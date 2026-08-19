@@ -15,6 +15,7 @@
 - [x] Discord webhook notification integration for new orders and approvals
 - [x] ตรวจสอบและเพิ่มรายการยศทั้งหมดให้แสดงใน Web Store และเชื่อมโยงกับข้อมูลยศใน Discord
 - [x] แยกข้อมูลทดสอบออเดอร์ออกจาก ID ของยศจริง เพื่อไม่ให้ Vitest เขียนทับ Emperor ในฐานข้อมูลจริง
-- [ ] เพิ่ม Discord Role ID จริงของแต่ละยศเมื่อผู้ใช้จัดเตรียม ID เพื่อให้การอนุมัติออเดอร์ผูกยศ Discord ได้
+- [x] เพิ่ม Discord Role ID จริงของแต่ละยศเมื่อผู้ใช้จัดเตรียม ID เพื่อให้การอนุมัติออเดอร์ผูกยศ Discord ได้
 - [x] แยก Vitest ออกจากฐานข้อมูลจริงด้วย mock และล้างข้อมูลทดสอบอัตโนมัติหลังจบเทสต์
 - [x] mock DB helper ใน `server/store.orders.test.ts` และเพิ่มหลักฐานว่า Vitest ทั้งชุดไม่เชื่อมต่อฐานข้อมูลจริง
+- [ ] บันทึก Discord Role ID จริงเมื่อผู้ใช้พร้อมใช้งาน
