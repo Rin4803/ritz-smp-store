@@ -22,7 +22,9 @@ function statusClass(status: string) {
 export default function Account() {
   const { user, loading: authLoading, isAuthenticated, logout } = useAuth();
   const ordersQuery = trpc.store.myOrders.useQuery(undefined, { enabled: isAuthenticated });
+  const walletQuery = trpc.store.wallet.useQuery(undefined, { enabled: isAuthenticated });
   const orders = ordersQuery.data ?? [];
+  const wallet = walletQuery.data ?? { balance: "0.00", transactions: [] };
 
   if (authLoading) {
     return <div className="store-shell"><div className="loading"><Loader2 size={20} className="animate-spin" /> กำลังตรวจสอบบัญชี...</div></div>;
@@ -85,13 +87,20 @@ export default function Account() {
                 {user?.role === "admin" ? <><CheckCircle2 size={12} /> Admin</> : <><ShieldAlert size={12} /> Player</>}
               </span>
             </div>
-            {user?.role === "admin" && (
-              <Link href="/admin" className="account-card admin-entry-card">
-                <ShieldAlert size={25} className="gold-text" />
-                <div><strong>Admin Dashboard</strong><span>ตรวจสอบสลิปและจัดการออเดอร์</span></div>
-                <ExternalLink size={16} />
-              </Link>
-            )}
+            <div className="account-card balance-card" style={{ background: "rgba(20,20,28,0.8)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "12px", padding: "1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <div className="eyebrow" style={{ color: "#d4af37" }}>Wallet Balance</div>
+                <h2 style={{ fontSize: "1.8rem", color: "#fff", margin: "0.2rem 0" }}>{formatPrice(wallet.balance)} ฿</h2>
+                <p className="subtle" style={{ margin: 0, fontSize: "0.85rem" }}>ยอดเงินคงเหลือสำหรับซื้อยศและบริการในเซิร์ฟเวอร์</p>
+              </div>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                {user?.role === "admin" && (
+                  <Link href="/admin" className="ghost-btn compact-btn" style={{ borderColor: "#d4af37", color: "#d4af37" }}>
+                    <ShieldAlert size={15} /> Admin
+                  </Link>
+                )}
+              </div>
+            </div>
           </section>
 
           <section className="account-orders">
@@ -113,6 +122,36 @@ export default function Account() {
                     <div className="account-order-meta"><strong>{formatPrice(order.amount)} ฿</strong><span>{order.paymentMethod}</span></div>
                     <div><span className={`status ${statusClass(order.status)}`}>{order.status === "รอตรวจสอบ" ? <Clock3 size={12} /> : <CheckCircle2 size={12} />}{order.status}</span><span className="order-date">{formatDate(order.createdAt)}</span></div>
                     <a className="order-slip" href={order.slipUrl} target="_blank" rel="noreferrer">ดูสลิป <ExternalLink size={12} /></a>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="account-orders" style={{ marginTop: "2rem" }}>
+            <div className="section-head">
+              <div><div className="eyebrow">Wallet Ledger</div><h2 className="section-title">ประวัติธุรกรรมยอดเงิน</h2></div>
+              <span className="order-count">{wallet.transactions.length} รายการ</span>
+            </div>
+            {wallet.transactions.length === 0 ? (
+              <div className="empty-box">ยังไม่มีประวัติธุรกรรมยอดเงิน</div>
+            ) : (
+              <div className="order-list">
+                {wallet.transactions.map(tx => (
+                  <article className="account-order-row" key={tx.id}>
+                    <div className="account-order-main">
+                      <span className="order-id">ธุรกรรม #{tx.id}</span>
+                      <strong>{tx.type === "topup" ? "เติมเงินเข้ากระเป๋า" : tx.type === "purchase" ? "ซื้อยศ/สินค้า" : "ปรับยอดเงิน"}</strong>
+                      <span className="subtle">{tx.description}</span>
+                    </div>
+                    <div className="account-order-meta">
+                      <strong style={{ color: Number(tx.amount) >= 0 ? "#4ade80" : "#f87171" }}>
+                        {Number(tx.amount) >= 0 ? "+" : ""}{formatPrice(tx.amount)} ฿
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="order-date">{formatDate(tx.createdAt)}</span>
+                    </div>
                   </article>
                 ))}
               </div>

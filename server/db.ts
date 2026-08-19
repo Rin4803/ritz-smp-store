@@ -10,6 +10,8 @@ import {
   orders,
   ranks,
   users,
+  wallets,
+  walletTransactions,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -192,6 +194,43 @@ export async function countOrdersByStatus(status: Order["status"]) {
   if (!db) return 0;
   const result = await db.select().from(orders).where(eq(orders.status, status));
   return result.length;
+}
+
+export async function getUserWallet(userId: number) {
+  const db = await getDb();
+  if (!db) return { userId, balance: "0.00" };
+  const res = await db.select().from(wallets).where(eq(wallets.userId, userId)).limit(1);
+  if (res[0]) return res[0];
+  await db.insert(wallets).values({ userId, balance: "0.00" }).onDuplicateKeyUpdate({ set: { userId } });
+  const created = await db.select().from(wallets).where(eq(wallets.userId, userId)).limit(1);
+  return created[0] ?? { userId, balance: "0.00" };
+}
+
+export async function adjustUserBalance(userId: number, amount: number, type: "topup" | "purchase" | "refund" | "admin_adjust", description: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  
+  const current = await getUserWallet(userId);
+  const currentBalance = Number(current.balance) || 0;
+  const newBalance = Number((currentBalance + amount).toFixed(2));
+  if (newBalance < 0) {
+    throw new Error("ยอดเงินในบัญชีไม่พอสำหรับการทำรายการ");
+  }
+
+  await db.update(wallets).set({ balance: String(newBalance) }).where(eq(wallets.userId, userId));
+  await db.insert(walletTransactions).values({
+    userId,
+    amount: String(amount),
+    type,
+    description,
+  });
+  return { userId, newBalance };
+}
+
+export async function getUserWalletTransactions(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(walletTransactions).where(eq(walletTransactions.userId, userId)).orderBy(desc(walletTransactions.createdAt));
 }
 
 export async function insertRank(rank: InsertRank) {

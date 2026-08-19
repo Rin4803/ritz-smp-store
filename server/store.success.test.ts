@@ -43,6 +43,24 @@ vi.mock("./db", () => ({
   getRanks: vi.fn(async () => []),
   getAllOrders: vi.fn(async () => []),
   getOrdersByUser: vi.fn(async () => []),
+  getOrderById: vi.fn(async (id: number) => ({
+    id,
+    userId: 7,
+    minecraftIGN: "RitzWarrior",
+    rankId: 999,
+    rankName: "Ritz Test Elite",
+    amount: "150.00",
+    paymentMethod: "PromptPay",
+    slipUrl: "https://example.com/slip.png",
+    slipKey: "slip.png",
+    status: "รอตรวจสอบ",
+    adminNotes: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  })),
+  getUserWallet: vi.fn(async () => ({ userId: 7, balance: "500.00" })),
+  getUserWalletTransactions: vi.fn(async () => []),
+  adjustUserBalance: vi.fn(async () => ({})),
 }));
 
 vi.mock("./storage", () => ({

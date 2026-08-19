@@ -8,10 +8,16 @@ import {
   createOrder,
   getAllOrders,
   getOrdersByUser,
+  getOrderById,
   getRankById,
   getRanks,
   updateOrder,
+  getUserWallet,
+  getUserWalletTransactions,
+  adjustUserBalance,
 } from "./db";
+import { ENV } from "./_core/env";
+import { Rcon } from "rcon-client";
 import { storagePut } from "./storage";
 import type { Order } from "../drizzle/schema";
 
@@ -53,6 +59,14 @@ export const appRouter = router({
   store: router({
     ranks: publicProcedure.query(() => getRanks()),
     myOrders: protectedProcedure.query(({ ctx }) => getOrdersByUser(ctx.user.id)),
+    wallet: protectedProcedure.query(async ({ ctx }) => {
+      const wallet = await getUserWallet(ctx.user.id);
+      const transactions = await getUserWalletTransactions(ctx.user.id);
+      return {
+        balance: wallet.balance,
+        transactions,
+      };
+    }),
     createOrder: protectedProcedure
       .input(
         z.object({
@@ -118,22 +132,50 @@ export const appRouter = router({
         }),
       )
       .mutation(async ({ input }) => {
+        const existing = await getOrderById(input.id);
+        if (!existing) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "ไม่พบออเดอร์" });
+        }
         const updated = await updateOrder(input.id, input.status, input.adminNotes);
         if (!updated) {
           throw new TRPCError({ code: "NOT_FOUND", message: "ไม่พบออเดอร์" });
         }
 
-        // If status is updated to 'สำเร็จ', trigger fulfillment notification & optional RCON command intent
-        if (input.status === "สำเร็จ") {
+        // If status is updated to 'สำเร็จ', execute Rcon rank assignment automatically and record ledger
+        if (input.status === "สำเร็จ" && existing.status !== "สำเร็จ") {
+          const rank = await getRankById(existing.rankId);
+          let rconDetail = "รอดำเนินการอัตโนมัติ";
+          let rconExecuted = false;
+          if (rank) {
+            const cmd = `lp user ${existing.minecraftIGN} parent add ${rank.name.toLowerCase()}`;
+            if (ENV.rconHost && ENV.rconPort && ENV.rconPassword) {
+              try {
+                const rcon = await Rcon.connect({ host: ENV.rconHost, port: ENV.rconPort, password: ENV.rconPassword });
+                const res = await rcon.send(cmd);
+                await rcon.end();
+                rconExecuted = true;
+                rconDetail = res || "RCON มอบยศสำเร็จ";
+              } catch (err: any) {
+                rconDetail = `RCON Error: ${err?.message ?? String(err)}`;
+              }
+            } else {
+              rconDetail = `ยังไม่ได้ตั้งค่า RCON (รันคำสั่งในคอนโซล: ${cmd})`;
+            }
+          }
+
+          // Adjust user balance if order was topup, or deduct if purchase
+          if (existing.rankId === 0) {
+            await adjustUserBalance(existing.userId, Number(existing.amount), "topup", `เติมเงินผ่าน ${existing.paymentMethod} (ออเดอร์ #${existing.id})`);
+          }
+
+          await updateOrder(input.id, "สำเร็จ", `${existing.adminNotes || ""} [อัตโนมัติ: มอบยศเรียบร้อย - ${rconDetail}]`.trim());
+
           await notifyOwner({
-            title: `RitzSMP: ออนเดอร์ #${updated.id} สำเร็จแล้ว`,
+            title: `RitzSMP: ออเดอร์ #${updated.id} สำเร็จอัตโนมัติ`,
             content: [
-              `✅ อรุณสวัสดิ์! ออเดอร์ #${updated.id} ของผู้เล่น ${updated.minecraftIGN} ได้รับการอนุมัติแล้ว`,
-              `👑 ยศที่สั่งซื้อ: ${updated.rankName}`,
-              `💰 ยอดเงิน: ${updated.amount} บาท`,
-              `📝 หมายเหตุแอดมิน: ${updated.adminNotes || "ไม่มี"}`,
-              `⚙️ คำสั่งสำหรับรันใน RCON/Console เซิร์ฟเวอร์:`,
-              `lp user ${updated.minecraftIGN} parent add <group_name>`,
+              `✅ ออเดอร์ #${updated.id} ของผู้เล่น ${updated.minecraftIGN} สำเร็จแล้ว`,
+              `👑 ยศ: ${updated.rankName}`,
+              `⚙️ RCON Status: ${rconExecuted ? "ส่งคำสั่งเข้าเซิร์ฟเวอร์สำเร็จ" : rconDetail}`,
             ].join("\n"),
           }).catch(() => {});
         }
