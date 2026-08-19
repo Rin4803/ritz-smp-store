@@ -11,3 +11,5 @@
 - [x] พัฒนาหน้า Dashboard สำหรับแอดมินเพื่อตรวจสอบและเปลี่ยนสถานะออเดอร์ พร้อมดูสลิป
 - [x] เพิ่ม Vitest coverage ครอบคลุมทั้ง Catalog, Auth Guards, Success Paths ของ Order Creation และ Admin Status Management
 - [x] ตรวจสอบ Responsive (Mobile & Desktop), Build ผ่าน และเตรียมข้อมูลสรุปสำหรับนำไปใช้งานจริง
+- [x] RCON rank fulfillment integration for order approval
+- [x] Discord webhook notification integration for new orders and approvals

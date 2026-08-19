@@ -122,6 +122,22 @@ export const appRouter = router({
         if (!updated) {
           throw new TRPCError({ code: "NOT_FOUND", message: "ไม่พบออเดอร์" });
         }
+
+        // If status is updated to 'สำเร็จ', trigger fulfillment notification & optional RCON command intent
+        if (input.status === "สำเร็จ") {
+          await notifyOwner({
+            title: `RitzSMP: ออนเดอร์ #${updated.id} สำเร็จแล้ว`,
+            content: [
+              `✅ อรุณสวัสดิ์! ออเดอร์ #${updated.id} ของผู้เล่น ${updated.minecraftIGN} ได้รับการอนุมัติแล้ว`,
+              `👑 ยศที่สั่งซื้อ: ${updated.rankName}`,
+              `💰 ยอดเงิน: ${updated.amount} บาท`,
+              `📝 หมายเหตุแอดมิน: ${updated.adminNotes || "ไม่มี"}`,
+              `⚙️ คำสั่งสำหรับรันใน RCON/Console เซิร์ฟเวอร์:`,
+              `lp user ${updated.minecraftIGN} parent add <group_name>`,
+            ].join("\n"),
+          }).catch(() => {});
+        }
+
         return updated;
       }),
   }),
