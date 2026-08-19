@@ -149,11 +149,11 @@ export default function Home() {
           >
             {menuOpen ? <X size={19} /> : <Menu size={19} />}
           </button>
-          <a className="brand" href="#top" aria-label="RitzSMP Web Store">
-            <span className="brand-mark"><Crown size={21} strokeWidth={1.8} /></span>
-            <span>
-              <span className="brand-name">RITZ<span className="gold-text">SMP</span></span>
-              <span className="brand-sub">Realm Official Store</span>
+          <a className="brand" href="#top" aria-label="RitzSMP Web Store" style={{ minWidth: 0, overflow: "hidden" }}>
+            <span className="brand-mark flex-shrink-0"><Crown size={21} strokeWidth={1.8} /></span>
+            <span style={{ minWidth: 0, overflow: "hidden" }}>
+              <span className="brand-name" style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>RITZ<span className="gold-text">SMP</span></span>
+              <span className="brand-sub" style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Realm Official Store</span>
             </span>
           </a>
           <nav className="nav desktop-nav" aria-label="เมนูหลัก">
