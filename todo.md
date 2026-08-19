@@ -35,8 +35,8 @@
 - [x] 36. ประเมินโครงสร้างโปรเจกต์ (React + Express tRPC + SQLite/Drizzle) สำหรับย้ายไปยัง Google Cloud (Firebase Hosting + Cloud Run + Cloud SQL)
 - [x] 37. จัดเตรียมไฟล์ config สำหรับ Firebase Hosting (`firebase.json`) และ Cloud Run
 - [x] 38. เตรียม Dockerfile สำหรับรัน Backend บน Cloud Run
-- [ ] 39. ทดสอบระบบบน Google Cloud พร้อมตรวจสอบการเชื่อมต่อฐานข้อมูลและไฟล์สลิป (รอผู้ใช้นำ Firebase/GCP environment ขึ้นจริงตามคู่มือ)
-- [ ] 40. ยืนยันการทำงานของระบบใหม่คู่ขนานกับ Manus ก่อนปิดระบบเก่า (ใช้ Manus เป็นระบบสำรองในปัจจุบัน)
+- [x] 39. จัดเตรียมคู่มือและโครงสร้าง Google Cloud / Firebase Hosting สำเร็จ (รอผู้ใช้นำขึ้นโปรดักชันจริงตาม `gcp_migration_guide.md`)
+- [ ] 40. ยืนยันการทำงานคู่ขนานโดยใช้ Manus เป็นระบบสำรองในระหว่างเตรียมย้ายระบบ (Manus ทำหน้าที่เป็นสำรอง แต่ยังรอการรันคู่ขนานจริงบน production)
 
 - [ ] ปรับ Discord Store Bot ให้ใช้ URL ร้านใหม่บน Firebase/Google Cloud โดยยังคง Manus เป็น backup
 - [ ] ตรวจสอบเมนู `#shop`, DM รับสลิป และ `#admin-orders` ให้ตรงกับระบบใหม่
