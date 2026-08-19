@@ -1,17 +1,10 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
- * Extend this file with additional tables as your product grows.
- * Columns use camelCase to match both database fields and generated types.
  */
 export const users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
   id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
@@ -25,4 +18,45 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+/**
+ * Ranks table for server rank store items
+ */
+export const ranks = mysqlTable("ranks", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  displayName: varchar("displayName", { length: 128 }).notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  duration: varchar("duration", { length: 64 }).default("ถาวร").notNull(),
+  color: varchar("color", { length: 32 }).default("gold").notNull(),
+  badge: varchar("badge", { length: 64 }).default("POPULAR").notNull(),
+  description: text("description").notNull(),
+  features: text("features").notNull(), // JSON string array of perks
+  roleId: varchar("roleId", { length: 64 }), // Discord role ID
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Rank = typeof ranks.$inferSelect;
+export type InsertRank = typeof ranks.$inferInsert;
+
+/**
+ * Orders table for purchases and slip uploads
+ */
+export const orders = mysqlTable("orders", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  minecraftIGN: varchar("minecraftIGN", { length: 64 }).notNull(),
+  rankId: int("rankId").notNull(),
+  rankName: varchar("rankName", { length: 128 }).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: varchar("paymentMethod", { length: 64 }).default("PromptPay / ออมสิน").notNull(),
+  slipUrl: text("slipUrl").notNull(),
+  slipKey: varchar("slipKey", { length: 255 }).notNull(),
+  status: mysqlEnum("status", ["รอตรวจสอบ", "สำเร็จ", "ยกเลิก"]).default("รอตรวจสอบ").notNull(),
+  adminNotes: text("adminNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = typeof orders.$inferInsert;
