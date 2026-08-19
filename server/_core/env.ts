@@ -12,6 +12,7 @@ export const ENV = {
   discordStoreChannelId: process.env.DISCORD_STORE_CHANNEL_ID ?? "",
   discordOrdersChannelId: process.env.DISCORD_ORDERS_CHANNEL_ID ?? "",
   discordAdminRoleId: process.env.DISCORD_ADMIN_ROLE_ID ?? "",
+  publicStoreUrl: process.env.PUBLIC_STORE_URL ?? "",
   rconHost: process.env.RCON_HOST ?? "",
   rconPort: Number(process.env.RCON_PORT ?? 0),
   rconPassword: process.env.RCON_PASSWORD ?? "",

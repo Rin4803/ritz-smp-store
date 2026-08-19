@@ -37,3 +37,22 @@
 - [ ] 38. เตรียม Dockerfile สำหรับรัน Backend บน Cloud Run
 - [ ] 39. ทดสอบระบบบน Google Cloud พร้อมตรวจสอบการเชื่อมต่อฐานข้อมูลและไฟล์สลิป
 - [ ] 40. ยืนยันการทำงานของระบบใหม่คู่ขนานกับ Manus ก่อนปิดระบบเก่า
+
+- [ ] ปรับ Discord Store Bot ให้ใช้ URL ร้านใหม่บน Firebase/Google Cloud โดยยังคง Manus เป็น backup
+- [ ] ตรวจสอบเมนู `#shop`, DM รับสลิป และ `#admin-orders` ให้ตรงกับระบบใหม่
+- [ ] เพิ่ม/ตรวจสอบตัวแปร URL ร้านค้าแบบ configurable โดยไม่ hardcode URL Manus
+- [ ] รัน Vitest และ production build หลังแก้ Discord flow
+- [ ] ขอ Bot Token, Guild ID, Store Channel ID, Orders Channel ID และ Admin Role ID ผ่านช่องทางปลอดภัยก่อนเปิดบอทจริง
+- [ ] ห้ามลบข้อความหรือช่อง Discord เดิมจนกว่าผู้ใช้ยืนยันผล
+- [ ] ทดสอบ deployment Firebase/Cloud Run และ Discord แบบคู่ขนานก่อน cutover
+- [ ] อัปเดตคู่มือ Discord และคู่มือ migration ให้ตรงกับระบบจริง
+- [ ] ขอผู้ใช้ยืนยัน URL ใหม่ก่อนเปลี่ยนลิงก์ใน Discord
+- [ ] ขอผู้ใช้ยืนยันก่อนปิดหรือลบระบบ Manus
+- [ ] ตรวจสอบ secrets ไม่ให้ถูก commit หรือฝังใน Docker image
+- [ ] บันทึก checkpoint หลังการแก้ไขและทดสอบผ่าน
+
+- [x] พักการเชื่อมต่อ Discord Bot และมุ่งเน้นที่เว็บไซต์อย่างเดียว
+- [ ] 51. ตรวจสอบไฟล์ config สำหรับ Firebase Hosting และ Cloud Run
+- [ ] 52. เพิ่ม Meta Tags และ Robots.txt / Sitemap.xml สำหรับ Google Search SEO
+- [ ] 53. ตรวจสอบและสร้างคู่มือ Deploy เว็บไซต์บน Firebase และ Google Cloud
+- [ ] 54. บันทึก checkpoint เว็บไซต์เวอร์ชันเสถียรสำหรับการย้ายระบบ

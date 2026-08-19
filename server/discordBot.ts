@@ -58,14 +58,37 @@ function isStaff(interaction: Interaction): boolean {
   return Boolean(member?.roles?.cache?.has(ENV.discordAdminRoleId));
 }
 
-function buildStorePanel(ranks: Awaited<ReturnType<typeof getRanks>>) {
+export function normalizePublicStoreUrl(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return null;
+  }
+}
+
+export function getPublicStoreUrl(): string | null {
+  return normalizePublicStoreUrl(ENV.publicStoreUrl);
+}
+
+export function buildStorePanel(ranks: Awaited<ReturnType<typeof getRanks>>) {
+  const publicStoreUrl = getPublicStoreUrl();
   const embed = new EmbedBuilder()
     .setTitle("👑 RITZSMP OFFICIAL STORE")
     .setDescription(
       "เลือกยศที่ต้องการ กรอกชื่อ Minecraft ในหน้าต่างที่เปิดขึ้น แล้วบอทจะส่งรายละเอียดการชำระเงินไปทาง DM เพื่อให้คุณแนบสลิปอย่างเป็นส่วนตัว\n\n" +
         "หลังส่งสลิปแล้ว แอดมินจะตรวจสอบในช่องเจ้าหน้าที่และแจ้งผลกลับทาง DM",
     )
-    .addFields({ name: "ช่องทางชำระเงิน", value: PAYMENT_TEXT })
+    .addFields(
+      { name: "ช่องทางชำระเงิน", value: PAYMENT_TEXT },
+      {
+        name: "เว็บไซต์ร้านค้า",
+        value: publicStoreUrl ? `[เปิดร้านค้า](${publicStoreUrl})` : "รอผู้ดูแลตั้งค่า PUBLIC_STORE_URL",
+      },
+    )
     .setColor(0xd4af37)
     .setFooter({ text: "RitzSMP Store • โปรดตรวจสอบชื่อในเกมก่อนส่งออเดอร์" });
 
