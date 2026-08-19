@@ -14,6 +14,7 @@ import {
   FileCheck2,
   Loader2,
   LogIn,
+  Menu,
   ShieldCheck,
   Sparkles,
   Upload,
@@ -77,6 +78,7 @@ export default function Home() {
   const [slipType, setSlipType] = useState<"image/jpeg" | "image/png" | "image/webp">("image/png");
   const [orderResult, setOrderResult] = useState<number | null>(null);
   const [toastMessage, setToastMessage] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const ranks = ranksQuery.data ?? [];
   const rankNotice = useMemo(() => ranks.some(rank => Number(rank.price) <= 0), [ranks]);
@@ -137,6 +139,16 @@ export default function Home() {
       <div className="noise" aria-hidden="true" />
       <header className="topbar">
         <div className="container topbar-inner">
+          <button
+            type="button"
+            className="menu-toggle"
+            aria-label={menuOpen ? "ปิดเมนูหลัก" : "เปิดเมนูหลัก"}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
+            onClick={() => setMenuOpen(open => !open)}
+          >
+            {menuOpen ? <X size={19} /> : <Menu size={19} />}
+          </button>
           <a className="brand" href="#top" aria-label="RitzSMP Web Store">
             <span className="brand-mark"><Crown size={21} strokeWidth={1.8} /></span>
             <span>
@@ -144,7 +156,7 @@ export default function Home() {
               <span className="brand-sub">Realm Official Store</span>
             </span>
           </a>
-          <nav className="nav" aria-label="เมนูหลัก">
+          <nav className="nav desktop-nav" aria-label="เมนูหลัก">
             <a href="#ranks">ยศทั้งหมด</a>
             <a href="#payment">ช่องทางชำระเงิน</a>
             <Link href="/account">ประวัติการซื้อ</Link>
@@ -160,6 +172,19 @@ export default function Home() {
             </button>
           )}
         </div>
+        {menuOpen && (
+          <nav id="mobile-menu" className="mobile-menu" aria-label="เมนูหลักบนมือถือ">
+            <a href="#ranks" onClick={() => setMenuOpen(false)}>ยศทั้งหมด</a>
+            <a href="#payment" onClick={() => setMenuOpen(false)}>ช่องทางชำระเงิน</a>
+            <Link href="/account" onClick={() => setMenuOpen(false)}>ประวัติการซื้อและยอดคงเหลือ</Link>
+            {user?.role === "admin" && <Link href="/admin" className="gold-text" onClick={() => setMenuOpen(false)}>Admin Dashboard</Link>}
+            {!authLoading && (isAuthenticated ? (
+              <Link href="/account" className="mobile-menu-login" onClick={() => setMenuOpen(false)}><ShieldCheck size={15} /> บัญชีของฉัน</Link>
+            ) : (
+              <button type="button" className="mobile-menu-login" onClick={() => { setMenuOpen(false); startLogin(); }}><LogIn size={15} /> เข้าสู่ระบบ</button>
+            ))}
+          </nav>
+        )}
       </header>
 
       <main id="top">
