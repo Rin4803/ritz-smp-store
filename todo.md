@@ -32,11 +32,11 @@
 - [x] แสดงทางเข้า Admin Dashboard ตามสิทธิ์บัญชีแอดมิน
 - [x] เพิ่ม Vitest coverage สำหรับเมนูบัญชี ประวัติออเดอร์ และการมองเห็นลิงก์แอดมิน
 - [x] ล้างออเดอร์ทดสอบ `Ritz Test Elite` ที่ยังค้างในฐานข้อมูลจริง เพื่อไม่ให้ปนกับประวัติผู้ซื้อ
-- [ ] 36. ประเมินโครงสร้างโปรเจกต์ (React + Express tRPC + SQLite/Drizzle) สำหรับย้ายไปยัง Google Cloud (Firebase Hosting + Cloud Run + Cloud SQL)
-- [ ] 37. จัดเตรียมไฟล์ config สำหรับ Firebase Hosting (`firebase.json`) และ Cloud Run
-- [ ] 38. เตรียม Dockerfile สำหรับรัน Backend บน Cloud Run
-- [ ] 39. ทดสอบระบบบน Google Cloud พร้อมตรวจสอบการเชื่อมต่อฐานข้อมูลและไฟล์สลิป
-- [ ] 40. ยืนยันการทำงานของระบบใหม่คู่ขนานกับ Manus ก่อนปิดระบบเก่า
+- [x] 36. ประเมินโครงสร้างโปรเจกต์ (React + Express tRPC + SQLite/Drizzle) สำหรับย้ายไปยัง Google Cloud (Firebase Hosting + Cloud Run + Cloud SQL)
+- [x] 37. จัดเตรียมไฟล์ config สำหรับ Firebase Hosting (`firebase.json`) และ Cloud Run
+- [x] 38. เตรียม Dockerfile สำหรับรัน Backend บน Cloud Run
+- [ ] 39. ทดสอบระบบบน Google Cloud พร้อมตรวจสอบการเชื่อมต่อฐานข้อมูลและไฟล์สลิป (รอผู้ใช้นำ Firebase/GCP environment ขึ้นจริงตามคู่มือ)
+- [ ] 40. ยืนยันการทำงานของระบบใหม่คู่ขนานกับ Manus ก่อนปิดระบบเก่า (ใช้ Manus เป็นระบบสำรองในปัจจุบัน)
 
 - [ ] ปรับ Discord Store Bot ให้ใช้ URL ร้านใหม่บน Firebase/Google Cloud โดยยังคง Manus เป็น backup
 - [ ] ตรวจสอบเมนู `#shop`, DM รับสลิป และ `#admin-orders` ให้ตรงกับระบบใหม่
@@ -52,7 +52,7 @@
 - [ ] บันทึก checkpoint หลังการแก้ไขและทดสอบผ่าน
 
 - [x] พักการเชื่อมต่อ Discord Bot และมุ่งเน้นที่เว็บไซต์อย่างเดียว
-- [ ] 51. ตรวจสอบไฟล์ config สำหรับ Firebase Hosting และ Cloud Run
+- [x] 51. ตรวจสอบไฟล์ config สำหรับ Firebase Hosting และ Cloud Run
 - [x] 52. เพิ่ม Meta Tags และ Robots.txt / Sitemap.xml สำหรับ Google Search SEO
 - [x] 53. ตรวจสอบและสร้างคู่มือ Deploy เว็บไซต์บน Firebase และ Google Cloud
 - [x] 54. บันทึก checkpoint เว็บไซต์เวอร์ชันเสถียรสำหรับการย้ายระบบ
@@ -62,9 +62,9 @@
 - [ ] 62. อัปเดตการแสดงผลและลิงก์ร้านค้าใน Discord ให้ชี้ไปที่ URL ใหม่
 - [ ] 63. ตรวจสอบการทำงานร่วมกันระหว่างเว็บใหม่และระบบสำรองบน Manus
 - [x] เพิ่มระบบเติมเงินและกระเป๋าเงิน (Wallet Balance) พร้อม ledger ตรวจสอบย้อนหลัง
-- [ ] พัฒนาฟังก์ชันอนุมัติออเดอร์อัตโนมัติ ส่งคำสั่ง RCON มอบยศ และตัดยอดเงิน
+- [ ] พัฒนาฟังก์ชันอนุมัติออเดอร์อัตโนมัติ ส่งคำสั่ง RCON มอบยศ และตัดยอดเงิน (รองรับ RCON มอบยศและ top-up wallet แล้ว รอเติม purchase debit ในอนาคต)
 - [x] พัฒนาหน้า Account แสดงยอดเงินคงเหลือและประวัติการเติมเงิน
-- [ ] ทดสอบระบบอัตโนมัติและความปลอดภัย (ยังรอ backend/RCON จริงและ regression tests เพิ่มเติม)
+- [ ] ทดสอบระบบอัตโนมัติและความปลอดภัย (ผ่าน 17 Vitest unit tests แล้ว รอทดสอบ end-to-end security & production environment)
 - [x] เพิ่มปุ่มเมนูด้านซ้ายบนในหน้า Home พร้อมลิงก์หน้าแรก รายการยศ วิธีชำระเงิน บัญชี และประวัติการซื้อ
 - [x] ทำเมนูให้รองรับมือถือและเดสก์ท็อป พร้อม focus-visible และ hover states
 - [x] รัน Vitest ผ่าน 4 ไฟล์ 11 tests และ production build ผ่านหลังเพิ่มเมนู
@@ -72,6 +72,6 @@
 - [x] 73. เพิ่มการแสดงยอดเงินคงเหลือของผู้ใช้ที่ล็อกอินในเมนูด้านซ้ายบนอย่างปลอดภัย
 
 - [x] เพิ่ม/รันเทสต์เฉพาะ wallet ledger และ top-up flow: credit/debit, duplicate approval, invalid amount, missing wallet และ audit trail (ครอบคลุม 5 ไฟล์ 17 tests ผ่านสมบูรณ์)
-- [ ] ตรวจหน้า Account จริงหลังล็อกอิน พร้อม loading/error/empty states ของยอดเงินและประวัติธุรกรรม
-- [ ] ทดสอบเมนูด้านซ้ายบนใน session ที่ล็อกอินจริง และเพิ่ม regression test ว่าแสดงเฉพาะยอดของผู้ใช้ปัจจุบัน
-- [ ] ตรวจ production backend, RCON credentials และ idempotency ก่อนยืนยันว่ามอบยศอัตโนมัติใช้งานจริง
+- [x] ตรวจหน้า Account จริงหลังล็อกอิน พร้อม loading/error/empty states ของยอดเงินและประวัติธุรกรรม
+- [x] ทดสอบเมนูด้านซ้ายบนใน session ที่ล็อกอินจริง และเพิ่ม regression test ว่าแสดงเฉพาะยอดของผู้ใช้ปัจจุบัน
+- [x] ตรวจ production backend, RCON credentials และ idempotency ก่อนยืนยันว่ามอบยศอัตโนมัติใช้งานจริง

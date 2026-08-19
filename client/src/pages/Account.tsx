@@ -90,7 +90,13 @@ export default function Account() {
             <div className="account-card balance-card" style={{ background: "rgba(20,20,28,0.8)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "12px", padding: "1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div>
                 <div className="eyebrow" style={{ color: "#d4af37" }}>Wallet Balance</div>
-                <h2 style={{ fontSize: "1.8rem", color: "#fff", margin: "0.2rem 0" }}>{formatPrice(wallet.balance)} ฿</h2>
+                {walletQuery.isLoading ? (
+                  <h2 style={{ fontSize: "1.5rem", color: "#fff", margin: "0.2rem 0" }}><Loader2 size={18} className="animate-spin" /> กำลังโหลด...</h2>
+                ) : walletQuery.isError ? (
+                  <h2 style={{ fontSize: "1.2rem", color: "#f87171", margin: "0.2rem 0" }}>ไม่สามารถโหลดได้</h2>
+                ) : (
+                  <h2 style={{ fontSize: "1.8rem", color: "#fff", margin: "0.2rem 0" }}>{formatPrice(wallet.balance)} ฿</h2>
+                )}
                 <p className="subtle" style={{ margin: 0, fontSize: "0.85rem" }}>ยอดเงินคงเหลือสำหรับซื้อยศและบริการในเซิร์ฟเวอร์</p>
               </div>
               <div style={{ display: "flex", gap: "0.5rem" }}>
@@ -133,7 +139,11 @@ export default function Account() {
               <div><div className="eyebrow">Wallet Ledger</div><h2 className="section-title">ประวัติธุรกรรมยอดเงิน</h2></div>
               <span className="order-count">{wallet.transactions.length} รายการ</span>
             </div>
-            {wallet.transactions.length === 0 ? (
+            {walletQuery.isLoading ? (
+              <div className="loading"><Loader2 size={20} className="animate-spin" /> กำลังโหลดประวัติธุรกรรม...</div>
+            ) : walletQuery.isError ? (
+              <div className="empty-box">ไม่สามารถโหลดประวัติธุรกรรมได้ กรุณาลองใหม่อีกครั้ง</div>
+            ) : wallet.transactions.length === 0 ? (
               <div className="empty-box">ยังไม่มีประวัติธุรกรรมยอดเงิน</div>
             ) : (
               <div className="order-list">
