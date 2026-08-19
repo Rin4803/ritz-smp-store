@@ -4,6 +4,23 @@ import type { TrpcContext } from "./_core/context";
 
 type User = NonNullable<TrpcContext["user"]>;
 
+vi.mock("./_core/env", () => ({
+  ENV: {
+    rconHost: "127.0.0.1",
+    rconPort: 25575,
+    rconPassword: "test-rcon-password",
+  },
+}));
+
+vi.mock("rcon-client", () => ({
+  Rcon: {
+    connect: vi.fn(async () => ({
+      send: vi.fn(async () => "OK"),
+      end: vi.fn(async () => undefined),
+    })),
+  },
+}));
+
 vi.mock("./db", () => ({
   getRankById: vi.fn(async () => ({
     id: 999,
@@ -60,7 +77,7 @@ vi.mock("./db", () => ({
   })),
   getUserWallet: vi.fn(async () => ({ userId: 7, balance: "500.00" })),
   getUserWalletTransactions: vi.fn(async () => []),
-  adjustUserBalance: vi.fn(async () => ({})),
+  adjustUserBalance: vi.fn(async () => ({ userId: 7, newBalance: 650, alreadyApplied: false })),
 }));
 
 vi.mock("./storage", () => ({
@@ -127,7 +144,14 @@ describe("RitzSMP Order Success Path & Admin Workflow", () => {
 
     expect(updated).toMatchObject({
       status: "สำเร็จ",
-      adminNotes: "ตรวจสอบสลิปเรียบร้อย มอบยศในเกมแล้ว",
+      adminNotes: expect.stringContaining("ตรวจสอบสลิปเรียบร้อย มอบยศในเกมแล้ว"),
     });
+  });
+
+  it("verifies wallet balance procedure execution", async () => {
+    const userCaller = appRouter.createCaller(createTestContext("user"));
+    const wallet = await userCaller.store.wallet();
+    expect(wallet).toHaveProperty("balance", "500.00");
+    expect(wallet.transactions).toEqual([]);
   });
 });

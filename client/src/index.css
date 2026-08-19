@@ -62,6 +62,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .mobile-menu { position: absolute; top: 100%; left: 0; right: 0; display: grid; gap: 4px; padding: 12px 20px 18px; border-bottom: 1px solid rgba(230,192,107,.16); background: rgba(12,14,20,.98); box-shadow: 0 22px 36px rgba(0,0,0,.28); }
 .mobile-menu a, .mobile-menu button { display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; color: #c9cbd1; background: transparent; font: inherit; font-size: 13px; text-align: left; text-decoration: none; cursor: pointer; }
 .mobile-menu a:hover, .mobile-menu button:hover { color: #f4d48a; background: rgba(230,192,107,.08); }
+.wallet-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 54px; margin: 0 0 6px; padding: 0 13px; border: 1px solid rgba(230,192,107,.24); border-radius: 12px; color: #f0dfb3; background: linear-gradient(135deg, rgba(230,192,107,.12), rgba(255,255,255,.035)); }
+.wallet-summary-label { display: inline-flex; align-items: center; gap: 8px; color: #c9cbd1; font-size: 12px; }
+.wallet-summary strong { color: #f4d48a; font-size: 14px; letter-spacing: .02em; white-space: nowrap; }
 .mobile-menu-login { margin-top: 5px; border: 1px solid rgba(230,192,107,.2) !important; color: #e6c06b !important; background: rgba(230,192,107,.06) !important; }
 .nav a { color: inherit; text-decoration: none; transition: color .18s ease; }
 .nav a:hover { color: #e6c06b; }

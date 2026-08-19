@@ -80,6 +80,7 @@ export const walletTransactions = mysqlTable("wallet_transactions", {
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   type: mysqlEnum("type", ["topup", "purchase", "refund", "admin_adjust"]).notNull(),
   description: text("description").notNull(),
+  referenceKey: varchar("referenceKey", { length: 128 }).unique(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

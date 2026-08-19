@@ -136,39 +136,56 @@ export const appRouter = router({
         if (!existing) {
           throw new TRPCError({ code: "NOT_FOUND", message: "ไม่พบออเดอร์" });
         }
-        const updated = await updateOrder(input.id, input.status, input.adminNotes);
-        if (!updated) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "ไม่พบออเดอร์" });
-        }
+        let updated = existing;
 
-        // If status is updated to 'สำเร็จ', execute Rcon rank assignment automatically and record ledger
+        // A successful approval is a side-effecting operation. Complete the side effect first,
+        // then persist the final status so a failed RCON call cannot look like a fulfilled order.
         if (input.status === "สำเร็จ" && existing.status !== "สำเร็จ") {
           const rank = await getRankById(existing.rankId);
-          let rconDetail = "รอดำเนินการอัตโนมัติ";
+          let rconDetail = "ไม่ต้องใช้ RCON";
           let rconExecuted = false;
-          if (rank) {
+
+          if (existing.rankId === 0) {
+            const walletResult = await adjustUserBalance(
+              existing.userId,
+              Number(existing.amount),
+              "topup",
+              `เติมเงินผ่าน ${existing.paymentMethod} (ออเดอร์ #${existing.id})`,
+              `order:${existing.id}:topup`,
+            );
+            rconDetail = walletResult.alreadyApplied ? "ยอดเงินของออเดอร์นี้ถูกบันทึกแล้ว" : "เติมเงินเข้ากระเป๋าสำเร็จ";
+          } else {
+            if (!rank) {
+              throw new TRPCError({ code: "NOT_FOUND", message: "ไม่พบยศของออเดอร์นี้" });
+            }
             const cmd = `lp user ${existing.minecraftIGN} parent add ${rank.name.toLowerCase()}`;
-            if (ENV.rconHost && ENV.rconPort && ENV.rconPassword) {
-              try {
-                const rcon = await Rcon.connect({ host: ENV.rconHost, port: ENV.rconPort, password: ENV.rconPassword });
-                const res = await rcon.send(cmd);
-                await rcon.end();
-                rconExecuted = true;
-                rconDetail = res || "RCON มอบยศสำเร็จ";
-              } catch (err: any) {
-                rconDetail = `RCON Error: ${err?.message ?? String(err)}`;
-              }
-            } else {
-              rconDetail = `ยังไม่ได้ตั้งค่า RCON (รันคำสั่งในคอนโซล: ${cmd})`;
+            if (!ENV.rconHost || !ENV.rconPort || !ENV.rconPassword) {
+              throw new TRPCError({
+                code: "PRECONDITION_FAILED",
+                message: `ยังไม่ได้ตั้งค่า RCON สำหรับมอบยศอัตโนมัติ (คำสั่งที่ต้องรัน: ${cmd})`,
+              });
+            }
+            let rcon: Rcon | undefined;
+            try {
+              rcon = await Rcon.connect({ host: ENV.rconHost, port: ENV.rconPort, password: ENV.rconPassword });
+              const res = await rcon.send(cmd);
+              rconExecuted = true;
+              rconDetail = res || "RCON มอบยศสำเร็จ";
+            } catch (err: any) {
+              throw new TRPCError({ code: "PRECONDITION_FAILED", message: `RCON มอบยศไม่สำเร็จ: ${err?.message ?? String(err)}` });
+            } finally {
+              await rcon?.end().catch(() => undefined);
             }
           }
 
-          // Adjust user balance if order was topup, or deduct if purchase
-          if (existing.rankId === 0) {
-            await adjustUserBalance(existing.userId, Number(existing.amount), "topup", `เติมเงินผ่าน ${existing.paymentMethod} (ออเดอร์ #${existing.id})`);
+          updated = await updateOrder(
+            input.id,
+            "สำเร็จ",
+            `${input.adminNotes ?? existing.adminNotes ?? ""} [อัตโนมัติ: ${existing.rankId === 0 ? "เติมเงินสำเร็จ" : "มอบยศเรียบร้อย"} - ${rconDetail}]`.trim(),
+          );
+          if (!updated) {
+            throw new TRPCError({ code: "NOT_FOUND", message: "ไม่สามารถบันทึกสถานะออเดอร์ได้" });
           }
-
-          await updateOrder(input.id, "สำเร็จ", `${existing.adminNotes || ""} [อัตโนมัติ: มอบยศเรียบร้อย - ${rconDetail}]`.trim());
 
           await notifyOwner({
             title: `RitzSMP: ออเดอร์ #${updated.id} สำเร็จอัตโนมัติ`,

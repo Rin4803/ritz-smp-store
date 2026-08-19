@@ -1,0 +1,2 @@
+ALTER TABLE `wallet_transactions` ADD `referenceKey` varchar(128);--> statement-breakpoint
+ALTER TABLE `wallet_transactions` ADD CONSTRAINT `wallet_transactions_referenceKey_unique` UNIQUE(`referenceKey`);

@@ -56,6 +56,7 @@ export default function Home() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const ranksQuery = trpc.store.ranks.useQuery();
   const ordersQuery = trpc.store.myOrders.useQuery(undefined, { enabled: isAuthenticated });
+  const walletQuery = trpc.store.wallet.useQuery(undefined, { enabled: isAuthenticated });
   const utils = trpc.useUtils();
 
   const createOrder = trpc.store.createOrder.useMutation({
@@ -174,6 +175,12 @@ export default function Home() {
         </div>
         {menuOpen && (
           <nav id="mobile-menu" className="mobile-menu" aria-label="เมนูหลักบนมือถือ">
+            {isAuthenticated && (
+              <div className="wallet-summary" aria-live="polite">
+                <span className="wallet-summary-label"><CreditCard size={15} /> ยอดเงินคงเหลือ</span>
+                <strong>{walletQuery.isLoading ? "กำลังโหลด…" : `${formatPrice(walletQuery.data?.balance ?? 0)} ฿`}</strong>
+              </div>
+            )}
             <a href="#ranks" onClick={() => setMenuOpen(false)}>ยศทั้งหมด</a>
             <a href="#payment" onClick={() => setMenuOpen(false)}>ช่องทางชำระเงิน</a>
             <Link href="/account" onClick={() => setMenuOpen(false)}>ประวัติการซื้อและยอดคงเหลือ</Link>

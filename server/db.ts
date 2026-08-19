@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertOrder,
@@ -206,25 +206,63 @@ export async function getUserWallet(userId: number) {
   return created[0] ?? { userId, balance: "0.00" };
 }
 
-export async function adjustUserBalance(userId: number, amount: number, type: "topup" | "purchase" | "refund" | "admin_adjust", description: string) {
+export async function adjustUserBalance(
+  userId: number,
+  amount: number,
+  type: "topup" | "purchase" | "refund" | "admin_adjust",
+  description: string,
+  referenceKey?: string,
+) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
-  
-  const current = await getUserWallet(userId);
-  const currentBalance = Number(current.balance) || 0;
-  const newBalance = Number((currentBalance + amount).toFixed(2));
-  if (newBalance < 0) {
-    throw new Error("ยอดเงินในบัญชีไม่พอสำหรับการทำรายการ");
+  if (!Number.isFinite(amount) || Math.round(amount * 100) !== amount * 100) {
+    throw new Error("จำนวนเงินไม่ถูกต้อง");
   }
 
-  await db.update(wallets).set({ balance: String(newBalance) }).where(eq(wallets.userId, userId));
-  await db.insert(walletTransactions).values({
-    userId,
-    amount: String(amount),
-    type,
-    description,
+  return db.transaction(async tx => {
+    await tx.insert(wallets).values({ userId, balance: "0.00" }).onDuplicateKeyUpdate({ set: { userId } });
+
+    if (referenceKey) {
+      const inserted = await tx
+        .insert(walletTransactions)
+        .values({ userId, amount: String(amount), type, description, referenceKey })
+        .onDuplicateKeyUpdate({ set: { id: sql`${walletTransactions.id}` } });
+      const affectedRows = Number((inserted as any)?.[0]?.affectedRows ?? 0);
+      if (affectedRows === 0) {
+        const existing = await tx
+          .select()
+          .from(walletTransactions)
+          .where(eq(walletTransactions.referenceKey, referenceKey))
+          .limit(1);
+        if (existing[0]?.userId !== userId) {
+          throw new Error("รายการกระเป๋าเงินอ้างอิงซ้ำกับผู้ใช้อื่น");
+        }
+        const current = await tx.select().from(wallets).where(eq(wallets.userId, userId)).limit(1);
+        return { userId, newBalance: Number(current[0]?.balance) || 0, alreadyApplied: true };
+      }
+    }
+
+    const updated = await tx
+      .update(wallets)
+      .set({ balance: sql`${wallets.balance} + ${amount}` })
+      .where(and(eq(wallets.userId, userId), sql`${wallets.balance} + ${amount} >= 0`));
+    const affectedRows = Number((updated as any)?.[0]?.affectedRows ?? 0);
+    if (affectedRows === 0) {
+      throw new Error("ยอดเงินในบัญชีไม่พอสำหรับการทำรายการ");
+    }
+
+    if (!referenceKey) {
+      await tx.insert(walletTransactions).values({
+        userId,
+        amount: String(amount),
+        type,
+        description,
+      });
+    }
+
+    const current = await tx.select().from(wallets).where(eq(wallets.userId, userId)).limit(1);
+    return { userId, newBalance: Number(current[0]?.balance) || 0, alreadyApplied: false };
   });
-  return { userId, newBalance };
 }
 
 export async function getUserWalletTransactions(userId: number) {
