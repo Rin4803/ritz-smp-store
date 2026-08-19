@@ -5,6 +5,7 @@ import {
   InsertRank,
   InsertUser,
   Order,
+  User,
   Rank,
   orders,
   ranks,
@@ -130,6 +131,40 @@ export async function createOrder(order: InsertOrder): Promise<Order> {
   const created = await db.select().from(orders).where(eq(orders.id, result[0].insertId)).limit(1);
   if (!created[0]) throw new Error("Order could not be created");
   return created[0];
+}
+
+export async function getOrderById(id: number): Promise<Order | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+  return result[0];
+}
+
+export async function getUserById(id: number): Promise<User | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return result[0];
+}
+
+export async function getUserByDiscordId(discordUserId: string): Promise<User | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.openId, `discord:${discordUserId}`)).limit(1);
+  return result[0];
+}
+
+export async function ensureDiscordUser(discordUserId: string, displayName: string): Promise<User> {
+  const openId = `discord:${discordUserId}`;
+  await upsertUser({
+    openId,
+    name: displayName,
+    loginMethod: "discord",
+    role: "user",
+  });
+  const user = await getUserByOpenId(openId);
+  if (!user) throw new Error("Discord user could not be created");
+  return user;
 }
 
 export async function getOrdersByUser(userId: number): Promise<Order[]> {

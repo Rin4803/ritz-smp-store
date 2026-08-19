@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { startLogin } from "@/const";
+import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import {
@@ -146,13 +147,13 @@ export default function Home() {
           <nav className="nav" aria-label="เมนูหลัก">
             <a href="#ranks">ยศทั้งหมด</a>
             <a href="#payment">ช่องทางชำระเงิน</a>
-            <a href="#orders">ประวัติออเดอร์</a>
-            {user?.role === "admin" && <a href="/admin" className="gold-text">Admin Dashboard</a>}
+            <Link href="/account">ประวัติการซื้อ</Link>
+            {user?.role === "admin" && <Link href="/admin" className="gold-text">Admin Dashboard</Link>}
           </nav>
           {authLoading ? (
             <span className="user-chip"><Loader2 size={14} className="animate-spin" /> กำลังตรวจสอบ</span>
           ) : isAuthenticated ? (
-            <span className="user-chip"><ShieldCheck size={14} className="gold-text" /> {user?.name ?? "ผู้เล่น"}</span>
+            <Link href="/account" className="user-chip"><ShieldCheck size={14} className="gold-text" /> {user?.name ?? "ผู้เล่น"} <span className="account-link-label">บัญชีของฉัน</span></Link>
           ) : (
             <button className="ghost-btn compact-btn" onClick={() => startLogin()}>
               <LogIn size={14} /> เข้าสู่ระบบ

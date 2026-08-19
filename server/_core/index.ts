@@ -8,6 +8,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { startDiscordStoreBot } from "../discordBot";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -60,6 +61,12 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+  });
+
+  // The Discord gateway is intentionally optional. It starts only after the bot token
+  // is configured, so local development and web-only deployments remain safe.
+  startDiscordStoreBot().catch(error => {
+    console.error("[DiscordBot] Failed to start:", error);
   });
 }
 
