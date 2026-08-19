@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
+import { eq } from "drizzle-orm";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 import { getDb } from "./db";
@@ -36,12 +37,21 @@ function createTestContext(role: User["role"] = "user"): TrpcContext {
   };
 }
 
+const TEST_IGN = "__ritzsmp_vitest__";
+
+afterAll(async () => {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(orders).where(eq(orders.minecraftIGN, TEST_IGN));
+  await db.delete(ranks).where(eq(ranks.id, 999));
+});
+
 describe("RitzSMP Order Success Path & Admin Workflow", () => {
   it("allows a user to create an order successfully when valid priced rank and slip are provided", async () => {
     const db = await getDb();
     if (db) {
       await db.insert(ranks).values({
-        id: 10,
+        id: 999,
         name: "test-elite",
         displayName: "Ritz Test Elite",
         price: "150.00",
@@ -58,8 +68,8 @@ describe("RitzSMP Order Success Path & Admin Workflow", () => {
     const validBase64Slip = "data:image/png;base64," + dummyBytes.toString("base64");
 
     const result = await caller.store.createOrder({
-      rankId: 10,
-      minecraftIGN: "RitzWarrior",
+      rankId: 999,
+      minecraftIGN: TEST_IGN,
       paymentMethod: "PromptPay",
       slipData: validBase64Slip,
       slipName: "test-slip.png",
@@ -68,7 +78,7 @@ describe("RitzSMP Order Success Path & Admin Workflow", () => {
 
     expect(result).toHaveProperty("order");
     expect(result.order).toMatchObject({
-      minecraftIGN: "RitzWarrior",
+      minecraftIGN: TEST_IGN,
       paymentMethod: "PromptPay",
       status: "รอตรวจสอบ",
     });
@@ -81,8 +91,8 @@ describe("RitzSMP Order Success Path & Admin Workflow", () => {
     if (db) {
       const res = await db.insert(orders).values({
         userId: 7,
-        minecraftIGN: "RitzWarrior",
-        rankId: 10,
+        minecraftIGN: TEST_IGN,
+        rankId: 999,
         rankName: "Ritz Test Elite",
         amount: "150.00",
         paymentMethod: "PromptPay",

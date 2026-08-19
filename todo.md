@@ -13,3 +13,7 @@
 - [x] ตรวจสอบ Responsive (Mobile & Desktop), Build ผ่าน และเตรียมข้อมูลสรุปสำหรับนำไปใช้งานจริง
 - [x] RCON rank fulfillment integration for order approval
 - [x] Discord webhook notification integration for new orders and approvals
+- [x] ตรวจสอบและเพิ่มรายการยศทั้งหมดให้แสดงใน Web Store และเชื่อมโยงกับข้อมูลยศใน Discord
+- [x] แยกข้อมูลทดสอบออเดอร์ออกจาก ID ของยศจริง เพื่อไม่ให้ Vitest เขียนทับ Emperor ในฐานข้อมูลจริง
+- [ ] เพิ่ม Discord Role ID จริงของแต่ละยศเมื่อผู้ใช้จัดเตรียม ID เพื่อให้การอนุมัติออเดอร์ผูกยศ Discord ได้
+- [ ] แยก Vitest ออกจากฐานข้อมูลจริงด้วย test database หรือ mock และล้างข้อมูลทดสอบอัตโนมัติหลังจบเทสต์

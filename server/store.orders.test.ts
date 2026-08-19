@@ -24,11 +24,23 @@ function createContext(role: User["role"] = "user"): TrpcContext {
 }
 
 describe("RitzSMP store procedures", () => {
-  it("exposes rank catalog data for the storefront", async () => {
+  it("exposes the complete verified permanent rank catalog for the storefront", async () => {
     const result = await appRouter.createCaller(createContext()).store.ranks();
-    expect(result.length).toBeGreaterThan(0);
-    expect(result[0]).toHaveProperty("displayName");
-    expect(result[0]).toHaveProperty("features");
+    expect(result.map(rank => rank.displayName)).toEqual([
+      "VIP",
+      "VIP+",
+      "Knight",
+      "Elite",
+      "Noble",
+      "Lord",
+      "Overlord",
+      "Mythic",
+      "Celestial",
+      "Emperor",
+    ]);
+    expect(result.map(rank => Number(rank.price))).toEqual([39, 79, 149, 249, 399, 599, 899, 1299, 1799, 2499]);
+    expect(result.every(rank => rank.duration === "ถาวร")).toBe(true);
+    expect(result.every(rank => JSON.parse(rank.features).length > 0)).toBe(true);
   });
 
   it("rejects admin order access for regular users", async () => {
