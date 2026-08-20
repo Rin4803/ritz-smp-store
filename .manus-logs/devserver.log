@@ -619,3 +619,6 @@
 [2026-08-20T13:45:45.240Z] (node:43383) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
 [2026-08-20T13:45:45.240Z] (Use `node --trace-deprecation ...` to show where the warning was created)
 [2026-08-20T13:45:47.394Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-20T13:46:30.853Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-20T13:47:20.868Z] 1:47:20 PM [vite] (client) hmr update /src/pages/Home.tsx, /src/index.css
+[2026-08-20T13:47:47.971Z] 1:47:47 PM [vite] (client) hmr update /src/index.css

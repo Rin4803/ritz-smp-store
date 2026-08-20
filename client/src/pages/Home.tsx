@@ -634,6 +634,54 @@ export default function Home() {
         </div>
       )}
 
+      {/* Rules Section */}
+      <section className="section" style={{ background: "rgba(15,23,42,0.4)", borderTop: "1px solid rgba(212,175,55,0.15)", borderBottom: "1px solid rgba(212,175,55,0.15)", padding: "50px 0" }}>
+        <div className="container">
+          <div style={{ textAlign: "center", marginBottom: 36 }}>
+            <div className="eyebrow" style={{ justifyContent: "center" }}>RitzSMP Regulations</div>
+            <h2 style={{ fontSize: 28, fontWeight: 800, margin: "8px 0 0" }}>📜 กฎระเบียบเซิร์ฟเวอร์ RitzSMP</h2>
+            <p className="subtle" style={{ maxWidth: 600, margin: "8px auto 0" }}>เพื่อสังคมเกมที่สนุกและยุติธรรมสำหรับผู้เล่นทุกคน กรุณาศึกษาและปฏิบัติตามกฎระเบียบอย่างเคร่งครัด</p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20, marginBottom: 24 }}>
+            <div className="card" style={{ padding: 24, borderLeft: "4px solid #f87171" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(248,113,113,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#f87171", fontWeight: 700 }}>1</div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>ห้ามใช้โปรโกง (No Cheating)</h3>
+              </div>
+              <p className="subtle" style={{ fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+                ห้ามใช้ X-Ray, โปรบิน, KillAura หรือ Mod โกงทุกชนิด (วัดกันด้วยฝีมือล้วนๆ)
+              </p>
+            </div>
+
+            <div className="card" style={{ padding: 24, borderLeft: "4px solid #fbbf24" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(251,191,36,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fbbf24", fontWeight: 700 }}>2</div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>ห้ามทำเซิร์ฟค้าง (No Lag Machine)</h3>
+              </div>
+              <p className="subtle" style={{ fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+                ห้ามสร้างวงจรรูปแบบที่ตั้งใจทำให้เซิร์ฟเวอร์กระตุกหรือหลุด
+              </p>
+            </div>
+
+            <div className="card" style={{ padding: 24, borderLeft: "4px solid #38bdf8" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(56,189,248,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#38bdf8", fontWeight: 700 }}>3</div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>ด่าในเกมได้ ห้ามลามชีวิตจริง (No Harassment)</h3>
+              </div>
+              <p className="subtle" style={{ fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+                ปล้น/ฆ่ากันในเกมได้เต็มที่ แต่ห้ามเหยียดหรือคุกคามกันนอกเกมในช่องแชท
+              </p>
+            </div>
+          </div>
+
+          <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "12px", padding: "18px 24px", textAlign: "center" }}>
+            <span style={{ color: "#f87171", fontWeight: 700, fontSize: 16 }}>⚡ บทลงโทษ:</span>
+            <span style={{ color: "#e2e8f0", fontSize: 15, marginLeft: 8 }}>ใช้โปร หรือทำเซิร์ฟค้าง = <strong>แบนถาวรทันที</strong></span>
+          </div>
+        </div>
+      </section>
+
       {/* Purchase Success Modal */}
       {purchaseResult && (
         <div className="modal-backdrop" role="presentation">
