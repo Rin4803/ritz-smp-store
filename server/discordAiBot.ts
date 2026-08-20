@@ -27,6 +27,8 @@ import {
   fetchMinecraftServerStatus,
   grantMinecraftRank,
 } from "./minecraftIntegration.js";
+import { handleMusicCommand, musicCommand } from "./discordMusic.js";
+import { ensureMusicTextChannel } from "./discordMusicChannel.js";
 
 interface BotLog {
   timestamp: string;
@@ -62,23 +64,59 @@ export function getRitzSmpAiBotStatus() {
 
 const checkMinecraftServerStatus = fetchMinecraftServerStatus;
 
-async function safeReply(interaction: ChatInputCommandInteraction, options: any) {
+function interactionWasAlreadyAcknowledged(error: unknown): boolean {
+  const code = (error as { code?: number } | null)?.code;
+  return code === 40060 || /already been acknowledged|already acknowledged/i.test(String(error));
+}
+
+export async function ensureDeferredReply(interaction: any, options: { ephemeral?: boolean } = {}): Promise<boolean> {
+  if (!interaction) return false;
+  if (typeof interaction.isRepliable === "function" && !interaction.isRepliable()) return false;
+  if (interaction.deferred || interaction.replied) return true;
+  try {
+    await interaction.deferReply(options);
+    return true;
+  } catch (error) {
+    if (interactionWasAlreadyAcknowledged(error) || interaction.deferred || interaction.replied) {
+      pushLog("INFO", "Interaction was acknowledged by another handler; continuing with editReply");
+      return true;
+    }
+    pushLog("ERROR", `Could not defer interaction: ${String(error)}`);
+    return false;
+  }
+}
+
+export async function safeReply(interaction: any, options: any): Promise<boolean> {
+  if (!interaction) return false;
+  if (typeof interaction.isRepliable === "function" && !interaction.isRepliable()) return false;
   try {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply(options);
     } else {
       await interaction.reply(options);
     }
-  } catch (err) {
-    pushLog("WARN", `safeReply failed: ${String(err)}`);
+    return true;
+  } catch (error) {
+    if (interactionWasAlreadyAcknowledged(error)) {
+      try {
+        await interaction.editReply(options);
+        return true;
+      } catch (retryError) {
+        pushLog("ERROR", `safeReply acknowledged retry failed: ${String(retryError)}`);
+        return false;
+      }
+    }
+    pushLog("WARN", `safeReply failed: ${String(error)}`);
     try {
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({ content: "เกิดข้อผิดพลาดในการตอบสนอง กรุณาลองใหม่อีกครั้งนะคะ 💕", ephemeral: true });
       } else {
         await interaction.followUp({ content: "เกิดข้อผิดพลาดในการตอบสนอง กรุณาลองใหม่อีกครั้งนะคะ 💕", ephemeral: true });
       }
-    } catch (innerErr) {
-      pushLog("ERROR", `safeReply fallback failed: ${String(innerErr)}`);
+      return true;
+    } catch (fallbackError) {
+      pushLog("ERROR", `safeReply fallback failed: ${String(fallbackError)}`);
+      return false;
     }
   }
 }
@@ -171,7 +209,7 @@ export function getVerificationConflict(
 }
 
 async function verifyMinecraftAccount(interaction: any, shouldClaimRank: boolean) {
-  await interaction.deferReply({ ephemeral: true });
+  if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return;
   const minecraftIGN = interaction.fields.getTextInputValue("minecraft_ign").trim();
   const profile = await fetchMinecraftProfile(minecraftIGN);
   if (!profile) {
@@ -220,7 +258,7 @@ async function verifyMinecraftAccount(interaction: any, shouldClaimRank: boolean
 }
 
 async function replyWithPlayers(interaction: any) {
-  await interaction.deferReply({ ephemeral: true });
+  if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return;
   const mc = await fetchMinecraftServerStatus();
   const names = mc.playerNames.length ? mc.playerNames.map(name => `• ${name}`).join("\\n") : "ยังไม่มีรายชื่อที่ API เปิดเผยในขณะนี้ค่ะ";
   const embed = new EmbedBuilder()
@@ -279,7 +317,7 @@ export function buildProfileEmbed(interaction: any, verification: any) {
 }
 
 async function replyWithProfile(interaction: any) {
-  await interaction.deferReply({ ephemeral: true });
+  if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return;
   const verification = await getDiscordVerification(interaction.user.id);
   if (!verification) {
     await interaction.editReply("ยังไม่มีโปรไฟล์ที่ยืนยันค่ะ กรุณากด ✅ ยืนยันตัวตนก่อนนะคะ");
@@ -319,7 +357,7 @@ async function showProfileModal(interaction: any) {
 }
 
 async function updateProfileFromModal(interaction: any) {
-  await interaction.deferReply({ ephemeral: true });
+  if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return;
   const verification = await getDiscordVerification(interaction.user.id);
   if (!verification) {
     await interaction.editReply("ไม่พบการยืนยันตัวตนค่ะ กรุณายืนยันบัญชีก่อนนะคะ");
@@ -376,7 +414,7 @@ export async function handleOnboardingInteraction(interaction: any): Promise<boo
         await showMinecraftModal(interaction, "ritz_claim_rank_modal", "เชื่อมบัญชีและรับยศ RitzSMP");
         return true;
       }
-      await interaction.deferReply({ ephemeral: true });
+      if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return true;
       const rankResult = await grantMinecraftRank(existing.minecraftIGN, ENV.discordClaimRankGroup);
       const memberRoleAdded = await addConfiguredRole(interaction, ENV.discordMemberRoleId, "RitzSMP member rank claim");
       await interaction.editReply(
@@ -423,7 +461,7 @@ export function startRitzSmpAiBot() {
 }
 
 export function createRitzSmpAiBot() {
-  const token = process.env.DISCORD_AI_BOT_TOKEN || process.env.DISCORD_BOT_TOKEN || (ENV as any).discordAiBotToken || ENV.discordBotToken;
+  const token = process.env.DISCORD_AI_BOT_TOKEN || (ENV as any).discordAiBotToken;
   if (!token || token.trim() === "" || token === "102031") {
     pushLog("WARN", "No Discord AI Bot token provided. Bot disabled.");
     return null;
@@ -480,6 +518,7 @@ export function createRitzSmpAiBot() {
       new SlashCommandBuilder()
         .setName("profile")
         .setDescription("🪪 ดูโปรไฟล์สมาชิก RitzSMP ที่เชื่อมกับ Minecraft"),
+      musicCommand,
       new SlashCommandBuilder()
         .setName("setup")
         .setDescription("🛠️ ตั้งค่าแผงต้อนรับและยืนยันตัวตน (แอดมินเท่านั้น)")
@@ -519,6 +558,12 @@ export function createRitzSmpAiBot() {
       pushLog("INFO", "Registering global slash commands...");
       await rest.put(Routes.applicationCommands(clientId), { body: commands });
       pushLog("SUCCESS", "Successfully registered global slash commands for RitzSMP AI.");
+      const musicChannelId = await ensureMusicTextChannel(client, ENV.discordGuildId);
+      if (musicChannelId) {
+        pushLog("SUCCESS", `Dedicated music text channel ready: ${musicChannelId}`);
+      } else {
+        pushLog("WARN", "Dedicated music channel was not created; check DISCORD_GUILD_ID and Manage Channels permission.");
+      }
     } catch (error) {
       pushLog("ERROR", `Failed to register global slash commands: ${String(error)}`);
     }
@@ -538,11 +583,7 @@ export function createRitzSmpAiBot() {
       pushLog("ERROR", `Onboarding interaction failed: ${String(err)}`);
       try {
         if (interaction.isRepliable()) {
-          if (interaction.deferred || interaction.replied) {
-            await interaction.editReply("ระบบกำลังขัดข้องชั่วคราวค่ะ กรุณาลองใหม่อีกครั้งนะคะ");
-          } else {
-            await interaction.reply({ content: "ระบบกำลังขัดข้องชั่วคราวค่ะ กรุณาลองใหม่อีกครั้งนะคะ", ephemeral: true });
-          }
+          await safeReply(interaction, { content: "ระบบกำลังขัดข้องชั่วคราวค่ะ กรุณาลองใหม่อีกครั้งนะคะ", ephemeral: true });
         }
       } catch (replyError) {
         pushLog("WARN", `Could not reply to onboarding error: ${String(replyError)}`);
@@ -559,8 +600,14 @@ export function createRitzSmpAiBot() {
     pushLog("INFO", `Received command /${commandName} from ${interaction.user.tag}`);
 
     try {
+      if (commandName === "music") {
+        await handleMusicCommand(interaction);
+        pushLog("SUCCESS", "Handled /music command");
+        return;
+      }
+
       if (commandName === "status" || commandName === "ai-status") {
-        await interaction.deferReply({ ephemeral: false });
+        if (!(await ensureDeferredReply(interaction, { ephemeral: false }))) return;
         const mc = await checkMinecraftServerStatus();
         const uptimeMin = botStartTime ? Math.floor((Date.now() - botStartTime) / 60000) : 0;
 
@@ -680,6 +727,7 @@ export function createRitzSmpAiBot() {
             { name: "/ranks", value: "ดูรายละเอียดและสิทธิประโยชน์ของแต่ละยศ", inline: false },
             { name: "/topup", value: "ดูคู่มือขั้นตอนการเติมเงินและซื้อยศ", inline: false },
             { name: "/profile", value: "ดูโปรไฟล์สมาชิกและแก้ไขคำแนะนำตัว/สไตล์การเล่น", inline: false },
+            { name: "/music play <url>", value: "เล่นเพลงจาก YouTube/SoundCloud; ใช้ /music queue, /music skip, /music stop และ /music leave ควบคุมคิวค่ะ (โหมดฟรีอาจหยุดเมื่อระบบพักเครื่อง)", inline: false },
             { name: "/embed default", value: "ส่งประกาศร้านค้าสำเร็จรูปพร้อมปุ่มลิงก์", inline: false },
             { name: "/embed create", value: "สร้างประกาศ Embed แบบกำหนดเอง (สำหรับแอดมิน)", inline: false }
           )
@@ -767,7 +815,7 @@ export function createRitzSmpAiBot() {
       }
 
       if (commandName === "ask") {
-        await interaction.deferReply({ ephemeral: false });
+        if (!(await ensureDeferredReply(interaction, { ephemeral: false }))) return;
         const question = interaction.options.getString("question", true);
 
         const dynamicSeed = Math.random().toString(36).substring(7);

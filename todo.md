@@ -95,3 +95,15 @@
 - [x] Stop/restart the website services and validate the rebuilt deployment before the final checkpoint publication
 - [x] Add a Vitest or HTTP integration test for the scheduled presence route covering non-cron rejection and cron orphan handling
 - [x] Run a manual or automated request against the scheduled presence route after restart/deployment
+
+- [x] Audit and restore all RitzSMP AI commands that fail to respond, including token/lifecycle and command-registration health
+- [x] Add focused tests for command timeout, safe interaction replies, and command error recovery
+- [x] Decide and document a supported Discord music source and runtime approach that is compatible with production hosting
+- [x] Implement safe Discord music playback with join/play/queue/skip/stop/leave controls if the runtime supports it
+- [ ] Add focused music-command tests and perform a live Discord smoke test after restart
+
+- [x] Implement free Autoscale music mode without Reserved Hosting; document that voice playback and queue can stop on cold starts/restarts
+- [x] Add free-mode music commands with voice-channel validation, queue controls, source validation, and graceful error replies
+- [x] Add tests for free-mode music command validation and interaction timeout safety
+- [x] Route music help/status messages to a dedicated `🎵│ห้องเพลง` channel and keep `🐣│รายชื่อผู้ซื้อยศสำเร็จ` limited to purchase notifications
+- [x] Add a safe setup or channel-routing helper that can create/use the dedicated music channel only when the bot has Discord channel-management permission
