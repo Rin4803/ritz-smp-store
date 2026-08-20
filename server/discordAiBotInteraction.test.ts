@@ -49,4 +49,12 @@ describe("Discord interaction acknowledgement safety", () => {
     expect(interaction.reply).not.toHaveBeenCalled();
     expect(interaction.editReply).toHaveBeenCalledWith({ content: "ตอบกลับแล้วค่ะ" });
   });
+
+  it("uses editReply when the onboarding handler marked the interaction as deferred", async () => {
+    const interaction = repliableInteraction({ __ritzDeferred: true });
+
+    await expect(safeReply(interaction, { content: "ระบบได้บันทึกคำขอแล้วค่ะ" })).resolves.toBe(true);
+    expect(interaction.reply).not.toHaveBeenCalled();
+    expect(interaction.editReply).toHaveBeenCalledWith({ content: "ระบบได้บันทึกคำขอแล้วค่ะ" });
+  });
 });

@@ -47,6 +47,26 @@ let activeManagedServerRuntime: ManagedServerRuntimeConfig | null = null;
 let totalInteractionsCount = 0;
 let botStartTime: number | null = null;
 
+export function createSingleFlight<T>() {
+  let inFlight: Promise<T> | null = null;
+
+  return {
+    run(factory: () => Promise<T>): Promise<T> {
+      if (inFlight) return inFlight;
+      inFlight = factory().catch(error => {
+        inFlight = null;
+        throw error;
+      });
+      return inFlight;
+    },
+    get promise() {
+      return inFlight;
+    },
+  };
+}
+
+const botStartup = createSingleFlight<Client | null>();
+
 function pushLog(level: "INFO" | "SUCCESS" | "WARN" | "ERROR", message: string) {
   const timestamp = new Date().toISOString();
   logsBuffer.push({ timestamp, level, message });
@@ -651,33 +671,33 @@ export async function handleOnboardingInteraction(interaction: any): Promise<boo
   }
   } catch (err) {
     pushLog("ERROR", `Error in handleOnboardingInteraction: ${String(err)}`);
-    try {
-      if (interaction.isRepliable()) {
-        const payload = { content: "ระบบได้บันทึกคำขอของคุณแล้วค่ะ 💕 กำลังดำเนินการต่อ", ephemeral: true };
-        if (interaction.deferred || interaction.replied) {
-          await interaction.editReply(payload);
-        } else {
-          await interaction.reply(payload);
-        }
-      }
-    } catch (e) {}
+    await safeReply(interaction, {
+      content: "ระบบได้บันทึกคำขอของคุณแล้วค่ะ 💕 กำลังดำเนินการต่อ",
+      ephemeral: true,
+    });
     return true;
   }
 
   return false;
 }
 
-export async function startRitzSmpAiBot() {
-  try {
-    activeManagedServerRuntime = (await getActiveManagedServerRuntimeConfig()) ?? null;
-    if (activeManagedServerRuntime) {
-      pushLog("INFO", `Using managed-server runtime overlay for ${activeManagedServerRuntime.slug}`);
-    }
-  } catch (error) {
-    activeManagedServerRuntime = null;
-    pushLog("WARN", `Managed-server runtime overlay unavailable; using default environment: ${String(error)}`);
+export function startRitzSmpAiBot(): Promise<Client | null> {
+  if (botStartup.promise) {
+    pushLog("WARN", "RitzSMP AI startup already in progress; reusing the existing startup promise.");
   }
-  return createRitzSmpAiBot(activeManagedServerRuntime ?? undefined);
+
+  return botStartup.run(async () => {
+    try {
+      activeManagedServerRuntime = (await getActiveManagedServerRuntimeConfig()) ?? null;
+      if (activeManagedServerRuntime) {
+        pushLog("INFO", `Using managed-server runtime overlay for ${activeManagedServerRuntime.slug}`);
+      }
+    } catch (error) {
+      activeManagedServerRuntime = null;
+      pushLog("WARN", `Managed-server runtime overlay unavailable; using default environment: ${String(error)}`);
+    }
+    return createRitzSmpAiBot(activeManagedServerRuntime ?? undefined);
+  });
 }
 
 export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
@@ -698,8 +718,14 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
   });
 
   botClient = client;
+  let readyBootstrapStarted = false;
 
   client.once("ready", async () => {
+    if (readyBootstrapStarted) {
+      pushLog("WARN", "Ignoring duplicate RitzSMP AI ready bootstrap for the same client.");
+      return;
+    }
+    readyBootstrapStarted = true;
     botStartTime = Date.now();
     pushLog("SUCCESS", `RitzSMP AI bot logged in as ${client.user?.tag}`);
 
@@ -914,7 +940,7 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
         pushLog("WARN", `Channel auto-deployment note: ${String(panelDeployErr)}`);
       }
     } catch (error) {
-      pushLog("ERROR", `Failed to register global slash commands: ${String(error)}`);
+      pushLog("ERROR", `RitzSMP AI ready bootstrap failed after command registration: ${String(error)}`);
     }
   });
 

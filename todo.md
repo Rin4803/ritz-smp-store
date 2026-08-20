@@ -137,10 +137,10 @@
 - [x] Implement Minecraft /verify <code> command to securely bind Minecraft UUID/IGN to Discord ID
 - [x] Implement single-button 4-digit code generator in verification channel
 - [x] Implement Minecraft /verify <code> command to securely bind Minecraft UUID/IGN to Discord ID
-- [ ] Design multi-server database schema (`managed_servers` and server-scoped configs)
-- [ ] Implement Server Selection and Management UI in web platform
-- [ ] Implement dynamic bot configuration per server (Discord tokens, RCON, channel mapping)
-- [ ] Validate multi-tenant isolation and automated tests
+- [x] Design multi-server database schema (`managed_servers` and server-scoped configs)
+- [x] Implement Server Selection and Management UI in web platform
+- [x] Implement dynamic bot configuration per server (Discord tokens, RCON, channel mapping)
+- [x] Validate multi-tenant isolation and automated tests
 - [x] Design multi-server database schema (`managed_servers` and server-scoped configs)
 - [x] Implement Server Selection and Management UI in web platform
 - [x] Implement dynamic bot configuration per server (Discord tokens, RCON, channel mapping)
@@ -161,3 +161,5 @@
 - [x] Add a secure verify-and-claim button flow that assigns the configured Discord role and Minecraft rank where configured
 - [x] Validate rank-claim permissions, duplicate clicks, and interaction response handling
 - [x] Rename auto-created Discord channels with clear system-purpose names and matching topics
+- [x] Fix intermittent `RangeError: Maximum call stack size exceeded` during Discord global command registration and prevent duplicate bot startup work
+- [ ] Fix production `InteractionNotReplied` in the onboarding interaction error path and verify profile/button handling in live logs
