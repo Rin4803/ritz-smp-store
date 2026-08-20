@@ -127,6 +127,9 @@ export function createRitzSmpAiBot() {
         .setName("status")
         .setDescription("📊 ตรวจสอบสถานะและสถิติการทำงานของ RitzSMP AI"),
       new SlashCommandBuilder()
+        .setName("ai-status")
+        .setDescription("📊 [Legacy Alias] ตรวจสอบสถานะและสถิติการทำงานของ RitzSMP AI"),
+      new SlashCommandBuilder()
         .setName("store")
         .setDescription("🛒 แสดงลิงก์เว็บไซต์ร้านค้าหลักของ RitzSMP Store"),
       new SlashCommandBuilder()
@@ -173,12 +176,12 @@ export function createRitzSmpAiBot() {
 
     const storeUrl = "https://ritzsmpstore-94jhsfkx.manus.space";
 
-    if (commandName === "status") {
+    if (commandName === "status" || commandName === "ai-status") {
       await safeReply(interaction, {
         content: `💖 **RitzSMP AI Status Dashboard**\n• สถานะบอท: ออนไลน์ปกติ ✨\n• บัญชีบอท: \`${botUsername}\`\n• คำสั่งทั้งหมดที่มีผู้ใช้งาน: \`${totalInteractionsCount}\` ครั้ง\n• เว็บไซต์ร้านค้า: ${storeUrl}`,
         ephemeral: true,
       });
-      pushLog("SUCCESS", "Executed /status successfully");
+      pushLog("SUCCESS", `Executed /${commandName} successfully`);
       return;
     }
 
