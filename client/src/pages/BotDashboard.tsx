@@ -102,7 +102,7 @@ export default function BotDashboard() {
               <div className="text-3xl font-extrabold text-purple-400">
                 {botStatus?.totalInteractions ?? 0} <span className="text-xs text-slate-400 font-normal">ครั้ง</span>
               </div>
-              <p className="text-xs text-slate-500 mt-2">รวมคำสั่ง Slash Command และข้อความ AI ที่ตอบกลับ</p>
+              <p className="text-xs text-slate-500 mt-2">รองรับคำสั่ง /ask, /status, /store, /ranks, /topup, /embed</p>
             </CardContent>
           </Card>
 
@@ -137,20 +137,20 @@ export default function BotDashboard() {
               <div className="py-12 text-center text-slate-500">ยังไม่มีบันทึก Log ในระบบขณะนี้</div>
             ) : (
               <div className="space-y-3 font-mono text-xs bg-slate-950 p-4 rounded-lg border border-slate-800 max-h-96 overflow-y-auto">
-                {botStatus.logs.map((log: { timestamp: string; type: string; message: string }, idx: number) => (
+                {botStatus.logs.map((log: { timestamp: string; level: string; message: string }, idx: number) => (
                   <div key={idx} className="flex items-start space-x-3 border-b border-slate-900 pb-2 last:border-0">
                     <span className="text-slate-500 shrink-0">{new Date(log.timestamp).toLocaleTimeString()}</span>
                     <Badge
                       variant="outline"
                       className={`shrink-0 ${
-                        log.type === "SUCCESS"
+                        log.level === "SUCCESS"
                           ? "border-emerald-500 text-emerald-400 bg-emerald-500/10"
-                          : log.type === "ERROR"
+                          : log.level === "ERROR"
                           ? "border-red-500 text-red-400 bg-red-500/10"
                           : "border-cyan-500 text-cyan-400 bg-cyan-500/10"
                       }`}
                     >
-                      {log.type}
+                      {log.level}
                     </Badge>
                     <span className="text-slate-300 break-all">{log.message}</span>
                   </div>

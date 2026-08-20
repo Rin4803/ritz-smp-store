@@ -56,7 +56,7 @@ export const appRouter = router({
           status: "offline" as const,
           username: null,
           totalInteractions: 0,
-          logs: [{ timestamp: new Date().toISOString(), type: "ERROR", message: String(e) }],
+          logs: [{ timestamp: new Date().toISOString(), level: "ERROR" as const, message: String(e) }],
         };
       }
     }),

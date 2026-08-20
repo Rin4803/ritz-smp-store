@@ -414,3 +414,49 @@
 [2026-08-20T12:20:36.202Z] [RitzSmpAI] Logged in as RitzSMP AI#4684
 [2026-08-20T12:20:36.209Z] (node:33314) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
 [2026-08-20T12:20:36.209Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T12:22:23.157Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-20T12:26:24.774Z] 12:26:24 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T12:26:26.732Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T12:26:27.491Z] Server running on http://localhost:3000/
+[2026-08-20T12:26:32.955Z] [DiscordBot] Failed to start: DiscordjsError [TokenInvalid]: An invalid token was provided.
+[2026-08-20T12:26:32.955Z] at WebSocketManager.connect (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/websocket/WebSocketManager.js:140:26)
+[2026-08-20T12:26:32.955Z] at Client.login (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/Client.js:229:21)
+[2026-08-20T12:26:32.955Z] at <anonymous> (/home/ubuntu/ritz-smp-store/server/discordBot.ts:422:20)
+[2026-08-20T12:26:32.955Z] at startDiscordStoreBot (/home/ubuntu/ritz-smp-store/server/discordBot.ts:424:5)
+[2026-08-20T12:26:32.955Z] at startServer (/home/ubuntu/ritz-smp-store/server/_core/index.ts:69:3)
+[2026-08-20T12:26:32.955Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-20T12:26:32.955Z] code: 'TokenInvalid'
+[2026-08-20T12:26:32.955Z] }
+[2026-08-20T12:27:36.020Z] 12:27:36 PM [tsx] change in ./server/routers.ts Restarting...
+[2026-08-20T12:27:37.959Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T12:27:38.734Z] Server running on http://localhost:3000/
+[2026-08-20T12:27:44.227Z] [DiscordBot] Failed to start: DiscordjsError [TokenInvalid]: An invalid token was provided.
+[2026-08-20T12:27:44.227Z] at WebSocketManager.connect (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/websocket/WebSocketManager.js:140:26)
+[2026-08-20T12:27:44.227Z] at Client.login (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/Client.js:229:21)
+[2026-08-20T12:27:44.227Z] at <anonymous> (/home/ubuntu/ritz-smp-store/server/discordBot.ts:422:20)
+[2026-08-20T12:27:44.227Z] at startDiscordStoreBot (/home/ubuntu/ritz-smp-store/server/discordBot.ts:424:5)
+[2026-08-20T12:27:44.227Z] at startServer (/home/ubuntu/ritz-smp-store/server/_core/index.ts:69:3)
+[2026-08-20T12:27:44.227Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-20T12:27:44.227Z] code: 'TokenInvalid'
+[2026-08-20T12:27:44.227Z] }
+[2026-08-20T12:27:49.227Z] [RitzSmpAI] Login failed: ConnectTimeoutError: Connect Timeout Error (attempted addresses: 162.159.128.233:443, timeout: 10000ms)
+[2026-08-20T12:27:49.227Z] at onConnectTimeout (node:internal/deps/undici/undici:2602:28)
+[2026-08-20T12:27:49.227Z] at Immediate._onImmediate (node:internal/deps/undici/undici:2583:11)
+[2026-08-20T12:27:49.227Z] at process.processImmediate (node:internal/timers:491:21) {
+[2026-08-20T12:27:49.227Z] code: 'UND_ERR_CONNECT_TIMEOUT'
+[2026-08-20T12:27:49.227Z] }
+[2026-08-20T12:28:28.378Z] 12:28:28 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T12:28:30.196Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T12:28:30.985Z] Server running on http://localhost:3000/
+[2026-08-20T12:28:41.485Z] [DiscordBot] Failed to start: ConnectTimeoutError: Connect Timeout Error (attempted addresses: 162.159.137.232:443, timeout: 10000ms)
+[2026-08-20T12:28:41.485Z] at onConnectTimeout (node:internal/deps/undici/undici:2602:28)
+[2026-08-20T12:28:41.485Z] at Immediate._onImmediate (node:internal/deps/undici/undici:2583:11)
+[2026-08-20T12:28:41.485Z] at process.processImmediate (node:internal/timers:491:21) {
+[2026-08-20T12:28:41.485Z] code: 'UND_ERR_CONNECT_TIMEOUT'
+[2026-08-20T12:28:41.485Z] }
+[2026-08-20T12:28:41.486Z] [RitzSmpAI] Login failed: ConnectTimeoutError: Connect Timeout Error (attempted addresses: 162.159.128.233:443, timeout: 10000ms)
+[2026-08-20T12:28:41.486Z] at onConnectTimeout (node:internal/deps/undici/undici:2602:28)
+[2026-08-20T12:28:41.486Z] at Immediate._onImmediate (node:internal/deps/undici/undici:2583:11)
+[2026-08-20T12:28:41.486Z] at process.processImmediate (node:internal/timers:491:21) {
+[2026-08-20T12:28:41.486Z] code: 'UND_ERR_CONNECT_TIMEOUT'
+[2026-08-20T12:28:41.486Z] }
