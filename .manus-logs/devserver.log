@@ -360,3 +360,6 @@
 [2026-08-20T12:06:29.737Z] [RitzSmpAI] Logged in as RitzSMP AI#4684
 [2026-08-20T12:06:29.742Z] (node:30241) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
 [2026-08-20T12:06:29.742Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T12:07:28.536Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-20T12:09:38.918Z] (node:30241) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-20T12:10:17.262Z] 12:10:17 PM [vite] (client) hmr update /src/index.css
