@@ -230,3 +230,47 @@
 [2026-08-20T11:50:54.704Z] (Use `node --trace-deprecation ...` to show where the warning was created)
 [2026-08-20T11:50:58.195Z] [RitzSmpAI] Global slash commands registered successfully!
 [2026-08-20T11:51:03.760Z] [RitzSmpAI] Guild commands registered for guild 1525527108854481007
+[2026-08-20T11:52:18.357Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-20T11:56:09.254Z] (node:27883) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-20T11:56:12.878Z] [RitzSmpAI] embed command error: DiscordAPIError[10062]: Unknown interaction
+[2026-08-20T11:56:12.878Z] at handleErrors (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+rest@2.6.3/node_modules/@discordjs/rest/src/lib/handlers/Shared.ts:148:10)
+[2026-08-20T11:56:12.878Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2026-08-20T11:56:12.878Z] at async BurstHandler.runRequest (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+rest@2.6.3/node_modules/@discordjs/rest/src/lib/handlers/BurstHandler.ts:144:20)
+[2026-08-20T11:56:12.878Z] at async _REST.request (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+rest@2.6.3/node_modules/@discordjs/rest/src/lib/REST.ts:210:20)
+[2026-08-20T11:56:12.878Z] at async ChatInputCommandInteraction.deferReply (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/structures/interfaces/InteractionResponses.js:122:22)
+[2026-08-20T11:56:12.878Z] at async Client.<anonymous> (/home/ubuntu/ritz-smp-store/server/discordAiBot.ts:94:11) {
+[2026-08-20T11:56:12.878Z] rawError: { message: 'Unknown interaction', code: 10062 },
+[2026-08-20T11:56:12.878Z] code: 10062,
+[2026-08-20T11:56:12.878Z] status: 404,
+[2026-08-20T11:56:12.878Z] method: 'POST',
+[2026-08-20T11:56:12.878Z] url: 'https://discord.com/api/v10/interactions/1539966264502517782/aW50ZXJhY3Rpb246MTUzOTk2NjI2NDUwMjUxNzc4Mjp4bzRnenNiNjR2dmxVWGY0eXEwSG1rSlpXdW9wRWgxclAyU21pRWQ5WFAxQ2FsVHRmZ0xXQ1phOXpGTmFwVVdDOEhwcFk1QUEwYzlmYVJ5dVZDUWM1cks0bXNteVRaUXlKWEtMMEdXTkJUYlNTZjM0U0VpUFloNzdxOHhNVlN3dw/callback?with_response=false',
+[2026-08-20T11:56:12.878Z] requestBody: { files: undefined, json: { type: 5, data: [Object] } }
+[2026-08-20T11:56:12.878Z] }
+[2026-08-20T11:56:36.903Z] [RitzSmpAI] embed command error: DiscordAPIError[10062]: Unknown interaction
+[2026-08-20T11:56:36.903Z] at handleErrors (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+rest@2.6.3/node_modules/@discordjs/rest/src/lib/handlers/Shared.ts:148:10)
+[2026-08-20T11:56:36.903Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2026-08-20T11:56:36.903Z] at async BurstHandler.runRequest (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+rest@2.6.3/node_modules/@discordjs/rest/src/lib/handlers/BurstHandler.ts:144:20)
+[2026-08-20T11:56:36.903Z] at async _REST.request (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+rest@2.6.3/node_modules/@discordjs/rest/src/lib/REST.ts:210:20)
+[2026-08-20T11:56:36.903Z] at async ChatInputCommandInteraction.deferReply (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/structures/interfaces/InteractionResponses.js:122:22)
+[2026-08-20T11:56:36.903Z] at async Client.<anonymous> (/home/ubuntu/ritz-smp-store/server/discordAiBot.ts:94:11) {
+[2026-08-20T11:56:36.903Z] rawError: { message: 'Unknown interaction', code: 10062 },
+[2026-08-20T11:56:36.903Z] code: 10062,
+[2026-08-20T11:56:36.903Z] status: 404,
+[2026-08-20T11:56:36.903Z] method: 'POST',
+[2026-08-20T11:56:36.903Z] url: 'https://discord.com/api/v10/interactions/1539966357486043277/aW50ZXJhY3Rpb246MTUzOTk2NjM1NzQ4NjA0MzI3Nzp3eU90RHNWSFRLRXFzRktnNzRpRm5xT0l3QnR5QklxaDhJaUt3QkIwSVp1NzQwSVRUOW1jN0hRY0tWQWFPM29EZHdnQXh2anJWU2RqeWVoZTZxaHA0Tkt4amJ3NDFRN0IxaFJQVEY5cmxGckJKVHNhcmpjTldFTmpnSXZOVUEwRw/callback?with_response=false',
+[2026-08-20T11:56:36.903Z] requestBody: { files: undefined, json: { type: 5, data: [Object] } }
+[2026-08-20T11:56:36.903Z] }
+[2026-08-20T11:56:49.134Z] [RitzSmpAI] embed command error: DiscordAPIError[10062]: Unknown interaction
+[2026-08-20T11:56:49.135Z] at handleErrors (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+rest@2.6.3/node_modules/@discordjs/rest/src/lib/handlers/Shared.ts:148:10)
+[2026-08-20T11:56:49.135Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2026-08-20T11:56:49.135Z] at async BurstHandler.runRequest (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+rest@2.6.3/node_modules/@discordjs/rest/src/lib/handlers/BurstHandler.ts:144:20)
+[2026-08-20T11:56:49.135Z] at async _REST.request (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+rest@2.6.3/node_modules/@discordjs/rest/src/lib/REST.ts:210:20)
+[2026-08-20T11:56:49.135Z] at async ChatInputCommandInteraction.deferReply (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/structures/interfaces/InteractionResponses.js:122:22)
+[2026-08-20T11:56:49.135Z] at async Client.<anonymous> (/home/ubuntu/ritz-smp-store/server/discordAiBot.ts:94:11) {
+[2026-08-20T11:56:49.135Z] rawError: { message: 'Unknown interaction', code: 10062 },
+[2026-08-20T11:56:49.135Z] code: 10062,
+[2026-08-20T11:56:49.135Z] status: 404,
+[2026-08-20T11:56:49.135Z] method: 'POST',
+[2026-08-20T11:56:49.135Z] url: 'https://discord.com/api/v10/interactions/1539966408341987368/aW50ZXJhY3Rpb246MTUzOTk2NjQwODM0MTk4NzM2ODp5c2ZHVmlHaGJlbU1KcUs0Z0o2dW90Ukg4MTNISlY5SVQzUW1seHBaeVM3cjZwM0pNZ0JnS1FRbzlRaERXcDgxMHRtRE1wWWd0VjZnTkdpMHN6N0kxekdscTVkdkVsWjFZM25KYmNHNmw1ZUE2SDdDQTRPcm9DYnY3cDI2cHRlOA/callback?with_response=false',
+[2026-08-20T11:56:49.135Z] requestBody: { files: undefined, json: { type: 5, data: [Object] } }
+[2026-08-20T11:56:49.135Z] }
