@@ -100,7 +100,7 @@
 - [x] Add focused tests for command timeout, safe interaction replies, and command error recovery
 - [x] Decide and document a supported Discord music source and runtime approach that is compatible with production hosting
 - [x] Implement safe Discord music playback with join/play/queue/skip/stop/leave controls if the runtime supports it
-- [ ] Add focused music-command tests and perform a live Discord smoke test after restart
+- [x] Add focused music-command tests and perform a live Discord API smoke test after restart; actual voice playback still requires a member to join a voice channel
 
 - [x] Implement free Autoscale music mode without Reserved Hosting; document that voice playback and queue can stop on cold starts/restarts
 - [x] Add free-mode music commands with voice-channel validation, queue controls, source validation, and graceful error replies
