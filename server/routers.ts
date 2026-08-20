@@ -11,6 +11,7 @@ import {
   getOrderById,
   getRankById,
   getRanks,
+  getUserById,
   updateOrder,
   getUserWallet,
   getUserWalletTransactions,
@@ -21,6 +22,7 @@ import { Rcon } from "rcon-client";
 import { storagePut } from "./storage";
 import type { Order } from "../drizzle/schema";
 import { getRitzSmpAiBotStatus } from "./discordAiBot";
+import { notifyPurchaseCompleted, notifyTopupSubmitted } from "./discordNotifications";
 
 const allowedSlipTypes = ["image/jpeg", "image/png", "image/webp"] as const;
 const orderStatus = z.enum(["รอตรวจสอบ", "สำเร็จ", "ยกเลิก"]);
@@ -122,8 +124,16 @@ export const appRouter = router({
             `สถานะ: ${order.status}`,
           ].join("\n"),
         });
+        const discordNotification = await notifyTopupSubmitted({
+          order,
+          userName: ctx.user.name ?? ctx.user.email ?? "ไม่ระบุชื่อ",
+          slipType,
+        }).catch(error => {
+          console.error("[DiscordNotifications] Top-up notification failed:", error);
+          return { sent: false, reason: error instanceof Error ? error.message : String(error) };
+        });
 
-        return { order, notificationSent };
+        return { order, notificationSent, discordNotification };
       }),
 
     purchaseRank: protectedProcedure
@@ -205,8 +215,16 @@ export const appRouter = router({
             `RCON: ${rconExecuted ? "สำเร็จ" : "รอดำเนินการ"}`,
           ].join("\n"),
         }).catch(() => {});
+        const discordNotification = await notifyPurchaseCompleted({
+          order,
+          userName: ctx.user.name ?? ctx.user.email ?? "ไม่ระบุชื่อ",
+          rconExecuted,
+        }).catch(error => {
+          console.error("[DiscordNotifications] Purchase notification failed:", error);
+          return { sent: false, reason: error instanceof Error ? error.message : String(error) };
+        });
 
-        return { order, rconExecuted, rconDetail };
+        return { order, rconExecuted, rconDetail, discordNotification };
       }),
   }),
   admin: router({
@@ -283,6 +301,14 @@ export const appRouter = router({
               `⚙️ RCON Status: ${rconExecuted ? "ส่งคำสั่งเข้าเซิร์ฟเวอร์สำเร็จ" : rconDetail}`,
             ].join("\n"),
           }).catch(() => {});
+          if (updated.rankId !== 0) {
+            const buyer = await getUserById(updated.userId);
+            await notifyPurchaseCompleted({
+              order: updated,
+              userName: buyer?.name ?? buyer?.email ?? "ไม่ระบุชื่อ",
+              rconExecuted,
+            }).catch(error => console.error("[DiscordNotifications] Admin purchase notification failed:", error));
+          }
         }
 
         return updated;

@@ -60,6 +60,7 @@ vi.mock("./db", () => ({
   getRanks: vi.fn(async () => []),
   getAllOrders: vi.fn(async () => []),
   getOrdersByUser: vi.fn(async () => []),
+  getUserById: vi.fn(async () => ({ id: 7, name: "Ritz Player", email: "user@ritzsmp.test", openId: "user-test-openId" })),
   getOrderById: vi.fn(async (id: number) => ({
     id,
     userId: 7,
@@ -89,6 +90,11 @@ vi.mock("./storage", () => ({
 
 vi.mock("./_core/notification", () => ({
   notifyOwner: vi.fn(async () => true),
+}));
+
+vi.mock("./discordNotifications", () => ({
+  notifyTopupSubmitted: vi.fn(async () => ({ sent: true, channelId: "donate-log" })),
+  notifyPurchaseCompleted: vi.fn(async () => ({ sent: true, channelId: "support" })),
 }));
 
 function createTestContext(role: User["role"] = "user"): TrpcContext {
@@ -131,6 +137,14 @@ describe("RitzSMP Order Success Path & Admin Workflow", () => {
       status: "รอตรวจสอบ",
     });
     expect(result.order.slipUrl).toBeTruthy();
+    expect(result.discordNotification).toMatchObject({ sent: true, channelId: "donate-log" });
+  });
+
+  it("broadcasts a successful wallet purchase to the Discord support channel", async () => {
+    const caller = appRouter.createCaller(createTestContext("user"));
+    const result = await caller.store.purchaseRank({ rankId: 999, minecraftIGN: "RitzWarrior" });
+    expect(result.order.status).toBe("สำเร็จ");
+    expect(result.discordNotification).toMatchObject({ sent: true, channelId: "support" });
   });
 
   it("allows an admin to update an order status without a database write", async () => {
