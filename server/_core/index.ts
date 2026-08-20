@@ -101,7 +101,7 @@ async function startServer() {
   // is configured, so local development and web-only deployments remain safe.
   // Consolidated: RitzSMP AI is now the sole unified bot handling onboarding, music, store notifications, and status
   try {
-    startRitzSmpAiBot();
+    await startRitzSmpAiBot();
   } catch (error) {
     console.error("[RitzSmpAI] Failed to start:", error);
   }

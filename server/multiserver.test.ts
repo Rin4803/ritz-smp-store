@@ -28,6 +28,35 @@ const managedServers = [
   },
 ];
 
+const runtimeMocks = vi.hoisted(() => ({
+  getManagedServerRuntimeConfig: vi.fn(async (id: number) => id === 1 ? {
+    serverId: 1,
+    slug: "ritzsmp",
+    displayName: "RitzSMP",
+    enabled: true,
+    minecraftHost: "play.ritzsmp.example",
+    minecraftPort: 25565,
+    discordGuildId: "guild-1",
+    discordBotToken: "super-secret-token",
+    rconHost: "play.ritzsmp.example",
+    rconPort: 25575,
+    rconPassword: "super-secret-password",
+    channels: { statusChannelId: "status-channel" },
+  } : undefined),
+  runtimeConfigForClient: vi.fn((config: { serverId: number; slug: string; displayName: string; enabled: boolean; minecraftHost: string; minecraftPort: number; discordGuildId: string; channels: Record<string, string>; discordBotToken: string; rconPassword: string }) => ({
+    serverId: config.serverId,
+    slug: config.slug,
+    displayName: config.displayName,
+    enabled: config.enabled,
+    minecraftHost: config.minecraftHost,
+    minecraftPort: config.minecraftPort,
+    discordGuildId: config.discordGuildId,
+    channels: config.channels,
+    hasDiscordToken: Boolean(config.discordBotToken),
+    hasRconPassword: Boolean(config.rconPassword),
+  })),
+}));
+
 const dbMocks = vi.hoisted(() => ({
   getEnabledManagedServers: vi.fn(async () => managedServers.filter(server => server.enabled === 1)),
   getManagedServers: vi.fn(async () => managedServers),
@@ -64,6 +93,7 @@ const dbMocks = vi.hoisted(() => ({
 
 vi.mock("./_core/env", () => ({ ENV: { ownerOpenId: "owner-open-id" } }));
 vi.mock("./db", () => dbMocks);
+vi.mock("./multiserverRuntime", () => runtimeMocks);
 
 function contextFor(openId: string, role: "admin" | "user"): TrpcContext {
   const now = new Date("2026-08-21T00:00:00Z");
@@ -146,5 +176,27 @@ describe("multi-server platform", () => {
       config: { channelConfig: {} },
     })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(dbMocks.createManagedServer).not.toHaveBeenCalled();
+  });
+
+  it("returns a redacted runtime preview only to the canonical owner", async () => {
+    const ownerCaller = appRouter.createCaller(contextFor(OWNER_OPEN_ID, "admin"));
+    const runtime = await ownerCaller.servers.runtime({ id: 1 });
+    expect(runtime).toMatchObject({
+      serverId: 1,
+      slug: "ritzsmp",
+      hasDiscordToken: true,
+      hasRconPassword: true,
+      channels: { statusChannelId: "status-channel" },
+    });
+    expect(runtime).not.toHaveProperty("discordBotToken");
+    expect(runtime).not.toHaveProperty("rconPassword");
+
+    const staffCaller = appRouter.createCaller(contextFor("staff-open-id", "admin"));
+    await expect(staffCaller.servers.runtime({ id: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("rejects runtime previews for disabled or missing servers", async () => {
+    const ownerCaller = appRouter.createCaller(contextFor(OWNER_OPEN_ID, "admin"));
+    await expect(ownerCaller.servers.runtime({ id: 2 })).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 });

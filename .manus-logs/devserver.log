@@ -2281,3 +2281,55 @@
 [2026-08-20T18:50:29.383Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540059969460764764
 [2026-08-20T18:50:31.553Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
 [2026-08-20T18:51:24.656Z] 6:51:24 PM [vite] (client) hmr update /src/index.css
+[2026-08-20T18:56:03.079Z] 6:56:03 PM [tsx] change in ./server/routers.ts Restarting...
+[2026-08-20T18:56:04.010Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T18:56:04.349Z] Server running on http://localhost:3000/
+[2026-08-20T18:56:11.434Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-20T18:56:11.435Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-20T18:56:11.437Z] (node:40734) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T18:56:11.437Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T18:56:13.896Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-20T18:56:16.867Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540059969460764764
+[2026-08-20T18:56:18.702Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-20T18:58:04.488Z] 6:58:04 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T18:58:05.485Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T18:58:05.833Z] Server running on http://localhost:3000/
+[2026-08-20T18:58:12.252Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-20T18:58:12.253Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-20T18:58:12.254Z] (node:41731) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T18:58:12.254Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T18:58:14.360Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-20T18:58:14.361Z] [RitzSmpAI] [ERROR] Failed to register global slash commands: RangeError: Maximum call stack size exceeded
+[2026-08-20T18:58:17.102Z] 6:58:17 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T18:58:17.900Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T18:58:18.223Z] Server running on http://localhost:3000/
+[2026-08-20T18:58:25.284Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-20T18:58:25.285Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-20T18:58:25.287Z] (node:41767) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T18:58:25.287Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T18:58:27.325Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-20T18:58:30.200Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540059969460764764
+[2026-08-20T18:58:31.991Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-20T18:58:41.578Z] 6:58:41 PM [tsx] change in ./server/_core/index.ts Restarting...
+[2026-08-20T18:58:42.518Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T18:58:42.846Z] Server running on http://localhost:3000/
+[2026-08-20T18:58:49.258Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-20T18:58:49.259Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-20T18:58:49.261Z] (node:41869) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T18:58:49.261Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T18:58:49.589Z] ELIFECYCLE  Command failed.
+[2026-08-20T18:58:49.662Z] Dev server exited with code -1
+[2026-08-20T18:58:50.695Z] Starting dev server with command: pnpm run dev
+[2026-08-20T18:58:51.031Z] > ritz-smp-store@1.0.0 dev /home/ubuntu/ritz-smp-store
+[2026-08-20T18:58:51.032Z] > NODE_ENV=development tsx watch server/_core/index.ts
+[2026-08-20T18:58:51.940Z] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T18:58:52.296Z] Server running on http://localhost:3000/
+[2026-08-20T18:58:52.868Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-20T18:58:59.194Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-20T18:58:59.195Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-20T18:58:59.197Z] (node:42001) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T18:58:59.197Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T18:59:01.713Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-20T18:59:04.688Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540059969460764764
+[2026-08-20T18:59:06.713Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-20T18:59:42.668Z] 6:59:42 PM [vite] (client) hmr update /src/index.css

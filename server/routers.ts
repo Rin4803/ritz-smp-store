@@ -29,6 +29,7 @@ import { Rcon } from "rcon-client";
 import { storagePut } from "./storage";
 import type { Order } from "../drizzle/schema";
 import { getRitzSmpAiBotStatus } from "./discordAiBot";
+import { getManagedServerRuntimeConfig, runtimeConfigForClient } from "./multiserverRuntime";
 import { notifyPurchaseCompleted, notifyTopupSubmitted } from "./discordNotifications";
 
 const allowedSlipTypes = ["image/jpeg", "image/png", "image/webp"] as const;
@@ -129,6 +130,13 @@ export const appRouter = router({
         ...input,
         config: { ...input.config, channelConfig: JSON.stringify(input.config.channelConfig) },
       })),
+    runtime: ownerProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .query(async ({ input }) => {
+        const runtime = await getManagedServerRuntimeConfig(input.id);
+        if (!runtime) throw new TRPCError({ code: "NOT_FOUND", message: "ไม่พบเซิร์ฟเวอร์ที่เปิดใช้งานหรือยังไม่ได้ตั้งค่าระบบ" });
+        return runtimeConfigForClient(runtime);
+      }),
     update: ownerProcedure
       .input(z.object({
         id: z.number().int().positive(),

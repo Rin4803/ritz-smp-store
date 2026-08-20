@@ -32,6 +32,7 @@ import {
 import { handleMusicCommand, musicCommand } from "./discordMusic.js";
 import { ensureMusicTextChannel } from "./discordMusicChannel.js";
 import { ensureMinecraftStatusTextChannel } from "./discordMinecraftStatusChannel.js";
+import { getActiveManagedServerRuntimeConfig, type ManagedServerRuntimeConfig } from "./multiserverRuntime.js";
 
 interface BotLog {
   timestamp: string;
@@ -42,6 +43,7 @@ interface BotLog {
 const MAX_LOGS = 100;
 const logsBuffer: BotLog[] = [];
 let botClient: Client | null = null;
+let activeManagedServerRuntime: ManagedServerRuntimeConfig | null = null;
 let totalInteractionsCount = 0;
 let botStartTime: number | null = null;
 
@@ -66,6 +68,10 @@ export function getRitzSmpAiBotStatus() {
 }
 
 const checkMinecraftServerStatus = fetchMinecraftServerStatus;
+
+function getConfiguredDiscordGuildId(): string {
+  return activeManagedServerRuntime?.discordGuildId || ENV.discordGuildId;
+}
 
 function interactionWasAlreadyAcknowledged(error: unknown): boolean {
   const code = (error as { code?: number } | null)?.code;
@@ -534,9 +540,9 @@ export const LEGACY_DISCORD_WELCOME_CHANNEL_NAMES = ["👋│welcome", "👋│�
 
 async function resolveWelcomeChannelId(client: Client): Promise<string> {
   if (ENV.discordWelcomeChannelId?.trim()) return ENV.discordWelcomeChannelId.trim();
-  if (!ENV.discordGuildId?.trim()) return "";
+  if (!getConfiguredDiscordGuildId()?.trim()) return "";
 
-  const guild = await client.guilds.fetch(ENV.discordGuildId).catch(() => null);
+  const guild = await client.guilds.fetch(getConfiguredDiscordGuildId()).catch(() => null);
   if (!guild) return "";
   const channels = await guild.channels.fetch().catch(() => null);
   const existing = channels?.find(
@@ -661,12 +667,22 @@ export async function handleOnboardingInteraction(interaction: any): Promise<boo
   return false;
 }
 
-export function startRitzSmpAiBot() {
-  return createRitzSmpAiBot();
+export async function startRitzSmpAiBot() {
+  try {
+    activeManagedServerRuntime = (await getActiveManagedServerRuntimeConfig()) ?? null;
+    if (activeManagedServerRuntime) {
+      pushLog("INFO", `Using managed-server runtime overlay for ${activeManagedServerRuntime.slug}`);
+    }
+  } catch (error) {
+    activeManagedServerRuntime = null;
+    pushLog("WARN", `Managed-server runtime overlay unavailable; using default environment: ${String(error)}`);
+  }
+  return createRitzSmpAiBot(activeManagedServerRuntime ?? undefined);
 }
 
-export function createRitzSmpAiBot() {
-  const token = process.env.DISCORD_AI_BOT_TOKEN || (ENV as any).discordAiBotToken;
+export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
+  if (runtime) activeManagedServerRuntime = runtime;
+  const token = runtime?.discordBotToken || process.env.DISCORD_AI_BOT_TOKEN || (ENV as any).discordAiBotToken;
   if (!token || token.trim() === "" || token === "102031") {
     pushLog("WARN", "No Discord AI Bot token provided. Bot disabled.");
     return null;
@@ -766,14 +782,14 @@ export function createRitzSmpAiBot() {
       pushLog("INFO", "Registering global slash commands...");
       await rest.put(Routes.applicationCommands(clientId), { body: commands });
       pushLog("SUCCESS", "Successfully registered global slash commands for RitzSMP AI.");
-      const musicChannelId = await ensureMusicTextChannel(client, ENV.discordGuildId);
+      const musicChannelId = await ensureMusicTextChannel(client, getConfiguredDiscordGuildId());
       if (musicChannelId) {
         pushLog("SUCCESS", `Dedicated music text channel ready: ${musicChannelId}`);
       } else {
         pushLog("WARN", "Dedicated music channel was not created; check DISCORD_GUILD_ID and Manage Channels permission.");
       }
 
-      const statusChannelId = await ensureMinecraftStatusTextChannel(client, ENV.discordGuildId);
+      const statusChannelId = await ensureMinecraftStatusTextChannel(client, getConfiguredDiscordGuildId());
       if (statusChannelId) {
         pushLog("SUCCESS", `Dedicated Minecraft status channel ready: ${statusChannelId}`);
       } else {
@@ -784,7 +800,7 @@ export function createRitzSmpAiBot() {
 
       // Auto-deploy onboarding & verification panels into user-requested channels
       try {
-        const guild = await client.guilds.fetch(ENV.discordGuildId).catch(() => null);
+        const guild = await client.guilds.fetch(getConfiguredDiscordGuildId()).catch(() => null);
         if (guild) {
           const channelsToEnsure = [
             {

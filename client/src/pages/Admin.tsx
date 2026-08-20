@@ -55,6 +55,11 @@ export default function Admin() {
       utils.servers.list.invalidate();
     },
   });
+  const [runtimeServerId, setRuntimeServerId] = useState<number | null>(null);
+  const runtimeQuery = trpc.servers.runtime.useQuery(
+    { id: runtimeServerId ?? 0 },
+    { enabled: runtimeServerId !== null },
+  );
 
   const submitServer = (event: React.FormEvent) => {
     event.preventDefault();
@@ -136,11 +141,18 @@ export default function Admin() {
                     <td>{server.minecraftHost}:{server.minecraftPort}</td>
                     <td>{server.discordGuildId ?? "ยังไม่ผูก"}</td>
                     <td><span className={`status ${server.enabled ? "success" : "cancelled"}`}>{server.enabled ? "เปิดใช้งาน" : "ปิดใช้งาน"}</span></td>
-                    <td><button type="button" className="ghost-btn compact-btn" disabled={updateServer.isPending} onClick={() => updateServer.mutate({ id: server.id, displayName: server.displayName, minecraftHost: server.minecraftHost, minecraftPort: server.minecraftPort, discordGuildId: server.discordGuildId, enabled: !server.enabled, config: { discordTokenEnv: server.config?.discordTokenEnv ?? null, rconHost: server.config?.rconHost ?? null, rconPort: server.config?.rconPort ?? null, rconPasswordEnv: server.config?.rconPasswordEnv ?? null, channelConfig: server.config?.channelConfig ?? {} } })}><Power size={13} /> {server.enabled ? "ปิดระบบ" : "เปิดระบบ"}</button></td>
+                    <td style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><button type="button" className="ghost-btn compact-btn" disabled={updateServer.isPending} onClick={() => updateServer.mutate({ id: server.id, displayName: server.displayName, minecraftHost: server.minecraftHost, minecraftPort: server.minecraftPort, discordGuildId: server.discordGuildId, enabled: !server.enabled, config: { discordTokenEnv: server.config?.discordTokenEnv ?? null, rconHost: server.config?.rconHost ?? null, rconPort: server.config?.rconPort ?? null, rconPasswordEnv: server.config?.rconPasswordEnv ?? null, channelConfig: server.config?.channelConfig ?? {} } })}><Power size={13} /> {server.enabled ? "ปิดระบบ" : "เปิดระบบ"}</button><button type="button" className="ghost-btn compact-btn" onClick={() => setRuntimeServerId(server.id)}>ตรวจ runtime</button></td>
                   </tr>)}</tbody>
                 </table>
               </div>
             ) : <div className="empty-box" style={{ marginTop: 16 }}>ยังไม่มีเซิร์ฟเวอร์ใน registry</div>}
+            {runtimeServerId !== null && (
+              <div className="empty-box" style={{ marginTop: 16 }} aria-live="polite">
+                {runtimeQuery.isLoading ? "กำลังตรวจ runtime..." : runtimeQuery.isError ? runtimeQuery.error.message : runtimeQuery.data && (
+                  <><strong>{runtimeQuery.data.displayName}</strong> พร้อมใช้งาน: Discord token {runtimeQuery.data.hasDiscordToken ? "พร้อม" : "ยังไม่ตั้งค่า"}, RCON password {runtimeQuery.data.hasRconPassword ? "พร้อม" : "ยังไม่ตั้งค่า"}<br /><span className="subtle">ช่องระบบที่ผูกไว้ {Object.keys(runtimeQuery.data.channels).length} รายการ · Guild {runtimeQuery.data.discordGuildId || "ยังไม่ผูก"}</span></>
+                )}
+              </div>
+            )}
             {updateServer.error && <p role="alert" style={{ color: "#fda4af", margin: "10px 0 0", fontSize: 13 }}>{updateServer.error.message}</p>}
           </section>
 
