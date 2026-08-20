@@ -139,15 +139,17 @@ export function createRitzSmpAiBot() {
             .setName("default")
             .setDescription("ส่งข้อความ Embed ประกาศร้านค้าสำเร็จรูปทันที")
         )
-        .addSubcommand(sub =>
-          sub
-            .setName("create")
-            .setDescription("สร้างข้อความประกาศ Embed แบบกำหนดเอง (แอดมิน)")
-            .addStringOption(o => o.setName("title").setDescription("หัวข้อประกาศ (Title)").setRequired(true))
-            .addStringOption(o => o.setName("description").setDescription("เนื้อหาประกาศ (Description)").setRequired(true))
-            .addStringOption(o => o.setName("color").setDescription("สีของ Embed เช่น #ff69b4 หรือ #00ffcc (ไม่บังคับ)").setRequired(false))
-            .addStringOption(o => o.setName("image_url").setDescription("ลิงก์รูปภาพประกอบ (Image URL, ไม่บังคับ)").setRequired(false))
-        ),
+            .addSubcommand(sub =>
+              sub
+                .setName("create")
+                .setDescription("สร้างข้อความประกาศ Embed แบบกำหนดเอง (แอดมิน)")
+                .addStringOption(o => o.setName("title").setDescription("หัวข้อประกาศ (Title)").setRequired(true))
+                .addStringOption(o => o.setName("description").setDescription("เนื้อหาประกาศ (Description)").setRequired(true))
+                .addStringOption(o => o.setName("color").setDescription("สีของ Embed เช่น #ff69b4 หรือ #00ffcc (ไม่บังคับ)").setRequired(false))
+                .addStringOption(o => o.setName("image_url").setDescription("ลิงก์รูปภาพประกอบ (Image URL, ไม่บังคับ)").setRequired(false))
+                .addStringOption(o => o.setName("button_label").setDescription("ข้อความบนปุ่มลิงก์ (ค่าเริ่มต้น: เว็บไซต์ร้านค้า RitzSMP)").setRequired(false))
+                .addStringOption(o => o.setName("button_url").setDescription("ลิงก์ URL ปลายทางของปุ่ม (ค่าเริ่มต้น: เว็บสโตร์)").setRequired(false))
+            ),
     ].map(cmd => cmd.toJSON());
 
     const rest = new REST({ version: "10" }).setToken(token);
@@ -334,11 +336,15 @@ export function createRitzSmpAiBot() {
             customEmbed.setImage(imageUrl);
           }
 
+          const buttonLabel = interaction.options.getString("button_label", false) || "🌐 เว็บไซต์ร้านค้า RitzSMP";
+          const buttonUrlInput = interaction.options.getString("button_url", false) || storeUrl;
+          const finalButtonUrl = buttonUrlInput.startsWith("http") ? buttonUrlInput : storeUrl;
+
           const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
             new ButtonBuilder()
-              .setLabel("🌐 เว็บไซต์ร้านค้า RitzSMP")
+              .setLabel(buttonLabel)
               .setStyle(ButtonStyle.Link)
-              .setURL(storeUrl),
+              .setURL(finalButtonUrl),
             new ButtonBuilder()
               .setLabel("💳 เติมเงิน / ซื้อยศ")
               .setStyle(ButtonStyle.Link)
