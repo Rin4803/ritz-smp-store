@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   getMinecraftStatusChannelId,
   isMinecraftStatusChannel,
+  MINECRAFT_STATUS_CHANNEL_NAME,
   setMinecraftStatusChannelIdForTests,
 } from "./discordMinecraftStatusChannel";
 
@@ -10,6 +11,10 @@ afterEach(() => {
 });
 
 describe("Minecraft status channel policy", () => {
+  it("uses an explicit system channel name", () => {
+    expect(MINECRAFT_STATUS_CHANNEL_NAME).toBe("📡│ระบบสถานะเซิร์ฟเวอร์");
+  });
+
   it("accepts only the configured dedicated channel", () => {
     setMinecraftStatusChannelIdForTests("status-channel");
 

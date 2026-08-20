@@ -1,6 +1,7 @@
 import { ChannelType, Client, PermissionFlagsBits } from "discord.js";
 
-export const MINECRAFT_STATUS_CHANNEL_NAME = "📡│สถานะเซิร์ฟเวอร์";
+export const MINECRAFT_STATUS_CHANNEL_NAME = "📡│ระบบสถานะเซิร์ฟเวอร์";
+export const LEGACY_MINECRAFT_STATUS_CHANNEL_NAMES = ["📡│สถานะเซิร์ฟเวอร์"];
 
 let configuredMinecraftStatusChannelId = process.env.DISCORD_ONLINE_CHANNEL_ID?.trim() || "";
 
@@ -28,9 +29,17 @@ export async function ensureMinecraftStatusTextChannel(client: Client, guildId: 
 
   const channels = await guild.channels.fetch().catch(() => null);
   const existing = channels?.find(
-    channel => channel?.type === ChannelType.GuildText && channel.name === MINECRAFT_STATUS_CHANNEL_NAME,
+    channel =>
+      channel?.type === ChannelType.GuildText &&
+      (channel.name === MINECRAFT_STATUS_CHANNEL_NAME || LEGACY_MINECRAFT_STATUS_CHANNEL_NAMES.includes(channel.name)),
   );
   if (existing) {
+    if (existing.name !== MINECRAFT_STATUS_CHANNEL_NAME && "setName" in existing) {
+      await (existing as any).setName(MINECRAFT_STATUS_CHANNEL_NAME, "Standardize RitzSMP Minecraft status channel name").catch(() => undefined);
+    }
+    if ("setTopic" in existing) {
+      await (existing as any).setTopic("ระบบแสดงสถานะเซิร์ฟเวอร์ Minecraft ผู้เล่นออนไลน์ และรายชื่อสมาชิกเข้า-ออก").catch(() => undefined);
+    }
     configuredMinecraftStatusChannelId = existing.id;
     return existing.id;
   }
@@ -42,7 +51,7 @@ export async function ensureMinecraftStatusTextChannel(client: Client, guildId: 
     .create({
       name: MINECRAFT_STATUS_CHANNEL_NAME,
       type: ChannelType.GuildText,
-      topic: "ประกาศผู้เล่นเข้า-ออกเซิร์ฟเวอร์ Minecraft RitzSMP เท่านั้น",
+      topic: "ระบบแสดงสถานะเซิร์ฟเวอร์ Minecraft ผู้เล่นออนไลน์ และรายชื่อสมาชิกเข้า-ออก",
       reason: "แยกประกาศสถานะ Minecraft ออกจากช่องซื้อยศและช่องเพลง",
     })
     .catch(() => null);

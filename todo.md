@@ -150,3 +150,10 @@
 - [ ] Fix string length / message size error handling in Discord embeds and responses
 - [x] Implement robust startup channel auto-recreation and idempotent panel publishing in RitzSMP AI
 - [x] Harden ensureDeferredReply and safeReply against InteractionNotReplied and string length limits
+- [x] Use the provided Minecraft cover image in the Discord welcome message for new members
+- [x] Add a matching Discord leave notification with member name, timestamp, and cover image
+- [x] Add or update tests for welcome and leave embed payloads and run the full Vitest suite
+- [x] Create a visual Discord rank-claim embed using the provided RitzSMP image
+- [x] Add a secure verify-and-claim button flow that assigns the configured Discord role and Minecraft rank where configured
+- [x] Validate rank-claim permissions, duplicate clicks, and interaction response handling
+- [x] Rename auto-created Discord channels with clear system-purpose names and matching topics

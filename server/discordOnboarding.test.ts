@@ -3,7 +3,14 @@ import * as db from "./db";
 import * as minecraftIntegration from "./minecraftIntegration";
 import {
   addConfiguredRole,
+  buildLeaveMemberEmbed,
+  buildRankClaimComponents,
+  buildRankClaimEmbed,
+  buildWelcomeMemberEmbed,
+  DISCORD_WELCOME_CHANNEL_NAME,
   handleOnboardingInteraction,
+  RITZ_RANK_CLAIM_IMAGE_URL,
+  RITZ_WELCOME_COVER_IMAGE_URL,
 } from "./discordAiBot";
 
 afterEach(() => {
@@ -59,7 +66,29 @@ describe("Discord onboarding interactions", () => {
 
     expect(await handleOnboardingInteraction(interaction)).toBe(true);
     expect(minecraftIntegration.grantMinecraftRank).toHaveBeenCalledWith("RitzPlayer", expect.any(String));
-    expect(interaction.editReply).toHaveBeenCalledWith(expect.stringContaining("มอบกลุ่ม LuckPerms"));
+    expect(interaction.editReply).toHaveBeenCalledWith(expect.objectContaining({
+      content: expect.stringContaining("มอบกลุ่ม LuckPerms"),
+      ephemeral: true,
+    }));
+  });
+
+  it("uses a clear system name for the welcome and leave channel", () => {
+    expect(DISCORD_WELCOME_CHANNEL_NAME).toBe("👋│ระบบต้อนรับ-เข้าออก");
+  });
+
+  it("uses the supplied cover images and exposes a single rank-claim button", () => {
+    const member = { user: { tag: "RitzPlayer#1234", displayAvatarURL: () => "https://cdn.example/avatar.png" } };
+    const welcome = buildWelcomeMemberEmbed(member).toJSON();
+    const leave = buildLeaveMemberEmbed(member).toJSON();
+    const rank = buildRankClaimEmbed().toJSON();
+    const components = buildRankClaimComponents();
+
+    expect(welcome.image?.url).toBe(RITZ_WELCOME_COVER_IMAGE_URL);
+    expect(leave.image?.url).toBe(RITZ_WELCOME_COVER_IMAGE_URL);
+    expect(rank.image?.url).toBe(RITZ_RANK_CLAIM_IMAGE_URL);
+    expect(rank.title).toContain("ยืนยันตัวตน");
+    expect(components).toHaveLength(1);
+    expect(components[0].toJSON().components[0].custom_id).toBe("ritz_claim_rank_button");
   });
 
   it("renders the current Minecraft player list through the onboarding player button", async () => {

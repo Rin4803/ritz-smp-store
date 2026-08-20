@@ -1,6 +1,7 @@
 import { ChannelType, PermissionFlagsBits, type Client } from "discord.js";
 
-export const MUSIC_CHANNEL_NAME = "🎵│ห้องเพลง";
+export const MUSIC_CHANNEL_NAME = "🎵│ระบบเพลง";
+export const LEGACY_MUSIC_CHANNEL_NAMES = ["🎵│ห้องเพลง"];
 
 let configuredMusicChannelId = process.env.DISCORD_MUSIC_CHANNEL_ID?.trim() || "";
 
@@ -24,9 +25,17 @@ export async function ensureMusicTextChannel(client: Client, guildId: string): P
 
   const channels = await guild.channels.fetch().catch(() => null);
   const existing = channels?.find(
-    channel => channel?.type === ChannelType.GuildText && channel.name === MUSIC_CHANNEL_NAME
+    channel =>
+      channel?.type === ChannelType.GuildText &&
+      (channel.name === MUSIC_CHANNEL_NAME || LEGACY_MUSIC_CHANNEL_NAMES.includes(channel.name)),
   );
   if (existing) {
+    if (existing.name !== MUSIC_CHANNEL_NAME && "setName" in existing) {
+      await (existing as any).setName(MUSIC_CHANNEL_NAME, "Standardize RitzSMP music channel name").catch(() => undefined);
+    }
+    if ("setTopic" in existing) {
+      await (existing as any).setTopic("ระบบเพลง RitzSMP AI สำหรับเล่นและควบคุมเพลงเท่านั้น").catch(() => undefined);
+    }
     configuredMusicChannelId = existing.id;
     return existing.id;
   }
@@ -38,7 +47,7 @@ export async function ensureMusicTextChannel(client: Client, guildId: string): P
     .create({
       name: MUSIC_CHANNEL_NAME,
       type: ChannelType.GuildText,
-      topic: "ห้องสำหรับใช้คำสั่งเพลงของ RitzSMP AI เท่านั้น",
+      topic: "ระบบเพลง RitzSMP AI สำหรับเล่นและควบคุมเพลงเท่านั้น",
       reason: "สร้างช่องแยกสำหรับระบบเพลง ไม่รบกวนช่องประกาศร้านค้าและรายชื่อผู้ซื้อยศ",
     })
     .catch(() => null);
