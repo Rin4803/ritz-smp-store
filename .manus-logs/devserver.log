@@ -1901,3 +1901,57 @@
 [2026-08-20T17:44:13.169Z] [RitzSmpAI] [INFO] Registering global slash commands...
 [2026-08-20T17:44:13.170Z] (node:22447) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
 [2026-08-20T17:44:13.170Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T17:44:57.968Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-20T17:45:02.510Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-20T17:45:04.245Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540042585509339236
+[2026-08-20T17:45:04.889Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540047039730028635
+[2026-08-20T17:45:05.896Z] [RitzSmpAI] [SUCCESS] Auto-created channel: ✅│เชื่อมต่อดิสคอร์ด
+[2026-08-20T17:45:07.615Z] [RitzSmpAI] [SUCCESS] Posted panel to channel ✅│เชื่อมต่อดิสคอร์ด
+[2026-08-20T17:45:08.451Z] [RitzSmpAI] [SUCCESS] Auto-created channel: 📋│รายชื่อบัญชี
+[2026-08-20T17:45:09.945Z] [RitzSmpAI] [SUCCESS] Posted panel to channel 📋│รายชื่อบัญชี
+[2026-08-20T17:45:10.763Z] [RitzSmpAI] [SUCCESS] Auto-created channel: 🪪│ยืนยันตัวตนแมะ
+[2026-08-20T17:45:12.460Z] [RitzSmpAI] [SUCCESS] Posted panel to channel 🪪│ยืนยันตัวตนแมะ
+[2026-08-20T17:45:13.267Z] [RitzSmpAI] [SUCCESS] Auto-created channel: 👋│welcome
+[2026-08-20T17:45:14.657Z] [RitzSmpAI] [SUCCESS] Posted panel to channel 👋│welcome
+[2026-08-20T17:46:10.589Z] (node:22447) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-20T17:46:12.619Z] [RitzSmpAI] [INFO] Interaction was acknowledged by another handler; continuing with editReply
+[2026-08-20T17:46:13.584Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:46:14.344Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:46:55.532Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: Error: Invalid string length
+[2026-08-20T17:46:57.005Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:47:06.937Z] [RitzSmpAI] [INFO] Interaction was acknowledged by another handler; continuing with editReply
+[2026-08-20T17:47:08.488Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:47:08.488Z] [RitzSmpAI] [SUCCESS] Discord-native verified 1180492362078769274
+[2026-08-20T17:47:08.488Z] [RitzSmpAI] [SUCCESS] Handled onboarding interaction ritz_verify_modal
+[2026-08-20T17:47:16.282Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: Error: Invalid string length
+[2026-08-20T17:47:18.065Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:47:30.799Z] [RitzSmpAI] [INFO] Interaction was acknowledged by another handler; continuing with editReply
+[2026-08-20T17:47:31.698Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:47:31.698Z] [RitzSmpAI] [SUCCESS] Discord-native verified 1180492362078769274
+[2026-08-20T17:47:31.698Z] [RitzSmpAI] [SUCCESS] Handled onboarding interaction ritz_verify_modal
+[2026-08-20T17:48:17.137Z] [RitzSmpAI] [SUCCESS] Handled onboarding interaction ritz_edit_profile_button
+[2026-08-20T17:52:33.503Z] [RitzSmpAI] [INFO] Interaction was acknowledged by another handler; continuing with editReply
+[2026-08-20T17:52:35.646Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:52:36.405Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:53:14.647Z] [RitzSmpAI] [INFO] Interaction was acknowledged by another handler; continuing with editReply
+[2026-08-20T17:53:16.175Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:53:16.885Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:53:19.622Z] 5:53:19 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T17:53:20.302Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T17:53:20.616Z] Server running on http://localhost:3000/
+[2026-08-20T17:53:25.359Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-20T17:53:25.360Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-20T17:53:25.361Z] (node:23798) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T17:53:25.361Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T17:53:26.325Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-20T17:53:26.555Z] (node:23798) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-20T17:53:27.122Z] 5:53:27 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T17:53:27.950Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T17:53:28.278Z] Server running on http://localhost:3000/
+[2026-08-20T17:53:33.060Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-20T17:53:33.062Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-20T17:53:33.063Z] (node:23836) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T17:53:33.063Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T17:53:33.918Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-20T17:53:35.411Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540042585509339236
+[2026-08-20T17:53:36.084Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540047039730028635

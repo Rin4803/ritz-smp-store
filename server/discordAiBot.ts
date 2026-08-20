@@ -127,28 +127,10 @@ function buildOnboardingComponents() {
   const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId("ritz_verify_button")
-      .setLabel("✅ ยืนยันตัวตน")
+      .setLabel("🔗 เชื่อมบัญชี")
       .setStyle(ButtonStyle.Success),
-    new ButtonBuilder()
-      .setCustomId("ritz_claim_rank_button")
-      .setLabel("🎖️ รับยศผู้เล่นในเซิร์ฟ")
-      .setStyle(ButtonStyle.Primary),
-    new ButtonBuilder()
-      .setCustomId("ritz_players_button")
-      .setLabel("👥 รายชื่อในเซิร์ฟ")
-      .setStyle(ButtonStyle.Secondary),
   );
-  const profileRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder()
-      .setCustomId("ritz_profile_button")
-      .setLabel("🪪 ดูโปรไฟล์สมาชิก")
-      .setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder()
-      .setCustomId("ritz_edit_profile_button")
-      .setLabel("✏️ แก้ไขโปรไฟล์")
-      .setStyle(ButtonStyle.Secondary),
-  );
-  return [actionRow, profileRow];
+  return [actionRow];
 }
 
 function buildOnboardingEmbed() {
@@ -662,8 +644,8 @@ export function createRitzSmpAiBot() {
                       .setDescription(
                         "ยินดีต้อนรับสู่ RitzSMP! 🌸\n\n" +
                         "📌 **ขั้นตอนการยืนยันตัวตน:**\n" +
-                        "1. กดปุ่ม **✅ ยืนยันตัวตน** ด้านล่างนี้เพื่อเชื่อมชื่อ\n" +
-                        "2. กดปุ่ม **🎖️ รับยศผู้เล่นในเซิร์ฟ** เพื่อรับสิทธิ์ในเกมและดิสคอร์ดทันทีค่ะ! 💕"
+                        "1. กดปุ่ม **🔗 เชื่อมบัญชี** ด้านล่างนี้เพื่อรับรหัส 4 หลัก\n" +
+                        "2. เข้าเกม Minecraft พิมพ์คำสั่ง `/verify <รหัส 4 หลัก>` เพื่อผูกบัญชีทันทีค่ะ! 💕"
                       )
                       .setColor(0xec4899)
                       .setTimestamp()

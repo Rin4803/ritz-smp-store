@@ -133,3 +133,7 @@
 - [ ] Ensure all onboarding buttons (`ritz_verify_button`, `ritz_claim_rank_button`, `ritz_players_button`, `ritz_profile_button`) reply instantly within 3 seconds to avoid "Application didn't respond"
 - [ ] Post the updated RitzSMP AI onboarding panel into the welcome/verification channel to replace stale legacy messages
 - [ ] Deploy RitzSMP AI automated channel panels into #✅│เชื่อมต่อดิสคอร์ด, #📋│รายชื่อบัญชี, #🪪│ยืนยันตัวตนแมะ, และ #👋│welcome
+- [ ] Implement single-button 4-digit code generator in verification channel
+- [ ] Implement Minecraft /verify <code> command to securely bind Minecraft UUID/IGN to Discord ID
+- [x] Implement single-button 4-digit code generator in verification channel
+- [x] Implement Minecraft /verify <code> command to securely bind Minecraft UUID/IGN to Discord ID
