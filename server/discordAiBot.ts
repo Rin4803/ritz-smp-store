@@ -7,7 +7,8 @@ import {
   EmbedBuilder, 
   ActionRowBuilder, 
   ButtonBuilder, 
-  ButtonStyle 
+  ButtonStyle,
+  ChatInputCommandInteraction
 } from "discord.js";
 import { invokeLLM } from "./_core/llm.js";
 
@@ -50,6 +51,23 @@ const variedFallbackAskReplies = [
   "น้องไอพร้อมช่วยเหลือเสมอค่ะ! เกี่ยวกับเรื่องนี้สามารถตรวจสอบเพิ่มเติมได้ที่หน้าเว็บไซต์ร้านค้าของเราเลยนะคะ 💎✨",
   "เป็นคำถามที่น่าสนใจมากเลยค่ะ! หากต้องการความช่วยเหลือเร่งด่วนสามารถแจ้งแอดมินในห้องซัพพอร์ตได้เลยนะค้า 🌸",
 ];
+
+async function safeReply(interaction: ChatInputCommandInteraction, options: any) {
+  try {
+    if (interaction.replied || interaction.deferred) {
+      return await interaction.followUp(options);
+    } else {
+      return await interaction.reply(options);
+    }
+  } catch (err) {
+    pushLog("ERROR", `Safe reply failed for /${interaction.commandName}: ${String(err)}`);
+    try {
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({ content: "ขออภัยด้วยนะคะ เกิดข้อผิดพลาดในการตอบสนองคำสั่งค่ะ 🥺", ephemeral: true });
+      }
+    } catch (e) {}
+  }
+}
 
 export function createRitzSmpAiBot() {
   const token = process.env.DISCORD_AI_BOT_TOKEN;
@@ -156,186 +174,156 @@ export function createRitzSmpAiBot() {
     const storeUrl = "https://ritzsmpstore-94jhsfkx.manus.space";
 
     if (commandName === "status") {
-      try {
-        await interaction.reply({
-          content: `💖 **RitzSMP AI Status Dashboard**\n• สถานะบอท: ออนไลน์ปกติ ✨\n• บัญชีบอท: \`${botUsername}\`\n• คำสั่งทั้งหมดที่มีผู้ใช้งาน: \`${totalInteractionsCount}\` ครั้ง\n• เว็บไซต์ร้านค้า: ${storeUrl}`,
-          ephemeral: true,
-        });
-        pushLog("SUCCESS", "Executed /status successfully");
-      } catch (err) {
-        pushLog("ERROR", `status error: ${String(err)}`);
-      }
+      await safeReply(interaction, {
+        content: `💖 **RitzSMP AI Status Dashboard**\n• สถานะบอท: ออนไลน์ปกติ ✨\n• บัญชีบอท: \`${botUsername}\`\n• คำสั่งทั้งหมดที่มีผู้ใช้งาน: \`${totalInteractionsCount}\` ครั้ง\n• เว็บไซต์ร้านค้า: ${storeUrl}`,
+        ephemeral: true,
+      });
+      pushLog("SUCCESS", "Executed /status successfully");
       return;
     }
 
     if (commandName === "store") {
-      try {
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-          new ButtonBuilder()
-            .setLabel("🌐 เปิดเว็บไซต์ร้านค้า RitzSMP Store")
-            .setStyle(ButtonStyle.Link)
-            .setURL(storeUrl)
-        );
-        await interaction.reply({
-          content: "🛒 ยินดีต้อนรับสู่ร้านค้าทางการของ RitzSMP ค่ะ! คลิกปุ่มด้านล่างเพื่อเข้าสู่เว็บไซต์ได้ทันทีนะค้า 💖",
-          components: [row],
-          ephemeral: true,
-        });
-        pushLog("SUCCESS", "Executed /store successfully");
-      } catch (err) {
-        pushLog("ERROR", `store error: ${String(err)}`);
-      }
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setLabel("🌐 เปิดเว็บไซต์ร้านค้า RitzSMP Store")
+          .setStyle(ButtonStyle.Link)
+          .setURL(storeUrl)
+      );
+      await safeReply(interaction, {
+        content: "🛒 ยินดีต้อนรับสู่ร้านค้าทางการของ RitzSMP ค่ะ! คลิกปุ่มด้านล่างเพื่อเข้าสู่เว็บไซต์ได้ทันทีนะค้า 💖",
+        components: [row],
+        ephemeral: true,
+      });
+      pushLog("SUCCESS", "Executed /store successfully");
       return;
     }
 
     if (commandName === "ranks") {
-      try {
-        const ranksEmbed = new EmbedBuilder()
-          .setTitle("👑 รายการยศและสิทธิประโยชน์พิเศษใน RitzSMP")
-          .setDescription(
-            "ยกระดับการเล่นเกมของคุณในอาณาจักร RitzSMP พร้อมรับสิทธิประโยชน์สุดคุ้มค่า:\n\n" +
-            "💎 **VIP Tier:** ได้สิทธิ์ใช้ `/fly`, `/nv`, `/craft`, และ `/hat` พร้อมสิทธิ์ตั้งบ้านเพิ่มขึ้น\n" +
-            "👑 **Royal Tier:** ยศระดับสูง สิทธิพิเศษเต็มพิกัด บินได้ มองในที่มืด และเซ็ตบ้านได้จุใจ\n\n" +
-            "ซื้อได้ง่ายๆ ผ่านเว็บสโตร์ ระบบตัดเงินจากกระเป๋าและเติมยศเข้าเกมอัตโนมัติผ่าน RCON ทันทีค่ะ!"
-          )
-          .setColor(0xffd700)
-          .setFooter({ text: "RitzSMP • ระบบร้านค้าอัตโนมัติ 24 ชั่วโมง" });
+      const ranksEmbed = new EmbedBuilder()
+        .setTitle("👑 รายการยศและสิทธิประโยชน์พิเศษใน RitzSMP")
+        .setDescription(
+          "ยกระดับการเล่นเกมของคุณในอาณาจักร RitzSMP พร้อมรับสิทธิประโยชน์สุดคุ้มค่า:\n\n" +
+          "💎 **VIP Tier:** ได้สิทธิ์ใช้ `/fly`, `/nv`, `/craft`, และ `/hat` พร้อมสิทธิ์ตั้งบ้านเพิ่มขึ้น\n" +
+          "👑 **Royal Tier:** ยศระดับสูง สิทธิพิเศษเต็มพิกัด บินได้ มองในที่มืด และเซ็ตบ้านได้จุใจ\n\n" +
+          "ซื้อได้ง่ายๆ ผ่านเว็บสโตร์ ระบบตัดเงินจากกระเป๋าและเติมยศเข้าเกมอัตโนมัติผ่าน RCON ทันทีค่ะ!"
+        )
+        .setColor(0xffd700)
+        .setFooter({ text: "RitzSMP • ระบบร้านค้าอัตโนมัติ 24 ชั่วโมง" });
 
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-          new ButtonBuilder()
-            .setLabel("🛒 เลือกซื้อยศในเว็บไซต์")
-            .setStyle(ButtonStyle.Link)
-            .setURL(storeUrl)
-        );
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setLabel("🛒 เลือกซื้อยศในเว็บไซต์")
+          .setStyle(ButtonStyle.Link)
+          .setURL(storeUrl)
+      );
 
-        await interaction.reply({
-          embeds: [ranksEmbed],
-          components: [row],
-          ephemeral: true,
-        });
-        pushLog("SUCCESS", "Executed /ranks successfully");
-      } catch (err) {
-        pushLog("ERROR", `ranks error: ${String(err)}`);
-      }
+      await safeReply(interaction, {
+        embeds: [ranksEmbed],
+        components: [row],
+        ephemeral: true,
+      });
+      pushLog("SUCCESS", "Executed /ranks successfully");
       return;
     }
 
     if (commandName === "topup") {
-      try {
-        const topupEmbed = new EmbedBuilder()
-          .setTitle("💳 คู่มือการเติมเงินและซื้อยศ RitzSMP Store")
-          .setDescription(
-            "ขั้นตอนการใช้งานระบบเติมเงินและสนับสนุนเซิร์ฟเวอร์:\n\n" +
-            "1️⃣ **เติมเงินเข้ากระเป๋า (ต้องแนบสลิป):**\n" +
-            "• โอนเงินผ่าน PromptPay / TrueMoney Wallet: `0930286252`\n" +
-            "• ไปที่หน้าเว็บไซต์ เลือกเมนูเติมเงิน กรอกจำนวนเงิน และแนบรูปภาพสลิป\n" +
-            "• รอแอดมินตรวจสอบยอดเงินเข้ากระเป๋า\n\n" +
-            "2️⃣ **ซื้อยศ (ใช้กระเป๋าเงิน ไม่ต้องแนบสลิป):**\n" +
-            "• เลือกยศที่ต้องการ กรอกชื่อในเกม (Minecraft IGN)\n" +
-            "• กดยืนยัน ระบบจะหักเงินในกระเป๋าและเติมยศให้ทันทีค่ะ!"
-          )
-          .setColor(0x00ffcc)
-          .setFooter({ text: "RitzSMP Store • สะดวก ปลอดภัย รวดเร็วทันใจ" });
+      const topupEmbed = new EmbedBuilder()
+        .setTitle("💳 คู่มือการเติมเงินและซื้อยศ RitzSMP Store")
+        .setDescription(
+          "ขั้นตอนการใช้งานระบบเติมเงินและสนับสนุนเซิร์ฟเวอร์:\n\n" +
+          "1️⃣ **เติมเงินเข้ากระเป๋า (ต้องแนบสลิป):**\n" +
+          "• โอนเงินผ่าน PromptPay / TrueMoney Wallet: `0930286252`\n" +
+          "• ไปที่หน้าเว็บไซต์ เลือกเมนูเติมเงิน กรอกจำนวนเงิน และแนบรูปภาพสลิป\n" +
+          "• รอแอดมินตรวจสอบยอดเงินเข้ากระเป๋า\n\n" +
+          "2️⃣ **ซื้อยศ (ใช้กระเป๋าเงิน ไม่ต้องแนบสลิป):**\n" +
+          "• เลือกยศที่ต้องการ กรอกชื่อในเกม (Minecraft IGN)\n" +
+          "• กดยืนยัน ระบบจะหักเงินในกระเป๋าและเติมยศให้ทันทีค่ะ!"
+        )
+        .setColor(0x00ffcc)
+        .setFooter({ text: "RitzSMP Store • สะดวก ปลอดภัย รวดเร็วทันใจ" });
 
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-          new ButtonBuilder()
-            .setLabel("💳 ไปที่หน้าเติมเงิน / ซื้อยศ")
-            .setStyle(ButtonStyle.Link)
-            .setURL(storeUrl)
-        );
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setLabel("💳 ไปที่หน้าเติมเงิน / ซื้อยศ")
+          .setStyle(ButtonStyle.Link)
+          .setURL(storeUrl)
+      );
 
-        await interaction.reply({
-          embeds: [topupEmbed],
-          components: [row],
-          ephemeral: true,
-        });
-        pushLog("SUCCESS", "Executed /topup successfully");
-      } catch (err) {
-        pushLog("ERROR", `topup error: ${String(err)}`);
-      }
+      await safeReply(interaction, {
+        embeds: [topupEmbed],
+        components: [row],
+        ephemeral: true,
+      });
+      pushLog("SUCCESS", "Executed /topup successfully");
       return;
     }
 
     if (commandName === "help") {
-      try {
-        const helpEmbed = new EmbedBuilder()
-          .setTitle("📖 คู่มือและรายการคำสั่ง RitzSMP AI")
-          .setDescription(
-            "ยินดีต้อนรับสู่ระบบช่วยเหลือของ RitzSMP AI สาวน้อยสุดน่ารักค่ะ! รายการคำสั่งทั้งหมดที่มีให้ใช้งาน:\n\n" +
-            "💬 `/ask <คำถาม>` : พูดคุยและสอบถามข้อมูลกับ AI\n" +
-            "📊 `/status` : ตรวจสอบสถานะและสถิติของบอท\n" +
-            "🛒 `/store` : รับลิงก์เว็บไซต์ร้านค้าหลักของ RitzSMP Store\n" +
-            "👑 `/ranks` : ตรวจสอบข้อมูลยศพิเศษและสิทธิประโยชน์\n" +
-            "💳 `/topup` : คู่มือการเติมเงินและซื้อยศ\n" +
-            "✨ `/embed` : ส่งข้อความประกาศ Embed พร้อมปุ่มร้านค้า (แอดมิน)\n" +
-            "📖 `/help` : แสดงคู่มือคำสั่งนี้ค่ะ 💕"
-          )
-          .setColor(0xff69b4)
-          .setFooter({ text: "RitzSMP AI • พร้อมดูแลคุณตลอด 24 ชั่วโมงค่ะ 💕" });
+      const helpEmbed = new EmbedBuilder()
+        .setTitle("📖 คู่มือและรายการคำสั่ง RitzSMP AI")
+        .setDescription(
+          "ยินดีต้อนรับสู่ระบบช่วยเหลือของ RitzSMP AI สาวน้อยสุดน่ารักค่ะ! รายการคำสั่งทั้งหมดที่มีให้ใช้งาน:\n\n" +
+          "💬 `/ask <คำถาม>` : พูดคุยและสอบถามข้อมูลกับ AI\n" +
+          "📊 `/status` : ตรวจสอบสถานะและสถิติของบอท\n" +
+          "🛒 `/store` : รับลิงก์เว็บไซต์ร้านค้าหลักของ RitzSMP Store\n" +
+          "👑 `/ranks` : ตรวจสอบข้อมูลยศพิเศษและสิทธิประโยชน์\n" +
+          "💳 `/topup` : คู่มือการเติมเงินและซื้อยศ\n" +
+          "✨ `/embed` : ส่งข้อความประกาศ Embed พร้อมปุ่มร้านค้า (แอดมิน)\n" +
+          "📖 `/help` : แสดงคู่มือคำสั่งนี้ค่ะ 💕"
+        )
+        .setColor(0xff69b4)
+        .setFooter({ text: "RitzSMP AI • พร้อมดูแลคุณตลอด 24 ชั่วโมงค่ะ 💕" });
 
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-          new ButtonBuilder()
-            .setLabel("🌐 เปิดเว็บไซต์ร้านค้า")
-            .setStyle(ButtonStyle.Link)
-            .setURL(storeUrl)
-        );
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setLabel("🌐 เปิดเว็บไซต์ร้านค้า")
+          .setStyle(ButtonStyle.Link)
+          .setURL(storeUrl)
+      );
 
-        await interaction.reply({
-          embeds: [helpEmbed],
-          components: [row],
-          ephemeral: true,
-        });
-        pushLog("SUCCESS", "Executed /help successfully");
-      } catch (err) {
-        pushLog("ERROR", `help error: ${String(err)}`);
-      }
+      await safeReply(interaction, {
+        embeds: [helpEmbed],
+        components: [row],
+        ephemeral: true,
+      });
+      pushLog("SUCCESS", "Executed /help successfully");
       return;
     }
 
     if (commandName === "embed") {
-      try {
-        // Instant public reply so everyone in the channel sees the announcement immediately without waiting
-        const embed = new EmbedBuilder()
-          .setTitle("💖 ช่องทางโดเนทและวิธีใช้งาน RitzSMP Store")
-          .setDescription(
-            "🛒 **ระบบเว็บสโตร์ RitzSMP เปิดให้บริการแล้วค่ะ!**\n\n" +
-            "💳 **1. วิธีเติมเงินเข้ากระเป๋า (ต้องแนบสลิป):**\n" +
-            "• โอนเงินผ่านบัญชีธนาคารออมสิน, พร้อมเพย์ หรือ TrueMoney Wallet\n" +
-            "• เข้าเว็บไซต์ร้านค้า เลือกเมนูเติมเงิน กรอกจำนวนเงิน และ **แนบสลิปหลักฐานการโอน**\n" +
-            "• รอแอดมินตรวจสอบและกดยืนยันยอดเงินเข้ากระเป๋าของคุณ\n\n" +
-            "👑 **2. วิธีซื้อยศ (ใช้ยอด Wallet ไม่ต้องแนบสลิป):**\n" +
-            "• เมื่อมียอดเงินในกระเป๋าแล้ว ไปที่หน้าซื้อยศ\n" +
-            "• กรอก **ชื่อในเกม (Minecraft IGN)** และเลือกยศที่ต้องการ\n" +
-            "• ระบบจะหักเงินจากกระเป๋าและส่งยศเข้าเซิร์ฟเวอร์ผ่าน RCON ทันที\n\n" +
-            "📋 **ช่องทางโอนเงินสนับสนุน:**\n" +
-            "• 🏦 **ธนาคารออมสิน:** `020391511886` (ชื่อบัญชี: ภานุสรณ์ วงศ์สุวรรณ)\n" +
-            "• 📱 **พร้อมเพย์ (PromptPay):** `0930286252`\n" +
-            "• 💳 **TrueMoney Wallet:** `0930286252`"
-          )
-          .setColor(0xff69b4)
-          .setFooter({ text: "RitzSMP AI • ขอขอบพระคุณทุกท่านที่สนับสนุนเซิร์ฟเวอร์ของเราค่ะ 💕" });
+      const embed = new EmbedBuilder()
+        .setTitle("💖 ช่องทางโดเนทและวิธีใช้งาน RitzSMP Store")
+        .setDescription(
+          "🛒 **ระบบเว็บสโตร์ RitzSMP เปิดให้บริการแล้วค่ะ!**\n\n" +
+          "💳 **1. วิธีเติมเงินเข้ากระเป๋า (ต้องแนบสลิป):**\n" +
+          "• โอนเงินผ่านบัญชีธนาคารออมสิน, พร้อมเพย์ หรือ TrueMoney Wallet\n" +
+          "• เข้าเว็บไซต์ร้านค้า เลือกเมนูเติมเงิน กรอกจำนวนเงิน และ **แนบสลิปหลักฐานการโอน**\n" +
+          "• รอแอดมินตรวจสอบและกดยืนยันยอดเงินเข้ากระเป๋าของคุณ\n\n" +
+          "👑 **2. วิธีซื้อยศ (ใช้ยอด Wallet ไม่ต้องแนบสลิป):**\n" +
+          "• เมื่อมียอดเงินในกระเป๋าแล้ว ไปที่หน้าซื้อยศ\n" +
+          "• กรอก **ชื่อในเกม (Minecraft IGN)** และเลือกยศที่ต้องการ\n" +
+          "• ระบบจะหักเงินจากกระเป๋าและส่งยศเข้าเซิร์ฟเวอร์ผ่าน RCON ทันที\n\n" +
+          "📋 **ช่องทางโอนเงินสนับสนุน:**\n" +
+          "• 🏦 **ธนาคารออมสิน:** `020391511886` (ชื่อบัญชี: ภานุสรณ์ วงศ์สุวรรณ)\n" +
+          "• 📱 **พร้อมเพย์ (PromptPay):** `0930286252`\n" +
+          "• 💳 **TrueMoney Wallet:** `0930286252`"
+        )
+        .setColor(0xff69b4)
+        .setFooter({ text: "RitzSMP AI • ขอขอบพระคุณทุกท่านที่สนับสนุนเซิร์ฟเวอร์ของเราค่ะ 💕" });
 
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-          new ButtonBuilder()
-            .setLabel("🌐 เปิดเว็บไซต์ร้านค้า (Web Store)")
-            .setStyle(ButtonStyle.Link)
-            .setURL(storeUrl),
-          new ButtonBuilder()
-            .setLabel("💳 เติมเงิน / ซื้อยศในเว็บ")
-            .setStyle(ButtonStyle.Link)
-            .setURL(storeUrl)
-        );
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setLabel("🌐 เปิดเว็บไซต์ร้านค้า (Web Store)")
+          .setStyle(ButtonStyle.Link)
+          .setURL(storeUrl),
+        new ButtonBuilder()
+          .setLabel("💳 เติมเงิน / ซื้อยศในเว็บ")
+          .setStyle(ButtonStyle.Link)
+          .setURL(storeUrl)
+      );
 
-        await interaction.reply({ embeds: [embed], components: [row], ephemeral: false });
-        pushLog("SUCCESS", "Executed /embed successfully instantly (public)");
-      } catch (err) {
-        pushLog("ERROR", `embed command error: ${String(err)}`);
-        try {
-          if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: "ขอโทษด้วยนะคะ เกิดข้อผิดพลาดในการสร้างข้อความ Embed ค่ะ 🥺", ephemeral: true });
-          }
-        } catch (e) {}
-      }
+      await safeReply(interaction, { embeds: [embed], components: [row], ephemeral: false });
+      pushLog("SUCCESS", "Executed /embed successfully instantly (public via safeReply)");
       return;
     }
 
