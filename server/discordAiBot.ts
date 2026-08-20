@@ -143,7 +143,7 @@ export function createRitzSmpAiBot() {
         .setDescription("📖 แสดงคู่มือและรายการคำสั่งทั้งหมดของ RitzSMP AI"),
       new SlashCommandBuilder()
         .setName("embed")
-        .setDescription("✨ [แอดมิน] ส่งข้อความประกาศ Embed พร้อมปุ่มร้านค้าอย่างเป็นทางการลงในห้องนี้"),
+        .setDescription("📢 ส่งข้อความประกาศ Embed พร้อมปุ่มร้านค้าแบบสาธารณะ (แอดมิน)"),
     ].map(cmd => cmd.toJSON());
 
     const rest = new REST({ version: "10" }).setToken(token);
