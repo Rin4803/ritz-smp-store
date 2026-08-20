@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { notifyOwner } from "./_core/notification";
-import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { adminProcedure, ownerProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { COOKIE_NAME } from "@shared/const";
 import {
   createOrder,
@@ -12,6 +12,8 @@ import {
   getRankById,
   getRanks,
   getUserById,
+  getAllUsers,
+  updateUserRole,
   updateOrder,
   getUserWallet,
   getUserWalletTransactions,
@@ -229,6 +231,42 @@ export const appRouter = router({
   }),
   admin: router({
     orders: adminProcedure.query(() => getAllOrders()),
+    users: ownerProcedure.query(async () => {
+      const allUsers = await getAllUsers();
+      return allUsers.map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt,
+        lastSignedIn: user.lastSignedIn,
+        isOwner: user.openId === ENV.ownerOpenId,
+      }));
+    }),
+    setUserRole: ownerProcedure
+      .input(z.object({ id: z.number().int().positive(), role: z.enum(["user", "admin"]) }))
+      .mutation(async ({ input }) => {
+        const target = await getUserById(input.id);
+        if (!target) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "ไม่พบบัญชีผู้ใช้" });
+        }
+        if (target.openId === ENV.ownerOpenId) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "ไม่สามารถลดสิทธิ์หรือแก้ไขบัญชี Owner ได้" });
+        }
+        const updated = await updateUserRole(input.id, input.role);
+        if (!updated) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "ไม่สามารถบันทึกสิทธิ์บัญชีได้" });
+        }
+        return {
+          id: updated.id,
+          name: updated.name,
+          email: updated.email,
+          role: updated.role,
+          createdAt: updated.createdAt,
+          lastSignedIn: updated.lastSignedIn,
+          isOwner: updated.openId === ENV.ownerOpenId,
+        };
+      }),
     updateOrderStatus: adminProcedure
       .input(
         z.object({

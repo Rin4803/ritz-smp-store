@@ -12,6 +12,8 @@ import {
   users,
   wallets,
   walletTransactions,
+  discordVerifications,
+  DiscordVerification,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -149,11 +151,78 @@ export async function getUserById(id: number): Promise<User | undefined> {
   return result[0];
 }
 
+export async function getAllUsers(): Promise<User[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(users).orderBy(desc(users.createdAt));
+}
+
+export async function updateUserRole(id: number, role: User["role"]): Promise<User | undefined> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.update(users).set({ role }).where(eq(users.id, id));
+  return getUserById(id);
+}
+
 export async function getUserByDiscordId(discordUserId: string): Promise<User | undefined> {
   const db = await getDb();
   if (!db) return undefined;
   const result = await db.select().from(users).where(eq(users.openId, `discord:${discordUserId}`)).limit(1);
   return result[0];
+}
+
+export async function getDiscordVerification(discordUserId: string): Promise<DiscordVerification | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(discordVerifications)
+    .where(eq(discordVerifications.discordUserId, discordUserId))
+    .limit(1);
+  return result[0];
+}
+
+export async function getDiscordVerificationByMinecraftUuid(minecraftUuid: string): Promise<DiscordVerification | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(discordVerifications)
+    .where(eq(discordVerifications.minecraftUuid, minecraftUuid))
+    .limit(1);
+  return result[0];
+}
+
+export async function createDiscordVerification(input: {
+  discordUserId: string;
+  minecraftIGN: string;
+  minecraftUuid: string;
+}): Promise<DiscordVerification> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.insert(discordVerifications).values(input);
+  const created = await db
+    .select()
+    .from(discordVerifications)
+    .where(eq(discordVerifications.discordUserId, input.discordUserId))
+    .limit(1);
+  if (!created[0]) throw new Error("ไม่สามารถบันทึกการยืนยันตัวตนได้");
+  return created[0];
+}
+
+export async function updateDiscordProfile(
+  discordUserId: string,
+  input: { bio?: string | null; playStyle?: string | null },
+): Promise<DiscordVerification | undefined> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const updates: { bio?: string | null; playStyle?: string | null } = {};
+  if (input.bio !== undefined) updates.bio = input.bio;
+  if (input.playStyle !== undefined) updates.playStyle = input.playStyle;
+  if (Object.keys(updates).length > 0) {
+    await db.update(discordVerifications).set(updates).where(eq(discordVerifications.discordUserId, discordUserId));
+  }
+  return getDiscordVerification(discordUserId);
 }
 
 export async function ensureDiscordUser(discordUserId: string, displayName: string): Promise<User> {

@@ -9,11 +9,24 @@ import {
   ButtonBuilder,
   ButtonStyle,
   PermissionsBitField,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
   type ChatInputCommandInteraction,
-  type Interaction,
 } from "discord.js";
 import { ENV } from "./_core/env.js";
 import { invokeLLM } from "./_core/llm.js";
+import {
+  createDiscordVerification,
+  getDiscordVerification,
+  getDiscordVerificationByMinecraftUuid,
+  updateDiscordProfile,
+} from "./db.js";
+import {
+  fetchMinecraftProfile,
+  fetchMinecraftServerStatus,
+  grantMinecraftRank,
+} from "./minecraftIntegration.js";
 
 interface BotLog {
   timestamp: string;
@@ -47,37 +60,7 @@ export function getRitzSmpAiBotStatus() {
   };
 }
 
-async function checkMinecraftServerStatus() {
-  const startTime = Date.now();
-  try {
-    const res = await fetch("https://api.mcsrvstat.us/2/ritz.mcsv.me", { signal: AbortSignal.timeout(4000) });
-    if (res.ok) {
-      const data = (await res.json()) as any;
-      const latency = Date.now() - startTime;
-      if (data && data.online) {
-        return {
-          online: true,
-          players: data.players?.online || 0,
-          maxPlayers: data.players?.max || 50,
-          version: data.version || "Paper 1.20+",
-          latency,
-          motd: data.motd?.clean?.[0] || "RitzSMP Minecraft Server",
-        };
-      }
-    }
-  } catch (err) {
-    // fallback
-  }
-
-  return {
-    online: true,
-    players: 14,
-    maxPlayers: 50,
-    version: "Paper 1.20.4 (Geyser Bedrock)",
-    latency: 32,
-    motd: "RitzSMP - Survival & Economy",
-  };
-}
+const checkMinecraftServerStatus = fetchMinecraftServerStatus;
 
 async function safeReply(interaction: ChatInputCommandInteraction, options: any) {
   try {
@@ -100,6 +83,312 @@ async function safeReply(interaction: ChatInputCommandInteraction, options: any)
   }
 }
 
+function buildOnboardingComponents() {
+  const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId("ritz_verify_button")
+      .setLabel("✅ ยืนยันตัวตน")
+      .setStyle(ButtonStyle.Success),
+    new ButtonBuilder()
+      .setCustomId("ritz_claim_rank_button")
+      .setLabel("🎖️ รับยศผู้เล่นในเซิร์ฟ")
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId("ritz_players_button")
+      .setLabel("👥 รายชื่อในเซิร์ฟ")
+      .setStyle(ButtonStyle.Secondary),
+  );
+  const profileRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId("ritz_profile_button")
+      .setLabel("🪪 ดูโปรไฟล์สมาชิก")
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId("ritz_edit_profile_button")
+      .setLabel("✏️ แก้ไขโปรไฟล์")
+      .setStyle(ButtonStyle.Secondary),
+  );
+  return [actionRow, profileRow];
+}
+
+function buildOnboardingEmbed() {
+  return new EmbedBuilder()
+    .setTitle("✨ ยินดีต้อนรับเข้าสู่ RitzSMP ✨")
+    .setDescription(
+      "กดปุ่มด้านล่างเพื่อเริ่มต้นใช้งานระบบของเราได้เลยนะคะ\\n\\n" +
+      "✅ **ยืนยันตัวตน:** เชื่อม Discord กับชื่อ Minecraft ของคุณ\\n" +
+      "🎖️ **รับยศผู้เล่น:** รับยศสมาชิกใน Discord และยศเริ่มต้นในเกม (หากเปิด RCON แล้ว)\\n" +
+      "👥 **รายชื่อในเซิร์ฟ:** ดูผู้เล่นออนไลน์ล่าสุดจากสถานะ RitzSMP",
+    )
+    .setColor(0xec4899)
+    .setImage("https://cdn.discordapp.com/embed/avatars/0.png")
+    .setFooter({ text: "RitzSMP AI • ผู้ช่วยสาวน้อยประจำเซิร์ฟเวอร์ค่ะ" })
+    .setTimestamp();
+}
+
+async function sendToDiscordChannel(client: Client, channelId: string, payload: any): Promise<boolean> {
+  if (!channelId) {
+    pushLog("WARN", "Discord channel is not configured for this event");
+    return false;
+  }
+  try {
+    const channel = await client.channels.fetch(channelId);
+    if (!channel || !channel.isTextBased() || !("send" in channel)) {
+      pushLog("WARN", `Configured Discord channel ${channelId} is not text-based or unavailable`);
+      return false;
+    }
+    await (channel as any).send(payload);
+    return true;
+  } catch (error) {
+    pushLog("ERROR", `Failed to send Discord channel message: ${String(error)}`);
+    return false;
+  }
+}
+
+async function addConfiguredRole(interaction: any, roleId: string, reason: string): Promise<boolean> {
+  if (!roleId || !interaction.guild) return false;
+  try {
+    const member = await interaction.guild.members.fetch(interaction.user.id);
+    if (!member.roles.cache.has(roleId)) {
+      await member.roles.add(roleId, reason);
+    }
+    return true;
+  } catch (error) {
+    pushLog("WARN", `Could not add configured Discord role ${roleId}: ${String(error)}`);
+    return false;
+  }
+}
+
+async function verifyMinecraftAccount(interaction: any, shouldClaimRank: boolean) {
+  await interaction.deferReply({ ephemeral: true });
+  const minecraftIGN = interaction.fields.getTextInputValue("minecraft_ign").trim();
+  const profile = await fetchMinecraftProfile(minecraftIGN);
+  if (!profile) {
+    await interaction.editReply("ไม่พบชื่อ Minecraft นี้ใน Mojang ค่ะ กรุณาตรวจสอบชื่อให้ถูกต้องก่อนลองใหม่อีกครั้งนะคะ");
+    return;
+  }
+
+  try {
+    const existingForDiscord = await getDiscordVerification(interaction.user.id);
+    const existingForMinecraft = await getDiscordVerificationByMinecraftUuid(profile.id);
+    if (existingForMinecraft && existingForMinecraft.discordUserId !== interaction.user.id) {
+      await interaction.editReply("ชื่อ Minecraft นี้ถูกเชื่อมกับ Discord อื่นแล้วค่ะ หากเป็นเจ้าของบัญชีจริงกรุณาติดต่อทีมงาน");
+      return;
+    }
+    if (existingForDiscord && existingForDiscord.minecraftUuid !== profile.id) {
+      await interaction.editReply(`Discord นี้เชื่อมกับ Minecraft ชื่อ **${existingForDiscord.minecraftIGN}** อยู่แล้วค่ะ`);
+      return;
+    }
+    if (!existingForDiscord) {
+      await createDiscordVerification({
+        discordUserId: interaction.user.id,
+        minecraftIGN: profile.name,
+        minecraftUuid: profile.id,
+      });
+    }
+
+    const verified = await addConfiguredRole(interaction, ENV.discordVerifiedRoleId, "RitzSMP AI identity verification");
+    let rankMessage = "";
+    if (shouldClaimRank) {
+      const rankResult = await grantMinecraftRank(profile.name, ENV.discordClaimRankGroup);
+      const memberRoleAdded = await addConfiguredRole(interaction, ENV.discordMemberRoleId, "RitzSMP member rank claim");
+      rankMessage = rankResult.executed
+        ? `\\n🎖️ มอบกลุ่ม LuckPerms **${ENV.discordClaimRankGroup}** ให้ในเกมแล้วค่ะ${memberRoleAdded ? " และเพิ่มยศสมาชิกใน Discord แล้ว" : ""}`
+        : `\\n🎖️ เชื่อมบัญชีสำเร็จค่ะ แต่ยังไม่ได้มอบยศในเกม เพราะยังไม่เปิดค่า RCON${memberRoleAdded ? " (เพิ่มยศสมาชิกใน Discord แล้ว)" : ""}`;
+    }
+
+    await interaction.editReply(
+      `ยืนยันตัวตนสำเร็จแล้วค่ะ\\n👤 Discord: **${interaction.user.tag}**\\n⛏️ Minecraft: **${profile.name}**${verified ? "\\n✅ เพิ่มยศ Verified ใน Discord แล้วค่ะ" : "\\n⚠️ ยังไม่ได้ตั้งค่า Verified Role ในระบบ"}${rankMessage}`,
+    );
+    pushLog("SUCCESS", `Verified Discord ${interaction.user.id} with Minecraft ${profile.name}`);
+  } catch (error) {
+    pushLog("ERROR", `Verification flow failed: ${String(error)}`);
+    await interaction.editReply("ระบบยืนยันตัวตนขัดข้องชั่วคราวค่ะ กรุณาลองใหม่อีกครั้งหรือติดต่อทีมงานนะคะ");
+  }
+}
+
+async function replyWithPlayers(interaction: any) {
+  await interaction.deferReply({ ephemeral: true });
+  const mc = await fetchMinecraftServerStatus();
+  const names = mc.playerNames.length ? mc.playerNames.map(name => `• ${name}`).join("\\n") : "ยังไม่มีรายชื่อที่ API เปิดเผยในขณะนี้ค่ะ";
+  const embed = new EmbedBuilder()
+    .setTitle("👥 รายชื่อผู้เล่นใน RitzSMP")
+    .setDescription(mc.online ? names : "🔴 เซิร์ฟเวอร์ออฟไลน์หรือยังตรวจสอบไม่ได้ค่ะ")
+    .addFields({ name: "สถานะ", value: mc.online ? `🟢 ออนไลน์ ${mc.players}/${mc.maxPlayers} คน` : "🔴 ออฟไลน์", inline: true })
+    .setColor(mc.online ? 0x22c55e : 0xef4444)
+    .setTimestamp()
+    .setFooter({ text: "ข้อมูลจาก Minecraft status API • กดปุ่มอีกครั้งเพื่อรีเฟรช" });
+  await interaction.editReply({ embeds: [embed] });
+}
+
+async function showMinecraftModal(interaction: any, customId: string, title: string) {
+  const modal = new ModalBuilder().setCustomId(customId).setTitle(title);
+  const input = new TextInputBuilder()
+    .setCustomId("minecraft_ign")
+    .setLabel("ชื่อ Minecraft ของคุณ")
+    .setPlaceholder("เช่น RitzPlayer")
+    .setStyle(TextInputStyle.Short)
+    .setMinLength(3)
+    .setMaxLength(16)
+    .setRequired(true);
+  modal.addComponents(new ActionRowBuilder<TextInputBuilder>().addComponents(input));
+  await interaction.showModal(modal);
+}
+
+export function buildProfileEmbed(interaction: any, verification: any) {
+  const skinUrl = `https://mc-heads.net/avatar/${encodeURIComponent(verification.minecraftIGN)}/128`;
+  return new EmbedBuilder()
+    .setTitle(`🪪 โปรไฟล์สมาชิก ${interaction.user.username}`)
+    .setDescription(verification.bio || "สมาชิกคนนี้ยังไม่ได้เขียนคำแนะนำตัวค่ะ")
+    .setColor(0xec4899)
+    .setThumbnail(skinUrl)
+    .addFields(
+      { name: "Discord", value: `${interaction.user.tag}\nID: \`${interaction.user.id}\``, inline: false },
+      { name: "Minecraft", value: `**${verification.minecraftIGN}**\nUUID: \`${verification.minecraftUuid}\``, inline: false },
+      { name: "สไตล์การเล่น", value: verification.playStyle || "ยังไม่ได้ระบุ", inline: true },
+      { name: "สถานะ", value: "✅ ยืนยันตัวตนแล้ว", inline: true },
+      { name: "ยืนยันเมื่อ", value: new Date(verification.verifiedAt).toLocaleString("th-TH"), inline: false },
+    )
+    .setFooter({ text: "กด ✏️ แก้ไขโปรไฟล์ เพื่อเพิ่มคำแนะนำตัวและสไตล์การเล่น" })
+    .setTimestamp();
+}
+
+async function replyWithProfile(interaction: any) {
+  await interaction.deferReply({ ephemeral: true });
+  const verification = await getDiscordVerification(interaction.user.id);
+  if (!verification) {
+    await interaction.editReply("ยังไม่มีโปรไฟล์ที่ยืนยันค่ะ กรุณากด ✅ ยืนยันตัวตนก่อนนะคะ");
+    return;
+  }
+  await interaction.editReply({ embeds: [buildProfileEmbed(interaction, verification)] });
+}
+
+async function showProfileModal(interaction: any) {
+  const verification = await getDiscordVerification(interaction.user.id);
+  if (!verification) {
+    await interaction.reply({ content: "กรุณายืนยันตัวตนและเชื่อมชื่อ Minecraft ก่อนแก้ไขโปรไฟล์นะคะ", ephemeral: true });
+    return;
+  }
+  const modal = new ModalBuilder().setCustomId("ritz_profile_modal").setTitle("แก้ไขโปรไฟล์ RitzSMP");
+  const bioInput = new TextInputBuilder()
+    .setCustomId("profile_bio")
+    .setLabel("แนะนำตัวสั้น ๆ")
+    .setPlaceholder("เช่น ชอบสร้างบ้านและเล่นกับเพื่อน ๆ")
+    .setStyle(TextInputStyle.Paragraph)
+    .setMaxLength(300)
+    .setRequired(false)
+    .setValue(verification.bio || "");
+  const styleInput = new TextInputBuilder()
+    .setCustomId("profile_play_style")
+    .setLabel("สไตล์การเล่น")
+    .setPlaceholder("เช่น สายสร้างบ้าน / สายผจญภัย")
+    .setStyle(TextInputStyle.Short)
+    .setMaxLength(128)
+    .setRequired(false)
+    .setValue(verification.playStyle || "");
+  modal.addComponents(
+    new ActionRowBuilder<TextInputBuilder>().addComponents(bioInput),
+    new ActionRowBuilder<TextInputBuilder>().addComponents(styleInput),
+  );
+  await interaction.showModal(modal);
+}
+
+async function updateProfileFromModal(interaction: any) {
+  await interaction.deferReply({ ephemeral: true });
+  const verification = await getDiscordVerification(interaction.user.id);
+  if (!verification) {
+    await interaction.editReply("ไม่พบการยืนยันตัวตนค่ะ กรุณายืนยันบัญชีก่อนนะคะ");
+    return;
+  }
+  const bio = interaction.fields.getTextInputValue("profile_bio").trim().slice(0, 300) || null;
+  const playStyle = interaction.fields.getTextInputValue("profile_play_style").trim().slice(0, 128) || null;
+  const updated = await updateDiscordProfile(interaction.user.id, { bio, playStyle });
+  if (!updated) {
+    await interaction.editReply("ไม่สามารถบันทึกโปรไฟล์ได้ในขณะนี้ค่ะ กรุณาลองใหม่อีกครั้งนะคะ");
+    return;
+  }
+  await interaction.editReply({ content: "บันทึกโปรไฟล์เรียบร้อยแล้วค่ะ 💖", embeds: [buildProfileEmbed(interaction, updated)] });
+  pushLog("SUCCESS", `Updated Discord profile for ${interaction.user.id}`);
+}
+
+function startDiscordMemberEvents(client: Client) {
+  client.on("guildMemberAdd", async member => {
+    const embed = new EmbedBuilder()
+      .setTitle("ยินดีต้อนรับเข้าสู่ RitzSMP นะคะ ✨")
+      .setDescription(`สวัสดีค่ะ ${member}\\nอย่าลืมอ่านกฎเซิร์ฟเวอร์และกดยืนยันตัวตนเพื่อเริ่มใช้งานระบบนะคะ 💖`)
+      .setColor(0xec4899)
+      .setThumbnail(member.user.displayAvatarURL())
+      .setTimestamp()
+      .setFooter({ text: "RitzSMP AI • ยินดีต้อนรับสมาชิกใหม่" });
+    await sendToDiscordChannel(client, ENV.discordWelcomeChannelId, { embeds: [embed], components: buildOnboardingComponents() });
+  });
+
+  client.on("guildMemberRemove", async member => {
+    const embed = new EmbedBuilder()
+      .setTitle("ไว้เจอกันใหม่นะคะ 👋")
+      .setDescription(`**${member.user.tag}** ออกจากเซิร์ฟเวอร์ Discord ของ RitzSMP แล้วค่ะ`)
+      .setColor(0xf472b6)
+      .setThumbnail(member.user.displayAvatarURL())
+      .setTimestamp()
+      .setFooter({ text: "RitzSMP AI • ขอบคุณที่เคยร่วมสนุกด้วยกัน" });
+    await sendToDiscordChannel(client, ENV.discordWelcomeChannelId, { embeds: [embed] });
+  });
+}
+
+async function handleOnboardingInteraction(interaction: any): Promise<boolean> {
+  if (interaction.isButton()) {
+    if (interaction.customId === "ritz_verify_button") {
+      await showMinecraftModal(interaction, "ritz_verify_modal", "ยืนยันตัวตน RitzSMP");
+      return true;
+    }
+    if (interaction.customId === "ritz_claim_rank_button") {
+      const existing = await getDiscordVerification(interaction.user.id);
+      if (!existing) {
+        await showMinecraftModal(interaction, "ritz_claim_rank_modal", "เชื่อมบัญชีและรับยศ RitzSMP");
+        return true;
+      }
+      await interaction.deferReply({ ephemeral: true });
+      const rankResult = await grantMinecraftRank(existing.minecraftIGN, ENV.discordClaimRankGroup);
+      const memberRoleAdded = await addConfiguredRole(interaction, ENV.discordMemberRoleId, "RitzSMP member rank claim");
+      await interaction.editReply(
+        rankResult.executed
+          ? `มอบกลุ่ม LuckPerms **${ENV.discordClaimRankGroup}** ให้ **${existing.minecraftIGN}** แล้วค่ะ${memberRoleAdded ? " และเพิ่มยศสมาชิกใน Discord แล้ว" : ""}`
+          : `เชื่อมบัญชีไว้แล้วค่ะ แต่ยังมอบยศในเกมไม่ได้เพราะยังไม่ได้ตั้งค่า RCON${memberRoleAdded ? " (เพิ่มยศสมาชิกใน Discord แล้ว)" : ""}`,
+      );
+      return true;
+    }
+    if (interaction.customId === "ritz_players_button") {
+      await replyWithPlayers(interaction);
+      return true;
+    }
+    if (interaction.customId === "ritz_profile_button") {
+      await replyWithProfile(interaction);
+      return true;
+    }
+    if (interaction.customId === "ritz_edit_profile_button") {
+      await showProfileModal(interaction);
+      return true;
+    }
+  }
+
+  if (interaction.isModalSubmit()) {
+    if (interaction.customId === "ritz_verify_modal") {
+      await verifyMinecraftAccount(interaction, false);
+      return true;
+    }
+    if (interaction.customId === "ritz_claim_rank_modal") {
+      await verifyMinecraftAccount(interaction, true);
+      return true;
+    }
+    if (interaction.customId === "ritz_profile_modal") {
+      await updateProfileFromModal(interaction);
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export function startRitzSmpAiBot() {
   return createRitzSmpAiBot();
 }
@@ -114,6 +403,7 @@ export function createRitzSmpAiBot() {
   const client = new Client({
     intents: [
       GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMembers,
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.MessageContent,
     ],
@@ -152,6 +442,20 @@ export function createRitzSmpAiBot() {
       new SlashCommandBuilder()
         .setName("topup")
         .setDescription("💳 ดูวิธีเติมเงินผ่านสลิปโอนเงินและการซื้อยศผ่านกระเป๋า"),
+      new SlashCommandBuilder()
+        .setName("verify")
+        .setDescription("✅ เปิดแผงยืนยันตัวตนและเชื่อมชื่อ Minecraft"),
+      new SlashCommandBuilder()
+        .setName("players")
+        .setDescription("👥 แสดงรายชื่อผู้เล่นที่ออนไลน์ใน RitzSMP"),
+      new SlashCommandBuilder()
+        .setName("profile")
+        .setDescription("🪪 ดูโปรไฟล์สมาชิก RitzSMP ที่เชื่อมกับ Minecraft"),
+      new SlashCommandBuilder()
+        .setName("setup")
+        .setDescription("🛠️ ตั้งค่าแผงต้อนรับและยืนยันตัวตน (แอดมินเท่านั้น)")
+        .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator)
+        .addSubcommand(sub => sub.setName("panel").setDescription("ส่งแผงยืนยันตัวตนและรับยศลงช่องนี้")),
       new SlashCommandBuilder()
         .setName("help")
         .setDescription("📖 แสดงคู่มือและรายการคำสั่งทั้งหมดของ RitzSMP AI"),
@@ -196,6 +500,27 @@ export function createRitzSmpAiBot() {
   client.on("error", error => pushLog("ERROR", `Discord client error: ${error.message}`));
 
   client.on("interactionCreate", async interaction => {
+    try {
+      if (await handleOnboardingInteraction(interaction)) {
+        pushLog("SUCCESS", `Handled onboarding interaction ${"customId" in interaction ? interaction.customId : "unknown"}`);
+        return;
+      }
+    } catch (err) {
+      pushLog("ERROR", `Onboarding interaction failed: ${String(err)}`);
+      try {
+        if (interaction.isRepliable()) {
+          if (interaction.deferred || interaction.replied) {
+            await interaction.editReply("ระบบกำลังขัดข้องชั่วคราวค่ะ กรุณาลองใหม่อีกครั้งนะคะ");
+          } else {
+            await interaction.reply({ content: "ระบบกำลังขัดข้องชั่วคราวค่ะ กรุณาลองใหม่อีกครั้งนะคะ", ephemeral: true });
+          }
+        }
+      } catch (replyError) {
+        pushLog("WARN", `Could not reply to onboarding error: ${String(replyError)}`);
+      }
+      return;
+    }
+
     if (!interaction.isChatInputCommand()) return;
     totalInteractionsCount++;
 
@@ -229,6 +554,12 @@ export function createRitzSmpAiBot() {
 
         await safeReply(interaction, { embeds: [statusEmbed] });
         pushLog("SUCCESS", `Executed /${commandName} successfully`);
+        return;
+      }
+
+      if (commandName === "profile") {
+        await replyWithProfile(interaction);
+        pushLog("SUCCESS", "Executed /profile successfully");
         return;
       }
 
@@ -319,6 +650,7 @@ export function createRitzSmpAiBot() {
             { name: "/store", value: "เปิดลิงก์เว็บไซต์ร้านค้าหลักของ RitzSMP", inline: false },
             { name: "/ranks", value: "ดูรายละเอียดและสิทธิประโยชน์ของแต่ละยศ", inline: false },
             { name: "/topup", value: "ดูคู่มือขั้นตอนการเติมเงินและซื้อยศ", inline: false },
+            { name: "/profile", value: "ดูโปรไฟล์สมาชิกและแก้ไขคำแนะนำตัว/สไตล์การเล่น", inline: false },
             { name: "/embed default", value: "ส่งประกาศร้านค้าสำเร็จรูปพร้อมปุ่มลิงก์", inline: false },
             { name: "/embed create", value: "สร้างประกาศ Embed แบบกำหนดเอง (สำหรับแอดมิน)", inline: false }
           )

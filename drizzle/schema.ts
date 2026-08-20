@@ -86,3 +86,21 @@ export const walletTransactions = mysqlTable("wallet_transactions", {
 
 export type WalletTransaction = typeof walletTransactions.$inferSelect;
 export type InsertWalletTransaction = typeof walletTransactions.$inferInsert;
+
+/**
+ * Discord-to-Minecraft account links created by the verification panel.
+ * One Discord user and one Minecraft UUID can only be linked once.
+ */
+export const discordVerifications = mysqlTable("discord_verifications", {
+  id: int("id").autoincrement().primaryKey(),
+  discordUserId: varchar("discordUserId", { length: 64 }).notNull().unique(),
+  minecraftIGN: varchar("minecraftIGN", { length: 16 }).notNull(),
+  minecraftUuid: varchar("minecraftUuid", { length: 64 }).notNull().unique(),
+  bio: text("bio"),
+  playStyle: varchar("playStyle", { length: 128 }),
+  verifiedAt: timestamp("verifiedAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DiscordVerification = typeof discordVerifications.$inferSelect;
+export type InsertDiscordVerification = typeof discordVerifications.$inferInsert;
