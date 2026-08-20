@@ -1999,3 +1999,27 @@
 [2026-08-20T18:07:49.159Z] [RitzSmpAI] [WARN] Could not create channel 👋│welcome: Error: Expected token to be set for this request, but none was present
 [2026-08-20T18:07:49.523Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
 [2026-08-20T18:07:49.523Z] [RitzSmpAI] [SUCCESS] Executed /help successfully
+[2026-08-20T18:08:58.523Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-20T18:10:27.729Z] [RitzSmpAI] [INFO] Received command /ask from tun_5555
+[2026-08-20T18:10:27.739Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: Error: Invalid string length
+[2026-08-20T18:10:27.762Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: Error: Invalid string length
+[2026-08-20T18:10:30.426Z] [RitzSmpAI] [INFO] Interaction was acknowledged by another handler; continuing with editReply
+[2026-08-20T18:10:30.698Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T18:10:32.961Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T18:10:32.961Z] [RitzSmpAI] [SUCCESS] Executed /ask successfully for question: "ตอนนี้กำลังทำอะไร..."
+[2026-08-20T18:10:33.135Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T18:12:12.727Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: Error: Invalid string length
+[2026-08-20T18:12:15.589Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T18:12:24.442Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: Error: Invalid string length
+[2026-08-20T18:12:24.838Z] [RitzSmpAI] [SUCCESS] Handled onboarding interaction ritz_players_button
+[2026-08-20T18:12:27.826Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T18:15:31.445Z] 6:15:31 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T18:15:32.246Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T18:15:32.565Z] Server running on http://localhost:3000/
+[2026-08-20T18:15:41.182Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-20T18:15:41.183Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-20T18:15:41.184Z] (node:27746) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T18:15:41.184Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T18:15:44.645Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-20T18:15:49.219Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540059969460764764
+[2026-08-20T18:15:52.343Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566

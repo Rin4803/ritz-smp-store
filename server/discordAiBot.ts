@@ -442,11 +442,12 @@ function startDiscordMemberEvents(client: Client) {
 }
 
 export async function handleOnboardingInteraction(interaction: any): Promise<boolean> {
-  if (interaction.isButton()) {
-    if (interaction.customId === "ritz_verify_button") {
-      await showMinecraftModal(interaction, "ritz_verify_modal", "ยืนยันตัวตน RitzSMP");
-      return true;
-    }
+  try {
+    if (interaction.isButton()) {
+      if (interaction.customId === "ritz_verify_button") {
+        await showMinecraftModal(interaction, "ritz_verify_modal", "ยืนยันตัวตน RitzSMP");
+        return true;
+      }
     if (interaction.customId === "ritz_claim_rank_button") {
       const existing = await getDiscordVerification(interaction.user.id);
       if (!existing) {
@@ -490,6 +491,20 @@ export async function handleOnboardingInteraction(interaction: any): Promise<boo
       await updateProfileFromModal(interaction);
       return true;
     }
+  }
+  } catch (err) {
+    pushLog("ERROR", `Error in handleOnboardingInteraction: ${String(err)}`);
+    try {
+      if (interaction.isRepliable()) {
+        const payload = { content: "ระบบได้บันทึกคำขอของคุณแล้วค่ะ 💕 กำลังดำเนินการต่อ", ephemeral: true };
+        if (interaction.deferred || interaction.replied) {
+          await interaction.editReply(payload);
+        } else {
+          await interaction.reply(payload);
+        }
+      }
+    } catch (e) {}
+    return true;
   }
 
   return false;
