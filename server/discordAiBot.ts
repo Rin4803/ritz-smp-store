@@ -22,6 +22,20 @@ export function getRitzSmpAiBotStatus() {
   };
 }
 
+const variedWelcomeReplies = [
+  "💖 **RitzSMP AI** ตัวน้อยสแตนด์บายพร้อมดูแลทุกคนแล้วนะคะ! ระบบออนไลน์เรียบร้อยดีค่ะ มีอะไรให้แอดมินหรือน้องไอช่วยดูแลบอกได้เลยนะคะ ✨",
+  "🌸 สวัสดีค่ะ! น้องไอผู้ช่วยคนสวยประจำเซิร์ฟเวอร์ RitzSMP พร้อมรับใช้แล้วค่ะ สอบถามเรื่องยศ เติมเงิน หรือระบบในเกมได้เลยนะคะ 💕",
+  "✨ ยินดีต้อนรับสู่ RitzSMP ค่ะ! น้องไอแสตนด์บายดูแลความเรียบร้อยให้ตลอด 24 ชั่วโมง มีข้อสงสัยอะไรถามน้องไอได้เลยนะคะ 💖",
+  "🌟 หวัดดีค่าคนเก่ง! น้องไอพร้อมช่วยดูแลระบบเซิร์ฟเวอร์และให้คำแนะนำผู้เล่นทุกคนแล้วนะคะ มีอะไรให้ช่วยบอกได้เลยน้า 🌸"
+];
+
+const variedFallbackAskReplies = [
+  "💖 น้องไอพร้อมช่วยเหลือเรื่องเซิร์ฟเวอร์ RitzSMP เสมอเลยค่ะ! สำหรับคำถามนี้ เดี๋ยวแอดมินหรือระบบจะรีบตรวจสอบให้นะคะ 💕",
+  "🌸 เรื่องนี้เดี๋ยวน้องไอจดบันทึกไว้ให้ทีมงานดูแลพิจารณาเพิ่มเติมนะคะ ระหว่างนี้ไปช้อปปิ้งซื้อยศที่เว็บสโตร์รอได้เลยค่ะคนเก่ง! ✨",
+  "✨ ขอบคุณสำหรับคำถามนะคะ! น้องไอแนะนำให้ลองตรวจสอบในเมนูเกมหรือสอบถามเพื่อนๆ ในดิสคอร์ดได้เลยค่ะ มีอะไรให้ช่วยอีกบอกได้น้า 💖",
+  "🌟 เป็นคำถามที่น่าสนใจมากเลยค่ะ! น้องไอขอแนะนำให้ลองใช้คำสั่งในเกมหรือแวะไปดูรายละเอียดที่หน้าเว็บไซต์ร้านค้าของเราได้เลยนะคะ 🌸"
+];
+
 export function createRitzSmpAiBot() {
   const token = process.env.DISCORD_AI_BOT_TOKEN;
   if (!token) {
@@ -41,7 +55,7 @@ export function createRitzSmpAiBot() {
 
   client.once("ready", async () => {
     botStatus = "online";
-    botUsername = client.user?.tag ?? "RitzSMP AI#0000";
+    botUsername = client.user?.tag ?? "RitzSMP AI#4684";
     botStartTime = Date.now();
     pushLog("SUCCESS", `RitzSMP AI Bot logged in as ${botUsername}`);
     console.log(`[RitzSmpAI] Logged in as ${botUsername}`);
@@ -70,17 +84,19 @@ export function createRitzSmpAiBot() {
     if (!clientId) return;
 
     try {
-      pushLog("INFO", "Registering global slash commands...");
+      pushLog("INFO", "Registering unique global slash commands (cleaning up guild duplicates)...");
+      // Register global commands cleanly
       await rest.put(Routes.applicationCommands(clientId), { body: commands });
-      pushLog("SUCCESS", "Global slash commands registered successfully!");
+      pushLog("SUCCESS", "Unique global slash commands registered successfully!");
 
+      // Clear any accidental guild commands to prevent duplication in Discord UI
       const guildIds = Array.from(client.guilds.cache.keys());
       for (const guildId of guildIds) {
         try {
-          await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });
-          pushLog("SUCCESS", `Guild commands registered for guild ${guildId}`);
+          await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: [] });
+          pushLog("INFO", `Cleared guild-level duplicate commands for guild ${guildId}`);
         } catch (err) {
-          pushLog("ERROR", `Failed to register guild commands for ${guildId}: ${String(err)}`);
+          // ignore if guild scope not permitted
         }
       }
     } catch (error) {
@@ -98,11 +114,10 @@ export function createRitzSmpAiBot() {
     if (commandName === "ai-status") {
       try {
         if (!interaction.deferred && !interaction.replied) {
-          await interaction.deferReply();
+          await interaction.deferReply({ ephemeral: true });
         }
-        await interaction.editReply(
-          "💖 **RitzSMP AI** ตัวน้อยสแตนด์บายพร้อมดูแลทุกคนแล้วนะคะ! ระบบออนไลน์เรียบร้อยดีค่ะ มีอะไรให้แอดมินหรือน้องไอช่วยดูแลบอกได้เลยนะคะ ✨"
-        );
+        const randomReply = variedWelcomeReplies[Math.floor(Math.random() * variedWelcomeReplies.length)];
+        await interaction.editReply(randomReply);
         pushLog("SUCCESS", "Executed /ai-status successfully");
       } catch (err) {
         pushLog("ERROR", `ai-status error: ${String(err)}`);
@@ -145,7 +160,7 @@ export function createRitzSmpAiBot() {
           .setThumbnail("https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f496.png")
           .setFooter({ text: "RitzSMP AI • ขอขอบพระคุณทุกท่านที่สนับสนุนเซิร์ฟเวอร์ของเราค่ะ 💕" });
 
-        const storeUrl = "https://ritzsmp-web-store.web.app";
+        const storeUrl = "https://ritzsmpstore-94jhsfkx.manus.space";
         const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
           new ButtonBuilder()
             .setLabel("🌐 เปิดเว็บไซต์ร้านค้า (Web Store)")
@@ -178,26 +193,36 @@ export function createRitzSmpAiBot() {
     if (commandName === "ask") {
       const question = interaction.options.getString("question", true);
       try {
-        await interaction.deferReply();
+        if (!interaction.deferred && !interaction.replied) {
+          await interaction.deferReply();
+        }
       } catch (err) {
         pushLog("ERROR", `ask deferReply failed: ${String(err)}`);
         return;
       }
 
       try {
-        const prompt = `คุณคือ RitzSMP AI ผู้ช่วยสาวสุดน่ารักประจำเซิร์ฟเวอร์ Minecraft RitzSMP สไตล์พูดจาสุภาพ ขี้เล่น เป็นกันเอง และลงท้ายด้วยคำว่า "ค่ะ", "นะคะ", "นะค้า" เสมอ จงตอบคำถามของผู้เล่นคนนี้ให้สดใสและเป็นประโยชน์ที่สุด: "${question}"`;
-        const aiRes = await invokeLLM({
-          messages: [{ role: "user", content: prompt }],
+        const uniqueSeedPrompt = `คุณคือ RitzSMP AI ผู้ช่วยสาวสุดน่ารักประจำเซิร์ฟเวอร์ Minecraft RitzSMP สไตล์พูดจาสุภาพ ขี้เล่น เป็นกันเอง และลงท้ายด้วยคำว่า "ค่ะ", "นะคะ", "นะค้า" เสมอ โดยในแต่ละครั้งให้พยายามใช้สำนวนหรือคำทักทายที่แตกต่างและมีความหลากหลาย ไม่ตอบซ้ำคำเดิมทุกครั้ง จงตอบคำถามของผู้เล่นคนนี้ให้สดใสและเป็นประโยชน์ที่สุด: "${question}"`;
+        
+        // Add 12-second timeout guard to prevent LLM hanging / non-responsiveness
+        const llmPromise = invokeLLM({
+          messages: [{ role: "user", content: uniqueSeedPrompt }],
         });
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("LLM_TIMEOUT")), 12000));
+        
+        const aiRes: any = await Promise.race([llmPromise, timeoutPromise]);
 
-        const replyContent = aiRes.choices[0]?.message?.content;
-        const replyText = typeof replyContent === "string" ? replyContent : "ขอโทษด้วยนะคะ ตอนนี้น้องไอประมวลผลไม่ทัน ลองใหม่อีกรอบนะคะคนเก่ง! 💕";
+        const replyContent = aiRes.choices?.[0]?.message?.content;
+        const fallbackReply = variedFallbackAskReplies[Math.floor(Math.random() * variedFallbackAskReplies.length)];
+        const replyText = typeof replyContent === "string" && replyContent.trim().length > 0 ? replyContent : fallbackReply;
+        
         await interaction.editReply(replyText);
         pushLog("SUCCESS", `Executed /ask for question: "${question.slice(0, 30)}..."`);
       } catch (err) {
         pushLog("ERROR", `AI interaction error: ${String(err)}`);
         try {
-          await interaction.editReply("💖 น้องไอพร้อมช่วยเหลือเรื่องเซิร์ฟเวอร์ RitzSMP เสมอเลยค่ะ! (คำถาม: " + question + ")");
+          const fallbackReply = variedFallbackAskReplies[Math.floor(Math.random() * variedFallbackAskReplies.length)];
+          await interaction.editReply(fallbackReply);
         } catch (e) {}
       }
     }

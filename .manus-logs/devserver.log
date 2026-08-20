@@ -363,3 +363,54 @@
 [2026-08-20T12:07:28.536Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
 [2026-08-20T12:09:38.918Z] (node:30241) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
 [2026-08-20T12:10:17.262Z] 12:10:17 PM [vite] (client) hmr update /src/index.css
+[2026-08-20T12:17:38.696Z] 12:17:38 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T12:17:40.514Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T12:17:41.218Z] 12:17:41 PM [vite] (client) Re-optimizing dependencies because lockfile has changed
+[2026-08-20T12:17:41.316Z] Server running on http://localhost:3000/
+[2026-08-20T12:17:43.418Z] 12:17:43 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T12:17:45.054Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T12:17:45.748Z] Server running on http://localhost:3000/
+[2026-08-20T12:17:51.228Z] [DiscordBot] Failed to start: DiscordjsError [TokenInvalid]: An invalid token was provided.
+[2026-08-20T12:17:51.228Z] at WebSocketManager.connect (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/websocket/WebSocketManager.js:140:26)
+[2026-08-20T12:17:51.228Z] at Client.login (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/Client.js:229:21)
+[2026-08-20T12:17:51.228Z] at <anonymous> (/home/ubuntu/ritz-smp-store/server/discordBot.ts:422:20)
+[2026-08-20T12:17:51.228Z] at startDiscordStoreBot (/home/ubuntu/ritz-smp-store/server/discordBot.ts:424:5)
+[2026-08-20T12:17:51.228Z] at startServer (/home/ubuntu/ritz-smp-store/server/_core/index.ts:69:3)
+[2026-08-20T12:17:51.228Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-20T12:17:51.228Z] code: 'TokenInvalid'
+[2026-08-20T12:17:51.228Z] }
+[2026-08-20T12:17:57.546Z] [RitzSmpAI] Logged in as RitzSMP AI#4684
+[2026-08-20T12:17:57.551Z] (node:31907) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T12:17:57.551Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T12:18:53.971Z] (node:31907) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-20T12:19:25.915Z] 12:19:25 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T12:19:27.752Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T12:19:28.684Z] Server running on http://localhost:3000/
+[2026-08-20T12:19:34.194Z] [DiscordBot] Failed to start: DiscordjsError [TokenInvalid]: An invalid token was provided.
+[2026-08-20T12:19:34.194Z] at WebSocketManager.connect (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/websocket/WebSocketManager.js:140:26)
+[2026-08-20T12:19:34.194Z] at Client.login (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/Client.js:229:21)
+[2026-08-20T12:19:34.194Z] at <anonymous> (/home/ubuntu/ritz-smp-store/server/discordBot.ts:422:20)
+[2026-08-20T12:19:34.194Z] at startDiscordStoreBot (/home/ubuntu/ritz-smp-store/server/discordBot.ts:424:5)
+[2026-08-20T12:19:34.194Z] at startServer (/home/ubuntu/ritz-smp-store/server/_core/index.ts:69:3)
+[2026-08-20T12:19:34.194Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-20T12:19:34.194Z] code: 'TokenInvalid'
+[2026-08-20T12:19:34.194Z] }
+[2026-08-20T12:19:40.449Z] [RitzSmpAI] Logged in as RitzSMP AI#4684
+[2026-08-20T12:19:40.456Z] (node:32847) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T12:19:40.456Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T12:19:42.924Z] (node:32847) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-20T12:20:21.948Z] 12:20:21 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T12:20:23.803Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T12:20:24.571Z] Server running on http://localhost:3000/
+[2026-08-20T12:20:30.080Z] [DiscordBot] Failed to start: DiscordjsError [TokenInvalid]: An invalid token was provided.
+[2026-08-20T12:20:30.081Z] at WebSocketManager.connect (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/websocket/WebSocketManager.js:140:26)
+[2026-08-20T12:20:30.081Z] at Client.login (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/Client.js:229:21)
+[2026-08-20T12:20:30.081Z] at <anonymous> (/home/ubuntu/ritz-smp-store/server/discordBot.ts:422:20)
+[2026-08-20T12:20:30.081Z] at startDiscordStoreBot (/home/ubuntu/ritz-smp-store/server/discordBot.ts:424:5)
+[2026-08-20T12:20:30.081Z] at startServer (/home/ubuntu/ritz-smp-store/server/_core/index.ts:69:3)
+[2026-08-20T12:20:30.081Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-20T12:20:30.081Z] code: 'TokenInvalid'
+[2026-08-20T12:20:30.081Z] }
+[2026-08-20T12:20:36.202Z] [RitzSmpAI] Logged in as RitzSMP AI#4684
+[2026-08-20T12:20:36.209Z] (node:33314) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T12:20:36.209Z] (Use `node --trace-deprecation ...` to show where the warning was created)
