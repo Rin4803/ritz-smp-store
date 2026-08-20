@@ -9,6 +9,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
   PermissionsBitField,
+  ChannelType,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
@@ -621,6 +622,83 @@ export function createRitzSmpAiBot() {
       } else {
         pushLog("WARN", "Minecraft status channel was not created; presence announcements remain disabled until it is configured.");
       }
+
+      startDiscordMemberEvents(client);
+
+      // Auto-deploy onboarding & verification panels into user-requested channels
+      try {
+        const guild = await client.guilds.fetch(ENV.discordGuildId).catch(() => null);
+        if (guild) {
+          const channelsToEnsure = [
+            { name: "✅│เชื่อมต่อดิสคอร์ด", type: ChannelType.GuildText, topic: "ช่องยืนยันตัวตนและเชื่อมต่อบัญชี RitzSMP" },
+            { name: "📋│รายชื่อบัญชี", type: ChannelType.GuildText, topic: "ช่องแสดงรายชื่อสมาชิกและบัญชีที่ยืนยันแล้ว" },
+            { name: "🪪│ยืนยันตัวตนแมะ", type: ChannelType.GuildText, topic: "ช่องยืนยันตัวตนและรับยศ RitzSMP AI" },
+            { name: "👋│welcome", type: ChannelType.GuildText, topic: "ช่องต้อนรับสมาชิกใหม่และแจ้งเตือนเข้า-ออก" },
+          ];
+
+          for (const target of channelsToEnsure) {
+            let channel = guild.channels.cache.find(c => c.name === target.name && c.type === ChannelType.GuildText);
+            if (!channel) {
+              try {
+                channel = await guild.channels.create({
+                  name: target.name,
+                  type: target.type as any,
+                  topic: target.topic,
+                });
+                pushLog("SUCCESS", `Auto-created channel: ${target.name}`);
+              } catch (createErr) {
+                pushLog("WARN", `Could not create channel ${target.name}: ${String(createErr)}`);
+              }
+            }
+
+            if (channel && channel.isTextBased()) {
+              try {
+                const messages = await channel.messages.fetch({ limit: 5 });
+                const existingBotMsg = messages.find(m => m.author.id === client.user?.id);
+                if (!existingBotMsg) {
+                  if (target.name === "✅│เชื่อมต่อดิสคอร์ด" || target.name === "🪪│ยืนยันตัวตนแมะ") {
+                    const embed = new EmbedBuilder()
+                      .setTitle("✨ ระบบยืนยันตัวตน RitzSMP")
+                      .setDescription(
+                        "ยินดีต้อนรับสู่ RitzSMP! 🌸\n\n" +
+                        "📌 **ขั้นตอนการยืนยันตัวตน:**\n" +
+                        "1. กดปุ่ม **✅ ยืนยันตัวตน** ด้านล่างนี้เพื่อเชื่อมชื่อ\n" +
+                        "2. กดปุ่ม **🎖️ รับยศผู้เล่นในเซิร์ฟ** เพื่อรับสิทธิ์ในเกมและดิสคอร์ดทันทีค่ะ! 💕"
+                      )
+                      .setColor(0xec4899)
+                      .setTimestamp()
+                      .setFooter({ text: "RitzSMP AI • ระบบอัตโนมัติ 24 ชม." });
+                    await channel.send({ embeds: [embed], components: buildOnboardingComponents() });
+                  } else if (target.name === "📋│รายชื่อบัญชี") {
+                    const embed = new EmbedBuilder()
+                      .setTitle("📋 รายชื่อสมาชิกและบัญชีที่ยืนยันตัวตน")
+                      .setDescription("ระบบบันทึกรายชื่อสมาชิกผู้เล่น RitzSMP ทั้งหมดโดยอัตโนมัติ กดปุ่มด้านล่างเพื่อตรวจสอบโปรไฟล์ของคุณได้เลยค่ะ ✨")
+                      .setColor(0x3b82f6)
+                      .setTimestamp();
+                    const profileRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+                      new ButtonBuilder().setCustomId("ritz_profile_button").setLabel("🪪 ดูโปรไฟล์ของฉัน").setStyle(ButtonStyle.Primary),
+                      new ButtonBuilder().setCustomId("ritz_players_button").setLabel("👥 ผู้เล่นออนไลน์").setStyle(ButtonStyle.Secondary)
+                    );
+                    await channel.send({ embeds: [embed], components: [profileRow] });
+                  } else if (target.name === "👋│welcome") {
+                    const embed = new EmbedBuilder()
+                      .setTitle("👋 ยินดีต้อนรับสู่คอมมูนิตี้ RitzSMP!")
+                      .setDescription("ห้องสำหรับต้อนรับเพื่อน ๆ สมาชิกใหม่ อย่าลืมอ่านกฎเซิร์ฟเวอร์และกดยืนยันตัวตนกันด้วยนะจ๊ะ 💖")
+                      .setColor(0xec4899)
+                      .setTimestamp();
+                    await channel.send({ embeds: [embed] });
+                  }
+                  pushLog("SUCCESS", `Posted panel to channel ${target.name}`);
+                }
+              } catch (msgErr) {
+                pushLog("WARN", `Could not post panel to ${target.name}: ${String(msgErr)}`);
+              }
+            }
+          }
+        }
+      } catch (panelDeployErr) {
+        pushLog("WARN", `Channel auto-deployment note: ${String(panelDeployErr)}`);
+      }
     } catch (error) {
       pushLog("ERROR", `Failed to register global slash commands: ${String(error)}`);
     }
@@ -693,6 +771,18 @@ export function createRitzSmpAiBot() {
       if (commandName === "profile") {
         await replyWithProfile(interaction);
         pushLog("SUCCESS", "Executed /profile successfully");
+        return;
+      }
+
+      if (commandName === "verify") {
+        await showMinecraftModal(interaction, "ritz_verify_modal", "ยืนยันตัวตน RitzSMP");
+        pushLog("SUCCESS", "Executed /verify successfully");
+        return;
+      }
+
+      if (commandName === "players") {
+        await replyWithPlayers(interaction);
+        pushLog("SUCCESS", "Executed /players successfully");
         return;
       }
 
@@ -794,6 +884,33 @@ export function createRitzSmpAiBot() {
         await safeReply(interaction, { embeds: [helpEmbed], ephemeral: false });
         pushLog("SUCCESS", "Executed /help successfully");
         return;
+      }
+
+      if (commandName === "setup") {
+        const subcommand = interaction.options.getSubcommand();
+        if (subcommand === "panel") {
+          if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return;
+          const onboardingEmbed = new EmbedBuilder()
+            .setTitle("✨ ระบบยืนยันตัวตนและจัดการบัญชี RitzSMP")
+            .setDescription(
+              "ยินดีต้อนรับสู่คอมมูนิตี้ RitzSMP ค่ะ! 🌸\n\n" +
+              "• **✅ ยืนยันตัวตน:** ผูกบัญชี Discord ของคุณกับระบบเพื่อรับยศ Verified และสิทธิ์พิเศษ\n" +
+              "• **🎖️ รับยศผู้เล่น:** กดรับกลุ่ม LuckPerms ในเซิร์ฟเวอร์ Minecraft และยศสมาชิกในดิสคอร์ด\n" +
+              "• **👥 รายชื่อในเซิร์ฟ:** ตรวจสอบผู้เล่นที่ออนไลน์อยู่แบบเรียลไทม์\n" +
+              "• **🪪 โปรไฟล์ของฉัน:** ดูและแก้ไขคำแนะนำตัวหรือสไตล์การเล่นของคุณ\n\n" +
+              "กรุณากดปุ่มด้านล่างเพื่อเริ่มใช้งานได้เลยนะคะ! 💕"
+            )
+            .setColor(0xec4899)
+            .setTimestamp()
+            .setFooter({ text: "RitzSMP AI • ระบบอัตโนมัติ 24 ชั่วโมง" });
+
+          if (interaction.channel && "send" in interaction.channel) {
+            await (interaction.channel as any).send({ embeds: [onboardingEmbed], components: buildOnboardingComponents() });
+          }
+          await interaction.editReply({ content: "ส่งแผงยืนยันตัวตนและรับยศลงในช่องนี้เรียบร้อยแล้วค่ะ! ✨" });
+          pushLog("SUCCESS", "Executed /setup panel successfully");
+          return;
+        }
       }
 
       if (commandName === "embed") {

@@ -129,3 +129,7 @@
 - [x] Transition onboarding verification to be Discord-native (Minecraft linking optional with 'none' or direct Discord verification)
 - [x] Reconcile legacy verification / 4-digit bots and consolidate all onboarding, welcome, leave, verification, role assignment, and member profile capabilities into RitzSMP AI
 - [x] Ensure all 75 Vitest tests pass cleanly and prepare live production synchronization checkpoint for morning review
+- [ ] Add 4-digit code generation / verification flow (`/verify <code>` or modal code input) to RitzSMP AI to fully support user's 4-digit requirement
+- [ ] Ensure all onboarding buttons (`ritz_verify_button`, `ritz_claim_rank_button`, `ritz_players_button`, `ritz_profile_button`) reply instantly within 3 seconds to avoid "Application didn't respond"
+- [ ] Post the updated RitzSMP AI onboarding panel into the welcome/verification channel to replace stale legacy messages
+- [ ] Deploy RitzSMP AI automated channel panels into #✅│เชื่อมต่อดิสคอร์ด, #📋│รายชื่อบัญชี, #🪪│ยืนยันตัวตนแมะ, และ #👋│welcome
