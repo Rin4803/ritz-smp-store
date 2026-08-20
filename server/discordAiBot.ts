@@ -69,6 +69,25 @@ export function createRitzSmpAiBot() {
     ],
   });
 
+  client.on("error", (error) => {
+    pushLog("ERROR", `Discord client error: ${String(error)}`);
+    console.error("[RitzSmpAI] Discord client error:", error);
+  });
+
+  client.on("warn", (warn) => {
+    pushLog("WARN", `Discord client warn: ${String(warn)}`);
+  });
+
+  client.on("disconnect", () => {
+    botStatus = "offline";
+    pushLog("WARN", "Discord client disconnected.");
+  });
+
+  client.on("reconnecting", () => {
+    botStatus = "connecting";
+    pushLog("INFO", "Discord client reconnecting...");
+  });
+
   client.once("ready", async () => {
     botStatus = "online";
     botUsername = client.user?.tag ?? "RitzSMP AI#4684";
@@ -275,7 +294,7 @@ export function createRitzSmpAiBot() {
 
     if (commandName === "embed") {
       try {
-        // Instant reply without waiting for LLM
+        // Instant public reply so everyone in the channel sees the announcement immediately without waiting
         const embed = new EmbedBuilder()
           .setTitle("💖 ช่องทางโดเนทและวิธีใช้งาน RitzSMP Store")
           .setDescription(
@@ -307,17 +326,12 @@ export function createRitzSmpAiBot() {
             .setURL(storeUrl)
         );
 
-        if (interaction.channel && "send" in interaction.channel && typeof interaction.channel.send === "function") {
-          await interaction.channel.send({ embeds: [embed], components: [row] });
-          await interaction.reply({ content: "✨ น้องไอส่งข้อความ Embed ประกาศร้านค้าลงในห้องนี้เรียบร้อยแล้วค่ะ! 💖", ephemeral: true });
-        } else {
-          await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
-        }
-        pushLog("SUCCESS", "Executed /embed successfully instantly");
+        await interaction.reply({ embeds: [embed], components: [row], ephemeral: false });
+        pushLog("SUCCESS", "Executed /embed successfully instantly (public)");
       } catch (err) {
         pushLog("ERROR", `embed command error: ${String(err)}`);
         try {
-          if (!interaction.replied) {
+          if (!interaction.replied && !interaction.deferred) {
             await interaction.reply({ content: "ขอโทษด้วยนะคะ เกิดข้อผิดพลาดในการสร้างข้อความ Embed ค่ะ 🥺", ephemeral: true });
           }
         } catch (e) {}
@@ -328,7 +342,7 @@ export function createRitzSmpAiBot() {
     if (commandName === "ask") {
       const question = interaction.options.getString("question", true);
       try {
-        await interaction.deferReply();
+        await interaction.deferReply({ ephemeral: false });
       } catch (err) {
         pushLog("ERROR", `ask deferReply failed: ${String(err)}`);
         return;
