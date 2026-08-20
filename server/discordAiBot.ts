@@ -92,10 +92,16 @@ export async function safeReply(interaction: any, options: any): Promise<boolean
   if (!interaction) return false;
   if (typeof interaction.isRepliable === "function" && !interaction.isRepliable()) return false;
   try {
+    let payload = options;
+    if (typeof options === "string") {
+      payload = { content: options.length > 1950 ? options.slice(0, 1900) + "\n...(ถูกตัดทอนความยาว)" : options };
+    } else if (options && typeof options === "object" && typeof options.content === "string" && options.content.length > 1950) {
+      payload = { ...options, content: options.content.slice(0, 1900) + "\n...(ถูกตัดทอนความยาว)" };
+    }
     if (interaction.deferred || interaction.replied) {
-      await interaction.editReply(options);
+      await interaction.editReply(payload);
     } else {
-      await interaction.reply(options);
+      await interaction.reply(payload);
     }
     return true;
   } catch (error) {

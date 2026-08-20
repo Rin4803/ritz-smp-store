@@ -1980,3 +1980,22 @@
 [2026-08-20T18:00:15.746Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: Error: Invalid string length
 [2026-08-20T18:00:17.511Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
 [2026-08-20T18:05:36.653Z] 6:05:36 PM [vite] (client) hmr update /src/index.css
+[2026-08-20T18:07:12.935Z] 6:07:12 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T18:07:13.645Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T18:07:13.950Z] Server running on http://localhost:3000/
+[2026-08-20T18:07:40.470Z] [RitzSmpAI] [ERROR] Discord login failed: Unexpected server response: 525
+[2026-08-20T18:07:45.367Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-20T18:07:45.368Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-20T18:07:45.369Z] (node:25622) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T18:07:45.369Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T18:07:45.463Z] [RitzSmpAI] [INFO] Received command /help from tun_5555
+[2026-08-20T18:07:45.466Z] (node:25622) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-20T18:07:49.157Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-20T18:07:49.158Z] [RitzSmpAI] [WARN] Dedicated music channel was not created; check DISCORD_GUILD_ID and Manage Channels permission.
+[2026-08-20T18:07:49.158Z] [RitzSmpAI] [WARN] Minecraft status channel was not created; presence announcements remain disabled until it is configured.
+[2026-08-20T18:07:49.158Z] [RitzSmpAI] [WARN] Could not create channel ✅│เชื่อมต่อดิสคอร์ด: Error: Expected token to be set for this request, but none was present
+[2026-08-20T18:07:49.158Z] [RitzSmpAI] [WARN] Could not create channel 📋│รายชื่อบัญชี: Error: Expected token to be set for this request, but none was present
+[2026-08-20T18:07:49.159Z] [RitzSmpAI] [WARN] Could not create channel 🪪│ยืนยันตัวตนแมะ: Error: Expected token to be set for this request, but none was present
+[2026-08-20T18:07:49.159Z] [RitzSmpAI] [WARN] Could not create channel 👋│welcome: Error: Expected token to be set for this request, but none was present
+[2026-08-20T18:07:49.523Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T18:07:49.523Z] [RitzSmpAI] [SUCCESS] Executed /help successfully

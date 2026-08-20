@@ -145,3 +145,8 @@
 - [x] Implement Server Selection and Management UI in web platform
 - [x] Implement dynamic bot configuration per server (Discord tokens, RCON, channel mapping)
 - [x] Validate tenant isolation, tests, and deployment readiness
+- [ ] Inspect startup channel recovery in server/discordAiBot.ts
+- [ ] Ensure deleted channels are automatically recreated and repopulated upon bot restart
+- [ ] Fix string length / message size error handling in Discord embeds and responses
+- [x] Implement robust startup channel auto-recreation and idempotent panel publishing in RitzSMP AI
+- [x] Harden ensureDeferredReply and safeReply against InteractionNotReplied and string length limits
