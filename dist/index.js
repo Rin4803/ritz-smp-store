@@ -898,53 +898,115 @@ var appRouter = router({
         transactions
       };
     }),
-    createOrder: protectedProcedure.input(
+    createTopup: protectedProcedure.input(
       z.object({
-        rankId: z.number().int().positive(),
-        minecraftIGN: z.string().trim().min(3, "\u0E01\u0E23\u0E38\u0E13\u0E32\u0E23\u0E30\u0E1A\u0E38\u0E0A\u0E37\u0E48\u0E2D\u0E43\u0E19\u0E40\u0E01\u0E21").max(64),
+        amount: z.number().positive("\u0E01\u0E23\u0E38\u0E13\u0E32\u0E23\u0E30\u0E1A\u0E38\u0E08\u0E33\u0E19\u0E27\u0E19\u0E40\u0E07\u0E34\u0E19\u0E17\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E40\u0E15\u0E34\u0E21"),
         paymentMethod: z.enum(["\u0E18\u0E19\u0E32\u0E04\u0E32\u0E23\u0E2D\u0E2D\u0E21\u0E2A\u0E34\u0E19", "PromptPay", "TrueMoney Wallet"]),
         slipData: z.string().min(100).max(85e5),
-        slipName: z.string().max(160).default("payment-slip"),
+        slipName: z.string().max(160).default("topup-slip"),
         slipType: z.enum(allowedSlipTypes)
       })
     ).mutation(async ({ ctx, input }) => {
-      const rank2 = await getRankById(input.rankId);
-      if (!rank2) {
-        throw new TRPCError3({ code: "NOT_FOUND", message: "\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E22\u0E28\u0E17\u0E35\u0E48\u0E40\u0E25\u0E37\u0E2D\u0E01" });
-      }
-      const amount = Number(rank2.price);
-      if (!Number.isFinite(amount) || amount <= 0) {
-        throw new TRPCError3({
-          code: "PRECONDITION_FAILED",
-          message: "\u0E22\u0E28\u0E19\u0E35\u0E49\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E23\u0E32\u0E04\u0E32\u0E08\u0E23\u0E34\u0E07 \u0E01\u0E23\u0E38\u0E13\u0E32\u0E15\u0E34\u0E14\u0E15\u0E48\u0E2D\u0E40\u0E08\u0E49\u0E32\u0E02\u0E2D\u0E07\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C"
-        });
+      const amountNum = Number(input.amount);
+      if (!Number.isFinite(amountNum) || amountNum <= 0) {
+        throw new TRPCError3({ code: "BAD_REQUEST", message: "\u0E08\u0E33\u0E19\u0E27\u0E19\u0E40\u0E07\u0E34\u0E19\u0E40\u0E15\u0E34\u0E21\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07" });
       }
       const { buffer, slipType } = decodeSlip(input.slipData, input.slipType);
       const fileName = `${Date.now()}-${sanitizeFileName(input.slipName)}`;
-      const stored = await storagePut(`orders/${ctx.user.id}/${fileName}`, buffer, slipType);
+      const stored = await storagePut(`topups/${ctx.user.id}/${fileName}`, buffer, slipType);
       const order = await createOrder({
         userId: ctx.user.id,
-        minecraftIGN: input.minecraftIGN,
-        rankId: rank2.id,
-        rankName: rank2.displayName,
-        amount: rank2.price,
+        minecraftIGN: ctx.user.name ?? "TopupUser",
+        rankId: 0,
+        rankName: `\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19\u0E40\u0E02\u0E49\u0E32\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32 (${amountNum} \u0E1A\u0E32\u0E17)`,
+        amount: amountNum.toFixed(2),
         paymentMethod: input.paymentMethod,
         slipUrl: stored.url,
         slipKey: stored.key,
         status: "\u0E23\u0E2D\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A"
       });
       const notificationSent = await notifyOwner({
-        title: `RitzSMP: \u0E21\u0E35\u0E2D\u0E2D\u0E40\u0E14\u0E2D\u0E23\u0E4C\u0E43\u0E2B\u0E21\u0E48 #${order.id}`,
+        title: `RitzSMP: \u0E41\u0E08\u0E49\u0E07\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19\u0E43\u0E2B\u0E21\u0E48 #${order.id}`,
         content: [
-          `IGN: ${order.minecraftIGN}`,
-          `\u0E22\u0E28: ${order.rankName}`,
-          `\u0E22\u0E2D\u0E14\u0E0A\u0E33\u0E23\u0E30: ${order.amount} \u0E1A\u0E32\u0E17`,
+          `\u0E1C\u0E39\u0E49\u0E43\u0E0A\u0E49: ${ctx.user.name ?? "\u0E44\u0E21\u0E48\u0E23\u0E30\u0E1A\u0E38\u0E0A\u0E37\u0E48\u0E2D"}`,
+          `\u0E22\u0E2D\u0E14\u0E40\u0E15\u0E34\u0E21: ${order.amount} \u0E1A\u0E32\u0E17`,
           `\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07: ${order.paymentMethod}`,
-          `\u0E1C\u0E39\u0E49\u0E2A\u0E31\u0E48\u0E07\u0E0B\u0E37\u0E49\u0E2D: ${ctx.user.name ?? "\u0E44\u0E21\u0E48\u0E23\u0E30\u0E1A\u0E38\u0E0A\u0E37\u0E48\u0E2D"} (${ctx.user.email ?? "\u0E44\u0E21\u0E48\u0E21\u0E35\u0E2D\u0E35\u0E40\u0E21\u0E25"})`,
           `\u0E2A\u0E16\u0E32\u0E19\u0E30: ${order.status}`
         ].join("\n")
       });
       return { order, notificationSent };
+    }),
+    purchaseRank: protectedProcedure.input(
+      z.object({
+        rankId: z.number().int().positive(),
+        minecraftIGN: z.string().trim().min(3, "\u0E01\u0E23\u0E38\u0E13\u0E32\u0E23\u0E30\u0E1A\u0E38\u0E0A\u0E37\u0E48\u0E2D\u0E43\u0E19\u0E40\u0E01\u0E21").max(64)
+      })
+    ).mutation(async ({ ctx, input }) => {
+      const rank2 = await getRankById(input.rankId);
+      if (!rank2) {
+        throw new TRPCError3({ code: "NOT_FOUND", message: "\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E22\u0E28\u0E17\u0E35\u0E48\u0E40\u0E25\u0E37\u0E2D\u0E01" });
+      }
+      const priceNum = Number(rank2.price);
+      if (!Number.isFinite(priceNum) || priceNum <= 0) {
+        throw new TRPCError3({ code: "PRECONDITION_FAILED", message: "\u0E22\u0E28\u0E19\u0E35\u0E49\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E23\u0E32\u0E04\u0E32\u0E08\u0E23\u0E34\u0E07" });
+      }
+      const wallet = await getUserWallet(ctx.user.id);
+      const currentBalance = Number(wallet.balance);
+      if (currentBalance < priceNum) {
+        throw new TRPCError3({
+          code: "PRECONDITION_FAILED",
+          message: `\u0E22\u0E2D\u0E14\u0E40\u0E07\u0E34\u0E19\u0E43\u0E19\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E44\u0E21\u0E48\u0E1E\u0E2D (\u0E21\u0E35\u0E2D\u0E22\u0E39\u0E48 ${currentBalance.toLocaleString("th-TH")} \u0E1A\u0E32\u0E17, \u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23 ${priceNum.toLocaleString("th-TH")} \u0E1A\u0E32\u0E17) \u0E01\u0E23\u0E38\u0E13\u0E32\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19\u0E01\u0E48\u0E2D\u0E19\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28`
+        });
+      }
+      const refKey = `purchase-rank-${ctx.user.id}-${rank2.id}-${Date.now()}`;
+      await adjustUserBalance(
+        ctx.user.id,
+        -priceNum,
+        "purchase",
+        `\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28 ${rank2.displayName} \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A IGN: ${input.minecraftIGN}`,
+        refKey
+      );
+      const cmd = `lp user ${input.minecraftIGN} parent add ${rank2.name.toLowerCase()}`;
+      let rconDetail = "\u0E44\u0E21\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E43\u0E0A\u0E49 RCON";
+      let rconExecuted = false;
+      if (ENV.rconHost && ENV.rconPort && ENV.rconPassword) {
+        let rcon;
+        try {
+          rcon = await Rcon.connect({ host: ENV.rconHost, port: ENV.rconPort, password: ENV.rconPassword });
+          const res = await rcon.send(cmd);
+          rconExecuted = true;
+          rconDetail = res || "RCON \u0E21\u0E2D\u0E1A\u0E22\u0E28\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08";
+        } catch (err) {
+          console.error("[RCON] Purchase rank auto-fulfillment error:", err);
+          rconDetail = `RCON \u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08 (${err?.message ?? String(err)} \u0E41\u0E15\u0E48\u0E2B\u0E31\u0E01\u0E40\u0E07\u0E34\u0E19\u0E41\u0E25\u0E30\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E2D\u0E2D\u0E40\u0E14\u0E2D\u0E23\u0E4C\u0E41\u0E25\u0E49\u0E27)`;
+        } finally {
+          await rcon?.end().catch(() => void 0);
+        }
+      }
+      const order = await createOrder({
+        userId: ctx.user.id,
+        minecraftIGN: input.minecraftIGN,
+        rankId: rank2.id,
+        rankName: rank2.displayName,
+        amount: rank2.price,
+        paymentMethod: "\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E40\u0E07\u0E34\u0E19 (Wallet)",
+        slipUrl: "https://ritzsmp.me/wallet-paid",
+        slipKey: "wallet-paid",
+        status: "\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08",
+        adminNotes: `\u0E2B\u0E31\u0E01\u0E40\u0E07\u0E34\u0E19\u0E08\u0E32\u0E01\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34 [${rconDetail}]`
+      });
+      await notifyOwner({
+        title: `RitzSMP: \u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08 #${order.id} (${rank2.displayName})`,
+        content: [
+          `IGN: ${input.minecraftIGN}`,
+          `\u0E1C\u0E39\u0E49\u0E0B\u0E37\u0E49\u0E2D: ${ctx.user.name ?? "\u0E44\u0E21\u0E48\u0E23\u0E30\u0E1A\u0E38\u0E0A\u0E37\u0E48\u0E2D"}`,
+          `\u0E22\u0E28: ${rank2.displayName}`,
+          `\u0E23\u0E32\u0E04\u0E32: ${rank2.price} \u0E1A\u0E32\u0E17`,
+          `RCON: ${rconExecuted ? "\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08" : "\u0E23\u0E2D\u0E14\u0E33\u0E40\u0E19\u0E34\u0E19\u0E01\u0E32\u0E23"}`
+        ].join("\n")
+      }).catch(() => {
+      });
+      return { order, rconExecuted, rconDetail };
     })
   }),
   admin: router({
