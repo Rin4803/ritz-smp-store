@@ -77,11 +77,11 @@
 - [x] เพิ่มโปรไฟล์สมาชิก RitzSMP ใน Discord แสดง Discord tag, Minecraft IGN, UUID, รูปสกิน/อวตาร, สถานะยืนยัน และยศ
 - [x] เพิ่มฟอร์มแก้ไขโปรไฟล์สำหรับคำแนะนำตัวและสไตล์การเล่น พร้อมปุ่มดู/แก้ไขจากแผงสมาชิก
 - [x] เชื่อมโปรไฟล์กับระบบยืนยันตัวตน รายชื่อผู้เล่น และการรับยศ พร้อมทดสอบป้องกันข้อมูลของสมาชิกคนอื่นรั่วไหล
-- [ ] สร้างและทดสอบกลไกตรวจจับผู้เล่น Minecraft เข้า/ออกจริง (polling/query หรือ event bridge) แล้วส่งประกาศไปยัง Discord channel ที่ตั้งค่าได้
-- [ ] เพิ่ม/ทดสอบการให้ Verified Role และการกันกดยืนยันซ้ำแบบ end-to-end
-- [ ] เพิ่ม Vitest ครอบคลุม flow ใหม่ทั้งหมด: verify, claim rank, player list, join/leave announcement, profile view/edit
-- [ ] เพิ่ม tests/guards ด้าน privacy เพื่อยืนยันว่าผู้ใช้ไม่สามารถดูหรือแก้ไขโปรไฟล์ของสมาชิกคนอื่นได้
-- [ ] เพิ่มสิทธิ์ผู้ดูแลระบบให้บัญชี Nongmodeknarak@gmail.com และตรวจสอบ role หลังอัปเดต
+- [x] สร้างและทดสอบกลไกตรวจจับผู้เล่น Minecraft เข้า/ออกจริง (polling/query หรือ event bridge) แล้วส่งประกาศไปยัง Discord channel ที่ตั้งค่าได้
+- [x] เพิ่ม/ทดสอบการให้ Verified Role และการกันกดยืนยันซ้ำแบบ end-to-end
+- [x] เพิ่ม Vitest ครอบคลุม flow ใหม่ทั้งหมด: verify, claim rank, player list, join/leave announcement, profile view/edit
+- [x] เพิ่ม tests/guards ด้าน privacy เพื่อยืนยันว่าผู้ใช้ไม่สามารถดูหรือแก้ไขโปรไฟล์ของสมาชิกคนอื่นได้
+- [x] เลื่อนการเพิ่มสิทธิ์ผู้ดูแลระบบให้บัญชี Nongmodeknarak@gmail.com ตามคำขอ เพื่อให้ Owner ทดสอบการเพิ่มด้วยตนเองภายหลัง
 - [x] กำหนด `optun2264@gmail.com` เป็น Owner ระดับสูงสุดของเว็บ และห้ามบัญชีอื่นยึดสิทธิ์ Owner
 - [x] เพิ่มหน้า/แผงจัดการสมาชิกให้ Owner เพิ่มหรือปลด role Admin ได้จากเว็บ
 - [x] ป้องกันไม่ให้ Admin เพิ่ม/ปลด Admin คนอื่น ยกระดับตัวเอง หรือปลด Owner ได้
@@ -89,9 +89,9 @@
 
 - [x] Persist Minecraft presence snapshots and Heartbeat task identity for reliable join/leave detection across stateless deployments
 - [x] Mount and validate the authenticated `/api/scheduled/minecraft-presence` callback
-- [ ] Create the project-level Heartbeat job for periodic Minecraft presence polling after deployment
+- [x] Create the project-level Heartbeat job for periodic Minecraft presence polling after deployment
 
 - [x] Keep `Nongmodeknarak@gmail.com` unpromoted so the Owner can test manual promotion later
-- [ ] Stop/restart the website services and validate the rebuilt deployment before the final checkpoint publication
+- [x] Stop/restart the website services and validate the rebuilt deployment before the final checkpoint publication
 - [x] Add a Vitest or HTTP integration test for the scheduled presence route covering non-cron rejection and cron orphan handling
-- [ ] Run a manual or automated request against the scheduled presence route after restart/deployment
+- [x] Run a manual or automated request against the scheduled presence route after restart/deployment

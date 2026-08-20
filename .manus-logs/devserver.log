@@ -1337,3 +1337,71 @@
 [2026-08-20T16:21:59.577Z] (Use `node --trace-deprecation ...` to show where the warning was created)
 [2026-08-20T16:22:00.268Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
 [2026-08-20T16:22:32.592Z] 4:22:32 PM [vite] (client) hmr update /src/index.css
+[2026-08-20T16:24:30.511Z] 4:24:30 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T16:24:31.427Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T16:24:31.765Z] Server running on http://localhost:3000/
+[2026-08-20T16:24:33.183Z] [DiscordBot] Failed to start: DiscordjsError [TokenInvalid]: An invalid token was provided.
+[2026-08-20T16:24:33.183Z] at WebSocketManager.connect (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/websocket/WebSocketManager.js:140:26)
+[2026-08-20T16:24:33.183Z] at Client.login (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/Client.js:229:21)
+[2026-08-20T16:24:33.183Z] at <anonymous> (/home/ubuntu/ritz-smp-store/server/discordBot.ts:422:20)
+[2026-08-20T16:24:33.183Z] at startDiscordStoreBot (/home/ubuntu/ritz-smp-store/server/discordBot.ts:424:5)
+[2026-08-20T16:24:33.183Z] at startServer (/home/ubuntu/ritz-smp-store/server/_core/index.ts:73:3)
+[2026-08-20T16:24:33.183Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-20T16:24:33.183Z] code: 'TokenInvalid'
+[2026-08-20T16:24:33.183Z] }
+[2026-08-20T16:24:35.255Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-20T16:24:35.257Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-20T16:24:35.257Z] (node:5302) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T16:24:35.257Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T16:24:35.822Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-20T16:26:59.350Z] 4:26:59 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T16:27:00.226Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T16:27:00.595Z] Server running on http://localhost:3000/
+[2026-08-20T16:27:01.734Z] [DiscordBot] Failed to start: DiscordjsError [TokenInvalid]: An invalid token was provided.
+[2026-08-20T16:27:01.734Z] at WebSocketManager.connect (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/websocket/WebSocketManager.js:140:26)
+[2026-08-20T16:27:01.734Z] at Client.login (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/Client.js:229:21)
+[2026-08-20T16:27:01.734Z] at <anonymous> (/home/ubuntu/ritz-smp-store/server/discordBot.ts:422:20)
+[2026-08-20T16:27:01.734Z] at startDiscordStoreBot (/home/ubuntu/ritz-smp-store/server/discordBot.ts:424:5)
+[2026-08-20T16:27:01.734Z] at startServer (/home/ubuntu/ritz-smp-store/server/_core/index.ts:73:3)
+[2026-08-20T16:27:01.734Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-20T16:27:01.734Z] code: 'TokenInvalid'
+[2026-08-20T16:27:01.734Z] }
+[2026-08-20T16:27:03.865Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-20T16:27:03.867Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-20T16:27:03.868Z] (node:6142) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T16:27:03.868Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T16:27:04.420Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-20T16:28:32.174Z] 4:28:32 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T16:28:33.114Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T16:28:33.435Z] Server running on http://localhost:3000/
+[2026-08-20T16:28:34.611Z] [DiscordBot] Failed to start: DiscordjsError [TokenInvalid]: An invalid token was provided.
+[2026-08-20T16:28:34.611Z] at WebSocketManager.connect (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/websocket/WebSocketManager.js:140:26)
+[2026-08-20T16:28:34.611Z] at Client.login (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/Client.js:229:21)
+[2026-08-20T16:28:34.611Z] at <anonymous> (/home/ubuntu/ritz-smp-store/server/discordBot.ts:422:20)
+[2026-08-20T16:28:34.611Z] at startDiscordStoreBot (/home/ubuntu/ritz-smp-store/server/discordBot.ts:424:5)
+[2026-08-20T16:28:34.611Z] at startServer (/home/ubuntu/ritz-smp-store/server/_core/index.ts:73:3)
+[2026-08-20T16:28:34.611Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-20T16:28:34.611Z] code: 'TokenInvalid'
+[2026-08-20T16:28:34.611Z] }
+[2026-08-20T16:28:36.729Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-20T16:28:36.731Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-20T16:28:36.732Z] (node:6947) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T16:28:36.732Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T16:28:37.530Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-20T16:28:42.614Z] 4:28:42 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T16:28:43.415Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T16:28:43.775Z] Server running on http://localhost:3000/
+[2026-08-20T16:28:44.904Z] [DiscordBot] Failed to start: DiscordjsError [TokenInvalid]: An invalid token was provided.
+[2026-08-20T16:28:44.904Z] at WebSocketManager.connect (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/websocket/WebSocketManager.js:140:26)
+[2026-08-20T16:28:44.904Z] at Client.login (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/Client.js:229:21)
+[2026-08-20T16:28:44.904Z] at <anonymous> (/home/ubuntu/ritz-smp-store/server/discordBot.ts:422:20)
+[2026-08-20T16:28:44.904Z] at startDiscordStoreBot (/home/ubuntu/ritz-smp-store/server/discordBot.ts:424:5)
+[2026-08-20T16:28:44.904Z] at startServer (/home/ubuntu/ritz-smp-store/server/_core/index.ts:73:3)
+[2026-08-20T16:28:44.904Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-20T16:28:44.904Z] code: 'TokenInvalid'
+[2026-08-20T16:28:44.904Z] }
+[2026-08-20T16:28:47.704Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-20T16:28:47.706Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-20T16:28:47.707Z] (node:6983) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T16:28:47.707Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T16:28:48.306Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.

@@ -145,7 +145,7 @@ async function sendToDiscordChannel(client: Client, channelId: string, payload: 
   }
 }
 
-async function addConfiguredRole(interaction: any, roleId: string, reason: string): Promise<boolean> {
+export async function addConfiguredRole(interaction: any, roleId: string, reason: string): Promise<boolean> {
   if (!roleId || !interaction.guild) return false;
   try {
     const member = await interaction.guild.members.fetch(interaction.user.id);
@@ -157,6 +157,17 @@ async function addConfiguredRole(interaction: any, roleId: string, reason: strin
     pushLog("WARN", `Could not add configured Discord role ${roleId}: ${String(error)}`);
     return false;
   }
+}
+
+export function getVerificationConflict(
+  existingForDiscord: { discordUserId: string; minecraftUuid: string } | undefined,
+  existingForMinecraft: { discordUserId: string; minecraftUuid: string } | undefined,
+  discordUserId: string,
+  minecraftUuid: string,
+) {
+  if (existingForMinecraft && existingForMinecraft.discordUserId !== discordUserId) return "minecraft-linked-to-other-discord" as const;
+  if (existingForDiscord && existingForDiscord.minecraftUuid !== minecraftUuid) return "discord-linked-to-other-minecraft" as const;
+  return null;
 }
 
 async function verifyMinecraftAccount(interaction: any, shouldClaimRank: boolean) {
@@ -171,12 +182,13 @@ async function verifyMinecraftAccount(interaction: any, shouldClaimRank: boolean
   try {
     const existingForDiscord = await getDiscordVerification(interaction.user.id);
     const existingForMinecraft = await getDiscordVerificationByMinecraftUuid(profile.id);
-    if (existingForMinecraft && existingForMinecraft.discordUserId !== interaction.user.id) {
+    const verificationConflict = getVerificationConflict(existingForDiscord, existingForMinecraft, interaction.user.id, profile.id);
+    if (verificationConflict === "minecraft-linked-to-other-discord") {
       await interaction.editReply("ชื่อ Minecraft นี้ถูกเชื่อมกับ Discord อื่นแล้วค่ะ หากเป็นเจ้าของบัญชีจริงกรุณาติดต่อทีมงาน");
       return;
     }
-    if (existingForDiscord && existingForDiscord.minecraftUuid !== profile.id) {
-      await interaction.editReply(`Discord นี้เชื่อมกับ Minecraft ชื่อ **${existingForDiscord.minecraftIGN}** อยู่แล้วค่ะ`);
+    if (verificationConflict === "discord-linked-to-other-minecraft") {
+      await interaction.editReply(`Discord นี้เชื่อมกับ Minecraft ชื่อ **${existingForDiscord!.minecraftIGN}** อยู่แล้วค่ะ`);
       return;
     }
     if (!existingForDiscord) {
@@ -239,6 +251,10 @@ export function isProfileOwner(discordUserId: string, verification: { discordUse
   // Older in-memory fixtures may omit the identity, but every persisted
   // verification row contains it and is checked strictly at runtime.
   return typeof verification.discordUserId !== "string" || discordUserId === verification.discordUserId;
+}
+
+export function canEditProfile(discordUserId: string, verification: { discordUserId?: string }) {
+  return isProfileOwner(discordUserId, verification);
 }
 
 export function buildProfileEmbed(interaction: any, verification: any) {
@@ -309,6 +325,10 @@ async function updateProfileFromModal(interaction: any) {
     await interaction.editReply("ไม่พบการยืนยันตัวตนค่ะ กรุณายืนยันบัญชีก่อนนะคะ");
     return;
   }
+  if (!canEditProfile(interaction.user.id, verification)) {
+    await interaction.editReply("ไม่อนุญาตให้แก้ไขโปรไฟล์ของสมาชิกคนอื่นค่ะ");
+    return;
+  }
   const bio = interaction.fields.getTextInputValue("profile_bio").trim().slice(0, 300) || null;
   const playStyle = interaction.fields.getTextInputValue("profile_play_style").trim().slice(0, 128) || null;
   const updated = await updateDiscordProfile(interaction.user.id, { bio, playStyle });
@@ -344,7 +364,7 @@ function startDiscordMemberEvents(client: Client) {
   });
 }
 
-async function handleOnboardingInteraction(interaction: any): Promise<boolean> {
+export async function handleOnboardingInteraction(interaction: any): Promise<boolean> {
   if (interaction.isButton()) {
     if (interaction.customId === "ritz_verify_button") {
       await showMinecraftModal(interaction, "ritz_verify_modal", "ยืนยันตัวตน RitzSMP");

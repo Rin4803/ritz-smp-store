@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as db from "./db";
+import * as minecraftIntegration from "./minecraftIntegration";
+import * as discordNotifications from "./discordNotifications";
 import { handleMinecraftPresenceScheduled } from "./minecraftPresenceMonitor";
 import { sdk } from "./_core/sdk";
 
@@ -41,6 +43,35 @@ describe("scheduled Minecraft presence callback", () => {
 
     expect(response.status).not.toHaveBeenCalled();
     expect(response.json).toHaveBeenCalledWith({ ok: true, skipped: "orphan" });
+  });
+
+  it("executes the monitor for the owning cron and announces joined and departed players", async () => {
+    vi.spyOn(sdk, "authenticateRequest").mockResolvedValue({ isCron: true, taskUid: "cron-current" } as any);
+    vi.spyOn(db, "getMinecraftPresenceState").mockResolvedValue({
+      scheduleCronTaskUid: "cron-current",
+      lastOnline: 1,
+      playerListKnown: 1,
+      lastPlayerNames: JSON.stringify(["Alice", "Bob", "Charlie"]),
+    } as any);
+    vi.spyOn(db, "saveMinecraftPresenceState").mockResolvedValue(undefined as any);
+    vi.spyOn(minecraftIntegration, "fetchMinecraftServerStatus").mockResolvedValue({
+      online: true,
+      players: 2,
+      maxPlayers: 20,
+      playerNames: ["Alice", "Dana"],
+      playerListKnown: true,
+      version: "1.21",
+      latency: 42,
+      motd: "RitzSMP",
+    });
+    const announcementSpy = vi.spyOn(discordNotifications, "notifyMinecraftPresence").mockResolvedValue({ sent: true, channelId: "presence-channel" });
+    const response = createResponse();
+
+    await handleMinecraftPresenceScheduled(request, response);
+
+    expect(announcementSpy).toHaveBeenNthCalledWith(1, { kind: "join", playerNames: ["Dana"] });
+    expect(announcementSpy).toHaveBeenNthCalledWith(2, { kind: "leave", playerNames: ["Bob", "Charlie"] });
+    expect(response.json).toHaveBeenCalledWith(expect.objectContaining({ ok: true, joined: ["Dana"], left: ["Bob", "Charlie"] }));
   });
 
   it("returns a successful orphan response when a different task owns the state row", async () => {

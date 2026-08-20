@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildProfileEmbed } from "./discordAiBot";
+import { buildProfileEmbed, canEditProfile } from "./discordAiBot";
 
 describe("Discord member profile embed", () => {
   it("shows the linked Minecraft identity, editable profile fields, and skin thumbnail", () => {
@@ -30,6 +30,11 @@ describe("Discord member profile embed", () => {
         expect.objectContaining({ name: "สถานะ", value: "✅ ยืนยันตัวตนแล้ว" }),
       ]),
     );
+  });
+
+  it("allows editing only when the persisted verification belongs to the Discord member", () => {
+    expect(canEditProfile("discord-123", { discordUserId: "discord-123" })).toBe(true);
+    expect(canEditProfile("discord-other", { discordUserId: "discord-123" })).toBe(false);
   });
 
   it("uses safe empty-state text when optional profile fields are missing", () => {
