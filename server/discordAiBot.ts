@@ -29,6 +29,7 @@ import {
 } from "./minecraftIntegration.js";
 import { handleMusicCommand, musicCommand } from "./discordMusic.js";
 import { ensureMusicTextChannel } from "./discordMusicChannel.js";
+import { ensureMinecraftStatusTextChannel } from "./discordMinecraftStatusChannel.js";
 
 interface BotLog {
   timestamp: string;
@@ -208,59 +209,87 @@ export function getVerificationConflict(
   return null;
 }
 
-async function verifyMinecraftAccount(interaction: any, shouldClaimRank: boolean) {
+async function verifyDiscordNativeAccount(interaction: any, shouldClaimRank: boolean) {
   if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return;
-  const minecraftIGN = interaction.fields.getTextInputValue("minecraft_ign").trim();
-  const profile = await fetchMinecraftProfile(minecraftIGN);
-  if (!profile) {
-    await interaction.editReply("ไม่พบชื่อ Minecraft นี้ใน Mojang ค่ะ กรุณาตรวจสอบชื่อให้ถูกต้องก่อนลองใหม่อีกครั้งนะคะ");
-    return;
+  const rawInput = interaction.fields.getTextInputValue("minecraft_ign").trim();
+  
+  // Discord-native verification: Minecraft linking is optional
+  let minecraftInfo = "ไม่ได้เชื่อมต่อ Minecraft (ยืนยันตัวตนผ่าน Discord 100%)";
+  let verified = await addConfiguredRole(interaction, ENV.discordVerifiedRoleId, "RitzSMP AI Discord-native verification");
+  let rankMessage = "";
+
+  if (rawInput && rawInput.length > 0 && !/^none$/i.test(rawInput)) {
+    const profile = await fetchMinecraftProfile(rawInput);
+    if (profile) {
+      try {
+        const existingForDiscord = await getDiscordVerification(interaction.user.id);
+        const existingForMinecraft = await getDiscordVerificationByMinecraftUuid(profile.id);
+        const verificationConflict = getVerificationConflict(existingForDiscord, existingForMinecraft, interaction.user.id, profile.id);
+        if (verificationConflict === "minecraft-linked-to-other-discord") {
+          await safeReply(interaction, "ชื่อ Minecraft นี้ถูกเชื่อมกับ Discord อื่นแล้วค่ะ แต่การยืนยันตัวตนใน Discord สำเร็จแล้วนะจ๊ะ 💕");
+          return;
+        }
+        if (!existingForDiscord) {
+          await createDiscordVerification({
+            discordUserId: interaction.user.id,
+            minecraftIGN: profile.name,
+            minecraftUuid: profile.id,
+          });
+        }
+        minecraftInfo = `**${profile.name}**`;
+        if (shouldClaimRank) {
+          const rankResult = await grantMinecraftRank(profile.name, ENV.discordClaimRankGroup);
+          const memberRoleAdded = await addConfiguredRole(interaction, ENV.discordMemberRoleId, "RitzSMP member rank claim");
+          rankMessage = rankResult.executed
+            ? `\n🎖️ มอบกลุ่ม LuckPerms **${ENV.discordClaimRankGroup}** ให้ในเกมแล้วค่ะ${memberRoleAdded ? " และเพิ่มยศสมาชิกใน Discord แล้วนะค้า" : ""}`
+            : `\n🎖️ เชื่อมบัญชีสำเร็จค่ะ แต่ยังไม่เปิด RCON ในเกม${memberRoleAdded ? " (เพิ่มยศสมาชิกใน Discord แล้วจ้า)" : ""}`;
+        }
+      } catch (err) {
+        pushLog("WARN", `Optional Minecraft lookup note: ${String(err)}`);
+      }
+    } else {
+      // Save Discord-only profile if minecraft profile not found in Mojang
+      try {
+        const existingForDiscord = await getDiscordVerification(interaction.user.id);
+        if (!existingForDiscord) {
+          await createDiscordVerification({
+            discordUserId: interaction.user.id,
+            minecraftIGN: rawInput.slice(0, 16),
+            minecraftUuid: `discord-native-${interaction.user.id}`,
+          });
+        }
+        minecraftInfo = `**${rawInput}** (Discord-native alias)`;
+      } catch (e) {
+        // ignore duplicate
+      }
+    }
+  } else {
+    // Pure Discord-native verification without minecraft
+    try {
+      const existingForDiscord = await getDiscordVerification(interaction.user.id);
+      if (!existingForDiscord) {
+        await createDiscordVerification({
+          discordUserId: interaction.user.id,
+          minecraftIGN: interaction.user.username.slice(0, 16),
+          minecraftUuid: `discord-native-${interaction.user.id}`,
+        });
+      }
+    } catch (e) {}
   }
 
-  try {
-    const existingForDiscord = await getDiscordVerification(interaction.user.id);
-    const existingForMinecraft = await getDiscordVerificationByMinecraftUuid(profile.id);
-    const verificationConflict = getVerificationConflict(existingForDiscord, existingForMinecraft, interaction.user.id, profile.id);
-    if (verificationConflict === "minecraft-linked-to-other-discord") {
-      await interaction.editReply("ชื่อ Minecraft นี้ถูกเชื่อมกับ Discord อื่นแล้วค่ะ หากเป็นเจ้าของบัญชีจริงกรุณาติดต่อทีมงาน");
-      return;
-    }
-    if (verificationConflict === "discord-linked-to-other-minecraft") {
-      await interaction.editReply(`Discord นี้เชื่อมกับ Minecraft ชื่อ **${existingForDiscord!.minecraftIGN}** อยู่แล้วค่ะ`);
-      return;
-    }
-    if (!existingForDiscord) {
-      await createDiscordVerification({
-        discordUserId: interaction.user.id,
-        minecraftIGN: profile.name,
-        minecraftUuid: profile.id,
-      });
-    }
+  const memberRoleAdded = shouldClaimRank ? await addConfiguredRole(interaction, ENV.discordMemberRoleId, "RitzSMP member role claim") : false;
 
-    const verified = await addConfiguredRole(interaction, ENV.discordVerifiedRoleId, "RitzSMP AI identity verification");
-    let rankMessage = "";
-    if (shouldClaimRank) {
-      const rankResult = await grantMinecraftRank(profile.name, ENV.discordClaimRankGroup);
-      const memberRoleAdded = await addConfiguredRole(interaction, ENV.discordMemberRoleId, "RitzSMP member rank claim");
-      rankMessage = rankResult.executed
-        ? `\\n🎖️ มอบกลุ่ม LuckPerms **${ENV.discordClaimRankGroup}** ให้ในเกมแล้วค่ะ${memberRoleAdded ? " และเพิ่มยศสมาชิกใน Discord แล้ว" : ""}`
-        : `\\n🎖️ เชื่อมบัญชีสำเร็จค่ะ แต่ยังไม่ได้มอบยศในเกม เพราะยังไม่เปิดค่า RCON${memberRoleAdded ? " (เพิ่มยศสมาชิกใน Discord แล้ว)" : ""}`;
-    }
-
-    await interaction.editReply(
-      `ยืนยันตัวตนสำเร็จแล้วค่ะ\\n👤 Discord: **${interaction.user.tag}**\\n⛏️ Minecraft: **${profile.name}**${verified ? "\\n✅ เพิ่มยศ Verified ใน Discord แล้วค่ะ" : "\\n⚠️ ยังไม่ได้ตั้งค่า Verified Role ในระบบ"}${rankMessage}`,
-    );
-    pushLog("SUCCESS", `Verified Discord ${interaction.user.id} with Minecraft ${profile.name}`);
-  } catch (error) {
-    pushLog("ERROR", `Verification flow failed: ${String(error)}`);
-    await interaction.editReply("ระบบยืนยันตัวตนขัดข้องชั่วคราวค่ะ กรุณาลองใหม่อีกครั้งหรือติดต่อทีมงานนะคะ");
-  }
+  await safeReply(
+    interaction,
+    `ยินดีด้วยนะคะ! ยืนยันตัวตนใน Discord สำเร็จแล้วค่า ✨\n👤 สมาชิก: **${interaction.user.tag}**\n⛏️ Minecraft: ${minecraftInfo}\n${verified ? "✅ ได้รับยศ Verified เรียบร้อยแล้วนะคะ 💕" : "⚠️ ยังไม่ได้ตั้งค่า Verified Role ในระบบ"}`,
+  );
+  pushLog("SUCCESS", `Discord-native verified ${interaction.user.id}`);
 }
 
 async function replyWithPlayers(interaction: any) {
   if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return;
   const mc = await fetchMinecraftServerStatus();
-  const names = mc.playerNames.length ? mc.playerNames.map(name => `• ${name}`).join("\\n") : "ยังไม่มีรายชื่อที่ API เปิดเผยในขณะนี้ค่ะ";
+  const names = mc.playerNames.length ? mc.playerNames.map(name => `• ${name}`).join("\n") : "ยังไม่มีรายชื่อที่ API เปิดเผยในขณะนี้ค่ะ";
   const embed = new EmbedBuilder()
     .setTitle("👥 รายชื่อผู้เล่นใน RitzSMP")
     .setDescription(mc.online ? names : "🔴 เซิร์ฟเวอร์ออฟไลน์หรือยังตรวจสอบไม่ได้ค่ะ")
@@ -275,12 +304,12 @@ async function showMinecraftModal(interaction: any, customId: string, title: str
   const modal = new ModalBuilder().setCustomId(customId).setTitle(title);
   const input = new TextInputBuilder()
     .setCustomId("minecraft_ign")
-    .setLabel("ชื่อ Minecraft ของคุณ")
-    .setPlaceholder("เช่น RitzPlayer")
+    .setLabel("ชื่อ Minecraft (หรือพิมพ์ 'none' หากต้องการยืนยันผ่าน Discord อย่างเดียว)")
+    .setPlaceholder("ชื่อในเกม หรือเว้นว่างได้จ้า")
     .setStyle(TextInputStyle.Short)
-    .setMinLength(3)
-    .setMaxLength(16)
-    .setRequired(true);
+    .setMinLength(0)
+    .setMaxLength(32)
+    .setRequired(false);
   modal.addComponents(new ActionRowBuilder<TextInputBuilder>().addComponents(input));
   await interaction.showModal(modal);
 }
@@ -318,18 +347,39 @@ export function buildProfileEmbed(interaction: any, verification: any) {
 
 async function replyWithProfile(interaction: any) {
   if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return;
-  const verification = await getDiscordVerification(interaction.user.id);
+  let verification = await getDiscordVerification(interaction.user.id);
   if (!verification) {
-    await interaction.editReply("ยังไม่มีโปรไฟล์ที่ยืนยันค่ะ กรุณากด ✅ ยืนยันตัวตนก่อนนะคะ");
+    try {
+      await createDiscordVerification({
+        discordUserId: interaction.user.id,
+        minecraftIGN: interaction.user.username.slice(0, 16),
+        minecraftUuid: `discord-native-${interaction.user.id}`,
+      });
+      verification = await getDiscordVerification(interaction.user.id);
+    } catch (e) {}
+  }
+  if (!verification) {
+    await interaction.editReply("ยังไม่มีโปรไฟล์ที่ยืนยันค่ะ กรุณากด ✅ ยืนยันตัวตนก่อนนะคะ 💕");
     return;
   }
   await interaction.editReply({ embeds: [buildProfileEmbed(interaction, verification)] });
 }
 
 async function showProfileModal(interaction: any) {
-  const verification = await getDiscordVerification(interaction.user.id);
+  let verification = await getDiscordVerification(interaction.user.id);
   if (!verification) {
-    await interaction.reply({ content: "กรุณายืนยันตัวตนและเชื่อมชื่อ Minecraft ก่อนแก้ไขโปรไฟล์นะคะ", ephemeral: true });
+    // Auto-create a Discord-native verification row if not present, so members can edit profile immediately
+    try {
+      await createDiscordVerification({
+        discordUserId: interaction.user.id,
+        minecraftIGN: interaction.user.username.slice(0, 16),
+        minecraftUuid: `discord-native-${interaction.user.id}`,
+      });
+      verification = await getDiscordVerification(interaction.user.id);
+    } catch (e) {}
+  }
+  if (!verification) {
+    await interaction.reply({ content: "กรุณากด ✅ ยืนยันตัวตนก่อนแก้ไขโปรไฟล์นะคะ 💕", ephemeral: true });
     return;
   }
   const modal = new ModalBuilder().setCustomId("ritz_profile_modal").setTitle("แก้ไขโปรไฟล์ RitzSMP");
@@ -440,11 +490,11 @@ export async function handleOnboardingInteraction(interaction: any): Promise<boo
 
   if (interaction.isModalSubmit()) {
     if (interaction.customId === "ritz_verify_modal") {
-      await verifyMinecraftAccount(interaction, false);
+      await verifyDiscordNativeAccount(interaction, false);
       return true;
     }
     if (interaction.customId === "ritz_claim_rank_modal") {
-      await verifyMinecraftAccount(interaction, true);
+      await verifyDiscordNativeAccount(interaction, true);
       return true;
     }
     if (interaction.customId === "ritz_profile_modal") {
@@ -563,6 +613,13 @@ export function createRitzSmpAiBot() {
         pushLog("SUCCESS", `Dedicated music text channel ready: ${musicChannelId}`);
       } else {
         pushLog("WARN", "Dedicated music channel was not created; check DISCORD_GUILD_ID and Manage Channels permission.");
+      }
+
+      const statusChannelId = await ensureMinecraftStatusTextChannel(client, ENV.discordGuildId);
+      if (statusChannelId) {
+        pushLog("SUCCESS", `Dedicated Minecraft status channel ready: ${statusChannelId}`);
+      } else {
+        pushLog("WARN", "Minecraft status channel was not created; presence announcements remain disabled until it is configured.");
       }
     } catch (error) {
       pushLog("ERROR", `Failed to register global slash commands: ${String(error)}`);

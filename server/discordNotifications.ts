@@ -1,5 +1,6 @@
 import { ENV } from "./_core/env";
 import { storageGetSignedUrl } from "./storage";
+import { getMinecraftStatusChannelId } from "./discordMinecraftStatusChannel";
 
 type DiscordEmbedField = {
   name: string;
@@ -185,7 +186,7 @@ export async function notifyMinecraftPresence(input: {
   kind: "join" | "leave";
   playerNames: string[];
 }): Promise<DiscordNotificationResult> {
-  const channelId = process.env.DISCORD_ONLINE_CHANNEL_ID || ENV.discordOnlineChannelId || getSupportChannelId();
+  const channelId = getMinecraftStatusChannelId() || process.env.DISCORD_ONLINE_CHANNEL_ID || ENV.discordOnlineChannelId || "";
   const names = input.playerNames.length ? input.playerNames.map(name => `\`${name}\``).join(", ") : "ไม่ระบุชื่อผู้เล่น";
   const isJoin = input.kind === "join";
   const embed: DiscordEmbed = {

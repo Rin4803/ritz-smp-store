@@ -70,9 +70,7 @@ async function startServer() {
 
   // The Discord gateway is intentionally optional. It starts only after the bot token
   // is configured, so local development and web-only deployments remain safe.
-  startDiscordStoreBot().catch(error => {
-    console.error("[DiscordBot] Failed to start:", error);
-  });
+  // Consolidated: RitzSMP AI is now the sole unified bot handling onboarding, music, store notifications, and status
   try {
     startRitzSmpAiBot();
   } catch (error) {

@@ -107,3 +107,25 @@
 - [x] Add tests for free-mode music command validation and interaction timeout safety
 - [x] Route music help/status messages to a dedicated `🎵│ห้องเพลง` channel and keep `🐣│รายชื่อผู้ซื้อยศสำเร็จ` limited to purchase notifications
 - [x] Add a safe setup or channel-routing helper that can create/use the dedicated music channel only when the bot has Discord channel-management permission
+
+- [ ] Route Minecraft join/leave announcements away from `🐣│รายชื่อผู้ซื้อยศสำเร็จ` into a dedicated `📡│สถานะเซิร์ฟเวอร์` channel
+- [ ] Add channel-routing tests and verify live Discord separation for purchase, music, and Minecraft status messages
+- [ ] Audit legacy Discord bot entrypoint, token source, command registration, listeners, and permissions against RitzSMP AI
+- [ ] Restore or safely isolate the previously working Discord bot without duplicate command registrations or listeners
+- [ ] Add regression tests for every currently nonresponsive command path and both bot lifecycle outcomes
+- [ ] Run live identity/command smoke checks for the old bot and RitzSMP AI after restart
+- [ ] Publish the dedicated Minecraft status-channel routing fix so presence events no longer use the purchase channel
+- [ ] Verify the production bot and Heartbeat callback after publication with a live channel audit
+
+- [ ] Make Discord verification identity-first; keep Minecraft account linking optional and clearly labeled
+- [ ] Make role claiming assign Discord roles without requiring a Minecraft LuckPerms grant
+- [ ] Route Discord member join/leave announcements to Discord status channels independently from Minecraft presence
+- [ ] Make the Discord member list show Discord members and privacy-safe profiles rather than only Minecraft players
+- [ ] Add regression tests proving Discord-native onboarding works when Minecraft/RCON is unavailable
+- [ ] Transition onboarding verification and member lists to be Discord-native
+- [ ] Replace legacy Kanopi/Dischook bot output with RitzSMP AI welcome/goodbye and onboarding panels
+- [ ] Reconcile bot client tokens and prevent duplicate command handlers
+- [ ] Run Vitest tests and verify Discord synchronization
+- [x] Transition onboarding verification to be Discord-native (Minecraft linking optional with 'none' or direct Discord verification)
+- [x] Reconcile legacy verification / 4-digit bots and consolidate all onboarding, welcome, leave, verification, role assignment, and member profile capabilities into RitzSMP AI
+- [x] Ensure all 75 Vitest tests pass cleanly and prepare live production synchronization checkpoint for morning review
