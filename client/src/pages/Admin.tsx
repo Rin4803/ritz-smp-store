@@ -12,6 +12,9 @@ import {
   ShieldAlert,
   ShieldCheck,
   UserCog,
+  Plus,
+  Power,
+  Server,
 } from "lucide-react";
 
 function formatDate(value: Date | string | number) {
@@ -29,6 +32,7 @@ export default function Admin() {
   const isAdmin = user?.role === "admin";
   const ordersQuery = trpc.admin.orders.useQuery(undefined, { enabled: isAdmin });
   const usersQuery = trpc.admin.users.useQuery(undefined, { enabled: isAdmin });
+  const managedServersQuery = trpc.servers.adminList.useQuery(undefined, { enabled: isAdmin });
   const utils = trpc.useUtils();
   const updateOrder = trpc.admin.updateOrderStatus.useMutation({
     onSuccess: () => utils.admin.orders.invalidate(),
@@ -37,6 +41,34 @@ export default function Admin() {
     onSuccess: () => utils.admin.users.invalidate(),
   });
   const [notes, setNotes] = useState<Record<number, string>>({});
+  const [serverForm, setServerForm] = useState({ slug: "", displayName: "", minecraftHost: "", minecraftPort: "25565", discordGuildId: "" });
+  const createServer = trpc.servers.create.useMutation({
+    onSuccess: () => {
+      setServerForm({ slug: "", displayName: "", minecraftHost: "", minecraftPort: "25565", discordGuildId: "" });
+      utils.servers.adminList.invalidate();
+      utils.servers.list.invalidate();
+    },
+  });
+  const updateServer = trpc.servers.update.useMutation({
+    onSuccess: () => {
+      utils.servers.adminList.invalidate();
+      utils.servers.list.invalidate();
+    },
+  });
+
+  const submitServer = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!serverForm.slug.trim() || !serverForm.displayName.trim() || !serverForm.minecraftHost.trim()) return;
+    createServer.mutate({
+      slug: serverForm.slug.trim().toLowerCase(),
+      displayName: serverForm.displayName.trim(),
+      minecraftHost: serverForm.minecraftHost.trim(),
+      minecraftPort: Number(serverForm.minecraftPort),
+      discordGuildId: serverForm.discordGuildId.trim() || null,
+      enabled: true,
+      config: { channelConfig: {} },
+    });
+  };
 
   const orders = ordersQuery.data ?? [];
   const managedUsers = usersQuery.data ?? [];
@@ -74,6 +106,43 @@ export default function Admin() {
             <div className="stat-card"><span>รอตรวจสอบ</span><strong>{stats.pending}</strong></div>
             <div className="stat-card"><span>สำเร็จแล้ว</span><strong>{stats.successful}</strong></div>
           </div>
+
+          <section className="admin-panel" style={{ marginBottom: 24 }} aria-labelledby="managed-servers-title">
+            <div className="panel-heading" style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start" }}>
+              <div>
+                <div className="eyebrow" style={{ display: "flex", alignItems: "center", gap: 7 }}><Server size={14} /> MULTI-SERVER CONTROL</div>
+                <h2 id="managed-servers-title" style={{ margin: "7px 0 0", fontSize: 20 }}>จัดการเซิร์ฟเวอร์ Minecraft</h2>
+                <p className="subtle" style={{ margin: "7px 0 0", fontSize: 13 }}>เพิ่มชุมชนใหม่ได้จากที่เดียว ระบบจะเก็บเฉพาะชื่อ environment ของ secret ไม่เก็บ token หรือรหัสผ่านลงฐานข้อมูล</p>
+              </div>
+              <Server size={24} className="gold-text" aria-hidden="true" />
+            </div>
+
+            <form onSubmit={submitServer} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginTop: 16 }}>
+              <input className="admin-note" value={serverForm.slug} placeholder="slug เช่น ritzsmp" aria-label="Slug เซิร์ฟเวอร์" onChange={event => setServerForm(current => ({ ...current, slug: event.target.value }))} />
+              <input className="admin-note" value={serverForm.displayName} placeholder="ชื่อที่แสดง" aria-label="ชื่อที่แสดง" onChange={event => setServerForm(current => ({ ...current, displayName: event.target.value }))} />
+              <input className="admin-note" value={serverForm.minecraftHost} placeholder="Minecraft host" aria-label="Minecraft host" onChange={event => setServerForm(current => ({ ...current, minecraftHost: event.target.value }))} />
+              <input className="admin-note" type="number" min="1" max="65535" value={serverForm.minecraftPort} placeholder="Port" aria-label="Minecraft port" onChange={event => setServerForm(current => ({ ...current, minecraftPort: event.target.value }))} />
+              <input className="admin-note" value={serverForm.discordGuildId} placeholder="Discord Guild ID (ถ้ามี)" aria-label="Discord Guild ID" onChange={event => setServerForm(current => ({ ...current, discordGuildId: event.target.value }))} />
+              <button className="primary-btn compact-btn" type="submit" disabled={createServer.isPending} style={{ justifyContent: "center" }}>{createServer.isPending ? <Loader2 size={13} className="animate-spin" /> : <><Plus size={13} /> เพิ่มเซิร์ฟเวอร์</>}</button>
+            </form>
+            {createServer.error && <p role="alert" style={{ color: "#fda4af", margin: "10px 0 0", fontSize: 13 }}>{createServer.error.message}</p>}
+
+            {managedServersQuery.isLoading ? <div className="loading"><Loader2 size={18} className="animate-spin" /></div> : managedServersQuery.isError ? <p role="alert" style={{ color: "#fda4af", marginTop: 12 }}>โหลดรายการเซิร์ฟเวอร์ไม่สำเร็จ</p> : managedServersQuery.data?.length ? (
+              <div className="admin-table-wrap" style={{ marginTop: 16 }}>
+                <table className="admin-table">
+                  <thead><tr><th>เซิร์ฟเวอร์</th><th>Minecraft</th><th>Discord</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+                  <tbody>{managedServersQuery.data.map(server => <tr key={server.id}>
+                    <td><strong>{server.displayName}</strong><br /><span className="subtle">{server.slug}</span></td>
+                    <td>{server.minecraftHost}:{server.minecraftPort}</td>
+                    <td>{server.discordGuildId ?? "ยังไม่ผูก"}</td>
+                    <td><span className={`status ${server.enabled ? "success" : "cancelled"}`}>{server.enabled ? "เปิดใช้งาน" : "ปิดใช้งาน"}</span></td>
+                    <td><button type="button" className="ghost-btn compact-btn" disabled={updateServer.isPending} onClick={() => updateServer.mutate({ id: server.id, displayName: server.displayName, minecraftHost: server.minecraftHost, minecraftPort: server.minecraftPort, discordGuildId: server.discordGuildId, enabled: !server.enabled, config: { discordTokenEnv: server.config?.discordTokenEnv ?? null, rconHost: server.config?.rconHost ?? null, rconPort: server.config?.rconPort ?? null, rconPasswordEnv: server.config?.rconPasswordEnv ?? null, channelConfig: server.config?.channelConfig ?? {} } })}><Power size={13} /> {server.enabled ? "ปิดระบบ" : "เปิดระบบ"}</button></td>
+                  </tr>)}</tbody>
+                </table>
+              </div>
+            ) : <div className="empty-box" style={{ marginTop: 16 }}>ยังไม่มีเซิร์ฟเวอร์ใน registry</div>}
+            {updateServer.error && <p role="alert" style={{ color: "#fda4af", margin: "10px 0 0", fontSize: 13 }}>{updateServer.error.message}</p>}
+          </section>
 
           {usersQuery.isSuccess && (
             <section className="admin-panel" style={{ marginBottom: 24 }} aria-labelledby="admin-management-title">

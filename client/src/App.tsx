@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import Account from "./pages/Account";
 import BotDashboard from "./pages/BotDashboard";
+import ServerDirectory from "./pages/ServerDirectory";
 
 function Router() {
   return (
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/admin" component={Admin} />
       <Route path="/account" component={Account} />
       <Route path="/admin/bot" component={BotDashboard} />
+      <Route path="/servers" component={ServerDirectory} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

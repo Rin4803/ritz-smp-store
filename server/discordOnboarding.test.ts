@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as db from "./db";
 import * as minecraftIntegration from "./minecraftIntegration";
+import { isValidDiscordVerificationCode } from "./db";
 import {
   addConfiguredRole,
   buildLeaveMemberEmbed,
+  buildDiscordMembersEmbed,
   buildRankClaimComponents,
   buildRankClaimEmbed,
   buildWelcomeMemberEmbed,
@@ -36,6 +38,41 @@ describe("Discord onboarding interactions", () => {
     expect(await addConfiguredRole(interaction, "verified-role", "verification")).toBe(true);
     expect(add).toHaveBeenCalledTimes(1);
     expect(add).toHaveBeenCalledWith("verified-role", "verification");
+  });
+
+  it("accepts exactly four numeric verification-code characters", () => {
+    expect(isValidDiscordVerificationCode("0000")).toBe(true);
+    expect(isValidDiscordVerificationCode("1234")).toBe(true);
+    expect(isValidDiscordVerificationCode("123")).toBe(false);
+    expect(isValidDiscordVerificationCode("12a4")).toBe(false);
+  });
+
+  it("generates a durable four-digit code from the single verification button", async () => {
+    vi.spyOn(db, "createDiscordVerificationCode").mockResolvedValue({
+      id: 1,
+      discordUserId: "discord-player",
+      code: "0420",
+      expiresAt: new Date(Date.now() + 600000),
+      usedAt: null,
+      createdAt: new Date(),
+    });
+    const interaction = {
+      customId: "ritz_verify_button",
+      user: { id: "discord-player" },
+      isButton: () => true,
+      isModalSubmit: () => false,
+      isRepliable: () => true,
+      deferred: false,
+      replied: false,
+      deferReply: vi.fn().mockResolvedValue(undefined),
+      editReply: vi.fn().mockResolvedValue(undefined),
+    };
+
+    expect(await handleOnboardingInteraction(interaction)).toBe(true);
+    expect(db.createDiscordVerificationCode).toHaveBeenCalledWith("discord-player");
+    const payload = interaction.editReply.mock.calls[0][0];
+    expect(payload.embeds[0].data.description).toContain("0420");
+    expect(payload.embeds[0].data.description).toContain("/verify 0420");
   });
 
   it("re-runs the claim-rank button for an already verified member and reports the RCON result", async () => {
@@ -89,6 +126,47 @@ describe("Discord onboarding interactions", () => {
     expect(rank.title).toContain("ยืนยันตัวตน");
     expect(components).toHaveLength(1);
     expect(components[0].toJSON().components[0].custom_id).toBe("ritz_claim_rank_button");
+  });
+
+  it("renders a Discord-native member list without exposing bot accounts", () => {
+    const embed = buildDiscordMembersEmbed([
+      { id: "member-1", displayName: "RitzPlayer", user: { username: "ritzplayer", bot: false } },
+      { id: "bot-1", displayName: "RitzSMP AI", user: { username: "ritz-ai", bot: true } },
+    ]).toJSON();
+
+    expect(embed.title).toContain("สมาชิก Discord");
+    expect(embed.description).toContain("RitzPlayer");
+    expect(embed.description).not.toContain("RitzSMP AI");
+    expect(embed.fields?.[0].value).toContain("ไม่แสดงอีเมล");
+  });
+
+  it("handles the Discord-native member-list button independently of Minecraft status", async () => {
+    const interaction = {
+      customId: "ritz_discord_members_button",
+      user: { id: "discord-player" },
+      guild: {
+        members: {
+          fetch: vi.fn().mockResolvedValue(new Map([
+            ["member-1", { id: "member-1", displayName: "RitzPlayer", user: { username: "ritzplayer", bot: false } }],
+            ["bot-1", { id: "bot-1", displayName: "RitzSMP AI", user: { username: "ritz-ai", bot: true } }],
+          ])),
+        },
+      },
+      isButton: () => true,
+      isModalSubmit: () => false,
+      isRepliable: () => true,
+      deferred: false,
+      replied: false,
+      deferReply: vi.fn().mockResolvedValue(undefined),
+      editReply: vi.fn().mockResolvedValue(undefined),
+    };
+
+    expect(await handleOnboardingInteraction(interaction)).toBe(true);
+    expect(interaction.guild.members.fetch).toHaveBeenCalledTimes(1);
+    const payload = interaction.editReply.mock.calls[0][0];
+    expect(payload.embeds[0].data.title).toContain("สมาชิก Discord");
+    expect(payload.embeds[0].data.description).toContain("RitzPlayer");
+    expect(payload.embeds[0].data.description).not.toContain("RitzSMP AI");
   });
 
   it("renders the current Minecraft player list through the onboarding player button", async () => {

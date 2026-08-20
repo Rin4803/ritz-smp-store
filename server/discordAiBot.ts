@@ -19,6 +19,7 @@ import { ENV } from "./_core/env.js";
 import { invokeLLM } from "./_core/llm.js";
 import {
   createDiscordVerification,
+  createDiscordVerificationCode,
   getDiscordVerification,
   getDiscordVerificationByMinecraftUuid,
   updateDiscordProfile,
@@ -324,6 +325,43 @@ async function verifyDiscordNativeAccount(interaction: any, shouldClaimRank: boo
   pushLog("SUCCESS", `Discord-native verified ${interaction.user.id}`);
 }
 
+export function buildDiscordMembersEmbed(members: any[]) {
+  const visibleMembers = members.filter(member => !member.user?.bot).slice(0, 25);
+  const description = visibleMembers.length > 0
+    ? visibleMembers.map((member, index) => {
+        const displayName = member.displayName || member.user?.globalName || member.user?.username || `สมาชิก ${index + 1}`;
+        return `**${index + 1}.** ${displayName} (<@${member.id}>)`;
+      }).join("\\n")
+    : "ยังไม่พบสมาชิก Discord ที่แสดงได้ในขณะนี้ค่ะ";
+
+  return new EmbedBuilder()
+    .setTitle("👥 รายชื่อสมาชิก Discord RitzSMP")
+    .setDescription(description)
+    .addFields({
+      name: "🔒 ความเป็นส่วนตัว",
+      value: "แสดงเฉพาะชื่อ Discord และการ mention ของสมาชิกในเซิร์ฟเวอร์ ไม่แสดงอีเมลหรือข้อมูลส่วนตัวค่ะ",
+    })
+    .setColor(0x8b5cf6)
+    .setFooter({ text: visibleMembers.length >= 25 ? "แสดง 25 คนแรก • รายชื่อเต็มดูได้ใน Discord" : `สมาชิกที่แสดง ${visibleMembers.length} คน` })
+    .setTimestamp();
+}
+
+async function replyWithDiscordMembers(interaction: any) {
+  if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return;
+  try {
+    if (!interaction.guild?.members?.fetch) {
+      await safeReply(interaction, { content: "คำสั่งนี้ใช้ได้ภายในเซิร์ฟเวอร์ Discord เท่านั้นค่ะ", ephemeral: true });
+      return;
+    }
+    const fetched = await interaction.guild.members.fetch();
+    const members = Array.from(typeof fetched.values === "function" ? fetched.values() : []);
+    await safeReply(interaction, { embeds: [buildDiscordMembersEmbed(members)], ephemeral: true });
+  } catch (error) {
+    pushLog("ERROR", `Failed to load Discord member list: ${String(error)}`);
+    await safeReply(interaction, { content: "ยังโหลดรายชื่อสมาชิก Discord ไม่สำเร็จค่ะ กรุณาลองใหม่อีกครั้งนะคะ", ephemeral: true });
+  }
+}
+
 async function replyWithPlayers(interaction: any) {
   if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return;
   const mc = await fetchMinecraftServerStatus();
@@ -336,6 +374,31 @@ async function replyWithPlayers(interaction: any) {
     .setTimestamp()
     .setFooter({ text: "ข้อมูลจาก Minecraft status API • กดปุ่มอีกครั้งเพื่อรีเฟรช" });
   await interaction.editReply({ embeds: [embed] });
+}
+
+async function replyWithVerificationCode(interaction: any) {
+  if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return;
+  try {
+    const codeRow = await createDiscordVerificationCode(interaction.user.id);
+    const embed = new EmbedBuilder()
+      .setTitle("🔗 รหัสยืนยันตัวตน Minecraft")
+      .setDescription(
+        `นี่คือรหัสยืนยันตัวตนของคุณค่ะ:\n\n` +
+        `# \`${codeRow.code}\`\n\n` +
+        `📌 **วิธีใช้งาน:**\n` +
+        `1. เข้าเกม Minecraft (ritz.mcsv.me)\n` +
+        `2. พิมพ์คำสั่ง \`/verify ${codeRow.code}\` ในช่องแชท\n` +
+        `3. บัญชีของคุณจะถูกเชื่อมต่อทันทีค่ะ! 💕`
+      )
+      .setColor(0xec4899)
+      .setFooter({ text: `รหัสนี้จะหมดอายุใน 10 นาที (${new Date(codeRow.expiresAt).toLocaleTimeString("th-TH")})` })
+      .setTimestamp();
+    await interaction.editReply({ embeds: [embed] });
+    pushLog("SUCCESS", `Generated verification code ${codeRow.code} for ${interaction.user.id}`);
+  } catch (err) {
+    pushLog("ERROR", `Failed to generate verification code: ${String(err)}`);
+    await interaction.editReply("ขออภัยค่ะ ไม่สามารถสร้างรหัสยืนยันได้ในขณะนี้ กรุณาลองใหม่อีกครั้งนะคะ");
+  }
 }
 
 async function showMinecraftModal(interaction: any, customId: string, title: string) {
@@ -525,7 +588,7 @@ export async function handleOnboardingInteraction(interaction: any): Promise<boo
   try {
     if (interaction.isButton()) {
       if (interaction.customId === "ritz_verify_button") {
-        await showMinecraftModal(interaction, "ritz_verify_modal", "ยืนยันตัวตน RitzSMP");
+        await replyWithVerificationCode(interaction);
         return true;
       }
     if (interaction.customId === "ritz_claim_rank_button") {
@@ -550,6 +613,10 @@ export async function handleOnboardingInteraction(interaction: any): Promise<boo
     }
     if (interaction.customId === "ritz_players_button") {
       await replyWithPlayers(interaction);
+      return true;
+    }
+    if (interaction.customId === "ritz_discord_members_button") {
+      await replyWithDiscordMembers(interaction);
       return true;
     }
     if (interaction.customId === "ritz_profile_button") {
@@ -652,7 +719,10 @@ export function createRitzSmpAiBot() {
         .setDescription("✅ เปิดแผงยืนยันตัวตนและเชื่อมชื่อ Minecraft"),
       new SlashCommandBuilder()
         .setName("players")
-        .setDescription("👥 แสดงรายชื่อผู้เล่นที่ออนไลน์ใน RitzSMP"),
+        .setDescription("⛏️ แสดงรายชื่อผู้เล่นที่ออนไลน์ใน RitzSMP"),
+      new SlashCommandBuilder()
+        .setName("members")
+        .setDescription("👥 แสดงรายชื่อสมาชิก Discord ในเซิร์ฟเวอร์"),
       new SlashCommandBuilder()
         .setName("profile")
         .setDescription("🪪 ดูโปรไฟล์สมาชิก RitzSMP ที่เชื่อมกับ Minecraft"),
@@ -802,7 +872,8 @@ export function createRitzSmpAiBot() {
                       .setTimestamp();
                     const profileRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
                       new ButtonBuilder().setCustomId("ritz_profile_button").setLabel("🪪 ดูโปรไฟล์ของฉัน").setStyle(ButtonStyle.Primary),
-                      new ButtonBuilder().setCustomId("ritz_players_button").setLabel("👥 ผู้เล่นออนไลน์").setStyle(ButtonStyle.Secondary)
+                      new ButtonBuilder().setCustomId("ritz_discord_members_button").setLabel("👥 สมาชิก Discord").setStyle(ButtonStyle.Secondary),
+                      new ButtonBuilder().setCustomId("ritz_players_button").setLabel("⛏️ ผู้เล่น Minecraft ออนไลน์").setStyle(ButtonStyle.Secondary)
                     );
                     await channel.send({ embeds: [embed], components: [profileRow] });
                   } else if (target.name === "👋│ระบบต้อนรับ-เข้าออก") {
@@ -902,7 +973,7 @@ export function createRitzSmpAiBot() {
       }
 
       if (commandName === "verify") {
-        await showMinecraftModal(interaction, "ritz_verify_modal", "ยืนยันตัวตน RitzSMP");
+        await replyWithVerificationCode(interaction);
         pushLog("SUCCESS", "Executed /verify successfully");
         return;
       }
@@ -910,6 +981,12 @@ export function createRitzSmpAiBot() {
       if (commandName === "players") {
         await replyWithPlayers(interaction);
         pushLog("SUCCESS", "Executed /players successfully");
+        return;
+      }
+
+      if (commandName === "members") {
+        await replyWithDiscordMembers(interaction);
+        pushLog("SUCCESS", "Executed /members successfully");
         return;
       }
 

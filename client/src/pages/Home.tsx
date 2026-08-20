@@ -184,6 +184,7 @@ export default function Home() {
           <nav className="nav desktop-nav" aria-label="เมนูหลัก">
             <a href="#ranks">ยศทั้งหมด</a>
             <a href="#payment">ช่องทางชำระเงิน</a>
+            <Link href="/servers">เลือกเซิร์ฟเวอร์</Link>
             <Link href="/account">ประวัติการซื้อ</Link>
             {user?.role === "admin" && <Link href="/admin" className="gold-text">Admin Dashboard</Link>}
           </nav>
@@ -240,6 +241,7 @@ export default function Home() {
             )}
             <a href="#ranks" onClick={() => setMenuOpen(false)}>ยศทั้งหมด</a>
             <a href="#payment" onClick={() => setMenuOpen(false)}>ช่องทางชำระเงิน</a>
+            <Link href="/servers" onClick={() => setMenuOpen(false)}>เลือกเซิร์ฟเวอร์</Link>
             <Link href="/account" onClick={() => setMenuOpen(false)}>ประวัติการซื้อและยอดคงเหลือ</Link>
             {user?.role === "admin" && <Link href="/admin" className="gold-text" onClick={() => setMenuOpen(false)}>Admin Dashboard</Link>}
             {!authLoading && (isAuthenticated ? (

@@ -18,6 +18,11 @@ import {
   getUserWallet,
   getUserWalletTransactions,
   adjustUserBalance,
+  getManagedServers,
+  getEnabledManagedServers,
+  getManagedServerConfig,
+  createManagedServer,
+  updateManagedServer,
 } from "./db";
 import { ENV } from "./_core/env";
 import { Rcon } from "rcon-client";
@@ -72,6 +77,78 @@ export const appRouter = router({
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
+  }),
+  servers: router({
+    list: publicProcedure.query(async () => {
+      const servers = await getEnabledManagedServers();
+      return servers.map(server => ({
+        id: server.id,
+        slug: server.slug,
+        displayName: server.displayName,
+        minecraftHost: server.minecraftHost,
+        minecraftPort: server.minecraftPort,
+        discordGuildId: server.discordGuildId,
+        enabled: server.enabled === 1,
+        updatedAt: server.updatedAt,
+      }));
+    }),
+    adminList: ownerProcedure.query(async () => {
+      const servers = await getManagedServers();
+      return Promise.all(servers.map(async server => {
+        const config = await getManagedServerConfig(server.id);
+        let channelConfig: Record<string, string> = {};
+        try {
+          channelConfig = config?.channelConfig ? JSON.parse(config.channelConfig) : {};
+        } catch {
+          channelConfig = {};
+        }
+        return {
+          ...server,
+          enabled: server.enabled === 1,
+          config: config ? { ...config, channelConfig } : null,
+        };
+      }));
+    }),
+    create: ownerProcedure
+      .input(z.object({
+        slug: z.string().trim().regex(/^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/, "Slug ต้องเป็นตัวอักษรภาษาอังกฤษ ตัวเลข หรือขีดกลาง"),
+        displayName: z.string().trim().min(2).max(128),
+        minecraftHost: z.string().trim().min(1).max(255),
+        minecraftPort: z.number().int().min(1).max(65535).default(25565),
+        discordGuildId: z.string().trim().max(64).nullable().optional(),
+        enabled: z.boolean().default(true),
+        config: z.object({
+          discordTokenEnv: z.string().trim().max(128).nullable().optional(),
+          rconHost: z.string().trim().max(255).nullable().optional(),
+          rconPort: z.number().int().min(1).max(65535).nullable().optional(),
+          rconPasswordEnv: z.string().trim().max(128).nullable().optional(),
+          channelConfig: z.record(z.string(), z.string().trim().max(80)).default({}),
+        }),
+      }))
+      .mutation(async ({ input }) => createManagedServer({
+        ...input,
+        config: { ...input.config, channelConfig: JSON.stringify(input.config.channelConfig) },
+      })),
+    update: ownerProcedure
+      .input(z.object({
+        id: z.number().int().positive(),
+        displayName: z.string().trim().min(2).max(128),
+        minecraftHost: z.string().trim().min(1).max(255),
+        minecraftPort: z.number().int().min(1).max(65535),
+        discordGuildId: z.string().trim().max(64).nullable().optional(),
+        enabled: z.boolean(),
+        config: z.object({
+          discordTokenEnv: z.string().trim().max(128).nullable().optional(),
+          rconHost: z.string().trim().max(255).nullable().optional(),
+          rconPort: z.number().int().min(1).max(65535).nullable().optional(),
+          rconPasswordEnv: z.string().trim().max(128).nullable().optional(),
+          channelConfig: z.record(z.string(), z.string().trim().max(80)).default({}),
+        }),
+      }))
+      .mutation(async ({ input }) => updateManagedServer({
+        ...input,
+        config: { ...input.config, channelConfig: JSON.stringify(input.config.channelConfig) },
+      })),
   }),
   store: router({
     ranks: publicProcedure.query(() => getRanks()),

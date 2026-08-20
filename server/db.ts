@@ -1,4 +1,5 @@
 import { and, desc, eq, sql } from "drizzle-orm";
+import { randomInt } from "node:crypto";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertOrder,
@@ -14,8 +15,14 @@ import {
   walletTransactions,
   discordVerifications,
   DiscordVerification,
+  discordVerificationCodes,
+  DiscordVerificationCode,
   minecraftPresenceState,
   MinecraftPresenceState,
+  ManagedServer,
+  ManagedServerConfig,
+  managedServers,
+  managedServerConfigs,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -210,6 +217,85 @@ export async function createDiscordVerification(input: {
     .limit(1);
   if (!created[0]) throw new Error("ไม่สามารถบันทึกการยืนยันตัวตนได้");
   return created[0];
+}
+
+export const DISCORD_VERIFICATION_CODE_TTL_MS = 10 * 60 * 1000;
+
+export function isValidDiscordVerificationCode(code: string): boolean {
+  return /^\d{4}$/.test(code);
+}
+
+export function generateDiscordVerificationCode(): string {
+  return randomInt(0, 10_000).toString().padStart(4, "0");
+}
+
+export async function createDiscordVerificationCode(discordUserId: string): Promise<DiscordVerificationCode> {
+  if (!discordUserId) throw new Error("Discord user ID is required");
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const code = generateDiscordVerificationCode();
+  const expiresAt = new Date(Date.now() + DISCORD_VERIFICATION_CODE_TTL_MS);
+  await db.insert(discordVerificationCodes).values({
+    discordUserId,
+    code,
+    expiresAt,
+    usedAt: null,
+  }).onDuplicateKeyUpdate({
+    set: { code, expiresAt, usedAt: null },
+  });
+  const created = await db.select().from(discordVerificationCodes)
+    .where(eq(discordVerificationCodes.discordUserId, discordUserId)).limit(1);
+  if (!created[0]) throw new Error("ไม่สามารถสร้างรหัสยืนยันตัวตนได้");
+  return created[0];
+}
+
+export async function redeemDiscordVerificationCode(input: {
+  code: string;
+  minecraftIGN: string;
+  minecraftUuid: string;
+}): Promise<DiscordVerification> {
+  if (!isValidDiscordVerificationCode(input.code)) throw new Error("รหัสยืนยันต้องเป็นตัวเลข 4 หลัก");
+  if (!input.minecraftIGN || !input.minecraftUuid) throw new Error("ต้องระบุชื่อและ UUID ของ Minecraft");
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  return db.transaction(async tx => {
+    const codeRows = await tx.select().from(discordVerificationCodes)
+      .where(eq(discordVerificationCodes.code, input.code)).limit(1);
+    const codeRow = codeRows[0];
+    if (!codeRow || codeRow.usedAt || codeRow.expiresAt.getTime() <= Date.now()) {
+      throw new Error("รหัสยืนยันไม่ถูกต้องหรือหมดอายุแล้ว");
+    }
+
+    const discordRows = await tx.select().from(discordVerifications)
+      .where(eq(discordVerifications.discordUserId, codeRow.discordUserId)).limit(1);
+    const minecraftRows = await tx.select().from(discordVerifications)
+      .where(eq(discordVerifications.minecraftUuid, input.minecraftUuid)).limit(1);
+    const existingDiscord = discordRows[0];
+    const existingMinecraft = minecraftRows[0];
+    if (existingMinecraft && existingMinecraft.discordUserId !== codeRow.discordUserId) {
+      throw new Error("Minecraft บัญชีนี้เชื่อมกับ Discord อื่นแล้ว");
+    }
+    if (existingDiscord && existingDiscord.minecraftUuid !== input.minecraftUuid) {
+      throw new Error("Discord บัญชีนี้เชื่อมกับ Minecraft อื่นแล้ว");
+    }
+
+    const now = new Date();
+    if (!existingDiscord) {
+      await tx.insert(discordVerifications).values({
+        discordUserId: codeRow.discordUserId,
+        minecraftIGN: input.minecraftIGN.slice(0, 16),
+        minecraftUuid: input.minecraftUuid,
+        verifiedAt: now,
+        updatedAt: now,
+      });
+    }
+    await tx.update(discordVerificationCodes).set({ usedAt: now }).where(eq(discordVerificationCodes.id, codeRow.id));
+    const linkedRows = await tx.select().from(discordVerifications)
+      .where(eq(discordVerifications.discordUserId, codeRow.discordUserId)).limit(1);
+    if (!linkedRows[0]) throw new Error("ไม่สามารถบันทึกการเชื่อมบัญชีได้");
+    return linkedRows[0];
+  });
 }
 
 export async function updateDiscordProfile(
@@ -412,4 +498,114 @@ export async function insertRank(rank: InsertRank) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
   return db.insert(ranks).values(rank);
+}
+
+export async function getManagedServers(): Promise<ManagedServer[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(managedServers).orderBy(desc(managedServers.displayName));
+}
+
+export async function getEnabledManagedServers(): Promise<ManagedServer[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(managedServers).where(eq(managedServers.enabled, 1)).orderBy(desc(managedServers.displayName));
+}
+
+export async function getManagedServerById(id: number): Promise<ManagedServer | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(managedServers).where(eq(managedServers.id, id)).limit(1);
+  return result[0];
+}
+
+export async function getManagedServerConfig(serverId: number): Promise<ManagedServerConfig | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(managedServerConfigs).where(eq(managedServerConfigs.managedServerId, serverId)).limit(1);
+  return result[0];
+}
+
+export async function createManagedServer(input: {
+  slug: string;
+  displayName: string;
+  minecraftHost: string;
+  minecraftPort: number;
+  discordGuildId?: string | null;
+  enabled?: boolean;
+  config: {
+    discordTokenEnv?: string | null;
+    rconHost?: string | null;
+    rconPort?: number | null;
+    rconPasswordEnv?: string | null;
+    channelConfig: string;
+  };
+}): Promise<ManagedServer> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  return db.transaction(async tx => {
+    const inserted = await tx.insert(managedServers).values({
+      slug: input.slug,
+      displayName: input.displayName,
+      minecraftHost: input.minecraftHost,
+      minecraftPort: input.minecraftPort,
+      discordGuildId: input.discordGuildId ?? null,
+      enabled: input.enabled === false ? 0 : 1,
+    });
+    const serverId = Number(inserted[0].insertId);
+    await tx.insert(managedServerConfigs).values({
+      managedServerId: serverId,
+      discordTokenEnv: input.config.discordTokenEnv ?? null,
+      rconHost: input.config.rconHost ?? null,
+      rconPort: input.config.rconPort ?? null,
+      rconPasswordEnv: input.config.rconPasswordEnv ?? null,
+      channelConfig: input.config.channelConfig,
+    });
+    const created = await tx.select().from(managedServers).where(eq(managedServers.id, serverId)).limit(1);
+    if (!created[0]) throw new Error("ไม่สามารถสร้างเซิร์ฟเวอร์ได้");
+    return created[0];
+  });
+}
+
+export async function updateManagedServer(input: {
+  id: number;
+  displayName: string;
+  minecraftHost: string;
+  minecraftPort: number;
+  discordGuildId?: string | null;
+  enabled: boolean;
+  config: {
+    discordTokenEnv?: string | null;
+    rconHost?: string | null;
+    rconPort?: number | null;
+    rconPasswordEnv?: string | null;
+    channelConfig: string;
+  };
+}): Promise<ManagedServer | undefined> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.transaction(async tx => {
+    await tx.update(managedServers).set({
+      displayName: input.displayName,
+      minecraftHost: input.minecraftHost,
+      minecraftPort: input.minecraftPort,
+      discordGuildId: input.discordGuildId ?? null,
+      enabled: input.enabled ? 1 : 0,
+    }).where(eq(managedServers.id, input.id));
+    await tx.insert(managedServerConfigs).values({
+      managedServerId: input.id,
+      discordTokenEnv: input.config.discordTokenEnv ?? null,
+      rconHost: input.config.rconHost ?? null,
+      rconPort: input.config.rconPort ?? null,
+      rconPasswordEnv: input.config.rconPasswordEnv ?? null,
+      channelConfig: input.config.channelConfig,
+    }).onDuplicateKeyUpdate({ set: {
+      discordTokenEnv: input.config.discordTokenEnv ?? null,
+      rconHost: input.config.rconHost ?? null,
+      rconPort: input.config.rconPort ?? null,
+      rconPasswordEnv: input.config.rconPasswordEnv ?? null,
+      channelConfig: input.config.channelConfig,
+    }});
+  });
+  return getManagedServerById(input.id);
 }

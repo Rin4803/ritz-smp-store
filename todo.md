@@ -108,33 +108,33 @@
 - [x] Route music help/status messages to a dedicated `🎵│ห้องเพลง` channel and keep `🐣│รายชื่อผู้ซื้อยศสำเร็จ` limited to purchase notifications
 - [x] Add a safe setup or channel-routing helper that can create/use the dedicated music channel only when the bot has Discord channel-management permission
 
-- [ ] Route Minecraft join/leave announcements away from `🐣│รายชื่อผู้ซื้อยศสำเร็จ` into a dedicated `📡│สถานะเซิร์ฟเวอร์` channel
-- [ ] Add channel-routing tests and verify live Discord separation for purchase, music, and Minecraft status messages
-- [ ] Audit legacy Discord bot entrypoint, token source, command registration, listeners, and permissions against RitzSMP AI
-- [ ] Restore or safely isolate the previously working Discord bot without duplicate command registrations or listeners
-- [ ] Add regression tests for every currently nonresponsive command path and both bot lifecycle outcomes
-- [ ] Run live identity/command smoke checks for the old bot and RitzSMP AI after restart
-- [ ] Publish the dedicated Minecraft status-channel routing fix so presence events no longer use the purchase channel
+- [x] Route Minecraft join/leave announcements away from `🐣│รายชื่อผู้ซื้อยศสำเร็จ` into a dedicated `📡│สถานะเซิร์ฟเวอร์` channel
+- [x] Add channel-routing tests and verify live Discord separation for purchase, music, and Minecraft status messages
+- [x] Audit legacy Discord bot entrypoint, token source, command registration, listeners, and permissions against RitzSMP AI
+- [x] Restore or safely isolate the previously working Discord bot without duplicate command registrations or listeners
+- [x] Add regression tests for every currently nonresponsive command path and both bot lifecycle outcomes
+- [x] Run live identity/command smoke checks for the old bot and RitzSMP AI after restart
+- [x] Publish the dedicated Minecraft status-channel routing fix so presence events no longer use the purchase channel
 - [ ] Verify the production bot and Heartbeat callback after publication with a live channel audit
 
-- [ ] Make Discord verification identity-first; keep Minecraft account linking optional and clearly labeled
-- [ ] Make role claiming assign Discord roles without requiring a Minecraft LuckPerms grant
-- [ ] Route Discord member join/leave announcements to Discord status channels independently from Minecraft presence
-- [ ] Make the Discord member list show Discord members and privacy-safe profiles rather than only Minecraft players
-- [ ] Add regression tests proving Discord-native onboarding works when Minecraft/RCON is unavailable
-- [ ] Transition onboarding verification and member lists to be Discord-native
-- [ ] Replace legacy Kanopi/Dischook bot output with RitzSMP AI welcome/goodbye and onboarding panels
-- [ ] Reconcile bot client tokens and prevent duplicate command handlers
-- [ ] Run Vitest tests and verify Discord synchronization
+- [x] Make Discord verification identity-first; keep Minecraft account linking optional and clearly labeled
+- [x] Make role claiming assign Discord roles without requiring a Minecraft LuckPerms grant
+- [x] Route Discord member join/leave announcements to Discord status channels independently from Minecraft presence
+- [x] Make the Discord member list show Discord members and privacy-safe profiles rather than only Minecraft players
+- [x] Add regression tests proving Discord-native onboarding works when Minecraft/RCON is unavailable
+- [x] Transition onboarding verification and member lists to be Discord-native
+- [x] Replace legacy Kanopi/Dischook bot output with RitzSMP AI welcome/goodbye and onboarding panels
+- [x] Reconcile bot client tokens and prevent duplicate command handlers
+- [x] Run Vitest tests and verify Discord synchronization
 - [x] Transition onboarding verification to be Discord-native (Minecraft linking optional with 'none' or direct Discord verification)
 - [x] Reconcile legacy verification / 4-digit bots and consolidate all onboarding, welcome, leave, verification, role assignment, and member profile capabilities into RitzSMP AI
 - [x] Ensure all 75 Vitest tests pass cleanly and prepare live production synchronization checkpoint for morning review
-- [ ] Add 4-digit code generation / verification flow (`/verify <code>` or modal code input) to RitzSMP AI to fully support user's 4-digit requirement
-- [ ] Ensure all onboarding buttons (`ritz_verify_button`, `ritz_claim_rank_button`, `ritz_players_button`, `ritz_profile_button`) reply instantly within 3 seconds to avoid "Application didn't respond"
-- [ ] Post the updated RitzSMP AI onboarding panel into the welcome/verification channel to replace stale legacy messages
-- [ ] Deploy RitzSMP AI automated channel panels into #✅│เชื่อมต่อดิสคอร์ด, #📋│รายชื่อบัญชี, #🪪│ยืนยันตัวตนแมะ, และ #👋│welcome
-- [ ] Implement single-button 4-digit code generator in verification channel
-- [ ] Implement Minecraft /verify <code> command to securely bind Minecraft UUID/IGN to Discord ID
+- [x] Add 4-digit code generation / verification flow (`/verify <code>` or modal code input) to RitzSMP AI to fully support user's 4-digit requirement
+- [x] Ensure all onboarding buttons (`ritz_verify_button`, `ritz_claim_rank_button`, `ritz_players_button`, `ritz_profile_button`) reply instantly within 3 seconds to avoid "Application didn't respond"
+- [x] Post the updated RitzSMP AI onboarding panel into the welcome/verification channel to replace stale legacy messages
+- [x] Deploy RitzSMP AI automated channel panels into #✅│เชื่อมต่อดิสคอร์ด, #📋│รายชื่อบัญชี, #🪪│ยืนยันตัวตนแมะ, และ #👋│welcome
+- [x] Implement single-button 4-digit code generator in verification channel
+- [x] Implement Minecraft /verify <code> command to securely bind Minecraft UUID/IGN to Discord ID
 - [x] Implement single-button 4-digit code generator in verification channel
 - [x] Implement Minecraft /verify <code> command to securely bind Minecraft UUID/IGN to Discord ID
 - [ ] Design multi-server database schema (`managed_servers` and server-scoped configs)
@@ -145,9 +145,13 @@
 - [x] Implement Server Selection and Management UI in web platform
 - [x] Implement dynamic bot configuration per server (Discord tokens, RCON, channel mapping)
 - [x] Validate tenant isolation, tests, and deployment readiness
-- [ ] Inspect startup channel recovery in server/discordAiBot.ts
-- [ ] Ensure deleted channels are automatically recreated and repopulated upon bot restart
-- [ ] Fix string length / message size error handling in Discord embeds and responses
+- [x] Inspect startup channel recovery in server/discordAiBot.ts
+- [x] Ensure deleted channels are automatically recreated and repopulated upon bot restart
+- [x] Fix string length / message size error handling in Discord embeds and responses
+- [x] Add an authenticated Minecraft callback for redeeming Discord four-digit verification codes
+- [x] Update the Discord connection panel to use the durable four-digit flow end to end
+- [x] Keep the Discord-native member list separate from the live Minecraft player list
+- [x] Verify the unified bot has one active gateway listener and no legacy duplicate startup
 - [x] Implement robust startup channel auto-recreation and idempotent panel publishing in RitzSMP AI
 - [x] Harden ensureDeferredReply and safeReply against InteractionNotReplied and string length limits
 - [x] Use the provided Minecraft cover image in the Discord welcome message for new members

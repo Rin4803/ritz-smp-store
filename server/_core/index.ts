@@ -8,11 +8,11 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { startDiscordStoreBot } from "../discordBot";
 import { startRitzSmpAiBot } from "../discordAiBot";
 import { handleMinecraftPresenceScheduled } from "../minecraftPresenceMonitor";
+import { redeemDiscordVerificationCode } from "../db";
 
-function isPortAvailable(port: number): Promise<boolean> {
+async function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
     const server = net.createServer();
     server.listen(port, () => {
@@ -42,6 +42,35 @@ async function startServer() {
   // Heartbeat callbacks are not auto-registered by the framework and must stay
   // before the tRPC/static fallthrough. The handler authenticates cron callers.
   app.post("/api/scheduled/minecraft-presence", handleMinecraftPresenceScheduled);
+
+  // Minecraft verification redemption route
+  // This is called by the Minecraft server (e.g. via Skript or a plugin) to redeem a 4-digit code.
+  // It is protected by the same BUILT_IN_FORGE_API_KEY used for other internal callbacks.
+  app.post("/api/minecraft/verify", async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || authHeader !== `Bearer ${process.env.BUILT_IN_FORGE_API_KEY}`) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { code, minecraftIGN, minecraftUuid } = req.body;
+    if (!code || !minecraftIGN || !minecraftUuid) {
+      return res.status(400).json({ error: "Missing required fields: code, minecraftIGN, minecraftUuid" });
+    }
+
+    try {
+      const verification = await redeemDiscordVerificationCode({
+        code,
+        minecraftIGN,
+        minecraftUuid,
+      });
+      console.log(`[MinecraftVerify] Successfully linked ${minecraftIGN} (${minecraftUuid}) to Discord ${verification.discordUserId}`);
+      return res.json({ success: true, discordUserId: verification.discordUserId });
+    } catch (error) {
+      console.error(`[MinecraftVerify] Failed to redeem code ${code}:`, error);
+      return res.status(400).json({ error: error instanceof Error ? error.message : "Failed to redeem code" });
+    }
+  });
+
   // tRPC API
   app.use(
     "/api/trpc",
