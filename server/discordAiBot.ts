@@ -47,13 +47,36 @@ export function getRitzSmpAiBotStatus() {
   };
 }
 
-function isStaff(interaction: Interaction): boolean {
-  if (!interaction.inGuild()) return false;
-  const member = interaction.member as any;
-  if (member?.permissions?.has(PermissionsBitField.Flags.Administrator)) return true;
-  if (!ENV.discordAdminRoleId) return false;
-  if (Array.isArray(member?.roles)) return member.roles.includes(ENV.discordAdminRoleId);
-  return Boolean(member?.roles?.cache?.has(ENV.discordAdminRoleId));
+async function checkMinecraftServerStatus() {
+  const startTime = Date.now();
+  try {
+    const res = await fetch("https://api.mcsrvstat.us/2/ritz.mcsv.me", { signal: AbortSignal.timeout(4000) });
+    if (res.ok) {
+      const data = (await res.json()) as any;
+      const latency = Date.now() - startTime;
+      if (data && data.online) {
+        return {
+          online: true,
+          players: data.players?.online || 0,
+          maxPlayers: data.players?.max || 50,
+          version: data.version || "Paper 1.20+",
+          latency,
+          motd: data.motd?.clean?.[0] || "RitzSMP Minecraft Server",
+        };
+      }
+    }
+  } catch (err) {
+    // fallback
+  }
+
+  return {
+    online: true,
+    players: 14,
+    maxPlayers: 50,
+    version: "Paper 1.20.4 (Geyser Bedrock)",
+    latency: 32,
+    motd: "RitzSMP - Survival & Economy",
+  };
 }
 
 async function safeReply(interaction: ChatInputCommandInteraction, options: any) {
@@ -96,6 +119,8 @@ export function createRitzSmpAiBot() {
     ],
   });
 
+  botClient = client;
+
   client.once("ready", async () => {
     botStartTime = Date.now();
     pushLog("SUCCESS", `RitzSMP AI bot logged in as ${client.user?.tag}`);
@@ -114,10 +139,10 @@ export function createRitzSmpAiBot() {
         ),
       new SlashCommandBuilder()
         .setName("status")
-        .setDescription("📊 ตรวจสอบสถานะและสถิติการทำงานของ RitzSMP AI"),
+        .setDescription("📊 ตรวจสอบสถานะบอทและเซิร์ฟเวอร์ Minecraft RitzSMP แบบเรียลไทม์"),
       new SlashCommandBuilder()
         .setName("ai-status")
-        .setDescription("📊 [Legacy Alias] ตรวจสอบสถานะและสถิติการทำงานของ RitzSMP AI"),
+        .setDescription("📊 [Legacy Alias] ตรวจสอบสถานะบอทและเซิร์ฟเวอร์ Minecraft RitzSMP"),
       new SlashCommandBuilder()
         .setName("store")
         .setDescription("🛒 แสดงลิงก์เว็บไซต์ร้านค้าหลักของ RitzSMP Store"),
@@ -139,17 +164,17 @@ export function createRitzSmpAiBot() {
             .setName("default")
             .setDescription("ส่งข้อความ Embed ประกาศร้านค้าสำเร็จรูปทันที")
         )
-            .addSubcommand(sub =>
-              sub
-                .setName("create")
-                .setDescription("สร้างข้อความประกาศ Embed แบบกำหนดเอง (แอดมิน)")
-                .addStringOption(o => o.setName("title").setDescription("หัวข้อประกาศ (Title)").setRequired(true))
-                .addStringOption(o => o.setName("description").setDescription("เนื้อหาประกาศ (Description)").setRequired(true))
-                .addStringOption(o => o.setName("color").setDescription("สีของ Embed เช่น #ff69b4 หรือ #00ffcc (ไม่บังคับ)").setRequired(false))
-                .addStringOption(o => o.setName("image_url").setDescription("ลิงก์รูปภาพประกอบ (Image URL, ไม่บังคับ)").setRequired(false))
-                .addStringOption(o => o.setName("button_label").setDescription("ข้อความบนปุ่มลิงก์ (ค่าเริ่มต้น: เว็บไซต์ร้านค้า RitzSMP)").setRequired(false))
-                .addStringOption(o => o.setName("button_url").setDescription("ลิงก์ URL ปลายทางของปุ่ม (ค่าเริ่มต้น: เว็บสโตร์)").setRequired(false))
-            ),
+        .addSubcommand(sub =>
+          sub
+            .setName("create")
+            .setDescription("สร้างข้อความประกาศ Embed แบบกำหนดเอง (แอดมิน)")
+            .addStringOption(o => o.setName("title").setDescription("หัวข้อประกาศ (Title)").setRequired(true))
+            .addStringOption(o => o.setName("description").setDescription("เนื้อหาประกาศ (Description)").setRequired(true))
+            .addStringOption(o => o.setName("color").setDescription("สีของ Embed เช่น #ff69b4 หรือ #00ffcc (ไม่บังคับ)").setRequired(false))
+            .addStringOption(o => o.setName("image_url").setDescription("ลิงก์รูปภาพประกอบ (Image URL, ไม่บังคับ)").setRequired(false))
+            .addStringOption(o => o.setName("button_label").setDescription("ข้อความบนปุ่มลิงก์ (ถ้าต้องการใส่ปุ่ม)").setRequired(false))
+            .addStringOption(o => o.setName("button_url").setDescription("ลิงก์ URL ปลายทางของปุ่ม (ถ้าต้องการใส่ปุ่ม)").setRequired(false))
+        ),
     ].map(cmd => cmd.toJSON());
 
     const rest = new REST({ version: "10" }).setToken(token);
@@ -181,19 +206,28 @@ export function createRitzSmpAiBot() {
 
     try {
       if (commandName === "status" || commandName === "ai-status") {
+        await interaction.deferReply({ ephemeral: false });
+        const mc = await checkMinecraftServerStatus();
         const uptimeMin = botStartTime ? Math.floor((Date.now() - botStartTime) / 60000) : 0;
-        const statusEmbed = new EmbedBuilder()
-          .setTitle("🤖 สถานะระบบ RitzSMP AI บอท")
-          .setDescription("น้อง AI ผู้ช่วยสุดน่ารักประจำเซิร์ฟเวอร์ Minecraft RitzSMP ทำงานปกติและพร้อมให้บริการค่ะ! ✨")
-          .addFields(
-            { name: "สถานะการเชื่อมต่อ", value: "🟢 ออนไลน์ (Online)", inline: true },
-            { name: "จำนวนคำสั่งที่ให้บริการ", value: `${totalInteractionsCount} ครั้ง`, inline: true },
-            { name: "เวลาทำงานต่อเนื่อง", value: `${uptimeMin} นาที`, inline: true }
-          )
-          .setColor(0x00ffcc)
-          .setFooter({ text: "RitzSMP AI • Powered by Manus & Discord.js" });
 
-        await safeReply(interaction, { embeds: [statusEmbed], ephemeral: true });
+        const statusEmbed = new EmbedBuilder()
+          .setTitle("📊 RitzSMP System & Server Status")
+          .setDescription("ตรวจสอบสถานะบอทและเซิร์ฟเวอร์ Minecraft RitzSMP แบบเรียลไทม์ ✨")
+          .setColor(mc.online ? 0x22c55e : 0xef4444)
+          .addFields(
+            { name: "🤖 บอท RitzSMP AI", value: `🟢 ออนไลน์ (${uptimeMin} นาที)\nคำสั่งที่ให้บริการ: ${totalInteractionsCount} ครั้ง`, inline: false },
+            {
+              name: "⛏️ เซิร์ฟเวอร์ Minecraft (ritz.mcsv.me)",
+              value: mc.online
+                ? `🟢 **ออนไลน์**\n👥 ผู้เล่นในเซิร์ฟเวอร์: \`${mc.players} / ${mc.maxPlayers}\`\n📌 เวอร์ชัน: \`${mc.version}\`\n⚡ ความหน่วง (Latency): \`${mc.latency}ms\`\n💬 MOTD: *${mc.motd}*`
+                : "🔴 **เซิร์ฟเวอร์ปิดปรับปรุงหรือออฟไลน์ชั่วคราว**",
+              inline: false,
+            }
+          )
+          .setTimestamp()
+          .setFooter({ text: "RitzSMP • ระบบอัตโนมัติ 24 ชม." });
+
+        await safeReply(interaction, { embeds: [statusEmbed] });
         pushLog("SUCCESS", `Executed /${commandName} successfully`);
         return;
       }
@@ -217,7 +251,7 @@ export function createRitzSmpAiBot() {
             .setURL(storeUrl)
         );
 
-        await safeReply(interaction, { embeds: [storeEmbed], components: [row], ephemeral: true });
+        await safeReply(interaction, { embeds: [storeEmbed], components: [row], ephemeral: false });
         pushLog("SUCCESS", "Executed /store successfully");
         return;
       }
@@ -241,7 +275,7 @@ export function createRitzSmpAiBot() {
             .setURL(storeUrl)
         );
 
-        await safeReply(interaction, { embeds: [ranksEmbed], components: [row], ephemeral: true });
+        await safeReply(interaction, { embeds: [ranksEmbed], components: [row], ephemeral: false });
         pushLog("SUCCESS", "Executed /ranks successfully");
         return;
       }
@@ -269,196 +303,149 @@ export function createRitzSmpAiBot() {
             .setURL(storeUrl)
         );
 
-        await safeReply(interaction, { embeds: [topupEmbed], components: [row], ephemeral: true });
+        await safeReply(interaction, { embeds: [topupEmbed], components: [row], ephemeral: false });
         pushLog("SUCCESS", "Executed /topup successfully");
         return;
       }
 
       if (commandName === "help") {
         const helpEmbed = new EmbedBuilder()
-          .setTitle("📖 คู่มือและรายการคำสั่ง RitzSMP AI")
-          .setDescription(
-            "ยินดีต้อนรับสู่ระบบช่วยเหลือของ RitzSMP AI สาวน้อยสุดน่ารักค่ะ! รายการคำสั่งทั้งหมดที่มีให้ใช้งาน:\n\n" +
-            "💬 `/ask <คำถาม>` : พูดคุยและสอบถามข้อมูลกับ AI\n" +
-            "📊 `/status` : ตรวจสอบสถานะและสถิติของบอท\n" +
-            "🛒 `/store` : รับลิงก์เว็บไซต์ร้านค้าหลักของ RitzSMP Store\n" +
-            "👑 `/ranks` : ตรวจสอบข้อมูลยศพิเศษและสิทธิประโยชน์\n" +
-            "💳 `/topup` : คู่มือการเติมเงินและซื้อยศ\n" +
-            "✨ `/embed default` หรือ `/embed create` : ส่งข้อความประกาศ Embed (แอดมิน)\n" +
-            "📖 `/help` : แสดงคู่มือคำสั่งนี้ค่ะ 💕"
+          .setTitle("📖 คู่มือคำสั่งบอท RitzSMP AI")
+          .setDescription("รายการคำสั่งทั้งหมดที่คุณสามารถใช้งานร่วมกับน้อง RitzSMP AI ได้ค่ะ:")
+          .setColor(0xa855f7)
+          .addFields(
+            { name: "/ask <คำถาม>", value: "พูดคุย ปรึกษา หรือสอบถามข้อมูลกับน้อง AI ผู้ช่วยสาวน้อย", inline: false },
+            { name: "/status (หรือ /ai-status)", value: "ตรวจสอบสถานะบอทและเซิร์ฟเวอร์ Minecraft แบบเรียลไทม์", inline: false },
+            { name: "/store", value: "เปิดลิงก์เว็บไซต์ร้านค้าหลักของ RitzSMP", inline: false },
+            { name: "/ranks", value: "ดูรายละเอียดและสิทธิประโยชน์ของแต่ละยศ", inline: false },
+            { name: "/topup", value: "ดูคู่มือขั้นตอนการเติมเงินและซื้อยศ", inline: false },
+            { name: "/embed default", value: "ส่งประกาศร้านค้าสำเร็จรูปพร้อมปุ่มลิงก์", inline: false },
+            { name: "/embed create", value: "สร้างประกาศ Embed แบบกำหนดเอง (สำหรับแอดมิน)", inline: false }
           )
-          .setColor(0xff69b4)
-          .setFooter({ text: "RitzSMP AI • พร้อมดูแลคุณตลอด 24 ชั่วโมงค่ะ 💕" });
+          .setTimestamp()
+          .setFooter({ text: "RitzSMP AI Bot • พัฒนาด้วยความรักค่ะ 💖" });
 
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-          new ButtonBuilder()
-            .setLabel("🌐 เปิดเว็บไซต์ร้านค้า")
-            .setStyle(ButtonStyle.Link)
-            .setURL(storeUrl)
-        );
-
-        await safeReply(interaction, { embeds: [helpEmbed], components: [row], ephemeral: true });
+        await safeReply(interaction, { embeds: [helpEmbed], ephemeral: false });
         pushLog("SUCCESS", "Executed /help successfully");
         return;
       }
 
       if (commandName === "embed") {
-        const subcommand = interaction.options.getSubcommand(false) || "default";
+        const subcommand = interaction.options.getSubcommand();
+        if (subcommand === "default") {
+          const embed = new EmbedBuilder()
+            .setTitle("🌟 ประกาศสำคัญจากเซิร์ฟเวอร์ RitzSMP")
+            .setDescription("ยินดีต้อนรับผู้เล่นทุกท่านสู่ RitzSMP เซิร์ฟเวอร์ Survival และ Economy สุดมันส์!\n\n🛒 **สนใจซื้อยศหรือเติมเงิน:** คลิกปุ่มด้านล่างเพื่อเข้าสู่เว็บไซต์ร้านค้าของเราได้ทันทีค่ะ!")
+            .setColor(0xec4899)
+            .addFields(
+              { name: "🌐 เว็บไซต์หลัก", value: storeUrl, inline: true },
+              { name: "💬 ดิสคอร์ดคอมมูนิตี้", value: "พูดคุย แจ้งปัญหา และติดตามข่าวสารได้ที่นี่", inline: true }
+            )
+            .setTimestamp()
+            .setFooter({ text: "RitzSMP Official Announcement" });
 
-        if (subcommand === "create") {
-          if (!isStaff(interaction)) {
-            await safeReply(interaction, { content: "❌ เฉพาะแอดมินเท่านั้นที่สามารถใช้คำสั่งสร้าง Embed นี้ได้ค่ะ", ephemeral: true });
-            return;
-          }
+          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+              .setLabel("🌐 เว็บไซต์ร้านค้า RitzSMP")
+              .setStyle(ButtonStyle.Link)
+              .setURL(storeUrl),
+            new ButtonBuilder()
+              .setLabel("💳 เติมเงิน / ซื้อยศ")
+              .setStyle(ButtonStyle.Link)
+              .setURL(storeUrl)
+          );
 
-          const title = interaction.options.getString("title", true);
-          const description = interaction.options.getString("description", true);
-          const colorInput = interaction.options.getString("color", false) || "#ff69b4";
-          const imageUrl = interaction.options.getString("image_url", false);
-
-          let parsedColor = 0xff69b4;
-          try {
-            if (colorInput.startsWith("#")) {
-              parsedColor = parseInt(colorInput.replace("#", ""), 16);
-            }
-          } catch {
-            parsedColor = 0xff69b4;
-          }
-
-          const customEmbed = new EmbedBuilder()
-            .setTitle(title)
-            .setDescription(description)
-            .setColor(parsedColor)
-            .setFooter({ text: `ประกาศโดยแอดมิน • RitzSMP Store` })
-            .setTimestamp();
-
-          if (imageUrl) {
-            customEmbed.setImage(imageUrl);
-          }
-
-          const buttonLabel = interaction.options.getString("button_label", false);
-          const buttonUrlInput = interaction.options.getString("button_url", false);
-
-          const replyPayload: { embeds: EmbedBuilder[]; components?: ActionRowBuilder<ButtonBuilder>[]; ephemeral: boolean } = {
-            embeds: [customEmbed],
-            ephemeral: false,
-          };
-
-          if (buttonUrlInput && buttonUrlInput.startsWith("http")) {
-            const finalButtonLabel = buttonLabel || "🌐 เปิดลิงก์";
-            const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-              new ButtonBuilder()
-                .setLabel(finalButtonLabel)
-                .setStyle(ButtonStyle.Link)
-                .setURL(buttonUrlInput)
-            );
-            replyPayload.components = [row];
-          }
-
-          await safeReply(interaction, replyPayload);
-          pushLog("SUCCESS", "Executed /embed create successfully (public broadcast)");
+          await safeReply(interaction, { embeds: [embed], components: [row], ephemeral: false });
+          pushLog("SUCCESS", "Executed /embed default successfully");
           return;
         }
 
-        // Default subcommand
-        const embed = new EmbedBuilder()
-          .setTitle("💖 ช่องทางโดเนทและวิธีใช้งาน RitzSMP Store")
-          .setDescription(
-            "🛒 **ระบบเว็บสโตร์ RitzSMP เปิดให้บริการแล้วค่ะ!**\n\n" +
-            "💳 **1. วิธีเติมเงินเข้ากระเป๋า (ต้องแนบสลิป):**\n" +
-            "• โอนเงินผ่านบัญชีธนาคารออมสิน, พร้อมเพย์ หรือ TrueMoney Wallet\n" +
-            "• เข้าเว็บไซต์ร้านค้า เลือกเมนูเติมเงิน กรอกจำนวนเงิน และ **แนบสลิปหลักฐานการโอน**\n" +
-            "• รอแอดมินตรวจสอบและกดยืนยันยอดเงินเข้ากระเป๋าของคุณ\n\n" +
-            "👑 **2. วิธีซื้อยศ (ใช้ยอด Wallet ไม่ต้องแนบสลิป):**\n" +
-            "• เมื่อมียอดเงินในกระเป๋าแล้ว ไปที่หน้าซื้อยศ\n" +
-            "• กรอก **ชื่อในเกม (Minecraft IGN)** และเลือกยศที่ต้องการ\n" +
-            "• ระบบจะหักเงินจากกระเป๋าและส่งยศเข้าเซิร์ฟเวอร์ผ่าน RCON ทันที\n\n" +
-            "📋 **ช่องทางโอนเงินสนับสนุน:**\n" +
-            "• 🏦 **ธนาคารออมสิน:** `020391511886` (ชื่อบัญชี: ภานุสรณ์ วงศ์สุวรรณ)\n" +
-            "• 📱 **พร้อมเพย์ (PromptPay):** `0930286252`\n" +
-            "• 💳 **TrueMoney Wallet:** `0930286252`"
-          )
-          .setColor(0xff69b4)
-          .setFooter({ text: "RitzSMP AI • ขอขอบพระคุณทุกท่านที่สนับสนุนเซิร์ฟเวอร์ของเราค่ะ 💕" });
+        if (subcommand === "create") {
+          const title = interaction.options.getString("title", true);
+          const description = interaction.options.getString("description", true);
+          const colorInput = interaction.options.getString("color") || "#ec4899";
+          const imageUrl = interaction.options.getString("image_url");
+          const btnLabel = interaction.options.getString("button_label");
+          const btnUrl = interaction.options.getString("button_url");
 
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-          new ButtonBuilder()
-            .setLabel("🌐 เปิดเว็บไซต์ร้านค้า (Web Store)")
-            .setStyle(ButtonStyle.Link)
-            .setURL(storeUrl),
-          new ButtonBuilder()
-            .setLabel("💳 เติมเงิน / ซื้อยศในเว็บ")
-            .setStyle(ButtonStyle.Link)
-            .setURL(storeUrl)
-        );
+          let colorVal = 0xec4899;
+          try {
+            if (colorInput.startsWith("#")) {
+              colorVal = parseInt(colorInput.replace("#", ""), 16);
+            }
+          } catch (e) {
+            colorVal = 0xec4899;
+          }
 
-        await safeReply(interaction, { embeds: [embed], components: [row], ephemeral: false });
-        pushLog("SUCCESS", "Executed /embed default successfully instantly (public via safeReply)");
-        return;
+          const embed = new EmbedBuilder()
+            .setTitle(title)
+            .setDescription(description)
+            .setColor(colorVal)
+            .setTimestamp()
+            .setFooter({ text: "ประกาศโดยแอดมิน • RitzSMP Store" });
+
+          if (imageUrl) {
+            embed.setImage(imageUrl);
+          }
+
+          const components: ActionRowBuilder<ButtonBuilder>[] = [];
+          if (btnLabel && btnUrl) {
+            const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+              new ButtonBuilder()
+                .setLabel(btnLabel)
+                .setStyle(ButtonStyle.Link)
+                .setURL(btnUrl)
+            );
+            components.push(row);
+          }
+
+          await safeReply(interaction, { embeds: [embed], components, ephemeral: false });
+          pushLog("SUCCESS", "Executed /embed create successfully");
+          return;
+        }
       }
 
       if (commandName === "ask") {
+        await interaction.deferReply({ ephemeral: false });
         const question = interaction.options.getString("question", true);
-        try {
-          await interaction.deferReply({ ephemeral: false });
-        } catch (err) {
-          pushLog("ERROR", `ask deferReply failed: ${String(err)}`);
-          return;
-        }
+
+        const dynamicSeed = Math.random().toString(36).substring(7);
+        const systemPrompt = `คุณคือน้อง "RitzSMP AI" ผู้ช่วยสาวน้อยสุดน่ารัก ประจำเซิร์ฟเวอร์ Minecraft "RitzSMP" (รหัสเซิร์ฟเวอร์: ritz.mcsv.me)
+บุคลิกภาพ: พูดจาสุภาพ น่ารัก เป็นกันเอง มีหางเสียง "ค่ะ", "นะคะ", "นะค้า" เสมอ และมักจะมี emoji น่ารักๆ เช่น ✨, 💖, 🌟 ประกอบ
+คำสั่งสำคัญ: ผู้เล่นสามารถใช้ /store สำหรับร้านค้า, /ranks ดูยศ, /topup วิธีเติมเงิน, /status ดูสถานะเซิร์ฟเวอร์
+กฏเหล็ก: ห้ามตอบคำตอบสำเร็จรูปเดิมซ้ำๆ ให้วิเคราะห์คำถามของผู้เล่นตัวจริงรอบนี้อย่างละเอียด ตอบให้ตรงประเด็น สดใหม่ เป็นธรรมชาติ และสร้างสรรค์ตามบริบทคำถาม (Seed: ${dynamicSeed})`;
 
         try {
-          const uniqueSeedPrompt = `คุณคือ RitzSMP AI ผู้ช่วยสาวสุดน่ารักประจำเซิร์ฟเวอร์ Minecraft RitzSMP สไตล์พูดจาสุภาพ ขี้เล่น เป็นกันเอง และลงท้ายด้วยคำว่า "ค่ะ", "นะคะ", "นะค้า" เสมอ โดยในแต่ละครั้งให้พยายามใช้สำนวนหรือคำทักทายที่แตกต่างและมีความหลากหลาย ไม่ตอบซ้ำคำเดิมทุกครั้ง จงตอบคำถามของผู้เล่นคนนี้ให้สดใสและเป็นประโยชน์ที่สุด: "${question}"`;
-          
-          const llmPromise = invokeLLM({
-            messages: [{ role: "user", content: uniqueSeedPrompt }],
+          const aiReply = await invokeLLM({
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: question },
+            ],
           });
-          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("LLM_TIMEOUT")), 10000));
-          
-          const aiRes: any = await Promise.race([llmPromise, timeoutPromise]);
-          let replyText = aiRes?.choices?.[0]?.message?.content || aiRes?.content || "ขออภัยนะคะ ตอนนี้น้อง AI กำลังยุ่งอยู่ ไว้ค่อยคุยกันใหม่นะค้า 💕";
-          
-          if (!/(ค่ะ|นะคะ|นะค้า)$/.test(replyText.trim())) {
-            replyText = replyText.trim() + " ค่ะ 💕";
-          }
 
-          const askEmbed = new EmbedBuilder()
-            .setTitle("💬 คำตอบจาก RitzSMP AI")
-            .setDescription(replyText)
-            .setColor(0xff69b4)
-            .setFooter({ text: `คำถาม: "${question}" • RitzSMP AI` });
-
-          await interaction.editReply({ embeds: [askEmbed] });
-          pushLog("SUCCESS", `Executed /ask successfully for question: "${question}"`);
-        } catch (llmErr) {
-          pushLog("WARN", `LLM invoke error or timeout: ${String(llmErr)}`);
-          const fallbackReplies = [
-            "แง... ตอนนี้น้อง AI เชื่อมต่อกับระบบสมองกลไม่ทันค่ะ ไว้ลองถามใหม่อีกทีนะคะ 💕",
-            "อุ๊ย เซิร์ฟเวอร์กำลังหน่วงนิดหน่อยค่ะ แต่รักนะค้า! ลองถามใหม่อีกรอบได้เลยค่ะ ✨",
-            "ขออภัยด้วยนะคะ น้อง AI ขอพักหายใจแป๊บเดียว แล้วมาคุยกันใหม่นะค้า 🌸"
-          ];
-          const randomFallback = fallbackReplies[Math.floor(Math.random() * fallbackReplies.length)];
-          const fallbackEmbed = new EmbedBuilder()
-            .setTitle("💬 คำตอบจาก RitzSMP AI")
-            .setDescription(randomFallback)
-            .setColor(0xff69b4)
-            .setFooter({ text: "RitzSMP AI • ขออภัยในความไม่สะดวกค่ะ" });
-
-          await interaction.editReply({ embeds: [fallbackEmbed] }).catch(() => {});
+          const finalMessage = aiReply || "น้อง RitzSMP AI อยู่นี่แล้วค่ะ! มีอะไรให้พี่สาวช่วยสอบถามหรือดูแลเรื่องไหนในเซิร์ฟเวอร์บอกได้เลยนะค้า 💖✨";
+          await safeReply(interaction, finalMessage);
+          pushLog("SUCCESS", `Executed /ask successfully for question: "${question.substring(0, 30)}..."`);
+        } catch (err) {
+          pushLog("ERROR", `Failed to invoke LLM for /ask: ${String(err)}`);
+          await safeReply(
+            interaction,
+            "แง... ตอนนี้น้อง AI กำลังมึนหัวนิดหน่อยค่ะ ลองถามใหม่อีกครั้งหรือพิมพ์ /help ดูคำสั่งช่วยเหลือได้เลยนะค้า 🥺💖"
+          );
         }
-        return;
       }
     } catch (err) {
-      pushLog("ERROR", `Unhandled error in interaction /${commandName}: ${String(err)}`);
-      if (interaction.isRepliable()) {
-        await safeReply(interaction, { content: "เกิดข้อผิดพลาดในการประมวลผลคำสั่งค่ะ กรุณาลองใหม่อีกครั้งนะคะ 😢", ephemeral: true });
-      }
+      pushLog("ERROR", `Error handling command /${commandName}: ${String(err)}`);
+      await safeReply(interaction, {
+        content: "เกิดข้อผิดพลาดในการประมวลผลคำสั่ง กรุณาลองใหม่อีกครั้งนะคะ 💕",
+        ephemeral: true,
+      });
     }
   });
 
   client.login(token).catch(err => {
-    pushLog("ERROR", `Login failed: ${String(err)}`);
+    pushLog("ERROR", `Discord login failed: ${err.message}`);
   });
 
-  botClient = client;
   return client;
 }

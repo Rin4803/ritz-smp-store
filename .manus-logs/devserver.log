@@ -656,3 +656,23 @@
 [2026-08-20T14:05:35.476Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
 [2026-08-20T14:06:40.276Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
 [2026-08-20T14:08:21.191Z] 2:08:21 PM [vite] (client) hmr update /src/index.css
+[2026-08-20T14:14:20.385Z] [RitzSmpAI] [INFO] Received command /embed from tun_5555
+[2026-08-20T14:14:20.393Z] (node:44953) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-20T14:14:22.791Z] [RitzSmpAI] [SUCCESS] Executed /embed create successfully (public broadcast)
+[2026-08-20T14:15:19.941Z] 2:15:19 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T14:15:21.652Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T14:15:22.452Z] Server running on http://localhost:3000/
+[2026-08-20T14:15:24.434Z] [DiscordBot] Failed to start: DiscordjsError [TokenInvalid]: An invalid token was provided.
+[2026-08-20T14:15:24.434Z] at WebSocketManager.connect (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/websocket/WebSocketManager.js:140:26)
+[2026-08-20T14:15:24.434Z] at Client.login (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/Client.js:229:21)
+[2026-08-20T14:15:24.434Z] at <anonymous> (/home/ubuntu/ritz-smp-store/server/discordBot.ts:422:20)
+[2026-08-20T14:15:24.434Z] at startDiscordStoreBot (/home/ubuntu/ritz-smp-store/server/discordBot.ts:424:5)
+[2026-08-20T14:15:24.434Z] at startServer (/home/ubuntu/ritz-smp-store/server/_core/index.ts:69:3)
+[2026-08-20T14:15:24.434Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-20T14:15:24.434Z] code: 'TokenInvalid'
+[2026-08-20T14:15:24.434Z] }
+[2026-08-20T14:15:28.189Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-20T14:15:28.193Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-20T14:15:28.194Z] (node:46572) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T14:15:28.194Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T14:15:29.439Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
