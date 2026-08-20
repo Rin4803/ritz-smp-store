@@ -274,3 +274,67 @@
 [2026-08-20T11:56:49.135Z] url: 'https://discord.com/api/v10/interactions/1539966408341987368/aW50ZXJhY3Rpb246MTUzOTk2NjQwODM0MTk4NzM2ODp5c2ZHVmlHaGJlbU1KcUs0Z0o2dW90Ukg4MTNISlY5SVQzUW1seHBaeVM3cjZwM0pNZ0JnS1FRbzlRaERXcDgxMHRtRE1wWWd0VjZnTkdpMHN6N0kxekdscTVkdkVsWjFZM25KYmNHNmw1ZUE2SDdDQTRPcm9DYnY3cDI2cHRlOA/callback?with_response=false',
 [2026-08-20T11:56:49.135Z] requestBody: { files: undefined, json: { type: 5, data: [Object] } }
 [2026-08-20T11:56:49.135Z] }
+[2026-08-20T12:00:22.234Z] [RitzSmpAI] embed command error: DiscordAPIError[10062]: Unknown interaction
+[2026-08-20T12:00:22.234Z] at handleErrors (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+rest@2.6.3/node_modules/@discordjs/rest/src/lib/handlers/Shared.ts:148:10)
+[2026-08-20T12:00:22.234Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2026-08-20T12:00:22.234Z] at async BurstHandler.runRequest (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+rest@2.6.3/node_modules/@discordjs/rest/src/lib/handlers/BurstHandler.ts:144:20)
+[2026-08-20T12:00:22.234Z] at async _REST.request (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+rest@2.6.3/node_modules/@discordjs/rest/src/lib/REST.ts:210:20)
+[2026-08-20T12:00:22.234Z] at async ChatInputCommandInteraction.deferReply (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/structures/interfaces/InteractionResponses.js:122:22)
+[2026-08-20T12:00:22.235Z] at async Client.<anonymous> (/home/ubuntu/ritz-smp-store/server/discordAiBot.ts:94:11) {
+[2026-08-20T12:00:22.235Z] rawError: { message: 'Unknown interaction', code: 10062 },
+[2026-08-20T12:00:22.235Z] code: 10062,
+[2026-08-20T12:00:22.235Z] status: 404,
+[2026-08-20T12:00:22.235Z] method: 'POST',
+[2026-08-20T12:00:22.235Z] url: 'https://discord.com/api/v10/interactions/1539967303339475065/aW50ZXJhY3Rpb246MTUzOTk2NzMwMzMzOTQ3NTA2NTpzdXE2SlpINDNYVFExT1I3dEN4NjhwUE1PSkRwTXBuNk9qdU53d1pjZGlnMDVtUU5ZaW1adU9EQ3pkUVF0TDJDcU1ZQ2hzSml2aGhrMUh4UjNsbG9EeUJqWDdvSlZzQ2pNc0E4SGN3QzhnUk5zbTlhRE0weDhsVnJlOW1hRzVWcA/callback?with_response=false',
+[2026-08-20T12:00:22.235Z] requestBody: { files: undefined, json: { type: 5, data: [Object] } }
+[2026-08-20T12:00:22.235Z] }
+[2026-08-20T12:00:53.533Z] [RitzSmpAI] deferReply failed: DiscordAPIError[10062]: Unknown interaction
+[2026-08-20T12:00:53.533Z] at handleErrors (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+rest@2.6.3/node_modules/@discordjs/rest/src/lib/handlers/Shared.ts:148:10)
+[2026-08-20T12:00:53.533Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2026-08-20T12:00:53.533Z] at async BurstHandler.runRequest (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+rest@2.6.3/node_modules/@discordjs/rest/src/lib/handlers/BurstHandler.ts:144:20)
+[2026-08-20T12:00:53.533Z] at async _REST.request (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+rest@2.6.3/node_modules/@discordjs/rest/src/lib/REST.ts:210:20)
+[2026-08-20T12:00:53.533Z] at async ChatInputCommandInteraction.deferReply (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/structures/interfaces/InteractionResponses.js:122:22)
+[2026-08-20T12:00:53.533Z] at async Client.<anonymous> (/home/ubuntu/ritz-smp-store/server/discordAiBot.ts:152:9) {
+[2026-08-20T12:00:53.533Z] rawError: { message: 'Unknown interaction', code: 10062 },
+[2026-08-20T12:00:53.533Z] code: 10062,
+[2026-08-20T12:00:53.533Z] status: 404,
+[2026-08-20T12:00:53.533Z] method: 'POST',
+[2026-08-20T12:00:53.533Z] url: 'https://discord.com/api/v10/interactions/1539967433207447603/aW50ZXJhY3Rpb246MTUzOTk2NzQzMzIwNzQ0NzYwMzp6bnp3UkZzTDFrRHowcnlvcFRQem96bHU4VFJDaU9WUDlMOGdlcDdzQjVQNDlOdUVBU2pSejh1dmJoWlZMZHhNTHAwb21WUUdydzIzSDhHdXdYM1lhRWdLREZ6ckl5UWtObUdZTDJDNm9hZnE5WDR5cW5UWW5kZU4yTWRwYVFwWA/callback?with_response=false',
+[2026-08-20T12:00:53.533Z] requestBody: { files: undefined, json: { type: 5, data: [Object] } }
+[2026-08-20T12:00:53.533Z] }
+[2026-08-20T12:01:10.522Z] 12:01:10 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T12:01:12.289Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T12:01:13.006Z] Server running on http://localhost:3000/
+[2026-08-20T12:01:18.504Z] [DiscordBot] Failed to start: DiscordjsError [TokenInvalid]: An invalid token was provided.
+[2026-08-20T12:01:18.504Z] at WebSocketManager.connect (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/websocket/WebSocketManager.js:140:26)
+[2026-08-20T12:01:18.504Z] at Client.login (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/Client.js:229:21)
+[2026-08-20T12:01:18.504Z] at <anonymous> (/home/ubuntu/ritz-smp-store/server/discordBot.ts:422:20)
+[2026-08-20T12:01:18.504Z] at startDiscordStoreBot (/home/ubuntu/ritz-smp-store/server/discordBot.ts:424:5)
+[2026-08-20T12:01:18.504Z] at startServer (/home/ubuntu/ritz-smp-store/server/_core/index.ts:69:3)
+[2026-08-20T12:01:18.504Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-20T12:01:18.504Z] code: 'TokenInvalid'
+[2026-08-20T12:01:18.504Z] }
+[2026-08-20T12:01:24.642Z] [RitzSmpAI] Logged in as RitzSMP AI#4684
+[2026-08-20T12:01:24.645Z] [RitzSmpAI] Registering global slash commands...
+[2026-08-20T12:01:24.648Z] (node:29344) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T12:01:24.648Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T12:01:30.269Z] [RitzSmpAI] Global slash commands registered successfully!
+[2026-08-20T12:01:35.858Z] [RitzSmpAI] Guild commands registered for guild 1525527108854481007
+[2026-08-20T12:02:47.435Z] 12:02:47 PM [tsx] change in ./server/routers.ts Restarting...
+[2026-08-20T12:02:49.221Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T12:02:49.970Z] Server running on http://localhost:3000/
+[2026-08-20T12:02:55.522Z] [DiscordBot] Failed to start: DiscordjsError [TokenInvalid]: An invalid token was provided.
+[2026-08-20T12:02:55.522Z] at WebSocketManager.connect (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/websocket/WebSocketManager.js:140:26)
+[2026-08-20T12:02:55.522Z] at Client.login (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/Client.js:229:21)
+[2026-08-20T12:02:55.522Z] at <anonymous> (/home/ubuntu/ritz-smp-store/server/discordBot.ts:422:20)
+[2026-08-20T12:02:55.522Z] at startDiscordStoreBot (/home/ubuntu/ritz-smp-store/server/discordBot.ts:424:5)
+[2026-08-20T12:02:55.522Z] at startServer (/home/ubuntu/ritz-smp-store/server/_core/index.ts:69:3)
+[2026-08-20T12:02:55.522Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-20T12:02:55.522Z] code: 'TokenInvalid'
+[2026-08-20T12:02:55.522Z] }
+[2026-08-20T12:03:01.776Z] [RitzSmpAI] Logged in as RitzSMP AI#4684
+[2026-08-20T12:03:01.781Z] [RitzSmpAI] Registering global slash commands...
+[2026-08-20T12:03:01.785Z] (node:29464) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T12:03:01.785Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T12:03:07.353Z] [RitzSmpAI] Global slash commands registered successfully!
+[2026-08-20T12:03:12.913Z] [RitzSmpAI] Guild commands registered for guild 1525527108854481007

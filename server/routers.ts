@@ -47,6 +47,19 @@ const decodeSlip = (slipData: string, slipType: (typeof allowedSlipTypes)[number
 export const appRouter = router({
   system: router({
     health: publicProcedure.query(() => ({ ok: true, service: "ritz-smp-store" })),
+    botStatus: adminProcedure.query(() => {
+      try {
+        const { getRitzSmpAiBotStatus } = require("./discordAiBot");
+        return getRitzSmpAiBotStatus();
+      } catch (e) {
+        return {
+          status: "offline" as const,
+          username: null,
+          totalInteractions: 0,
+          logs: [{ timestamp: new Date().toISOString(), type: "ERROR", message: String(e) }],
+        };
+      }
+    }),
   }),
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

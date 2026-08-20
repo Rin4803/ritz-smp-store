@@ -182,6 +182,39 @@ export function createRitzSmpAiBot() {
   return client;
 }
 
+let botStartTime = 0;
+let botStatus: "online" | "offline" | "connecting" = "offline";
+let botUsername: string | null = null;
+let totalInteractionsCount = 0;
+const recentLogs: { timestamp: string; type: string; message: string }[] = [];
+
+function pushLog(type: string, message: string) {
+  const timeStr = new Date().toISOString();
+  recentLogs.unshift({ timestamp: timeStr, type, message });
+  if (recentLogs.length > 50) recentLogs.pop();
+}
+
+export function getRitzSmpAiBotStatus() {
+  return {
+    status: botStatus,
+    username: botUsername,
+    uptimeSeconds: botStartTime ? Math.floor((Date.now() - botStartTime) / 1000) : 0,
+    totalInteractions: totalInteractionsCount,
+    logs: recentLogs.slice(0, 20),
+  };
+}
+
 export function startRitzSmpAiBot() {
-  return createRitzSmpAiBot();
+  botStatus = "connecting";
+  pushLog("INFO", "Starting RitzSMP AI Bot...");
+  const client = createRitzSmpAiBot();
+  if (client) {
+    botStartTime = Date.now();
+    botStatus = "online";
+    pushLog("SUCCESS", "RitzSMP AI Bot online and connected.");
+  } else {
+    botStatus = "offline";
+    pushLog("WARN", "Token missing, bot offline.");
+  }
+  return client;
 }

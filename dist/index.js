@@ -1,3 +1,456 @@
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc2) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc2 = __getOwnPropDesc(from, key)) || desc2.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// server/_core/env.ts
+var ENV;
+var init_env = __esm({
+  "server/_core/env.ts"() {
+    "use strict";
+    ENV = {
+      appId: process.env.VITE_APP_ID ?? "",
+      cookieSecret: process.env.JWT_SECRET ?? "",
+      databaseUrl: process.env.DATABASE_URL ?? "",
+      oAuthServerUrl: process.env.OAUTH_SERVER_URL ?? "",
+      ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
+      isProduction: process.env.NODE_ENV === "production",
+      forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
+      forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+      discordBotToken: process.env.DISCORD_BOT_TOKEN ?? "",
+      discordGuildId: process.env.DISCORD_GUILD_ID ?? "",
+      discordStoreChannelId: process.env.DISCORD_STORE_CHANNEL_ID ?? "",
+      discordDonateChannelId: process.env.DISCORD_DONATE_CHANNEL_ID ?? "",
+      discordOrdersChannelId: process.env.DISCORD_ORDERS_CHANNEL_ID ?? "",
+      discordAdminRoleId: process.env.DISCORD_ADMIN_ROLE_ID ?? "",
+      publicStoreUrl: process.env.PUBLIC_STORE_URL ?? "",
+      rconHost: process.env.RCON_HOST ?? "",
+      rconPort: Number(process.env.RCON_PORT ?? 0),
+      rconPassword: process.env.RCON_PASSWORD ?? ""
+    };
+  }
+});
+
+// server/_core/llm.ts
+async function invokeLLM(params) {
+  assertApiKey();
+  const {
+    messages,
+    tools,
+    toolChoice,
+    tool_choice,
+    outputSchema,
+    output_schema,
+    responseFormat,
+    response_format,
+    model,
+    thinking,
+    reasoning,
+    maxTokens,
+    max_tokens
+  } = params;
+  const payload = {
+    messages: messages.map(normalizeMessage)
+  };
+  if (model) {
+    payload.model = model;
+  }
+  if (tools && tools.length > 0) {
+    payload.tools = tools;
+  }
+  const normalizedToolChoice = normalizeToolChoice(
+    toolChoice || tool_choice,
+    tools
+  );
+  if (normalizedToolChoice) {
+    payload.tool_choice = normalizedToolChoice;
+  }
+  const resolvedMaxTokens = max_tokens ?? maxTokens;
+  if (typeof resolvedMaxTokens === "number") {
+    payload.max_tokens = resolvedMaxTokens;
+  }
+  if (thinking) {
+    payload.thinking = thinking;
+  }
+  if (reasoning) {
+    payload.reasoning = reasoning;
+  }
+  const normalizedResponseFormat = normalizeResponseFormat({
+    responseFormat,
+    response_format,
+    outputSchema,
+    output_schema
+  });
+  if (normalizedResponseFormat) {
+    payload.response_format = normalizedResponseFormat;
+  }
+  const response = await fetchWithBackoff(resolveApiUrl(), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${ENV.forgeApiKey}`
+    },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `LLM invoke failed: ${response.status} ${response.statusText} \u2013 ${errorText}`
+    );
+  }
+  return await response.json();
+}
+var ensureArray, normalizeContentPart, normalizeMessage, normalizeToolChoice, resolveApiUrl, assertApiKey, normalizeResponseFormat, RETRY_MAX_RETRIES, RETRY_BASE_DELAY_MS, RETRY_MAX_DELAY_MS, sleep, parseRetryAfter, computeBackoffDelay, fetchWithBackoff;
+var init_llm = __esm({
+  "server/_core/llm.ts"() {
+    "use strict";
+    init_env();
+    ensureArray = (value) => Array.isArray(value) ? value : [value];
+    normalizeContentPart = (part) => {
+      if (typeof part === "string") {
+        return { type: "text", text: part };
+      }
+      if (part.type === "text") {
+        return part;
+      }
+      if (part.type === "image_url") {
+        return part;
+      }
+      if (part.type === "file_url") {
+        return part;
+      }
+      throw new Error("Unsupported message content part");
+    };
+    normalizeMessage = (message) => {
+      const { role, name, tool_call_id } = message;
+      if (role === "tool" || role === "function") {
+        const content = ensureArray(message.content).map((part) => typeof part === "string" ? part : JSON.stringify(part)).join("\n");
+        return {
+          role,
+          name,
+          tool_call_id,
+          content
+        };
+      }
+      const contentParts = ensureArray(message.content).map(normalizeContentPart);
+      if (contentParts.length === 1 && contentParts[0].type === "text") {
+        return {
+          role,
+          name,
+          content: contentParts[0].text
+        };
+      }
+      return {
+        role,
+        name,
+        content: contentParts
+      };
+    };
+    normalizeToolChoice = (toolChoice, tools) => {
+      if (!toolChoice) return void 0;
+      if (toolChoice === "none" || toolChoice === "auto") {
+        return toolChoice;
+      }
+      if (toolChoice === "required") {
+        if (!tools || tools.length === 0) {
+          throw new Error(
+            "tool_choice 'required' was provided but no tools were configured"
+          );
+        }
+        if (tools.length > 1) {
+          throw new Error(
+            "tool_choice 'required' needs a single tool or specify the tool name explicitly"
+          );
+        }
+        return {
+          type: "function",
+          function: { name: tools[0].function.name }
+        };
+      }
+      if ("name" in toolChoice) {
+        return {
+          type: "function",
+          function: { name: toolChoice.name }
+        };
+      }
+      return toolChoice;
+    };
+    resolveApiUrl = () => ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0 ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions` : "https://forge.manus.im/v1/chat/completions";
+    assertApiKey = () => {
+      if (!ENV.forgeApiKey) {
+        throw new Error("OPENAI_API_KEY is not configured");
+      }
+    };
+    normalizeResponseFormat = ({
+      responseFormat,
+      response_format,
+      outputSchema,
+      output_schema
+    }) => {
+      const explicitFormat = responseFormat || response_format;
+      if (explicitFormat) {
+        if (explicitFormat.type === "json_schema" && !explicitFormat.json_schema?.schema) {
+          throw new Error(
+            "responseFormat json_schema requires a defined schema object"
+          );
+        }
+        return explicitFormat;
+      }
+      const schema = outputSchema || output_schema;
+      if (!schema) return void 0;
+      if (!schema.name || !schema.schema) {
+        throw new Error("outputSchema requires both name and schema");
+      }
+      return {
+        type: "json_schema",
+        json_schema: {
+          name: schema.name,
+          schema: schema.schema,
+          ...typeof schema.strict === "boolean" ? { strict: schema.strict } : {}
+        }
+      };
+    };
+    RETRY_MAX_RETRIES = 4;
+    RETRY_BASE_DELAY_MS = 500;
+    RETRY_MAX_DELAY_MS = 3e4;
+    sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    parseRetryAfter = (value) => {
+      if (!value) return void 0;
+      const seconds = Number(value);
+      if (Number.isFinite(seconds)) return Math.max(0, seconds * 1e3);
+      const at = Date.parse(value);
+      return Number.isNaN(at) ? void 0 : Math.max(0, at - Date.now());
+    };
+    computeBackoffDelay = (attempt, retryAfterMs) => {
+      const cap = Math.min(RETRY_BASE_DELAY_MS * 2 ** attempt, RETRY_MAX_DELAY_MS);
+      const jittered = cap / 2 + Math.random() * (cap / 2);
+      return Math.min(Math.max(jittered, retryAfterMs ?? 0), RETRY_MAX_DELAY_MS);
+    };
+    fetchWithBackoff = async (url, init) => {
+      let lastError;
+      for (let attempt = 0; attempt <= RETRY_MAX_RETRIES; attempt++) {
+        try {
+          const response = await fetch(url, init);
+          if (response.ok || attempt === RETRY_MAX_RETRIES) {
+            return response;
+          }
+          const retryAfterMs = parseRetryAfter(
+            response.headers.get("retry-after")
+          );
+          try {
+            await response.body?.cancel();
+          } catch {
+          }
+          console.warn(
+            `LLM request retry ${attempt + 1}/${RETRY_MAX_RETRIES} after status ${response.status}`
+          );
+          await sleep(computeBackoffDelay(attempt, retryAfterMs));
+        } catch (error) {
+          lastError = error;
+          if (attempt === RETRY_MAX_RETRIES) throw error;
+          console.warn(
+            `LLM request retry ${attempt + 1}/${RETRY_MAX_RETRIES} after network error`
+          );
+          await sleep(computeBackoffDelay(attempt));
+        }
+      }
+      throw lastError instanceof Error ? lastError : new Error("LLM request failed after exhausting retries");
+    };
+  }
+});
+
+// server/discordAiBot.ts
+var discordAiBot_exports = {};
+__export(discordAiBot_exports, {
+  createRitzSmpAiBot: () => createRitzSmpAiBot,
+  getRitzSmpAiBotStatus: () => getRitzSmpAiBotStatus,
+  startRitzSmpAiBot: () => startRitzSmpAiBot
+});
+import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+function createRitzSmpAiBot() {
+  const token = process.env.DISCORD_AI_BOT_TOKEN;
+  if (!token) {
+    console.warn("[RitzSmpAI] DISCORD_AI_BOT_TOKEN not provided, skipping AI bot startup.");
+    return null;
+  }
+  const client = new Client({
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent
+    ]
+  });
+  client.once("ready", async () => {
+    console.log(`[RitzSmpAI] Logged in as ${client.user?.tag}`);
+    const commands = [
+      new SlashCommandBuilder().setName("ask").setDescription("\u0E2A\u0E2D\u0E1A\u0E16\u0E32\u0E21\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E40\u0E01\u0E35\u0E48\u0E22\u0E27\u0E01\u0E31\u0E1A\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C RitzSMP, \u0E22\u0E28, \u0E2B\u0E23\u0E37\u0E2D\u0E23\u0E30\u0E1A\u0E1A\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32").addStringOption(
+        (option) => option.setName("question").setDescription("\u0E04\u0E33\u0E16\u0E32\u0E21\u0E17\u0E35\u0E48\u0E04\u0E38\u0E13\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E16\u0E32\u0E21 AI").setRequired(true)
+      ),
+      new SlashCommandBuilder().setName("ai-status").setDescription("\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E23\u0E30\u0E1A\u0E1A RitzSMP AI \u0E41\u0E25\u0E30\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C Minecraft"),
+      new SlashCommandBuilder().setName("embed").setDescription("\u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28 Embed \u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E1B\u0E38\u0E48\u0E21\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 RitzSMP \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E41\u0E2D\u0E14\u0E21\u0E34\u0E19")
+    ].map((cmd) => cmd.toJSON());
+    const rest = new REST({ version: "10" }).setToken(token);
+    const clientId = client.user?.id;
+    if (!clientId) return;
+    try {
+      console.log("[RitzSmpAI] Registering global slash commands...");
+      await rest.put(Routes.applicationCommands(clientId), { body: commands });
+      console.log("[RitzSmpAI] Global slash commands registered successfully!");
+      const guildIds = Array.from(client.guilds.cache.keys());
+      for (const guildId of guildIds) {
+        try {
+          await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });
+          console.log(`[RitzSmpAI] Guild commands registered for guild ${guildId}`);
+        } catch (err) {
+          console.error(`[RitzSmpAI] Failed to register guild commands for ${guildId}:`, err);
+        }
+      }
+    } catch (error) {
+      console.error("[RitzSmpAI] Failed to register slash commands:", error);
+    }
+  });
+  client.on("interactionCreate", async (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
+    const { commandName } = interaction;
+    if (commandName === "ai-status") {
+      try {
+        if (!interaction.deferred && !interaction.replied) {
+          await interaction.deferReply();
+        }
+        await interaction.editReply(
+          "\u{1F496} **RitzSMP AI** \u0E15\u0E31\u0E27\u0E19\u0E49\u0E2D\u0E22\u0E2A\u0E41\u0E15\u0E19\u0E14\u0E4C\u0E1A\u0E32\u0E22\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E14\u0E39\u0E41\u0E25\u0E17\u0E38\u0E01\u0E04\u0E19\u0E41\u0E25\u0E49\u0E27\u0E19\u0E30\u0E04\u0E30! \u0E23\u0E30\u0E1A\u0E1A\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C\u0E40\u0E23\u0E35\u0E22\u0E1A\u0E23\u0E49\u0E2D\u0E22\u0E14\u0E35\u0E04\u0E48\u0E30 \u0E21\u0E35\u0E2D\u0E30\u0E44\u0E23\u0E43\u0E2B\u0E49\u0E41\u0E2D\u0E14\u0E21\u0E34\u0E19\u0E2B\u0E23\u0E37\u0E2D\u0E19\u0E49\u0E2D\u0E07\u0E44\u0E2D\u0E0A\u0E48\u0E27\u0E22\u0E14\u0E39\u0E41\u0E25\u0E1A\u0E2D\u0E01\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22\u0E19\u0E30\u0E04\u0E30 \u2728"
+        );
+      } catch (err) {
+        console.error("[RitzSmpAI] ai-status error:", err);
+        try {
+          if (!interaction.replied) {
+            await interaction.reply({
+              content: "\u{1F496} **RitzSMP AI** \u0E2A\u0E41\u0E15\u0E19\u0E14\u0E4C\u0E1A\u0E32\u0E22\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E14\u0E39\u0E41\u0E25\u0E04\u0E48\u0E30! (\u0E23\u0E30\u0E1A\u0E1A\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C\u0E40\u0E23\u0E35\u0E22\u0E1A\u0E23\u0E49\u0E2D\u0E22\u0E14\u0E35\u0E19\u0E30\u0E04\u0E49\u0E32)",
+              ephemeral: true
+            });
+          }
+        } catch (e) {
+        }
+      }
+      return;
+    }
+    if (commandName === "embed") {
+      try {
+        if (!interaction.deferred && !interaction.replied) {
+          await interaction.deferReply({ ephemeral: true });
+        }
+        const embed = new EmbedBuilder().setTitle("\u{1F496} \u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07\u0E42\u0E14\u0E40\u0E19\u0E17\u0E41\u0E25\u0E30\u0E27\u0E34\u0E18\u0E35\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19 RitzSMP Store").setDescription(
+          "\u{1F6D2} **\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E27\u0E47\u0E1A\u0E2A\u0E42\u0E15\u0E23\u0E4C RitzSMP \u0E40\u0E1B\u0E34\u0E14\u0E43\u0E2B\u0E49\u0E1A\u0E23\u0E34\u0E01\u0E32\u0E23\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30!**\n\n\u{1F4B3} **1. \u0E27\u0E34\u0E18\u0E35\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19\u0E40\u0E02\u0E49\u0E32\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32 (\u0E15\u0E49\u0E2D\u0E07\u0E41\u0E19\u0E1A\u0E2A\u0E25\u0E34\u0E1B):**\n\u2022 \u0E42\u0E2D\u0E19\u0E40\u0E07\u0E34\u0E19\u0E1C\u0E48\u0E32\u0E19\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E18\u0E19\u0E32\u0E04\u0E32\u0E23\u0E2D\u0E2D\u0E21\u0E2A\u0E34\u0E19, \u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E40\u0E1E\u0E22\u0E4C \u0E2B\u0E23\u0E37\u0E2D TrueMoney Wallet\n\u2022 \u0E40\u0E02\u0E49\u0E32\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 \u0E40\u0E25\u0E37\u0E2D\u0E01\u0E40\u0E21\u0E19\u0E39\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19 \u0E01\u0E23\u0E2D\u0E01\u0E08\u0E33\u0E19\u0E27\u0E19\u0E40\u0E07\u0E34\u0E19 \u0E41\u0E25\u0E30 **\u0E41\u0E19\u0E1A\u0E2A\u0E25\u0E34\u0E1B\u0E2B\u0E25\u0E31\u0E01\u0E10\u0E32\u0E19\u0E01\u0E32\u0E23\u0E42\u0E2D\u0E19**\n\u2022 \u0E23\u0E2D\u0E41\u0E2D\u0E14\u0E21\u0E34\u0E19\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E41\u0E25\u0E30\u0E01\u0E14\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E22\u0E2D\u0E14\u0E40\u0E07\u0E34\u0E19\u0E40\u0E02\u0E49\u0E32\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\n\n\u{1F451} **2. \u0E27\u0E34\u0E18\u0E35\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28 (\u0E43\u0E0A\u0E49\u0E22\u0E2D\u0E14 Wallet \u0E44\u0E21\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E41\u0E19\u0E1A\u0E2A\u0E25\u0E34\u0E1B):**\n\u2022 \u0E40\u0E21\u0E37\u0E48\u0E2D\u0E21\u0E35\u0E22\u0E2D\u0E14\u0E40\u0E07\u0E34\u0E19\u0E43\u0E19\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E41\u0E25\u0E49\u0E27 \u0E44\u0E1B\u0E17\u0E35\u0E48\u0E2B\u0E19\u0E49\u0E32\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28\n\u2022 \u0E01\u0E23\u0E2D\u0E01 **\u0E0A\u0E37\u0E48\u0E2D\u0E43\u0E19\u0E40\u0E01\u0E21 (Minecraft IGN)** \u0E41\u0E25\u0E30\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E22\u0E28\u0E17\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\n\u2022 \u0E23\u0E30\u0E1A\u0E1A\u0E08\u0E30\u0E2B\u0E31\u0E01\u0E40\u0E07\u0E34\u0E19\u0E08\u0E32\u0E01\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E41\u0E25\u0E30\u0E2A\u0E48\u0E07\u0E22\u0E28\u0E40\u0E02\u0E49\u0E32\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E1C\u0E48\u0E32\u0E19 RCON \u0E17\u0E31\u0E19\u0E17\u0E35\n\n\u{1F4CB} **\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07\u0E42\u0E2D\u0E19\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E19\u0E31\u0E1A\u0E2A\u0E19\u0E38\u0E19:**\n\u2022 \u{1F3E6} **\u0E18\u0E19\u0E32\u0E04\u0E32\u0E23\u0E2D\u0E2D\u0E21\u0E2A\u0E34\u0E19:** `020391511886` (\u0E0A\u0E37\u0E48\u0E2D\u0E1A\u0E31\u0E0D\u0E0A\u0E35: \u0E20\u0E32\u0E19\u0E38\u0E2A\u0E23\u0E13\u0E4C \u0E27\u0E07\u0E28\u0E4C\u0E2A\u0E38\u0E27\u0E23\u0E23\u0E13)\n\u2022 \u{1F4F1} **\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E40\u0E1E\u0E22\u0E4C (PromptPay):** `0930286252`\n\u2022 \u{1F4B3} **TrueMoney Wallet:** `0930286252`"
+        ).setColor(16738740).setThumbnail("https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f496.png").setFooter({ text: "RitzSMP AI \u2022 \u0E02\u0E2D\u0E02\u0E2D\u0E1A\u0E1E\u0E23\u0E30\u0E04\u0E38\u0E13\u0E17\u0E38\u0E01\u0E17\u0E48\u0E32\u0E19\u0E17\u0E35\u0E48\u0E2A\u0E19\u0E31\u0E1A\u0E2A\u0E19\u0E38\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E02\u0E2D\u0E07\u0E40\u0E23\u0E32\u0E04\u0E48\u0E30 \u{1F495}" });
+        const storeUrl = "https://ritzsmp-web-store.web.app";
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setLabel("\u{1F310} \u0E40\u0E1B\u0E34\u0E14\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 (Web Store)").setStyle(ButtonStyle.Link).setURL(storeUrl),
+          new ButtonBuilder().setLabel("\u{1F4B3} \u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19 / \u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28\u0E43\u0E19\u0E40\u0E27\u0E47\u0E1A").setStyle(ButtonStyle.Link).setURL(storeUrl)
+        );
+        if (interaction.channel && "send" in interaction.channel && typeof interaction.channel.send === "function") {
+          await interaction.channel.send({ embeds: [embed], components: [row] });
+          await interaction.editReply("\u2728 \u0E19\u0E49\u0E2D\u0E07\u0E44\u0E2D\u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21 Embed \u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32\u0E25\u0E07\u0E43\u0E19\u0E2B\u0E49\u0E2D\u0E07\u0E19\u0E35\u0E49\u0E40\u0E23\u0E35\u0E22\u0E1A\u0E23\u0E49\u0E2D\u0E22\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30! \u{1F496}");
+        } else {
+          await interaction.editReply({ embeds: [embed], components: [row] });
+        }
+      } catch (err) {
+        console.error("[RitzSmpAI] embed command error:", err);
+        try {
+          if (!interaction.replied) {
+            await interaction.reply({ content: "\u0E02\u0E2D\u0E42\u0E17\u0E29\u0E14\u0E49\u0E27\u0E22\u0E19\u0E30\u0E04\u0E30 \u0E40\u0E01\u0E34\u0E14\u0E02\u0E49\u0E2D\u0E1C\u0E34\u0E14\u0E1E\u0E25\u0E32\u0E14\u0E43\u0E19\u0E01\u0E32\u0E23\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21 Embed \u0E04\u0E48\u0E30 \u{1F97A}", ephemeral: true });
+          }
+        } catch (e) {
+        }
+      }
+      return;
+    }
+    if (commandName === "ask") {
+      const question = interaction.options.getString("question", true);
+      try {
+        await interaction.deferReply();
+      } catch (err) {
+        console.error("[RitzSmpAI] deferReply failed:", err);
+        return;
+      }
+      try {
+        const prompt = `\u0E04\u0E38\u0E13\u0E04\u0E37\u0E2D RitzSMP AI \u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22\u0E2A\u0E32\u0E27\u0E2A\u0E38\u0E14\u0E19\u0E48\u0E32\u0E23\u0E31\u0E01\u0E1B\u0E23\u0E30\u0E08\u0E33\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C Minecraft RitzSMP \u0E2A\u0E44\u0E15\u0E25\u0E4C\u0E1E\u0E39\u0E14\u0E08\u0E32\u0E2A\u0E38\u0E20\u0E32\u0E1E \u0E02\u0E35\u0E49\u0E40\u0E25\u0E48\u0E19 \u0E40\u0E1B\u0E47\u0E19\u0E01\u0E31\u0E19\u0E40\u0E2D\u0E07 \u0E41\u0E25\u0E30\u0E25\u0E07\u0E17\u0E49\u0E32\u0E22\u0E14\u0E49\u0E27\u0E22\u0E04\u0E33\u0E27\u0E48\u0E32 "\u0E04\u0E48\u0E30", "\u0E19\u0E30\u0E04\u0E30", "\u0E19\u0E30\u0E04\u0E49\u0E32" \u0E40\u0E2A\u0E21\u0E2D \u0E08\u0E07\u0E15\u0E2D\u0E1A\u0E04\u0E33\u0E16\u0E32\u0E21\u0E02\u0E2D\u0E07\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E04\u0E19\u0E19\u0E35\u0E49\u0E43\u0E2B\u0E49\u0E2A\u0E14\u0E43\u0E2A\u0E41\u0E25\u0E30\u0E40\u0E1B\u0E47\u0E19\u0E1B\u0E23\u0E30\u0E42\u0E22\u0E0A\u0E19\u0E4C\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14: "${question}"`;
+        const aiRes = await invokeLLM({
+          messages: [{ role: "user", content: prompt }]
+        });
+        const replyContent = aiRes.choices[0]?.message?.content;
+        const replyText = typeof replyContent === "string" ? replyContent : "\u0E02\u0E2D\u0E42\u0E17\u0E29\u0E14\u0E49\u0E27\u0E22\u0E19\u0E30\u0E04\u0E30 \u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49\u0E19\u0E49\u0E2D\u0E07\u0E44\u0E2D\u0E1B\u0E23\u0E30\u0E21\u0E27\u0E25\u0E1C\u0E25\u0E44\u0E21\u0E48\u0E17\u0E31\u0E19 \u0E25\u0E2D\u0E07\u0E43\u0E2B\u0E21\u0E48\u0E2D\u0E35\u0E01\u0E23\u0E2D\u0E1A\u0E19\u0E30\u0E04\u0E30\u0E04\u0E19\u0E40\u0E01\u0E48\u0E07! \u{1F495}";
+        await interaction.editReply(replyText);
+      } catch (err) {
+        console.error("[RitzSmpAI] AI interaction error:", err);
+        try {
+          await interaction.editReply("\u{1F496} \u0E19\u0E49\u0E2D\u0E07\u0E44\u0E2D\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E0A\u0E48\u0E27\u0E22\u0E40\u0E2B\u0E25\u0E37\u0E2D\u0E40\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C RitzSMP \u0E40\u0E2A\u0E21\u0E2D\u0E40\u0E25\u0E22\u0E04\u0E48\u0E30! (\u0E04\u0E33\u0E16\u0E32\u0E21: " + question + ")");
+        } catch (e) {
+        }
+      }
+    }
+  });
+  client.login(token).catch((err) => {
+    console.error("[RitzSmpAI] Login failed:", err);
+  });
+  return client;
+}
+function pushLog(type, message) {
+  const timeStr = (/* @__PURE__ */ new Date()).toISOString();
+  recentLogs.unshift({ timestamp: timeStr, type, message });
+  if (recentLogs.length > 50) recentLogs.pop();
+}
+function getRitzSmpAiBotStatus() {
+  return {
+    status: botStatus,
+    username: botUsername,
+    uptimeSeconds: botStartTime ? Math.floor((Date.now() - botStartTime) / 1e3) : 0,
+    totalInteractions: totalInteractionsCount,
+    logs: recentLogs.slice(0, 20)
+  };
+}
+function startRitzSmpAiBot() {
+  botStatus = "connecting";
+  pushLog("INFO", "Starting RitzSMP AI Bot...");
+  const client = createRitzSmpAiBot();
+  if (client) {
+    botStartTime = Date.now();
+    botStatus = "online";
+    pushLog("SUCCESS", "RitzSMP AI Bot online and connected.");
+  } else {
+    botStatus = "offline";
+    pushLog("WARN", "Token missing, bot offline.");
+  }
+  return client;
+}
+var botStartTime, botStatus, botUsername, totalInteractionsCount, recentLogs;
+var init_discordAiBot = __esm({
+  "server/discordAiBot.ts"() {
+    "use strict";
+    init_llm();
+    botStartTime = 0;
+    botStatus = "offline";
+    botUsername = null;
+    totalInteractionsCount = 0;
+    recentLogs = [];
+  }
+});
+
 // server/_core/index.ts
 import "dotenv/config";
 import express2 from "express";
@@ -94,29 +547,8 @@ var walletTransactions = mysqlTable("wallet_transactions", {
   createdAt: timestamp("createdAt").defaultNow().notNull()
 });
 
-// server/_core/env.ts
-var ENV = {
-  appId: process.env.VITE_APP_ID ?? "",
-  cookieSecret: process.env.JWT_SECRET ?? "",
-  databaseUrl: process.env.DATABASE_URL ?? "",
-  oAuthServerUrl: process.env.OAUTH_SERVER_URL ?? "",
-  ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
-  isProduction: process.env.NODE_ENV === "production",
-  forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
-  forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
-  discordBotToken: process.env.DISCORD_BOT_TOKEN ?? "",
-  discordGuildId: process.env.DISCORD_GUILD_ID ?? "",
-  discordStoreChannelId: process.env.DISCORD_STORE_CHANNEL_ID ?? "",
-  discordDonateChannelId: process.env.DISCORD_DONATE_CHANNEL_ID ?? "",
-  discordOrdersChannelId: process.env.DISCORD_ORDERS_CHANNEL_ID ?? "",
-  discordAdminRoleId: process.env.DISCORD_ADMIN_ROLE_ID ?? "",
-  publicStoreUrl: process.env.PUBLIC_STORE_URL ?? "",
-  rconHost: process.env.RCON_HOST ?? "",
-  rconPort: Number(process.env.RCON_PORT ?? 0),
-  rconPassword: process.env.RCON_PASSWORD ?? ""
-};
-
 // server/db.ts
+init_env();
 var _db = null;
 var rank = (id, name, price, color, badge, description, features) => ({
   id,
@@ -337,6 +769,7 @@ var ForbiddenError = (msg) => new HttpError(403, msg);
 import axios from "axios";
 import { parse as parseCookieHeader } from "cookie";
 import { SignJWT, jwtVerify } from "jose";
+init_env();
 var isNonEmptyString = (value) => typeof value === "string" && value.length > 0;
 var EXCHANGE_TOKEN_PATH = `/webdev.v1.WebDevAuthPublicService/ExchangeToken`;
 var GET_USER_INFO_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserInfo`;
@@ -629,6 +1062,7 @@ function registerOAuthRoutes(app) {
 }
 
 // server/_core/storageProxy.ts
+init_env();
 function registerStorageProxy(app) {
   app.get("/manus-storage/*", async (req, res) => {
     const key = req.params[0];
@@ -674,6 +1108,7 @@ import { TRPCError as TRPCError3 } from "@trpc/server";
 import { z } from "zod";
 
 // server/_core/notification.ts
+init_env();
 import { TRPCError } from "@trpc/server";
 var TITLE_MAX_LENGTH = 1200;
 var CONTENT_MAX_LENGTH = 2e4;
@@ -792,9 +1227,11 @@ var adminProcedure = t.procedure.use(
 );
 
 // server/routers.ts
+init_env();
 import { Rcon } from "rcon-client";
 
 // server/storage.ts
+init_env();
 function getForgeConfig() {
   const forgeUrl = ENV.forgeApiUrl;
   const forgeKey = ENV.forgeApiKey;
@@ -878,7 +1315,20 @@ var decodeSlip = (slipData, slipType) => {
 };
 var appRouter = router({
   system: router({
-    health: publicProcedure.query(() => ({ ok: true, service: "ritz-smp-store" }))
+    health: publicProcedure.query(() => ({ ok: true, service: "ritz-smp-store" })),
+    botStatus: adminProcedure.query(() => {
+      try {
+        const { getRitzSmpAiBotStatus: getRitzSmpAiBotStatus2 } = (init_discordAiBot(), __toCommonJS(discordAiBot_exports));
+        return getRitzSmpAiBotStatus2();
+      } catch (e) {
+        return {
+          status: "offline",
+          username: null,
+          totalInteractions: 0,
+          logs: [{ timestamp: (/* @__PURE__ */ new Date()).toISOString(), type: "ERROR", message: String(e) }]
+        };
+      }
+    })
   }),
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
@@ -1306,20 +1756,21 @@ function serveStatic(app) {
 
 // server/discordBot.ts
 import {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  Client,
-  EmbedBuilder,
-  GatewayIntentBits,
+  ActionRowBuilder as ActionRowBuilder2,
+  ButtonBuilder as ButtonBuilder2,
+  ButtonStyle as ButtonStyle2,
+  Client as Client2,
+  EmbedBuilder as EmbedBuilder2,
+  GatewayIntentBits as GatewayIntentBits2,
   ModalBuilder,
   PermissionsBitField,
-  REST,
-  Routes,
+  REST as REST2,
+  Routes as Routes2,
   TextInputBuilder,
   TextInputStyle
 } from "discord.js";
 import { Rcon as Rcon2 } from "rcon-client";
+init_env();
 var PAYMENT_TEXT = [
   "\u0E18\u0E19\u0E32\u0E04\u0E32\u0E23\u0E2D\u0E2D\u0E21\u0E2A\u0E34\u0E19: 020391511886",
   "PromptPay / TrueMoney: 0930286252"
@@ -1357,7 +1808,7 @@ function getPublicStoreUrl() {
 }
 function buildStorePanel(ranks2) {
   const publicStoreUrl = getPublicStoreUrl();
-  const embed = new EmbedBuilder().setTitle("\u{1F451} RITZSMP OFFICIAL STORE").setDescription(
+  const embed = new EmbedBuilder2().setTitle("\u{1F451} RITZSMP OFFICIAL STORE").setDescription(
     "\u{1F6D2} **\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E27\u0E47\u0E1A\u0E2A\u0E42\u0E15\u0E23\u0E4C RitzSMP \u0E40\u0E1B\u0E34\u0E14\u0E43\u0E2B\u0E49\u0E1A\u0E23\u0E34\u0E01\u0E32\u0E23\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30!**\n\n\u{1F4B3} **1. \u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19\u0E40\u0E02\u0E49\u0E32\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32:** \u0E44\u0E1B\u0E17\u0E35\u0E48\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19 \u0E40\u0E25\u0E37\u0E2D\u0E01\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07\u0E42\u0E2D\u0E19\u0E40\u0E07\u0E34\u0E19 (\u0E2D\u0E2D\u0E21\u0E2A\u0E34\u0E19 / \u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E40\u0E1E\u0E22\u0E4C / \u0E27\u0E2D\u0E40\u0E25\u0E17) \u0E41\u0E25\u0E30 **\u0E41\u0E19\u0E1A\u0E2A\u0E25\u0E34\u0E1B** \u0E23\u0E2D\u0E41\u0E2D\u0E14\u0E21\u0E34\u0E19\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E22\u0E2D\u0E14\u0E40\u0E07\u0E34\u0E19\n\u{1F451} **2. \u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28:** \u0E40\u0E21\u0E37\u0E48\u0E2D\u0E21\u0E35\u0E22\u0E2D\u0E14\u0E40\u0E07\u0E34\u0E19\u0E43\u0E19\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32 \u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28\u0E41\u0E25\u0E30\u0E01\u0E23\u0E2D\u0E01\u0E0A\u0E37\u0E48\u0E2D\u0E43\u0E19\u0E40\u0E01\u0E21 (Minecraft IGN) \u0E44\u0E14\u0E49\u0E17\u0E31\u0E19\u0E17\u0E35 **(\u0E42\u0E14\u0E22\u0E44\u0E21\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E41\u0E19\u0E1A\u0E2A\u0E25\u0E34\u0E1B\u0E0B\u0E49\u0E33 \u0E23\u0E30\u0E1A\u0E1A\u0E2B\u0E31\u0E01\u0E22\u0E2D\u0E14\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E41\u0E25\u0E30\u0E2A\u0E48\u0E07\u0E22\u0E28\u0E40\u0E02\u0E49\u0E32\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34)**\n\n\u0E2B\u0E23\u0E37\u0E2D\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E0B\u0E37\u0E49\u0E2D\u0E1C\u0E48\u0E32\u0E19\u0E1B\u0E38\u0E48\u0E21\u0E14\u0E49\u0E32\u0E19\u0E25\u0E48\u0E32\u0E07\u0E19\u0E35\u0E49\u0E44\u0E14\u0E49\u0E40\u0E0A\u0E48\u0E19\u0E01\u0E31\u0E19\u0E04\u0E48\u0E30!"
   ).addFields(
     { name: "\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07\u0E0A\u0E33\u0E23\u0E30\u0E40\u0E07\u0E34\u0E19", value: PAYMENT_TEXT },
@@ -1368,10 +1819,10 @@ function buildStorePanel(ranks2) {
   ).setColor(13938487).setFooter({ text: "RitzSMP Store \u2022 \u0E42\u0E1B\u0E23\u0E14\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E0A\u0E37\u0E48\u0E2D\u0E43\u0E19\u0E40\u0E01\u0E21\u0E01\u0E48\u0E2D\u0E19\u0E2A\u0E48\u0E07\u0E2D\u0E2D\u0E40\u0E14\u0E2D\u0E23\u0E4C" });
   const rows = [];
   for (let i = 0; i < ranks2.length; i += 5) {
-    const row = new ActionRowBuilder();
+    const row = new ActionRowBuilder2();
     for (const rank2 of ranks2.slice(i, i + 5)) {
       row.addComponents(
-        new ButtonBuilder().setCustomId(`buy_rank_${rank2.id}`).setLabel(`${rank2.displayName} ${Number(rank2.price).toLocaleString("th-TH")}\u0E3F`).setStyle(ButtonStyle.Primary)
+        new ButtonBuilder2().setCustomId(`buy_rank_${rank2.id}`).setLabel(`${rank2.displayName} ${Number(rank2.price).toLocaleString("th-TH")}\u0E3F`).setStyle(ButtonStyle2.Primary)
       );
     }
     rows.push(row);
@@ -1384,12 +1835,12 @@ async function publishDonateAnnouncement(client) {
   const channel = await client.channels.fetch(channelId);
   if (!channel?.isTextBased() || !("send" in channel)) return;
   const publicStoreUrl = getPublicStoreUrl() || "https://ritzsmp.manus.space";
-  const embed = new EmbedBuilder().setTitle("\u{1F496} \u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07\u0E42\u0E14\u0E40\u0E19\u0E17\u0E41\u0E25\u0E30\u0E27\u0E34\u0E18\u0E35\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19 RitzSMP Store").setDescription(
+  const embed = new EmbedBuilder2().setTitle("\u{1F496} \u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07\u0E42\u0E14\u0E40\u0E19\u0E17\u0E41\u0E25\u0E30\u0E27\u0E34\u0E18\u0E35\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19 RitzSMP Store").setDescription(
     "\u{1F6D2} **\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E27\u0E47\u0E1A\u0E2A\u0E42\u0E15\u0E23\u0E4C RitzSMP \u0E40\u0E1B\u0E34\u0E14\u0E43\u0E2B\u0E49\u0E1A\u0E23\u0E34\u0E01\u0E32\u0E23\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30!**\n\n\u{1F4B3} **1. \u0E27\u0E34\u0E18\u0E35\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19\u0E40\u0E02\u0E49\u0E32\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32 (\u0E15\u0E49\u0E2D\u0E07\u0E41\u0E19\u0E1A\u0E2A\u0E25\u0E34\u0E1B):**\n\u2022 \u0E42\u0E2D\u0E19\u0E40\u0E07\u0E34\u0E19\u0E1C\u0E48\u0E32\u0E19\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07\u0E14\u0E49\u0E32\u0E19\u0E25\u0E48\u0E32\u0E07\u0E19\u0E35\u0E49\n\u2022 \u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 \u0E40\u0E25\u0E37\u0E2D\u0E01\u0E40\u0E21\u0E19\u0E39\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19 \u0E01\u0E23\u0E2D\u0E01\u0E08\u0E33\u0E19\u0E27\u0E19\u0E40\u0E07\u0E34\u0E19 \u0E41\u0E25\u0E30 **\u0E41\u0E19\u0E1A\u0E2A\u0E25\u0E34\u0E1B\u0E2B\u0E25\u0E31\u0E01\u0E10\u0E32\u0E19\u0E01\u0E32\u0E23\u0E42\u0E2D\u0E19**\n\u2022 \u0E23\u0E2D\u0E41\u0E2D\u0E14\u0E21\u0E34\u0E19\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E41\u0E25\u0E30\u0E01\u0E14\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E22\u0E2D\u0E14\u0E40\u0E07\u0E34\u0E19\u0E40\u0E02\u0E49\u0E32\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\n\n\u{1F451} **2. \u0E27\u0E34\u0E18\u0E35\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28 (\u0E43\u0E0A\u0E49\u0E22\u0E2D\u0E14 Wallet \u0E44\u0E21\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E41\u0E19\u0E1A\u0E2A\u0E25\u0E34\u0E1B):**\n\u2022 \u0E40\u0E21\u0E37\u0E48\u0E2D\u0E21\u0E35\u0E22\u0E2D\u0E14\u0E40\u0E07\u0E34\u0E19\u0E43\u0E19\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E41\u0E25\u0E49\u0E27 \u0E44\u0E1B\u0E17\u0E35\u0E48\u0E2B\u0E19\u0E49\u0E32\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28\n\u2022 \u0E01\u0E23\u0E2D\u0E01 **\u0E0A\u0E37\u0E48\u0E2D\u0E43\u0E19\u0E40\u0E01\u0E21 (Minecraft IGN)** \u0E41\u0E25\u0E30\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E22\u0E28\u0E17\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\n\u2022 \u0E23\u0E30\u0E1A\u0E1A\u0E08\u0E30\u0E2B\u0E31\u0E01\u0E40\u0E07\u0E34\u0E19\u0E08\u0E32\u0E01\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E41\u0E25\u0E30\u0E2A\u0E48\u0E07\u0E22\u0E28\u0E40\u0E02\u0E49\u0E32\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E1C\u0E48\u0E32\u0E19 RCON \u0E17\u0E31\u0E19\u0E17\u0E35\n\n\u{1F4CB} **\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07\u0E42\u0E2D\u0E19\u0E40\u0E07\u0E34\u0E19:**\n" + PAYMENT_TEXT
   ).setColor(16738740).setThumbnail("https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f496.png").setFooter({ text: "RitzSMP \u2022 \u0E02\u0E2D\u0E02\u0E2D\u0E1A\u0E1E\u0E23\u0E30\u0E04\u0E38\u0E13\u0E17\u0E38\u0E01\u0E17\u0E48\u0E32\u0E19\u0E17\u0E35\u0E48\u0E2A\u0E19\u0E31\u0E1A\u0E2A\u0E19\u0E38\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E02\u0E2D\u0E07\u0E40\u0E23\u0E32\u0E04\u0E48\u0E30" });
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setLabel("\u{1F310} \u0E40\u0E1B\u0E34\u0E14\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 (Web Store)").setStyle(ButtonStyle.Link).setURL(publicStoreUrl),
-    new ButtonBuilder().setLabel("\u{1F4B3} \u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19 / \u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28").setStyle(ButtonStyle.Link).setURL(publicStoreUrl)
+  const row = new ActionRowBuilder2().addComponents(
+    new ButtonBuilder2().setLabel("\u{1F310} \u0E40\u0E1B\u0E34\u0E14\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 (Web Store)").setStyle(ButtonStyle2.Link).setURL(publicStoreUrl),
+    new ButtonBuilder2().setLabel("\u{1F4B3} \u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19 / \u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28").setStyle(ButtonStyle2.Link).setURL(publicStoreUrl)
   );
   const messages = await channel.messages.fetch({ limit: 20 });
   const existingAnnouncement = messages.find((m) => m.author.id === client.user?.id && m.embeds[0]?.title?.includes("\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07\u0E42\u0E14\u0E40\u0E19\u0E17"));
@@ -1412,8 +1863,8 @@ async function publishStorePanel(client) {
 }
 async function registerGuildCommands(client) {
   if (!ENV.discordGuildId || !client.user) return;
-  const rest = new REST({ version: "10" }).setToken(ENV.discordBotToken);
-  await rest.put(Routes.applicationGuildCommands(client.user.id, ENV.discordGuildId), {
+  const rest = new REST2({ version: "10" }).setToken(ENV.discordBotToken);
+  await rest.put(Routes2.applicationGuildCommands(client.user.id, ENV.discordGuildId), {
     body: [
       {
         name: "setup-store",
@@ -1425,7 +1876,7 @@ async function registerGuildCommands(client) {
 async function sendSlipInstructions(user, rank2) {
   return user.send({
     embeds: [
-      new EmbedBuilder().setTitle(`\u{1F9FE} \u0E2D\u0E2D\u0E40\u0E14\u0E2D\u0E23\u0E4C\u0E22\u0E28 ${rank2.displayName}`).setDescription(
+      new EmbedBuilder2().setTitle(`\u{1F9FE} \u0E2D\u0E2D\u0E40\u0E14\u0E2D\u0E23\u0E4C\u0E22\u0E28 ${rank2.displayName}`).setDescription(
         `\u0E0A\u0E37\u0E48\u0E2D Minecraft: **${rank2.pendingIgn ?? "\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E43\u0E19\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E01\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32"}**
 \u0E22\u0E2D\u0E14\u0E0A\u0E33\u0E23\u0E30: **${Number(rank2.price).toLocaleString("th-TH")} \u0E1A\u0E32\u0E17**
 
@@ -1446,16 +1897,16 @@ async function createReviewMessage(client, order) {
   const channel = await client.channels.fetch(ENV.discordOrdersChannelId);
   if (!channel?.isTextBased() || !("send" in channel)) return;
   const slipUrl = await storageGetSignedUrl(order.slipKey).catch(() => void 0);
-  const embed = new EmbedBuilder().setTitle(`\u{1F9FE} \u0E2D\u0E2D\u0E40\u0E14\u0E2D\u0E23\u0E4C\u0E43\u0E2B\u0E21\u0E48 #${order.id}`).setDescription("\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E22\u0E2D\u0E14\u0E42\u0E2D\u0E19\u0E41\u0E25\u0E30\u0E0A\u0E37\u0E48\u0E2D\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E43\u0E2B\u0E49\u0E40\u0E23\u0E35\u0E22\u0E1A\u0E23\u0E49\u0E2D\u0E22\u0E01\u0E48\u0E2D\u0E19\u0E01\u0E14\u0E2D\u0E19\u0E38\u0E21\u0E31\u0E15\u0E34").addFields(
+  const embed = new EmbedBuilder2().setTitle(`\u{1F9FE} \u0E2D\u0E2D\u0E40\u0E14\u0E2D\u0E23\u0E4C\u0E43\u0E2B\u0E21\u0E48 #${order.id}`).setDescription("\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E22\u0E2D\u0E14\u0E42\u0E2D\u0E19\u0E41\u0E25\u0E30\u0E0A\u0E37\u0E48\u0E2D\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E43\u0E2B\u0E49\u0E40\u0E23\u0E35\u0E22\u0E1A\u0E23\u0E49\u0E2D\u0E22\u0E01\u0E48\u0E2D\u0E19\u0E01\u0E14\u0E2D\u0E19\u0E38\u0E21\u0E31\u0E15\u0E34").addFields(
     { name: "\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19 Minecraft", value: `\`${order.minecraftIGN}\``, inline: true },
     { name: "\u0E22\u0E28", value: order.rankName, inline: true },
     { name: "\u0E22\u0E2D\u0E14\u0E40\u0E07\u0E34\u0E19", value: `${Number(order.amount).toLocaleString("th-TH")} \u0E1A\u0E32\u0E17`, inline: true },
     { name: "\u0E1C\u0E39\u0E49\u0E2A\u0E48\u0E07", value: `<@${order.userId}>`, inline: true },
     { name: "\u0E2B\u0E25\u0E31\u0E01\u0E10\u0E32\u0E19\u0E2A\u0E25\u0E34\u0E1B", value: slipUrl ? `[\u0E40\u0E1B\u0E34\u0E14\u0E14\u0E39\u0E2A\u0E25\u0E34\u0E1B](${slipUrl})` : "\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E25\u0E34\u0E07\u0E01\u0E4C\u0E2A\u0E25\u0E34\u0E1B\u0E44\u0E14\u0E49" }
   ).setColor(13938487).setTimestamp(new Date(order.createdAt));
-  const controls = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`approve_${order.id}`).setLabel("\u0E2D\u0E19\u0E38\u0E21\u0E31\u0E15\u0E34").setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId(`reject_${order.id}`).setLabel("\u0E1B\u0E0F\u0E34\u0E40\u0E2A\u0E18").setStyle(ButtonStyle.Danger)
+  const controls = new ActionRowBuilder2().addComponents(
+    new ButtonBuilder2().setCustomId(`approve_${order.id}`).setLabel("\u0E2D\u0E19\u0E38\u0E21\u0E31\u0E15\u0E34").setStyle(ButtonStyle2.Success),
+    new ButtonBuilder2().setCustomId(`reject_${order.id}`).setLabel("\u0E1B\u0E0F\u0E34\u0E40\u0E2A\u0E18").setStyle(ButtonStyle2.Danger)
   );
   await channel.send({ embeds: [embed], components: [controls] });
 }
@@ -1481,7 +1932,7 @@ async function handleBuyButton(interaction) {
   }
   const modal = new ModalBuilder().setCustomId(`modal_order_${rank2.id}`).setTitle(`\u0E2A\u0E31\u0E48\u0E07\u0E0B\u0E37\u0E49\u0E2D ${rank2.displayName}`);
   const ignInput = new TextInputBuilder().setCustomId("minecraft_ign").setLabel("\u0E0A\u0E37\u0E48\u0E2D\u0E43\u0E19\u0E40\u0E01\u0E21 Minecraft").setPlaceholder("\u0E15\u0E31\u0E27\u0E2D\u0E31\u0E01\u0E29\u0E23\u0E2D\u0E31\u0E07\u0E01\u0E24\u0E29 \u0E15\u0E31\u0E27\u0E40\u0E25\u0E02 \u0E2B\u0E23\u0E37\u0E2D _ \u0E04\u0E27\u0E32\u0E21\u0E22\u0E32\u0E27 3-16 \u0E15\u0E31\u0E27").setStyle(TextInputStyle.Short).setRequired(true).setMaxLength(16);
-  modal.addComponents(new ActionRowBuilder().addComponents(ignInput));
+  modal.addComponents(new ActionRowBuilder2().addComponents(ignInput));
   await interaction.showModal(modal);
 }
 async function handleModalSubmit(client, interaction) {
@@ -1606,8 +2057,8 @@ ${fulfillment.executed ? "RCON \u0E21\u0E2D\u0E1A\u0E22\u0E28\u0E43\u0E2B\u0E49\
 }
 function createDiscordStoreBot(token) {
   if (botClient) return botClient;
-  const client = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.DirectMessages]
+  const client = new Client2({
+    intents: [GatewayIntentBits2.Guilds, GatewayIntentBits2.GuildMessages, GatewayIntentBits2.DirectMessages]
   });
   client.once("ready", async () => {
     console.log(`[DiscordBot] Logged in as ${client.user?.tag}`);
@@ -1654,348 +2105,8 @@ async function startDiscordStoreBot() {
   return botStartPromise;
 }
 
-// server/discordAiBot.ts
-import { Client as Client2, GatewayIntentBits as GatewayIntentBits2, REST as REST2, Routes as Routes2, SlashCommandBuilder, EmbedBuilder as EmbedBuilder2, ActionRowBuilder as ActionRowBuilder2, ButtonBuilder as ButtonBuilder2, ButtonStyle as ButtonStyle2 } from "discord.js";
-
-// server/_core/llm.ts
-var ensureArray = (value) => Array.isArray(value) ? value : [value];
-var normalizeContentPart = (part) => {
-  if (typeof part === "string") {
-    return { type: "text", text: part };
-  }
-  if (part.type === "text") {
-    return part;
-  }
-  if (part.type === "image_url") {
-    return part;
-  }
-  if (part.type === "file_url") {
-    return part;
-  }
-  throw new Error("Unsupported message content part");
-};
-var normalizeMessage = (message) => {
-  const { role, name, tool_call_id } = message;
-  if (role === "tool" || role === "function") {
-    const content = ensureArray(message.content).map((part) => typeof part === "string" ? part : JSON.stringify(part)).join("\n");
-    return {
-      role,
-      name,
-      tool_call_id,
-      content
-    };
-  }
-  const contentParts = ensureArray(message.content).map(normalizeContentPart);
-  if (contentParts.length === 1 && contentParts[0].type === "text") {
-    return {
-      role,
-      name,
-      content: contentParts[0].text
-    };
-  }
-  return {
-    role,
-    name,
-    content: contentParts
-  };
-};
-var normalizeToolChoice = (toolChoice, tools) => {
-  if (!toolChoice) return void 0;
-  if (toolChoice === "none" || toolChoice === "auto") {
-    return toolChoice;
-  }
-  if (toolChoice === "required") {
-    if (!tools || tools.length === 0) {
-      throw new Error(
-        "tool_choice 'required' was provided but no tools were configured"
-      );
-    }
-    if (tools.length > 1) {
-      throw new Error(
-        "tool_choice 'required' needs a single tool or specify the tool name explicitly"
-      );
-    }
-    return {
-      type: "function",
-      function: { name: tools[0].function.name }
-    };
-  }
-  if ("name" in toolChoice) {
-    return {
-      type: "function",
-      function: { name: toolChoice.name }
-    };
-  }
-  return toolChoice;
-};
-var resolveApiUrl = () => ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0 ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions` : "https://forge.manus.im/v1/chat/completions";
-var assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
-  }
-};
-var normalizeResponseFormat = ({
-  responseFormat,
-  response_format,
-  outputSchema,
-  output_schema
-}) => {
-  const explicitFormat = responseFormat || response_format;
-  if (explicitFormat) {
-    if (explicitFormat.type === "json_schema" && !explicitFormat.json_schema?.schema) {
-      throw new Error(
-        "responseFormat json_schema requires a defined schema object"
-      );
-    }
-    return explicitFormat;
-  }
-  const schema = outputSchema || output_schema;
-  if (!schema) return void 0;
-  if (!schema.name || !schema.schema) {
-    throw new Error("outputSchema requires both name and schema");
-  }
-  return {
-    type: "json_schema",
-    json_schema: {
-      name: schema.name,
-      schema: schema.schema,
-      ...typeof schema.strict === "boolean" ? { strict: schema.strict } : {}
-    }
-  };
-};
-var RETRY_MAX_RETRIES = 4;
-var RETRY_BASE_DELAY_MS = 500;
-var RETRY_MAX_DELAY_MS = 3e4;
-var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-var parseRetryAfter = (value) => {
-  if (!value) return void 0;
-  const seconds = Number(value);
-  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1e3);
-  const at = Date.parse(value);
-  return Number.isNaN(at) ? void 0 : Math.max(0, at - Date.now());
-};
-var computeBackoffDelay = (attempt, retryAfterMs) => {
-  const cap = Math.min(RETRY_BASE_DELAY_MS * 2 ** attempt, RETRY_MAX_DELAY_MS);
-  const jittered = cap / 2 + Math.random() * (cap / 2);
-  return Math.min(Math.max(jittered, retryAfterMs ?? 0), RETRY_MAX_DELAY_MS);
-};
-var fetchWithBackoff = async (url, init) => {
-  let lastError;
-  for (let attempt = 0; attempt <= RETRY_MAX_RETRIES; attempt++) {
-    try {
-      const response = await fetch(url, init);
-      if (response.ok || attempt === RETRY_MAX_RETRIES) {
-        return response;
-      }
-      const retryAfterMs = parseRetryAfter(
-        response.headers.get("retry-after")
-      );
-      try {
-        await response.body?.cancel();
-      } catch {
-      }
-      console.warn(
-        `LLM request retry ${attempt + 1}/${RETRY_MAX_RETRIES} after status ${response.status}`
-      );
-      await sleep(computeBackoffDelay(attempt, retryAfterMs));
-    } catch (error) {
-      lastError = error;
-      if (attempt === RETRY_MAX_RETRIES) throw error;
-      console.warn(
-        `LLM request retry ${attempt + 1}/${RETRY_MAX_RETRIES} after network error`
-      );
-      await sleep(computeBackoffDelay(attempt));
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error("LLM request failed after exhausting retries");
-};
-async function invokeLLM(params) {
-  assertApiKey();
-  const {
-    messages,
-    tools,
-    toolChoice,
-    tool_choice,
-    outputSchema,
-    output_schema,
-    responseFormat,
-    response_format,
-    model,
-    thinking,
-    reasoning,
-    maxTokens,
-    max_tokens
-  } = params;
-  const payload = {
-    messages: messages.map(normalizeMessage)
-  };
-  if (model) {
-    payload.model = model;
-  }
-  if (tools && tools.length > 0) {
-    payload.tools = tools;
-  }
-  const normalizedToolChoice = normalizeToolChoice(
-    toolChoice || tool_choice,
-    tools
-  );
-  if (normalizedToolChoice) {
-    payload.tool_choice = normalizedToolChoice;
-  }
-  const resolvedMaxTokens = max_tokens ?? maxTokens;
-  if (typeof resolvedMaxTokens === "number") {
-    payload.max_tokens = resolvedMaxTokens;
-  }
-  if (thinking) {
-    payload.thinking = thinking;
-  }
-  if (reasoning) {
-    payload.reasoning = reasoning;
-  }
-  const normalizedResponseFormat = normalizeResponseFormat({
-    responseFormat,
-    response_format,
-    outputSchema,
-    output_schema
-  });
-  if (normalizedResponseFormat) {
-    payload.response_format = normalizedResponseFormat;
-  }
-  const response = await fetchWithBackoff(resolveApiUrl(), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`
-    },
-    body: JSON.stringify(payload)
-  });
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `LLM invoke failed: ${response.status} ${response.statusText} \u2013 ${errorText}`
-    );
-  }
-  return await response.json();
-}
-
-// server/discordAiBot.ts
-function createRitzSmpAiBot() {
-  const token = process.env.DISCORD_AI_BOT_TOKEN;
-  if (!token) {
-    console.warn("[RitzSmpAI] DISCORD_AI_BOT_TOKEN not provided, skipping AI bot startup.");
-    return null;
-  }
-  const client = new Client2({
-    intents: [
-      GatewayIntentBits2.Guilds,
-      GatewayIntentBits2.GuildMessages,
-      GatewayIntentBits2.MessageContent
-    ]
-  });
-  client.once("ready", async () => {
-    console.log(`[RitzSmpAI] Logged in as ${client.user?.tag}`);
-    const commands = [
-      new SlashCommandBuilder().setName("ask").setDescription("\u0E2A\u0E2D\u0E1A\u0E16\u0E32\u0E21\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E40\u0E01\u0E35\u0E48\u0E22\u0E27\u0E01\u0E31\u0E1A\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C RitzSMP, \u0E22\u0E28, \u0E2B\u0E23\u0E37\u0E2D\u0E23\u0E30\u0E1A\u0E1A\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32").addStringOption(
-        (option) => option.setName("question").setDescription("\u0E04\u0E33\u0E16\u0E32\u0E21\u0E17\u0E35\u0E48\u0E04\u0E38\u0E13\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E16\u0E32\u0E21 AI").setRequired(true)
-      ),
-      new SlashCommandBuilder().setName("ai-status").setDescription("\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E23\u0E30\u0E1A\u0E1A RitzSMP AI \u0E41\u0E25\u0E30\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C Minecraft"),
-      new SlashCommandBuilder().setName("embed").setDescription("\u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28 Embed \u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E1B\u0E38\u0E48\u0E21\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 RitzSMP \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E41\u0E2D\u0E14\u0E21\u0E34\u0E19")
-    ].map((cmd) => cmd.toJSON());
-    const rest = new REST2({ version: "10" }).setToken(token);
-    const clientId = client.user?.id;
-    if (!clientId) return;
-    try {
-      console.log("[RitzSmpAI] Registering global slash commands...");
-      await rest.put(Routes2.applicationCommands(clientId), { body: commands });
-      console.log("[RitzSmpAI] Global slash commands registered successfully!");
-      const guildIds = Array.from(client.guilds.cache.keys());
-      for (const guildId of guildIds) {
-        try {
-          await rest.put(Routes2.applicationGuildCommands(clientId, guildId), { body: commands });
-          console.log(`[RitzSmpAI] Guild commands registered for guild ${guildId}`);
-        } catch (err) {
-          console.error(`[RitzSmpAI] Failed to register guild commands for ${guildId}:`, err);
-        }
-      }
-    } catch (error) {
-      console.error("[RitzSmpAI] Failed to register slash commands:", error);
-    }
-  });
-  client.on("interactionCreate", async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
-    const { commandName } = interaction;
-    if (commandName === "ai-status") {
-      try {
-        await interaction.deferReply();
-        await interaction.editReply(
-          "\u{1F496} **RitzSMP AI** \u0E15\u0E31\u0E27\u0E19\u0E49\u0E2D\u0E22\u0E2A\u0E41\u0E15\u0E19\u0E14\u0E4C\u0E1A\u0E32\u0E22\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E14\u0E39\u0E41\u0E25\u0E17\u0E38\u0E01\u0E04\u0E19\u0E41\u0E25\u0E49\u0E27\u0E19\u0E30\u0E04\u0E30! \u0E23\u0E30\u0E1A\u0E1A\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C\u0E40\u0E23\u0E35\u0E22\u0E1A\u0E23\u0E49\u0E2D\u0E22\u0E14\u0E35\u0E04\u0E48\u0E30 \u0E21\u0E35\u0E2D\u0E30\u0E44\u0E23\u0E43\u0E2B\u0E49\u0E41\u0E2D\u0E14\u0E21\u0E34\u0E19\u0E2B\u0E23\u0E37\u0E2D\u0E19\u0E49\u0E2D\u0E07\u0E44\u0E2D\u0E0A\u0E48\u0E27\u0E22\u0E14\u0E39\u0E41\u0E25\u0E1A\u0E2D\u0E01\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22\u0E19\u0E30\u0E04\u0E30 \u2728"
-        );
-      } catch (err) {
-        console.error("[RitzSmpAI] ai-status error:", err);
-      }
-      return;
-    }
-    if (commandName === "embed") {
-      try {
-        await interaction.deferReply({ ephemeral: true });
-        const embed = new EmbedBuilder2().setTitle("\u{1F496} \u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07\u0E42\u0E14\u0E40\u0E19\u0E17\u0E41\u0E25\u0E30\u0E27\u0E34\u0E18\u0E35\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19 RitzSMP Store").setDescription(
-          "\u{1F6D2} **\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E27\u0E47\u0E1A\u0E2A\u0E42\u0E15\u0E23\u0E4C RitzSMP \u0E40\u0E1B\u0E34\u0E14\u0E43\u0E2B\u0E49\u0E1A\u0E23\u0E34\u0E01\u0E32\u0E23\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30!**\n\n\u{1F4B3} **1. \u0E27\u0E34\u0E18\u0E35\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19\u0E40\u0E02\u0E49\u0E32\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32 (\u0E15\u0E49\u0E2D\u0E07\u0E41\u0E19\u0E1A\u0E2A\u0E25\u0E34\u0E1B):**\n\u2022 \u0E42\u0E2D\u0E19\u0E40\u0E07\u0E34\u0E19\u0E1C\u0E48\u0E32\u0E19\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E18\u0E19\u0E32\u0E04\u0E32\u0E23\u0E2D\u0E2D\u0E21\u0E2A\u0E34\u0E19, \u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E40\u0E1E\u0E22\u0E4C \u0E2B\u0E23\u0E37\u0E2D TrueMoney Wallet\n\u2022 \u0E40\u0E02\u0E49\u0E32\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 \u0E40\u0E25\u0E37\u0E2D\u0E01\u0E40\u0E21\u0E19\u0E39\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19 \u0E01\u0E23\u0E2D\u0E01\u0E08\u0E33\u0E19\u0E27\u0E19\u0E40\u0E07\u0E34\u0E19 \u0E41\u0E25\u0E30 **\u0E41\u0E19\u0E1A\u0E2A\u0E25\u0E34\u0E1B\u0E2B\u0E25\u0E31\u0E01\u0E10\u0E32\u0E19\u0E01\u0E32\u0E23\u0E42\u0E2D\u0E19**\n\u2022 \u0E23\u0E2D\u0E41\u0E2D\u0E14\u0E21\u0E34\u0E19\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E41\u0E25\u0E30\u0E01\u0E14\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E22\u0E2D\u0E14\u0E40\u0E07\u0E34\u0E19\u0E40\u0E02\u0E49\u0E32\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\n\n\u{1F451} **2. \u0E27\u0E34\u0E18\u0E35\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28 (\u0E43\u0E0A\u0E49\u0E22\u0E2D\u0E14 Wallet \u0E44\u0E21\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E41\u0E19\u0E1A\u0E2A\u0E25\u0E34\u0E1B):**\n\u2022 \u0E40\u0E21\u0E37\u0E48\u0E2D\u0E21\u0E35\u0E22\u0E2D\u0E14\u0E40\u0E07\u0E34\u0E19\u0E43\u0E19\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E41\u0E25\u0E49\u0E27 \u0E44\u0E1B\u0E17\u0E35\u0E48\u0E2B\u0E19\u0E49\u0E32\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28\n\u2022 \u0E01\u0E23\u0E2D\u0E01 **\u0E0A\u0E37\u0E48\u0E2D\u0E43\u0E19\u0E40\u0E01\u0E21 (Minecraft IGN)** \u0E41\u0E25\u0E30\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E22\u0E28\u0E17\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\n\u2022 \u0E23\u0E30\u0E1A\u0E1A\u0E08\u0E30\u0E2B\u0E31\u0E01\u0E40\u0E07\u0E34\u0E19\u0E08\u0E32\u0E01\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E41\u0E25\u0E30\u0E2A\u0E48\u0E07\u0E22\u0E28\u0E40\u0E02\u0E49\u0E32\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E1C\u0E48\u0E32\u0E19 RCON \u0E17\u0E31\u0E19\u0E17\u0E35\n\n\u{1F4CB} **\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07\u0E42\u0E2D\u0E19\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E19\u0E31\u0E1A\u0E2A\u0E19\u0E38\u0E19:**\n\u2022 \u{1F3E6} **\u0E18\u0E19\u0E32\u0E04\u0E32\u0E23\u0E2D\u0E2D\u0E21\u0E2A\u0E34\u0E19:** `020391511886` (\u0E0A\u0E37\u0E48\u0E2D\u0E1A\u0E31\u0E0D\u0E0A\u0E35: \u0E20\u0E32\u0E19\u0E38\u0E2A\u0E23\u0E13\u0E4C \u0E27\u0E07\u0E28\u0E4C\u0E2A\u0E38\u0E27\u0E23\u0E23\u0E13)\n\u2022 \u{1F4F1} **\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E40\u0E1E\u0E22\u0E4C (PromptPay):** `0930286252`\n\u2022 \u{1F4B3} **TrueMoney Wallet:** `0930286252`"
-        ).setColor(16738740).setThumbnail("https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f496.png").setFooter({ text: "RitzSMP AI \u2022 \u0E02\u0E2D\u0E02\u0E2D\u0E1A\u0E1E\u0E23\u0E30\u0E04\u0E38\u0E13\u0E17\u0E38\u0E01\u0E17\u0E48\u0E32\u0E19\u0E17\u0E35\u0E48\u0E2A\u0E19\u0E31\u0E1A\u0E2A\u0E19\u0E38\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E02\u0E2D\u0E07\u0E40\u0E23\u0E32\u0E04\u0E48\u0E30 \u{1F495}" });
-        const storeUrl = "https://ritzsmp-web-store.web.app";
-        const row = new ActionRowBuilder2().addComponents(
-          new ButtonBuilder2().setLabel("\u{1F310} \u0E40\u0E1B\u0E34\u0E14\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 (Web Store)").setStyle(ButtonStyle2.Link).setURL(storeUrl),
-          new ButtonBuilder2().setLabel("\u{1F4B3} \u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19 / \u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28\u0E43\u0E19\u0E40\u0E27\u0E47\u0E1A").setStyle(ButtonStyle2.Link).setURL(storeUrl)
-        );
-        if (interaction.channel && "send" in interaction.channel && typeof interaction.channel.send === "function") {
-          await interaction.channel.send({ embeds: [embed], components: [row] });
-          await interaction.editReply("\u2728 \u0E19\u0E49\u0E2D\u0E07\u0E44\u0E2D\u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21 Embed \u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32\u0E25\u0E07\u0E43\u0E19\u0E2B\u0E49\u0E2D\u0E07\u0E19\u0E35\u0E49\u0E40\u0E23\u0E35\u0E22\u0E1A\u0E23\u0E49\u0E2D\u0E22\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30! \u{1F496}");
-        } else {
-          await interaction.editReply({ embeds: [embed], components: [row] });
-        }
-      } catch (err) {
-        console.error("[RitzSmpAI] embed command error:", err);
-        try {
-          await interaction.editReply("\u0E02\u0E2D\u0E42\u0E17\u0E29\u0E14\u0E49\u0E27\u0E22\u0E19\u0E30\u0E04\u0E30 \u0E40\u0E01\u0E34\u0E14\u0E02\u0E49\u0E2D\u0E1C\u0E34\u0E14\u0E1E\u0E25\u0E32\u0E14\u0E43\u0E19\u0E01\u0E32\u0E23\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21 Embed \u0E04\u0E48\u0E30 \u{1F97A}");
-        } catch (e) {
-        }
-      }
-      return;
-    }
-    if (commandName === "ask") {
-      const question = interaction.options.getString("question", true);
-      try {
-        await interaction.deferReply();
-      } catch (err) {
-        console.error("[RitzSmpAI] deferReply failed:", err);
-        return;
-      }
-      try {
-        const prompt = `\u0E04\u0E38\u0E13\u0E04\u0E37\u0E2D RitzSMP AI \u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22\u0E2A\u0E32\u0E27\u0E2A\u0E38\u0E14\u0E19\u0E48\u0E32\u0E23\u0E31\u0E01\u0E1B\u0E23\u0E30\u0E08\u0E33\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C Minecraft RitzSMP \u0E2A\u0E44\u0E15\u0E25\u0E4C\u0E1E\u0E39\u0E14\u0E08\u0E32\u0E2A\u0E38\u0E20\u0E32\u0E1E \u0E02\u0E35\u0E49\u0E40\u0E25\u0E48\u0E19 \u0E40\u0E1B\u0E47\u0E19\u0E01\u0E31\u0E19\u0E40\u0E2D\u0E07 \u0E41\u0E25\u0E30\u0E25\u0E07\u0E17\u0E49\u0E32\u0E22\u0E14\u0E49\u0E27\u0E22\u0E04\u0E33\u0E27\u0E48\u0E32 "\u0E04\u0E48\u0E30", "\u0E19\u0E30\u0E04\u0E30", "\u0E19\u0E30\u0E04\u0E49\u0E32" \u0E40\u0E2A\u0E21\u0E2D \u0E08\u0E07\u0E15\u0E2D\u0E1A\u0E04\u0E33\u0E16\u0E32\u0E21\u0E02\u0E2D\u0E07\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E04\u0E19\u0E19\u0E35\u0E49\u0E43\u0E2B\u0E49\u0E2A\u0E14\u0E43\u0E2A\u0E41\u0E25\u0E30\u0E40\u0E1B\u0E47\u0E19\u0E1B\u0E23\u0E30\u0E42\u0E22\u0E0A\u0E19\u0E4C\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14: "${question}"`;
-        const aiRes = await invokeLLM({
-          messages: [{ role: "user", content: prompt }]
-        });
-        const replyContent = aiRes.choices[0]?.message?.content;
-        const replyText = typeof replyContent === "string" ? replyContent : "\u0E02\u0E2D\u0E42\u0E17\u0E29\u0E14\u0E49\u0E27\u0E22\u0E19\u0E30\u0E04\u0E30 \u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49\u0E19\u0E49\u0E2D\u0E07\u0E44\u0E2D\u0E1B\u0E23\u0E30\u0E21\u0E27\u0E25\u0E1C\u0E25\u0E44\u0E21\u0E48\u0E17\u0E31\u0E19 \u0E25\u0E2D\u0E07\u0E43\u0E2B\u0E21\u0E48\u0E2D\u0E35\u0E01\u0E23\u0E2D\u0E1A\u0E19\u0E30\u0E04\u0E30\u0E04\u0E19\u0E40\u0E01\u0E48\u0E07! \u{1F495}";
-        await interaction.editReply(replyText);
-      } catch (err) {
-        console.error("[RitzSmpAI] AI interaction error:", err);
-        try {
-          await interaction.editReply("\u{1F496} \u0E19\u0E49\u0E2D\u0E07\u0E44\u0E2D\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E0A\u0E48\u0E27\u0E22\u0E40\u0E2B\u0E25\u0E37\u0E2D\u0E40\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C RitzSMP \u0E40\u0E2A\u0E21\u0E2D\u0E40\u0E25\u0E22\u0E04\u0E48\u0E30! (\u0E04\u0E33\u0E16\u0E32\u0E21: " + question + ")");
-        } catch (e) {
-        }
-      }
-    }
-  });
-  client.login(token).catch((err) => {
-    console.error("[RitzSmpAI] Login failed:", err);
-  });
-  return client;
-}
-function startRitzSmpAiBot() {
-  return createRitzSmpAiBot();
-}
-
 // server/_core/index.ts
+init_discordAiBot();
 function isPortAvailable(port) {
   return new Promise((resolve) => {
     const server = net.createServer();
