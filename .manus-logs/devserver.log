@@ -2381,3 +2381,17 @@
 [2026-08-20T19:12:37.039Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540059969460764764
 [2026-08-20T19:12:38.286Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
 [2026-08-20T19:13:28.182Z] 7:13:28 PM [vite] (client) hmr update /src/index.css
+[2026-08-20T19:16:40.743Z] [Auth] Missing session cookie
+[2026-08-20T19:18:11.220Z] 7:18:11 PM [tsx] change in ./server/minecraftPresenceMonitor.ts Restarting...
+[2026-08-20T19:18:11.965Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T19:18:12.283Z] Server running on http://localhost:3000/
+[2026-08-20T19:18:16.839Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-20T19:18:16.840Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-20T19:18:16.841Z] (node:48162) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T19:18:16.841Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T19:18:17.603Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-20T19:18:20.405Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540059969460764764
+[2026-08-20T19:18:21.689Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-20T19:18:59.952Z] (node:48162) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-20T19:19:03.031Z] [RitzSmpAI] [SUCCESS] Generated verification code 4196 for 1215877840311025747
+[2026-08-20T19:19:03.031Z] [RitzSmpAI] [SUCCESS] Handled onboarding interaction ritz_verify_button

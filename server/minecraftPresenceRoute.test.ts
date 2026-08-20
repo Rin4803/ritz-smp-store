@@ -4,6 +4,7 @@ import * as minecraftIntegration from "./minecraftIntegration";
 import * as discordNotifications from "./discordNotifications";
 import { handleMinecraftPresenceScheduled } from "./minecraftPresenceMonitor";
 import { sdk } from "./_core/sdk";
+import { ForbiddenError } from "@shared/_core/errors";
 
 function createResponse() {
   const response = {
@@ -22,6 +23,16 @@ afterEach(() => {
 });
 
 describe("scheduled Minecraft presence callback", () => {
+  it("returns a safe 403 when authentication rejects an unauthenticated callback", async () => {
+    vi.spyOn(sdk, "authenticateRequest").mockRejectedValue(ForbiddenError("Invalid session cookie"));
+    const response = createResponse();
+
+    await handleMinecraftPresenceScheduled(request, response);
+
+    expect(response.status).toHaveBeenCalledWith(403);
+    expect(response.json).toHaveBeenCalledWith({ error: "forbidden" });
+  });
+
   it("rejects non-cron callers before reading presence state", async () => {
     vi.spyOn(sdk, "authenticateRequest").mockResolvedValue({ isCron: false } as any);
     const stateSpy = vi.spyOn(db, "getMinecraftPresenceState");

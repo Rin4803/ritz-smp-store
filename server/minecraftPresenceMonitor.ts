@@ -9,6 +9,7 @@ import {
 } from "./minecraftIntegration";
 import { notifyMinecraftPresence } from "./discordNotifications";
 import { sdk } from "./_core/sdk";
+import { HttpError } from "@shared/_core/errors";
 
 export type PresenceComparable = {
   online: boolean;
@@ -158,6 +159,10 @@ export async function handleMinecraftPresenceScheduled(req: Request, res: Respon
     const result = await runMinecraftPresenceMonitor();
     return res.json({ ok: true, ...result });
   } catch (error) {
+    if (error instanceof HttpError && error.statusCode === 403) {
+      return res.status(403).json({ error: "forbidden" });
+    }
+
     const message = error instanceof Error ? error.message : String(error);
     return res.status(500).json({
       error: message,

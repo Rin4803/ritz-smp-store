@@ -115,7 +115,7 @@
 - [x] Add regression tests for every currently nonresponsive command path and both bot lifecycle outcomes
 - [x] Run live identity/command smoke checks for the old bot and RitzSMP AI after restart
 - [x] Publish the dedicated Minecraft status-channel routing fix so presence events no longer use the purchase channel
-- [ ] Verify the production bot and Heartbeat callback after publication with a live channel audit
+- [x] Verify the production bot and Heartbeat callback after publication with a live channel audit
 
 - [x] Make Discord verification identity-first; keep Minecraft account linking optional and clearly labeled
 - [x] Make role claiming assign Discord roles without requiring a Minecraft LuckPerms grant
@@ -162,4 +162,5 @@
 - [x] Validate rank-claim permissions, duplicate clicks, and interaction response handling
 - [x] Rename auto-created Discord channels with clear system-purpose names and matching topics
 - [x] Fix intermittent `RangeError: Maximum call stack size exceeded` during Discord global command registration and prevent duplicate bot startup work
-- [ ] Fix production `InteractionNotReplied` in the onboarding interaction error path and verify profile/button handling in live logs
+- [x] Fix production `InteractionNotReplied` in the onboarding interaction error path and verify profile/button handling in live logs
+- [x] Return a safe 403 response for unauthenticated Heartbeat callbacks instead of leaking a 500 session-cookie error
