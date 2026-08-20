@@ -336,26 +336,26 @@ export function createRitzSmpAiBot() {
             customEmbed.setImage(imageUrl);
           }
 
-          const buttonLabel = interaction.options.getString("button_label", false) || "🌐 เว็บไซต์ร้านค้า RitzSMP";
-          const buttonUrlInput = interaction.options.getString("button_url", false) || storeUrl;
-          const finalButtonUrl = buttonUrlInput.startsWith("http") ? buttonUrlInput : storeUrl;
+          const buttonLabel = interaction.options.getString("button_label", false);
+          const buttonUrlInput = interaction.options.getString("button_url", false);
 
-          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder()
-              .setLabel(buttonLabel)
-              .setStyle(ButtonStyle.Link)
-              .setURL(finalButtonUrl),
-            new ButtonBuilder()
-              .setLabel("💳 เติมเงิน / ซื้อยศ")
-              .setStyle(ButtonStyle.Link)
-              .setURL(storeUrl)
-          );
-
-          await safeReply(interaction, {
+          const replyPayload: { embeds: EmbedBuilder[]; components?: ActionRowBuilder<ButtonBuilder>[]; ephemeral: boolean } = {
             embeds: [customEmbed],
-            components: [row],
             ephemeral: false,
-          });
+          };
+
+          if (buttonUrlInput && buttonUrlInput.startsWith("http")) {
+            const finalButtonLabel = buttonLabel || "🌐 เปิดลิงก์";
+            const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+              new ButtonBuilder()
+                .setLabel(finalButtonLabel)
+                .setStyle(ButtonStyle.Link)
+                .setURL(buttonUrlInput)
+            );
+            replyPayload.components = [row];
+          }
+
+          await safeReply(interaction, replyPayload);
           pushLog("SUCCESS", "Executed /embed create successfully (public broadcast)");
           return;
         }

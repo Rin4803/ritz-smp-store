@@ -622,3 +622,35 @@
 [2026-08-20T13:46:30.853Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
 [2026-08-20T13:47:20.868Z] 1:47:20 PM [vite] (client) hmr update /src/pages/Home.tsx, /src/index.css
 [2026-08-20T13:47:47.971Z] 1:47:47 PM [vite] (client) hmr update /src/index.css
+[2026-08-20T13:52:55.969Z] [RitzSmpAI] [INFO] Received command /embed from tun_5555
+[2026-08-20T13:52:55.976Z] (node:43383) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-20T13:52:58.204Z] [RitzSmpAI] [SUCCESS] Executed /embed default successfully instantly (public via safeReply)
+[2026-08-20T13:53:36.165Z] [RitzSmpAI] [INFO] Received command /embed from tun_5555
+[2026-08-20T13:53:38.244Z] [RitzSmpAI] [WARN] safeReply failed: DiscordAPIError[40060]: Interaction has already been acknowledged.
+[2026-08-20T13:53:40.365Z] [RitzSmpAI] [ERROR] safeReply fallback failed: DiscordAPIError[40060]: Interaction has already been acknowledged.
+[2026-08-20T13:53:40.365Z] [RitzSmpAI] [SUCCESS] Executed /embed create successfully (public broadcast)
+[2026-08-20T13:54:39.075Z] [RitzSmpAI] [INFO] Received command /embed from tun_5555
+[2026-08-20T13:54:41.100Z] [RitzSmpAI] [WARN] safeReply failed: DiscordAPIError[40060]: Interaction has already been acknowledged.
+[2026-08-20T13:54:43.468Z] [RitzSmpAI] [ERROR] safeReply fallback failed: DiscordAPIError[40060]: Interaction has already been acknowledged.
+[2026-08-20T13:54:43.468Z] [RitzSmpAI] [SUCCESS] Executed /embed create successfully (public broadcast)
+[2026-08-20T14:03:13.615Z] [RitzSmpAI] [INFO] Received command /embed from tun_5555
+[2026-08-20T14:03:15.687Z] [RitzSmpAI] [WARN] safeReply failed: DiscordAPIError[40060]: Interaction has already been acknowledged.
+[2026-08-20T14:03:17.623Z] [RitzSmpAI] [ERROR] safeReply fallback failed: DiscordAPIError[40060]: Interaction has already been acknowledged.
+[2026-08-20T14:03:17.623Z] [RitzSmpAI] [SUCCESS] Executed /embed create successfully (public broadcast)
+[2026-08-20T14:05:26.419Z] 2:05:26 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T14:05:27.964Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T14:05:28.709Z] Server running on http://localhost:3000/
+[2026-08-20T14:05:30.790Z] [DiscordBot] Failed to start: DiscordjsError [TokenInvalid]: An invalid token was provided.
+[2026-08-20T14:05:30.790Z] at WebSocketManager.connect (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/websocket/WebSocketManager.js:140:26)
+[2026-08-20T14:05:30.790Z] at Client.login (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/Client.js:229:21)
+[2026-08-20T14:05:30.790Z] at <anonymous> (/home/ubuntu/ritz-smp-store/server/discordBot.ts:422:20)
+[2026-08-20T14:05:30.790Z] at startDiscordStoreBot (/home/ubuntu/ritz-smp-store/server/discordBot.ts:424:5)
+[2026-08-20T14:05:30.790Z] at startServer (/home/ubuntu/ritz-smp-store/server/_core/index.ts:69:3)
+[2026-08-20T14:05:30.790Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-20T14:05:30.790Z] code: 'TokenInvalid'
+[2026-08-20T14:05:30.790Z] }
+[2026-08-20T14:05:34.714Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-20T14:05:34.718Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-20T14:05:34.719Z] (node:44953) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T14:05:34.719Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-20T14:05:35.476Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
