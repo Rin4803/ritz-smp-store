@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Allow: /api/trpc/store.*
+Disallow: /api/
+Disallow: /admin
+
+Sitemap: https://ritzsmp.com/sitemap.xml
