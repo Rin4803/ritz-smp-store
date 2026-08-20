@@ -1955,3 +1955,28 @@
 [2026-08-20T17:53:33.918Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
 [2026-08-20T17:53:35.411Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540042585509339236
 [2026-08-20T17:53:36.084Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540047039730028635
+[2026-08-20T17:54:31.250Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-20T17:59:08.790Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: Error: Invalid string length
+[2026-08-20T17:59:08.793Z] (node:23836) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-20T17:59:10.587Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:59:13.828Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: Error: Invalid string length
+[2026-08-20T17:59:14.487Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:59:16.397Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: Error: Invalid string length
+[2026-08-20T17:59:17.066Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:59:19.021Z] [RitzSmpAI] [INFO] Interaction was acknowledged by another handler; continuing with editReply
+[2026-08-20T17:59:19.800Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:59:20.469Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:59:31.139Z] [RitzSmpAI] [SUCCESS] Handled onboarding interaction ritz_players_button
+[2026-08-20T17:59:35.065Z] [RitzSmpAI] [INFO] Interaction was acknowledged by another handler; continuing with editReply
+[2026-08-20T17:59:36.589Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:59:37.209Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:59:42.999Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: DiscordAPIError[10062]: Unknown interaction
+[2026-08-20T17:59:44.794Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:59:48.861Z] [RitzSmpAI] [INFO] Interaction was acknowledged by another handler; continuing with editReply
+[2026-08-20T17:59:48.861Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:59:50.270Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T17:59:56.895Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: Error: Invalid string length
+[2026-08-20T17:59:58.673Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T18:00:15.746Z] [RitzSmpAI] [ERROR] Onboarding interaction failed: Error: Invalid string length
+[2026-08-20T18:00:17.511Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-20T18:05:36.653Z] 6:05:36 PM [vite] (client) hmr update /src/index.css

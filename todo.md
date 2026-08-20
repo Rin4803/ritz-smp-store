@@ -137,3 +137,11 @@
 - [ ] Implement Minecraft /verify <code> command to securely bind Minecraft UUID/IGN to Discord ID
 - [x] Implement single-button 4-digit code generator in verification channel
 - [x] Implement Minecraft /verify <code> command to securely bind Minecraft UUID/IGN to Discord ID
+- [ ] Design multi-server database schema (`managed_servers` and server-scoped configs)
+- [ ] Implement Server Selection and Management UI in web platform
+- [ ] Implement dynamic bot configuration per server (Discord tokens, RCON, channel mapping)
+- [ ] Validate multi-tenant isolation and automated tests
+- [x] Design multi-server database schema (`managed_servers` and server-scoped configs)
+- [x] Implement Server Selection and Management UI in web platform
+- [x] Implement dynamic bot configuration per server (Discord tokens, RCON, channel mapping)
+- [x] Validate tenant isolation, tests, and deployment readiness
