@@ -338,3 +338,25 @@
 [2026-08-20T12:03:01.785Z] (Use `node --trace-deprecation ...` to show where the warning was created)
 [2026-08-20T12:03:07.353Z] [RitzSmpAI] Global slash commands registered successfully!
 [2026-08-20T12:03:12.913Z] [RitzSmpAI] Guild commands registered for guild 1525527108854481007
+[2026-08-20T12:05:05.389Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-20T12:06:04.504Z] 12:06:04 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-20T12:06:06.349Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T12:06:07.113Z] Server running on http://localhost:3000/
+[2026-08-20T12:06:11.126Z] 12:06:11 PM [tsx] change in ./server/routers.ts Restarting...
+[2026-08-20T12:06:12.774Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T12:06:13.529Z] Server running on http://localhost:3000/
+[2026-08-20T12:06:15.829Z] 12:06:15 PM [tsx] change in ./server/routers.ts Restarting...
+[2026-08-20T12:06:17.441Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-20T12:06:18.137Z] Server running on http://localhost:3000/
+[2026-08-20T12:06:23.641Z] [DiscordBot] Failed to start: DiscordjsError [TokenInvalid]: An invalid token was provided.
+[2026-08-20T12:06:23.641Z] at WebSocketManager.connect (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/websocket/WebSocketManager.js:140:26)
+[2026-08-20T12:06:23.641Z] at Client.login (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/discord.js@14.27.0/node_modules/discord.js/src/client/Client.js:229:21)
+[2026-08-20T12:06:23.641Z] at <anonymous> (/home/ubuntu/ritz-smp-store/server/discordBot.ts:422:20)
+[2026-08-20T12:06:23.641Z] at startDiscordStoreBot (/home/ubuntu/ritz-smp-store/server/discordBot.ts:424:5)
+[2026-08-20T12:06:23.641Z] at startServer (/home/ubuntu/ritz-smp-store/server/_core/index.ts:69:3)
+[2026-08-20T12:06:23.641Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-20T12:06:23.641Z] code: 'TokenInvalid'
+[2026-08-20T12:06:23.641Z] }
+[2026-08-20T12:06:29.737Z] [RitzSmpAI] Logged in as RitzSMP AI#4684
+[2026-08-20T12:06:29.742Z] (node:30241) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-20T12:06:29.742Z] (Use `node --trace-deprecation ...` to show where the warning was created)

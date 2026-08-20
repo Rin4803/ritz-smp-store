@@ -20,6 +20,7 @@ import { ENV } from "./_core/env";
 import { Rcon } from "rcon-client";
 import { storagePut } from "./storage";
 import type { Order } from "../drizzle/schema";
+import { getRitzSmpAiBotStatus } from "./discordAiBot";
 
 const allowedSlipTypes = ["image/jpeg", "image/png", "image/webp"] as const;
 const orderStatus = z.enum(["รอตรวจสอบ", "สำเร็จ", "ยกเลิก"]);
@@ -49,7 +50,6 @@ export const appRouter = router({
     health: publicProcedure.query(() => ({ ok: true, service: "ritz-smp-store" })),
     botStatus: adminProcedure.query(() => {
       try {
-        const { getRitzSmpAiBotStatus } = require("./discordAiBot");
         return getRitzSmpAiBotStatus();
       } catch (e) {
         return {

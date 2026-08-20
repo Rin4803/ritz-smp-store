@@ -1,9 +1,32 @@
 import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { invokeLLM } from "./_core/llm.js";
 
+let botStartTime = 0;
+let botStatus: "online" | "offline" | "connecting" = "offline";
+let botUsername: string | null = null;
+let totalInteractionsCount = 0;
+const recentLogs: { timestamp: string; type: string; message: string }[] = [];
+
+function pushLog(type: string, message: string) {
+  const timeStr = new Date().toISOString();
+  recentLogs.unshift({ timestamp: timeStr, type, message });
+  if (recentLogs.length > 50) recentLogs.pop();
+}
+
+export function getRitzSmpAiBotStatus() {
+  return {
+    status: botStatus,
+    username: botUsername,
+    totalInteractions: totalInteractionsCount,
+    logs: recentLogs.slice(0, 25),
+  };
+}
+
 export function createRitzSmpAiBot() {
   const token = process.env.DISCORD_AI_BOT_TOKEN;
   if (!token) {
+    botStatus = "offline";
+    pushLog("WARN", "DISCORD_AI_BOT_TOKEN not provided, skipping AI bot startup.");
     console.warn("[RitzSmpAI] DISCORD_AI_BOT_TOKEN not provided, skipping AI bot startup.");
     return null;
   }
@@ -17,7 +40,11 @@ export function createRitzSmpAiBot() {
   });
 
   client.once("ready", async () => {
-    console.log(`[RitzSmpAI] Logged in as ${client.user?.tag}`);
+    botStatus = "online";
+    botUsername = client.user?.tag ?? "RitzSMP AI#0000";
+    botStartTime = Date.now();
+    pushLog("SUCCESS", `RitzSMP AI Bot logged in as ${botUsername}`);
+    console.log(`[RitzSmpAI] Logged in as ${botUsername}`);
 
     const commands = [
       new SlashCommandBuilder()
@@ -43,28 +70,30 @@ export function createRitzSmpAiBot() {
     if (!clientId) return;
 
     try {
-      console.log("[RitzSmpAI] Registering global slash commands...");
+      pushLog("INFO", "Registering global slash commands...");
       await rest.put(Routes.applicationCommands(clientId), { body: commands });
-      console.log("[RitzSmpAI] Global slash commands registered successfully!");
+      pushLog("SUCCESS", "Global slash commands registered successfully!");
 
       const guildIds = Array.from(client.guilds.cache.keys());
       for (const guildId of guildIds) {
         try {
           await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });
-          console.log(`[RitzSmpAI] Guild commands registered for guild ${guildId}`);
+          pushLog("SUCCESS", `Guild commands registered for guild ${guildId}`);
         } catch (err) {
-          console.error(`[RitzSmpAI] Failed to register guild commands for ${guildId}:`, err);
+          pushLog("ERROR", `Failed to register guild commands for ${guildId}: ${String(err)}`);
         }
       }
     } catch (error) {
-      console.error("[RitzSmpAI] Failed to register slash commands:", error);
+      pushLog("ERROR", `Failed to register slash commands: ${String(error)}`);
     }
   });
 
   client.on("interactionCreate", async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
+    totalInteractionsCount++;
     const { commandName } = interaction;
+    pushLog("INFO", `Received command /${commandName} from user ${interaction.user.tag}`);
 
     if (commandName === "ai-status") {
       try {
@@ -74,8 +103,9 @@ export function createRitzSmpAiBot() {
         await interaction.editReply(
           "💖 **RitzSMP AI** ตัวน้อยสแตนด์บายพร้อมดูแลทุกคนแล้วนะคะ! ระบบออนไลน์เรียบร้อยดีค่ะ มีอะไรให้แอดมินหรือน้องไอช่วยดูแลบอกได้เลยนะคะ ✨"
         );
+        pushLog("SUCCESS", "Executed /ai-status successfully");
       } catch (err) {
-        console.error("[RitzSmpAI] ai-status error:", err);
+        pushLog("ERROR", `ai-status error: ${String(err)}`);
         try {
           if (!interaction.replied) {
             await interaction.reply({
@@ -133,15 +163,14 @@ export function createRitzSmpAiBot() {
         } else {
           await interaction.editReply({ embeds: [embed], components: [row] });
         }
+        pushLog("SUCCESS", "Executed /embed successfully");
       } catch (err) {
-        console.error("[RitzSmpAI] embed command error:", err);
+        pushLog("ERROR", `embed command error: ${String(err)}`);
         try {
           if (!interaction.replied) {
             await interaction.reply({ content: "ขอโทษด้วยนะคะ เกิดข้อผิดพลาดในการสร้างข้อความ Embed ค่ะ 🥺", ephemeral: true });
           }
-        } catch (e) {
-          // ignore
-        }
+        } catch (e) {}
       }
       return;
     }
@@ -151,7 +180,7 @@ export function createRitzSmpAiBot() {
       try {
         await interaction.deferReply();
       } catch (err) {
-        console.error("[RitzSmpAI] deferReply failed:", err);
+        pushLog("ERROR", `ask deferReply failed: ${String(err)}`);
         return;
       }
 
@@ -164,57 +193,31 @@ export function createRitzSmpAiBot() {
         const replyContent = aiRes.choices[0]?.message?.content;
         const replyText = typeof replyContent === "string" ? replyContent : "ขอโทษด้วยนะคะ ตอนนี้น้องไอประมวลผลไม่ทัน ลองใหม่อีกรอบนะคะคนเก่ง! 💕";
         await interaction.editReply(replyText);
+        pushLog("SUCCESS", `Executed /ask for question: "${question.slice(0, 30)}..."`);
       } catch (err) {
-        console.error("[RitzSmpAI] AI interaction error:", err);
+        pushLog("ERROR", `AI interaction error: ${String(err)}`);
         try {
           await interaction.editReply("💖 น้องไอพร้อมช่วยเหลือเรื่องเซิร์ฟเวอร์ RitzSMP เสมอเลยค่ะ! (คำถาม: " + question + ")");
-        } catch (e) {
-          // ignore
-        }
+        } catch (e) {}
       }
     }
   });
 
   client.login(token).catch(err => {
+    botStatus = "offline";
+    pushLog("ERROR", `Bot login failed: ${String(err)}`);
     console.error("[RitzSmpAI] Login failed:", err);
   });
 
   return client;
 }
 
-let botStartTime = 0;
-let botStatus: "online" | "offline" | "connecting" = "offline";
-let botUsername: string | null = null;
-let totalInteractionsCount = 0;
-const recentLogs: { timestamp: string; type: string; message: string }[] = [];
-
-function pushLog(type: string, message: string) {
-  const timeStr = new Date().toISOString();
-  recentLogs.unshift({ timestamp: timeStr, type, message });
-  if (recentLogs.length > 50) recentLogs.pop();
-}
-
-export function getRitzSmpAiBotStatus() {
-  return {
-    status: botStatus,
-    username: botUsername,
-    uptimeSeconds: botStartTime ? Math.floor((Date.now() - botStartTime) / 1000) : 0,
-    totalInteractions: totalInteractionsCount,
-    logs: recentLogs.slice(0, 20),
-  };
-}
-
 export function startRitzSmpAiBot() {
   botStatus = "connecting";
   pushLog("INFO", "Starting RitzSMP AI Bot...");
   const client = createRitzSmpAiBot();
-  if (client) {
-    botStartTime = Date.now();
-    botStatus = "online";
-    pushLog("SUCCESS", "RitzSMP AI Bot online and connected.");
-  } else {
+  if (!client) {
     botStatus = "offline";
-    pushLog("WARN", "Token missing, bot offline.");
   }
   return client;
 }
