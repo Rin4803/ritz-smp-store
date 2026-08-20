@@ -10,6 +10,7 @@ export const ENV = {
   discordBotToken: process.env.DISCORD_BOT_TOKEN ?? "",
   discordGuildId: process.env.DISCORD_GUILD_ID ?? "",
   discordStoreChannelId: process.env.DISCORD_STORE_CHANNEL_ID ?? "",
+  discordDonateChannelId: process.env.DISCORD_DONATE_CHANNEL_ID ?? "",
   discordOrdersChannelId: process.env.DISCORD_ORDERS_CHANNEL_ID ?? "",
   discordAdminRoleId: process.env.DISCORD_ADMIN_ROLE_ID ?? "",
   publicStoreUrl: process.env.PUBLIC_STORE_URL ?? "",

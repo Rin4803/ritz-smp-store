@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from "discord.js";
+import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { invokeLLM } from "./_core/llm.js";
 
 export function createRitzSmpAiBot() {
@@ -32,6 +32,9 @@ export function createRitzSmpAiBot() {
       new SlashCommandBuilder()
         .setName("ai-status")
         .setDescription("ตรวจสอบสถานะระบบ RitzSMP AI และเซิร์ฟเวอร์ Minecraft"),
+      new SlashCommandBuilder()
+        .setName("embed")
+        .setDescription("ส่งข้อความประกาศ Embed พร้อมปุ่มร้านค้า RitzSMP สำหรับแอดมิน"),
     ].map(cmd => cmd.toJSON());
 
     const rest = new REST({ version: "10" }).setToken(token);
@@ -65,12 +68,80 @@ export function createRitzSmpAiBot() {
 
     if (commandName === "ai-status") {
       try {
-        await interaction.deferReply();
+        if (!interaction.deferred && !interaction.replied) {
+          await interaction.deferReply();
+        }
         await interaction.editReply(
           "💖 **RitzSMP AI** ตัวน้อยสแตนด์บายพร้อมดูแลทุกคนแล้วนะคะ! ระบบออนไลน์เรียบร้อยดีค่ะ มีอะไรให้แอดมินหรือน้องไอช่วยดูแลบอกได้เลยนะคะ ✨"
         );
       } catch (err) {
         console.error("[RitzSmpAI] ai-status error:", err);
+        try {
+          if (!interaction.replied) {
+            await interaction.reply({
+              content: "💖 **RitzSMP AI** สแตนด์บายพร้อมดูแลค่ะ! (ระบบออนไลน์เรียบร้อยดีนะค้า)",
+              ephemeral: true,
+            });
+          }
+        } catch (e) {}
+      }
+      return;
+    }
+
+    if (commandName === "embed") {
+      try {
+        if (!interaction.deferred && !interaction.replied) {
+          await interaction.deferReply({ ephemeral: true });
+        }
+
+        const embed = new EmbedBuilder()
+          .setTitle("💖 ช่องทางโดเนทและวิธีใช้งาน RitzSMP Store")
+          .setDescription(
+            "🛒 **ระบบเว็บสโตร์ RitzSMP เปิดให้บริการแล้วค่ะ!**\n\n" +
+            "💳 **1. วิธีเติมเงินเข้ากระเป๋า (ต้องแนบสลิป):**\n" +
+            "• โอนเงินผ่านบัญชีธนาคารออมสิน, พร้อมเพย์ หรือ TrueMoney Wallet\n" +
+            "• เข้าเว็บไซต์ร้านค้า เลือกเมนูเติมเงิน กรอกจำนวนเงิน และ **แนบสลิปหลักฐานการโอน**\n" +
+            "• รอแอดมินตรวจสอบและกดยืนยันยอดเงินเข้ากระเป๋าของคุณ\n\n" +
+            "👑 **2. วิธีซื้อยศ (ใช้ยอด Wallet ไม่ต้องแนบสลิป):**\n" +
+            "• เมื่อมียอดเงินในกระเป๋าแล้ว ไปที่หน้าซื้อยศ\n" +
+            "• กรอก **ชื่อในเกม (Minecraft IGN)** และเลือกยศที่ต้องการ\n" +
+            "• ระบบจะหักเงินจากกระเป๋าและส่งยศเข้าเซิร์ฟเวอร์ผ่าน RCON ทันที\n\n" +
+            "📋 **ช่องทางโอนเงินสนับสนุน:**\n" +
+            "• 🏦 **ธนาคารออมสิน:** `020391511886` (ชื่อบัญชี: ภานุสรณ์ วงศ์สุวรรณ)\n" +
+            "• 📱 **พร้อมเพย์ (PromptPay):** `0930286252`\n" +
+            "• 💳 **TrueMoney Wallet:** `0930286252`"
+          )
+          .setColor(0xff69b4)
+          .setThumbnail("https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f496.png")
+          .setFooter({ text: "RitzSMP AI • ขอขอบพระคุณทุกท่านที่สนับสนุนเซิร์ฟเวอร์ของเราค่ะ 💕" });
+
+        const storeUrl = "https://ritzsmp-web-store.web.app";
+        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+          new ButtonBuilder()
+            .setLabel("🌐 เปิดเว็บไซต์ร้านค้า (Web Store)")
+            .setStyle(ButtonStyle.Link)
+            .setURL(storeUrl),
+          new ButtonBuilder()
+            .setLabel("💳 เติมเงิน / ซื้อยศในเว็บ")
+            .setStyle(ButtonStyle.Link)
+            .setURL(storeUrl)
+        );
+
+        if (interaction.channel && "send" in interaction.channel && typeof interaction.channel.send === "function") {
+          await interaction.channel.send({ embeds: [embed], components: [row] });
+          await interaction.editReply("✨ น้องไอส่งข้อความ Embed ประกาศร้านค้าลงในห้องนี้เรียบร้อยแล้วค่ะ! 💖");
+        } else {
+          await interaction.editReply({ embeds: [embed], components: [row] });
+        }
+      } catch (err) {
+        console.error("[RitzSmpAI] embed command error:", err);
+        try {
+          if (!interaction.replied) {
+            await interaction.reply({ content: "ขอโทษด้วยนะคะ เกิดข้อผิดพลาดในการสร้างข้อความ Embed ค่ะ 🥺", ephemeral: true });
+          }
+        } catch (e) {
+          // ignore
+        }
       }
       return;
     }

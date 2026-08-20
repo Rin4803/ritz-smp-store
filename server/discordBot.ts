@@ -79,8 +79,10 @@ export function buildStorePanel(ranks: Awaited<ReturnType<typeof getRanks>>) {
   const embed = new EmbedBuilder()
     .setTitle("👑 RITZSMP OFFICIAL STORE")
     .setDescription(
-      "เลือกยศที่ต้องการ กรอกชื่อ Minecraft ในหน้าต่างที่เปิดขึ้น แล้วบอทจะส่งรายละเอียดการชำระเงินไปทาง DM เพื่อให้คุณแนบสลิปอย่างเป็นส่วนตัว\n\n" +
-        "หลังส่งสลิปแล้ว แอดมินจะตรวจสอบในช่องเจ้าหน้าที่และแจ้งผลกลับทาง DM",
+      "🛒 **ระบบเว็บสโตร์ RitzSMP เปิดให้บริการแล้วค่ะ!**\n\n" +
+        "💳 **1. เติมเงินเข้ากระเป๋า:** ไปที่เว็บไซต์เพื่อเติมเงิน เลือกช่องทางโอนเงิน (ออมสิน / พร้อมเพย์ / วอเลท) และ **แนบสลิป** รอแอดมินตรวจสอบเพื่อเพิ่มยอดเงิน\n" +
+        "👑 **2. ซื้อยศ:** เมื่อมียอดเงินในกระเป๋า สามารถเลือกซื้อยศและกรอกชื่อในเกม (Minecraft IGN) ได้ทันที **(โดยไม่ต้องแนบสลิปซ้ำ ระบบหักยอดกระเป๋าและส่งยศเข้าเซิร์ฟเวอร์อัตโนมัติ)**\n\n" +
+        "หรือเลือกซื้อผ่านปุ่มด้านล่างนี้ได้เช่นกันค่ะ!",
     )
     .addFields(
       { name: "ช่องทางชำระเงิน", value: PAYMENT_TEXT },
@@ -108,13 +110,60 @@ export function buildStorePanel(ranks: Awaited<ReturnType<typeof getRanks>>) {
   return { embeds: [embed], components: rows };
 }
 
+async function publishDonateAnnouncement(client: Client): Promise<void> {
+  const channelId = ENV.discordDonateChannelId || ENV.discordStoreChannelId;
+  if (!channelId) return;
+  const channel = await client.channels.fetch(channelId);
+  if (!channel?.isTextBased() || !("send" in channel)) return;
+  const publicStoreUrl = getPublicStoreUrl() || "https://ritzsmp.manus.space";
+
+  const embed = new EmbedBuilder()
+    .setTitle("💖 ช่องทางโดเนทและวิธีใช้งาน RitzSMP Store")
+    .setDescription(
+      "🛒 **ระบบเว็บสโตร์ RitzSMP เปิดให้บริการแล้วค่ะ!**\n\n" +
+      "💳 **1. วิธีเติมเงินเข้ากระเป๋า (ต้องแนบสลิป):**\n" +
+      "• โอนเงินผ่านช่องทางด้านล่างนี้\n" +
+      "• เข้าสู่เว็บไซต์ร้านค้า เลือกเมนูเติมเงิน กรอกจำนวนเงิน และ **แนบสลิปหลักฐานการโอน**\n" +
+      "• รอแอดมินตรวจสอบและกดยืนยันยอดเงินเข้ากระเป๋าของคุณ\n\n" +
+      "👑 **2. วิธีซื้อยศ (ใช้ยอด Wallet ไม่ต้องแนบสลิป):**\n" +
+      "• เมื่อมียอดเงินในกระเป๋าแล้ว ไปที่หน้าซื้อยศ\n" +
+      "• กรอก **ชื่อในเกม (Minecraft IGN)** และเลือกยศที่ต้องการ\n" +
+      "• ระบบจะหักเงินจากกระเป๋าและส่งยศเข้าเซิร์ฟเวอร์ผ่าน RCON ทันที\n\n" +
+      "📋 **ช่องทางโอนเงิน:**\n" +
+      PAYMENT_TEXT
+    )
+    .setColor(0xff69b4)
+    .setThumbnail("https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f496.png")
+    .setFooter({ text: "RitzSMP • ขอขอบพระคุณทุกท่านที่สนับสนุนเซิร์ฟเวอร์ของเราค่ะ" });
+
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setLabel("🌐 เปิดเว็บไซต์ร้านค้า (Web Store)")
+      .setStyle(ButtonStyle.Link)
+      .setURL(publicStoreUrl),
+    new ButtonBuilder()
+      .setLabel("💳 เติมเงิน / ซื้อยศ")
+      .setStyle(ButtonStyle.Link)
+      .setURL(publicStoreUrl)
+  );
+
+  const messages = await channel.messages.fetch({ limit: 20 });
+  const existingAnnouncement = messages.find(m => m.author.id === client.user?.id && m.embeds[0]?.title?.includes("ช่องทางโดเนท"));
+  if (existingAnnouncement) {
+    await existingAnnouncement.edit({ embeds: [embed], components: [row] });
+  } else {
+    await channel.send({ embeds: [embed], components: [row] });
+  }
+}
+
 async function publishStorePanel(client: Client): Promise<void> {
   if (!ENV.discordStoreChannelId) return;
   const channel = await client.channels.fetch(ENV.discordStoreChannelId);
   if (!channel?.isTextBased() || !("send" in channel)) return;
+  await publishDonateAnnouncement(client);
   const payload = buildStorePanel(await getRanks());
   const messages = await channel.messages.fetch({ limit: 20 });
-  const existing = messages.find(message => message.author.id === client.user?.id);
+  const existing = messages.find(message => message.author.id === client.user?.id && !message.embeds[0]?.title?.includes("ช่องทางโดเนท"));
   if (existing) await existing.edit(payload);
   else await channel.send(payload);
 }
