@@ -43,6 +43,13 @@
       "when": 1787238510943,
       "tag": "0005_right_loa",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1787242653291,
+      "tag": "0006_stiff_timeslip",
+      "breakpoints": true
     }
   ]
 }

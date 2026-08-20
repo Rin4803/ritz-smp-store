@@ -10,6 +10,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { startDiscordStoreBot } from "../discordBot";
 import { startRitzSmpAiBot } from "../discordAiBot";
+import { handleMinecraftPresenceScheduled } from "../minecraftPresenceMonitor";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -38,6 +39,9 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+  // Heartbeat callbacks are not auto-registered by the framework and must stay
+  // before the tRPC/static fallthrough. The handler authenticates cron callers.
+  app.post("/api/scheduled/minecraft-presence", handleMinecraftPresenceScheduled);
   // tRPC API
   app.use(
     "/api/trpc",

@@ -6,6 +6,7 @@ export interface MinecraftServerStatus {
   players: number;
   maxPlayers: number;
   playerNames: string[];
+  playerListKnown: boolean;
   version: string;
   latency: number | null;
   motd: string;
@@ -47,7 +48,8 @@ export async function fetchMinecraftServerStatus(): Promise<MinecraftServerStatu
 
     const data = (await response.json()) as any;
     const online = data?.online === true;
-    const playerNames = online && Array.isArray(data?.players?.list)
+    const playerListKnown = online && Array.isArray(data?.players?.list);
+    const playerNames = playerListKnown
       ? data.players.list.filter((name: unknown): name is string => typeof name === "string").slice(0, 100)
       : [];
 
@@ -56,6 +58,7 @@ export async function fetchMinecraftServerStatus(): Promise<MinecraftServerStatu
       players: online ? Number(data?.players?.online ?? playerNames.length) : 0,
       maxPlayers: online ? Number(data?.players?.max ?? 0) : 0,
       playerNames,
+      playerListKnown,
       version: online ? String(data?.version ?? "ไม่ทราบเวอร์ชัน") : "ไม่ทราบเวอร์ชัน",
       latency: Date.now() - startedAt,
       motd: getMotd(data),
@@ -66,6 +69,7 @@ export async function fetchMinecraftServerStatus(): Promise<MinecraftServerStatu
       players: 0,
       maxPlayers: 0,
       playerNames: [],
+      playerListKnown: false,
       version: "ไม่สามารถตรวจสอบได้",
       latency: null,
       motd: "ไม่สามารถเชื่อมต่อ API สถานะเซิร์ฟเวอร์ได้",

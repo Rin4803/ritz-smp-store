@@ -48,5 +48,5 @@
     "VITE_OAUTH_PORTAL_URL": "https://manus.im"
   },
   "template_id": "web-db-user",
-  "test_command": ""
+  "test_command": "pnpm test"
 }

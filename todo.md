@@ -86,3 +86,12 @@
 - [x] เพิ่มหน้า/แผงจัดการสมาชิกให้ Owner เพิ่มหรือปลด role Admin ได้จากเว็บ
 - [x] ป้องกันไม่ให้ Admin เพิ่ม/ปลด Admin คนอื่น ยกระดับตัวเอง หรือปลด Owner ได้
 - [x] เพิ่ม Vitest ตรวจสอบสิทธิ์ Owner/Admin และตรวจสอบว่าอีเมล Owner ถูกกำหนดอย่างปลอดภัย
+
+- [x] Persist Minecraft presence snapshots and Heartbeat task identity for reliable join/leave detection across stateless deployments
+- [x] Mount and validate the authenticated `/api/scheduled/minecraft-presence` callback
+- [ ] Create the project-level Heartbeat job for periodic Minecraft presence polling after deployment
+
+- [x] Keep `Nongmodeknarak@gmail.com` unpromoted so the Owner can test manual promotion later
+- [ ] Stop/restart the website services and validate the rebuilt deployment before the final checkpoint publication
+- [x] Add a Vitest or HTTP integration test for the scheduled presence route covering non-cron rejection and cron orphan handling
+- [ ] Run a manual or automated request against the scheduled presence route after restart/deployment

@@ -104,3 +104,21 @@ export const discordVerifications = mysqlTable("discord_verifications", {
 
 export type DiscordVerification = typeof discordVerifications.$inferSelect;
 export type InsertDiscordVerification = typeof discordVerifications.$inferInsert;
+
+/**
+ * Durable singleton state used by the Heartbeat Minecraft presence monitor.
+ * `id = 1` is the only row; player names are stored as a normalized JSON array.
+ */
+export const minecraftPresenceState = mysqlTable("minecraft_presence_state", {
+  id: int("id").primaryKey(),
+  scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }),
+  lastOnline: int("lastOnline").notNull(),
+  playerListKnown: int("playerListKnown").notNull(),
+  lastPlayerNames: text("lastPlayerNames").notNull(),
+  lastCheckedAt: timestamp("lastCheckedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MinecraftPresenceState = typeof minecraftPresenceState.$inferSelect;
+export type InsertMinecraftPresenceState = typeof minecraftPresenceState.$inferInsert;

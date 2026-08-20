@@ -14,6 +14,8 @@ import {
   walletTransactions,
   discordVerifications,
   DiscordVerification,
+  minecraftPresenceState,
+  MinecraftPresenceState,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -223,6 +225,72 @@ export async function updateDiscordProfile(
     await db.update(discordVerifications).set(updates).where(eq(discordVerifications.discordUserId, discordUserId));
   }
   return getDiscordVerification(discordUserId);
+}
+
+export async function getMinecraftPresenceState(): Promise<MinecraftPresenceState | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(minecraftPresenceState)
+    .where(eq(minecraftPresenceState.id, 1))
+    .limit(1);
+  return result[0];
+}
+
+export async function saveMinecraftPresenceState(input: {
+  scheduleCronTaskUid?: string | null;
+  lastOnline: boolean;
+  playerListKnown: boolean;
+  lastPlayerNames: string[];
+  lastCheckedAt?: Date;
+}): Promise<MinecraftPresenceState> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const existing = await getMinecraftPresenceState();
+  const values = {
+    id: 1,
+    scheduleCronTaskUid: input.scheduleCronTaskUid !== undefined
+      ? input.scheduleCronTaskUid
+      : existing?.scheduleCronTaskUid ?? null,
+    lastOnline: input.lastOnline ? 1 : 0,
+    playerListKnown: input.playerListKnown ? 1 : 0,
+    lastPlayerNames: JSON.stringify(input.lastPlayerNames),
+    lastCheckedAt: input.lastCheckedAt ?? new Date(),
+  };
+  await db.insert(minecraftPresenceState).values(values).onDuplicateKeyUpdate({
+    set: {
+      scheduleCronTaskUid: values.scheduleCronTaskUid,
+      lastOnline: values.lastOnline,
+      playerListKnown: values.playerListKnown,
+      lastPlayerNames: values.lastPlayerNames,
+      lastCheckedAt: values.lastCheckedAt,
+    },
+  });
+  const saved = await getMinecraftPresenceState();
+  if (!saved) throw new Error("Minecraft presence state could not be saved");
+  return saved;
+}
+
+export async function setMinecraftPresenceScheduleTaskUid(taskUid: string): Promise<MinecraftPresenceState> {
+  const existing = await getMinecraftPresenceState();
+  return saveMinecraftPresenceState({
+    scheduleCronTaskUid: taskUid,
+    lastOnline: Boolean(existing?.lastOnline),
+    playerListKnown: Boolean(existing?.playerListKnown),
+    lastPlayerNames: parsePresenceNames(existing?.lastPlayerNames),
+    lastCheckedAt: existing?.lastCheckedAt ?? new Date(),
+  });
+}
+
+function parsePresenceNames(value: string | null | undefined): string[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((name): name is string => typeof name === "string") : [];
+  } catch {
+    return [];
+  }
 }
 
 export async function ensureDiscordUser(discordUserId: string, displayName: string): Promise<User> {

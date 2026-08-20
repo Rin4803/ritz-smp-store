@@ -181,6 +181,29 @@ export async function notifyTopupSubmitted(input: {
   }
 }
 
+export async function notifyMinecraftPresence(input: {
+  kind: "join" | "leave";
+  playerNames: string[];
+}): Promise<DiscordNotificationResult> {
+  const channelId = process.env.DISCORD_ONLINE_CHANNEL_ID || ENV.discordOnlineChannelId || getSupportChannelId();
+  const names = input.playerNames.length ? input.playerNames.map(name => `\`${name}\``).join(", ") : "ไม่ระบุชื่อผู้เล่น";
+  const isJoin = input.kind === "join";
+  const embed: DiscordEmbed = {
+    title: isJoin ? "🟢 ผู้เล่นเข้าเซิร์ฟเวอร์ RitzSMP" : "🔴 ผู้เล่นออกจากเซิร์ฟเวอร์ RitzSMP",
+    description: isJoin
+      ? `มีผู้เล่นเข้าเซิร์ฟเวอร์แล้วค่ะ: ${names}`
+      : `มีผู้เล่นออกจากเซิร์ฟเวอร์แล้วค่ะ: ${names}`,
+    color: isJoin ? 0x22c55e : 0xef4444,
+    fields: [
+      { name: "จำนวนเหตุการณ์", value: `${input.playerNames.length} คน`, inline: true },
+      { name: "แหล่งข้อมูล", value: "Minecraft status API • ระบบ Heartbeat", inline: true },
+    ],
+    footer: { text: "RitzSMP • แจ้งเตือนสถานะผู้เล่นอัตโนมัติ" },
+    timestamp: new Date().toISOString(),
+  };
+  return postDiscordMessage(channelId, { embeds: [embed] });
+}
+
 export async function notifyPurchaseCompleted(input: {
   order: OrderLike;
   userName: string;
@@ -211,4 +234,5 @@ export const discordNotificationInternals = {
   getDonateLogChannelId,
   formatAmount,
   postDiscordMessage,
+  notifyMinecraftPresence,
 };

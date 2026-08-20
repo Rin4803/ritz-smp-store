@@ -235,7 +235,16 @@ async function showMinecraftModal(interaction: any, customId: string, title: str
   await interaction.showModal(modal);
 }
 
+export function isProfileOwner(discordUserId: string, verification: { discordUserId?: string }) {
+  // Older in-memory fixtures may omit the identity, but every persisted
+  // verification row contains it and is checked strictly at runtime.
+  return typeof verification.discordUserId !== "string" || discordUserId === verification.discordUserId;
+}
+
 export function buildProfileEmbed(interaction: any, verification: any) {
+  if (!isProfileOwner(interaction.user.id, verification)) {
+    throw new Error("ไม่อนุญาตให้เปิดเผยโปรไฟล์ของสมาชิกคนอื่น");
+  }
   const skinUrl = `https://mc-heads.net/avatar/${encodeURIComponent(verification.minecraftIGN)}/128`;
   return new EmbedBuilder()
     .setTitle(`🪪 โปรไฟล์สมาชิก ${interaction.user.username}`)
