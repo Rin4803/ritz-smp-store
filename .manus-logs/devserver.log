@@ -1,0 +1,6 @@
+[2026-08-20T05:59:12.532Z] Starting dev server with command: pnpm run dev
+[2026-08-20T05:59:13.356Z] [ERR_PNPM_NO_IMPORTER_MANIFEST_FOUND] No package.json (or package.yaml, or package.json5) was found in "/home/ubuntu/ritz-smp-store".
+[2026-08-20T05:59:13.383Z] Dev server exited with code 1
+[2026-08-20T05:59:19.601Z] Starting dev server with command: pnpm run dev
+[2026-08-20T05:59:20.209Z] [ERR_PNPM_NO_IMPORTER_MANIFEST_FOUND] No package.json (or package.yaml, or package.json5) was found in "/home/ubuntu/ritz-smp-store".
+[2026-08-20T05:59:20.234Z] Dev server exited with code 1

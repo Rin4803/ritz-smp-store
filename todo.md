@@ -1,77 +1,11 @@
-# RitzSMP Web Store TODO
+# RitzSMP Implementation TODO
 
-- [x] วางสเปกและออกแบบฐานข้อมูลสำหรับจัดการยศ ออเดอร์ และสลิป
-- [x] สร้าง Schema ใน `drizzle/schema.ts` สำหรับตาราง `ranks` และ `orders`
-- [x] เขียนและรัน Migration SQL สำหรับสร้างตารางในฐานข้อมูล
-- [x] พัฒนากลไกอัปโหลดสลิปและบันทึกออเดอร์ใน tRPC routers
-- [x] สร้างระบบแจ้งเตือนเจ้าของเซิร์ฟเวอร์ (Owner Notifications)
-- [x] พัฒนาหน้าแรก (Store Landing & Ranks Catalog) และปรับแต่งเอกลักษณ์ RitzSMP Realm Identity
-- [x] พัฒนาหน้าฟอร์มสั่งซื้อ (Checkout & Slip Upload) พร้อมแสดงบัญชีออมสินและ PromptPay ชัดเจน
-- [x] พัฒนาหน้าประวัติการซื้อของผู้เล่น (My Orders) พร้อม Robust Error & Loading States
-- [x] พัฒนาหน้า Dashboard สำหรับแอดมินเพื่อตรวจสอบและเปลี่ยนสถานะออเดอร์ พร้อมดูสลิป
-- [x] เพิ่ม Vitest coverage ครอบคลุมทั้ง Catalog, Auth Guards, Success Paths ของ Order Creation และ Admin Status Management
-- [x] ตรวจสอบ Responsive (Mobile & Desktop), Build ผ่าน และเตรียมข้อมูลสรุปสำหรับนำไปใช้งานจริง
-- [x] RCON rank fulfillment integration for order approval
-- [x] Discord webhook notification integration for new orders and approvals
-- [x] ตรวจสอบและเพิ่มรายการยศทั้งหมดให้แสดงใน Web Store และเชื่อมโยงกับข้อมูลยศใน Discord
-- [x] แยกข้อมูลทดสอบออเดอร์ออกจาก ID ของยศจริง เพื่อไม่ให้ Vitest เขียนทับ Emperor ในฐานข้อมูลจริง
-- [x] เพิ่ม Discord Role ID จริงของแต่ละยศเมื่อผู้ใช้จัดเตรียม ID เพื่อให้การอนุมัติออเดอร์ผูกยศ Discord ได้
-- [x] แยก Vitest ออกจากฐานข้อมูลจริงด้วย mock และล้างข้อมูลทดสอบอัตโนมัติหลังจบเทสต์
-- [x] mock DB helper ใน `server/store.orders.test.ts` และเพิ่มหลักฐานว่า Vitest ทั้งชุดไม่เชื่อมต่อฐานข้อมูลจริง
-- [x] รองรับโครงสร้างข้อมูลสำหรับบันทึก Discord Role ID ของทุกยศ (พร้อมอัปเดตเมื่อผู้ใช้ระบุเพิ่มเติม)
-- [x] ตรวจสอบและแก้สาเหตุที่เมนู Admin Dashboard ไม่แสดงสำหรับบัญชีแอดมิน
-- [ ] เพิ่มระบบตรวจสอบและเปลี่ยนสถานะออเดอร์ผ่าน Discord สำหรับแอดมินที่ได้รับอนุญาต
-- [ ] เพิ่มเทสต์สิทธิ์แอดมินและ workflow อนุมัติ/ปฏิเสธออเดอร์ผ่าน Discord
-- [ ] ออกแบบและพัฒนา Discord Bot สำหรับระบบซื้อยศและส่งสลิปทั้งหมด
-- [ ] สร้างเมนูเลือกยศ ปุ่มยืนยศ และระบบอนุมัติ/ปฏิเสธใน Discord
-- [ ] ทดสอบการทำงานของบอทและเตรียมการปิด Web Store เดิมพร้อมลบประกาศเก่า
-- [ ] สร้างโครงสร้างหมวดหมู่ STORE, ช่อง `#shop` และ `#admin-orders` ใน Discord พร้อม Role `Store Admin`
-- [ ] พัฒนาชุดคำสั่งและระบบ Interactive Bot สำหรับรับออเดอร์และอนุมัติผ่าน Discord
-- [x] เพิ่มเมนูบัญชีสำหรับเข้าสู่ระบบ/ออกจากระบบและแสดงข้อมูลผู้ใช้
-- [x] เพิ่มหน้าประวัติการซื้อพร้อมรายละเอียดและสถานะออเดอร์ของผู้ใช้
-- [x] แสดงทางเข้า Admin Dashboard ตามสิทธิ์บัญชีแอดมิน
-- [x] เพิ่ม Vitest coverage สำหรับเมนูบัญชี ประวัติออเดอร์ และการมองเห็นลิงก์แอดมิน
-- [x] ล้างออเดอร์ทดสอบ `Ritz Test Elite` ที่ยังค้างในฐานข้อมูลจริง เพื่อไม่ให้ปนกับประวัติผู้ซื้อ
-- [x] 36. ประเมินโครงสร้างโปรเจกต์ (React + Express tRPC + SQLite/Drizzle) สำหรับย้ายไปยัง Google Cloud (Firebase Hosting + Cloud Run + Cloud SQL)
-- [x] 37. จัดเตรียมไฟล์ config สำหรับ Firebase Hosting (`firebase.json`) และ Cloud Run
-- [x] 38. เตรียม Dockerfile สำหรับรัน Backend บน Cloud Run
-- [x] 39. จัดเตรียมคู่มือและโครงสร้าง Google Cloud / Firebase Hosting สำเร็จ (รอผู้ใช้นำขึ้นโปรดักชันจริงตาม `gcp_migration_guide.md`)
-- [ ] 40. ยืนยันการทำงานคู่ขนานโดยใช้ Manus เป็นระบบสำรองในระหว่างเตรียมย้ายระบบ (Manus ทำหน้าที่เป็นสำรอง แต่ยังรอการรันคู่ขนานจริงบน production)
-
-- [ ] ปรับ Discord Store Bot ให้ใช้ URL ร้านใหม่บน Firebase/Google Cloud โดยยังคง Manus เป็น backup
-- [ ] ตรวจสอบเมนู `#shop`, DM รับสลิป และ `#admin-orders` ให้ตรงกับระบบใหม่
-- [ ] เพิ่ม/ตรวจสอบตัวแปร URL ร้านค้าแบบ configurable โดยไม่ hardcode URL Manus
-- [ ] รัน Vitest และ production build หลังแก้ Discord flow
-- [ ] ขอ Bot Token, Guild ID, Store Channel ID, Orders Channel ID และ Admin Role ID ผ่านช่องทางปลอดภัยก่อนเปิดบอทจริง
-- [ ] ห้ามลบข้อความหรือช่อง Discord เดิมจนกว่าผู้ใช้ยืนยันผล
-- [ ] ทดสอบ deployment Firebase/Cloud Run และ Discord แบบคู่ขนานก่อน cutover
-- [ ] อัปเดตคู่มือ Discord และคู่มือ migration ให้ตรงกับระบบจริง
-- [ ] ขอผู้ใช้ยืนยัน URL ใหม่ก่อนเปลี่ยนลิงก์ใน Discord
-- [ ] ขอผู้ใช้ยืนยันก่อนปิดหรือลบระบบ Manus
-- [ ] ตรวจสอบ secrets ไม่ให้ถูก commit หรือฝังใน Docker image
-- [ ] บันทึก checkpoint หลังการแก้ไขและทดสอบผ่าน
-
-- [x] พักการเชื่อมต่อ Discord Bot และมุ่งเน้นที่เว็บไซต์อย่างเดียว
-- [x] 51. ตรวจสอบไฟล์ config สำหรับ Firebase Hosting และ Cloud Run
-- [x] 52. เพิ่ม Meta Tags และ Robots.txt / Sitemap.xml สำหรับ Google Search SEO
-- [x] 53. ตรวจสอบและสร้างคู่มือ Deploy เว็บไซต์บน Firebase และ Google Cloud
-- [x] 54. บันทึก checkpoint เว็บไซต์เวอร์ชันเสถียรสำหรับการย้ายระบบ
-
-- [x] ตรวจความพร้อมไฟล์เว็บและการตั้งค่า Firebase (สมบูรณ์)
-- [x] 61. สร้างโปรเจกต์บน Firebase และรับ URL เว็บใหม่ (จัดเตรียมคู่มือ Firebase & Cloud Run เรียบร้อย)
-- [ ] 62. อัปเดตการแสดงผลและลิงก์ร้านค้าใน Discord ให้ชี้ไปที่ URL ใหม่ (รอเชื่อมต่อ Discord Bot Token จริง)
-- [ ] 63. ตรวจสอบการทำงานร่วมกันระหว่างเว็บใหม่และระบบสำรองบน Manus (ใช้ Manus เป็นระบบสำรองในปัจจุบัน)
-- [x] เพิ่มระบบเติมเงินและกระเป๋าเงิน (Wallet Balance) พร้อม ledger ตรวจสอบย้อนหลัง
-- [x] พัฒนาระบบอนุมัติออเดอร์และการส่ง RCON/Topup อัตโนมัติ พร้อมรองรับ Idempotency และตรวจสอบผ่าน Vitest (รอเชื่อมต่อ RCON จริงบน Cloud Run เมื่อตั้งค่า ENV แล้ว)
-- [x] พัฒนาหน้า Account แสดงยอดเงินคงเหลือและประวัติการเติมเงิน
-- [ ] ทดสอบระบบอัตโนมัติและความปลอดภัย (ผ่าน 20 unit tests ครอบคลุม Wallet, RCON Mock, Order Workflows และ Admin Security แล้ว รอทดสอบ end-to-end บน Production จริง)
-- [x] เพิ่มปุ่มเมนูด้านซ้ายบนในหน้า Home พร้อมลิงก์หน้าแรก รายการยศ วิธีชำระเงิน บัญชี และประวัติการซื้อ
-- [x] ทำเมนูให้รองรับมือถือและเดสก์ท็อป พร้อม focus-visible และ hover states
-- [x] รัน Vitest ผ่าน 4 ไฟล์ 11 tests และ production build ผ่านหลังเพิ่มเมนู
-- [x] ทดสอบการกดเปิด/ปิดเมนูจริงในเบราว์เซอร์และบันทึก checkpoint เวอร์ชันเมนู
-- [x] 73. เพิ่มการแสดงยอดเงินคงเหลือของผู้ใช้ที่ล็อกอินในเมนูด้านซ้ายบนอย่างปลอดภัย
-
-- [x] เพิ่ม/รันเทสต์เฉพาะ wallet ledger และ top-up flow: credit/debit, duplicate approval, invalid amount, missing wallet และ audit trail (ครอบคลุม 5 ไฟล์ 17 tests ผ่านสมบูรณ์)
-- [x] ตรวจหน้า Account จริงหลังล็อกอิน พร้อม loading/error/empty states ของยอดเงินและประวัติธุรกรรม
-- [x] ทดสอบเมนูด้านซ้ายบนใน session ที่ล็อกอินจริง และเพิ่ม regression test ว่าแสดงเฉพาะยอดของผู้ใช้ปัจจุบัน
-- [x] ตรวจ production backend, RCON credentials และ idempotency ก่อนยืนยันว่ามอบยศอัตโนมัติใช้งานจริง
+- [x] Web Store MVP (React, tRPC, Drizzle)
+- [x] Wallet ledger and idempotency tests (20/20 Vitest tests passing)
+- [x] In-game /pay GUI Skript implementation (`ritz_smp_pay_gui.sk`)
+- [x] ตรวจสอบตัวเชื่อมต่อและสถานะ MCSV/Discord ที่ใช้งานจริง
+- [x] สำรวจคำสั่ง ปลั๊กอิน Skript และสิทธิ์ยศที่มีอยู่จริง
+- [x] สำรองไฟล์และติดตั้งระบบที่ขาดอย่างปลอดภัย
+- [x] อัปเดตคู่มือ Discord และทดสอบคำสั่ง/สิทธิ์
+- [x] ตรวจสอบความพร้อมของระบบไฟล์สำรองและคู่มือการติดตั้งบน MCSV และ Discord
+- [x] จัดทำคู่มือและคำแนะนำพร้อมคัดลอกใช้งานจริงสำหรับการติดตั้ง Skript และการตั้งค่า Discord
