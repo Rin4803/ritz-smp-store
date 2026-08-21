@@ -125,9 +125,37 @@ export async function getUserByOpenId(openId: string) {
 export async function getRanks(): Promise<Rank[]> {
   const db = await getDb();
   if (!db) return DEFAULT_RANKS;
-  const result = await db.select().from(ranks);
-  const catalog = result.length ? result : DEFAULT_RANKS;
-  return [...catalog].sort((left, right) => left.id - right.id);
+  // Always return the updated DEFAULT_RANKS (with coin points and no keys)
+  // and ensure database ranks table is upserted/synced
+  try {
+    for (const r of DEFAULT_RANKS) {
+      await db.insert(ranks).values({
+        id: r.id,
+        name: r.name,
+        displayName: r.displayName,
+        price: r.price,
+        duration: r.duration,
+        color: r.color,
+        badge: r.badge,
+        description: r.description,
+        features: r.features,
+      }).onDuplicateKeyUpdate({
+        set: {
+          name: r.name,
+          displayName: r.displayName,
+          price: r.price,
+          duration: r.duration,
+          color: r.color,
+          badge: r.badge,
+          description: r.description,
+          features: r.features,
+        }
+      });
+    }
+  } catch (err) {
+    console.warn("[Database] Failed to sync ranks table:", err);
+  }
+  return DEFAULT_RANKS;
 }
 
 export async function getRankById(id: number): Promise<Rank | undefined> {
