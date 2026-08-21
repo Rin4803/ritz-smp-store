@@ -3,6 +3,7 @@ import { startLogin } from "@/const";
 import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import confetti from "canvas-confetti";
 import {
   ArrowRight,
   Check,
@@ -46,6 +47,19 @@ function formatPrice(value: string | number) {
 
 function playCelebrationFanfare() {
   try {
+    // Respect reduced motion / user preferences if desired
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    
+    // Trigger confetti burst
+    if (!prefersReducedMotion) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ["#d4af37", "#facc15", "#60a5fa", "#f43f5e", "#ffffff"]
+      });
+    }
+
     const AudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: typeof window.AudioContext }).webkitAudioContext;
     if (!AudioContext) return;
     const ctx = new AudioContext();
@@ -71,7 +85,7 @@ function playCelebrationFanfare() {
       osc.stop(ctx.currentTime + index * 0.12 + 0.4);
     });
   } catch {
-    // Ignore audio autoplay restrictions gracefully
+    // Ignore audio/confetti restrictions gracefully
   }
 }
 
