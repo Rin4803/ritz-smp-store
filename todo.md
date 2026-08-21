@@ -275,3 +275,4 @@
 - [ ] ตรวจสอบและทดสอบการใช้งานบอท RitzSMP AI ใน Discord จริงแบบมีหลักฐานยืนยัน
 - [ ] ตรวจสอบหน้า mcsv.me และระบบซื้อขายไอเทมในเกมเพื่อยืนยันว่าการจ่ายเงินเข้าบัญชีผู้เล่นทำงานปกติ
 - [ ] Investigate root cause of YouTube music playback failure in discordMusic.ts and ensure actual audio streams to voice channel
+- [ ] Verify 100% end-to-end music streaming and voice channel output in Discord with live validation
