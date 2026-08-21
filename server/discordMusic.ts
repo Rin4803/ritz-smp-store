@@ -110,20 +110,27 @@ function getVoiceChannel(interaction: any): any | null {
   if (interaction.member?.voice?.channel) {
     return interaction.member.voice.channel;
   }
-  // 2. ตรวจจาก guild voiceStates cache หาก interaction.member ไม่ส่ง voice data มา
   const userId = interaction.user?.id;
+  // 2. ตรวจจาก guild voiceStates cache โดยตรง
   if (userId && interaction.guild?.voiceStates?.cache) {
     const voiceState = interaction.guild.voiceStates.cache.get(userId);
     if (voiceState?.channel) {
       return voiceState.channel;
     }
   }
-  // 3. ตรวจจาก guild members cache ถ้ามี
+  // 3. ตรวจจาก guild members cache
   if (userId && interaction.guild?.members?.cache) {
     const member = interaction.guild.members.cache.get(userId);
     if (member?.voice?.channel) {
       return member.voice.channel;
     }
+  }
+  // 4. รองรับ guild.members.fetch ถ้า guild รองรับ async (บันทึกกรณี cache เปล่า)
+  if (userId && interaction.guild?.voiceStates?.fetch) {
+    try {
+      const vs = interaction.guild.voiceStates.cache.get(userId);
+      if (vs?.channel) return vs.channel;
+    } catch {}
   }
   return null;
 }
