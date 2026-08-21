@@ -44,6 +44,37 @@ function formatPrice(value: string | number) {
   return Number.isFinite(number) ? number.toLocaleString("th-TH", { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : "—";
 }
 
+function playCelebrationFanfare() {
+  try {
+    const AudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: typeof window.AudioContext }).webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(() => {});
+    }
+
+    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+    notes.forEach((freq, index) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + index * 0.12);
+
+      gain.gain.setValueAtTime(0, ctx.currentTime + index * 0.12);
+      gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + index * 0.12 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + index * 0.12 + 0.35);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(ctx.currentTime + index * 0.12);
+      osc.stop(ctx.currentTime + index * 0.12 + 0.4);
+    });
+  } catch {
+    // Ignore audio autoplay restrictions gracefully
+  }
+}
+
 function formatDate(value: Date | string | number) {
   return new Date(value).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" });
 }
@@ -78,6 +109,7 @@ export default function Home() {
       setPurchaseResult({ id: result.order.id, rankName: selectedRank?.displayName ?? "ยศ", amount: selectedRank?.price ?? "0" });
       setSelectedRank(null);
       setIgn("");
+      playCelebrationFanfare();
       utils.store.myOrders.invalidate();
       utils.store.wallet.invalidate();
     },
