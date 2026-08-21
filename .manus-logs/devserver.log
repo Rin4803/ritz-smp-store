@@ -3540,3 +3540,37 @@
 [2026-08-21T15:49:15.228Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
 [2026-08-21T15:49:17.890Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540380693690060820
 [2026-08-21T15:49:19.143Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-21T15:50:01.294Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-21T15:50:32.276Z] [RitzSmpAI] [INFO] Received command /play from tun_5555
+[2026-08-21T15:50:32.278Z] (node:149763) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-21T15:50:51.280Z] [RitzSmpAI] [SUCCESS] Handled /play command
+[2026-08-21T15:50:56.395Z] [Music Error] VoiceConnection encountered error: Error: Client network socket disconnected before secure TLS connection was established
+[2026-08-21T15:50:56.395Z] at TLSSocket.onConnectEnd (node:_tls_wrap:1732:19)
+[2026-08-21T15:50:56.395Z] at TLSSocket.emit (node:events:536:35)
+[2026-08-21T15:50:56.395Z] at endReadableNT (node:internal/streams/readable:1698:12)
+[2026-08-21T15:50:56.395Z] at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+[2026-08-21T15:50:56.395Z] code: 'ECONNRESET',
+[2026-08-21T15:50:56.395Z] path: undefined,
+[2026-08-21T15:50:56.395Z] host: 'c-sin19-b11c1901.discord.media',
+[2026-08-21T15:50:56.395Z] port: '2087',
+[2026-08-21T15:50:56.395Z] localAddress: undefined
+[2026-08-21T15:50:56.395Z] }
+[2026-08-21T15:51:02.983Z] node:internal/process/promises:394
+[2026-08-21T15:51:02.983Z] triggerUncaughtException(err, true /* fromPromise */);
+[2026-08-21T15:51:02.983Z] ^
+[2026-08-21T15:51:02.983Z] Error: Client network socket disconnected before secure TLS connection was established
+[2026-08-21T15:51:02.983Z] at TLSSocket.onConnectEnd (node:_tls_wrap:1732:19)
+[2026-08-21T15:51:02.983Z] at TLSSocket.emit (node:events:536:35)
+[2026-08-21T15:51:02.983Z] at endReadableNT (node:internal/streams/readable:1698:12)
+[2026-08-21T15:51:02.983Z] at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+[2026-08-21T15:51:02.983Z] code: 'ECONNRESET',
+[2026-08-21T15:51:02.984Z] path: null,
+[2026-08-21T15:51:02.984Z] host: 'www.google.com',
+[2026-08-21T15:51:02.984Z] port: 443,
+[2026-08-21T15:51:02.984Z] localAddress: undefined
+[2026-08-21T15:51:02.984Z] }
+[2026-08-21T15:51:02.984Z] Node.js v22.13.0
+[2026-08-21T15:54:01.689Z] 3:54:01 PM [tsx] change in ./server/discordMusic.ts Rerunning...
+[2026-08-21T15:54:02.507Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-21T15:54:02.847Z] Server running on http://localhost:3000/
+[2026-08-21T15:54:13.340Z] [RitzSmpAI] [ERROR] Discord login failed: Connect Timeout Error (attempted addresses: 162.159.136.232:443, timeout: 10000ms)

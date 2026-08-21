@@ -224,7 +224,7 @@ async function resolveTrackFromQuery(resolvedQuery: { query: string; isUrl: bool
   let title = resolvedQuery.query;
 
   const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error("การค้นหาเพลงใช้เวลานานเกินไป (Timeout) กรุณาลองใหม่อีกครั้งค่ะ")), 8000)
+    setTimeout(() => reject(new Error("การค้นหาเพลงใช้เวลานานเกินไป (Timeout) กรุณาลองใช้อีกครั้งค่ะ")), 15000)
   );
 
   const lookupPromise = (async () => {
@@ -240,13 +240,8 @@ async function resolveTrackFromQuery(resolvedQuery: { query: string; isUrl: bool
           throw new Error("รองรับเฉพาะลิงก์ YouTube หรือ SoundCloud ที่ถูกต้องเท่านั้นค่ะ");
         }
         if (kind === "yt_video") {
-          const info = await video_basic_info(targetUrl).catch(err => {
-            if (String(err).includes("429") || String(err).includes("Too Many Requests")) {
-              throw new Error("YouTube กำลังจำกัดคำขอชั่วคราว (Rate Limit 429) กรุณาลองใหม่อีกครั้งในอีกสักครู่ค่ะ");
-            }
-            throw err;
-          });
-          title = info.video_details.title || targetUrl;
+          const info = await video_basic_info(targetUrl).catch(() => null);
+          title = info?.video_details?.title || targetUrl;
         }
       } else {
         const searchResults = await search(resolvedQuery.query, { limit: 1 }).catch(err => {
