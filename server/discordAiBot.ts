@@ -25,6 +25,11 @@ import {
   getDiscordVerification,
   getDiscordVerificationByMinecraftUuid,
   updateDiscordProfile,
+  listDiscordEmbedTemplates,
+  getDiscordEmbedTemplate,
+  createDiscordEmbedTemplate,
+  updateDiscordEmbedTemplate,
+  deleteDiscordEmbedTemplate,
 } from "./db.js";
 import {
   fetchMinecraftProfile,
@@ -32,7 +37,7 @@ import {
   grantMinecraftRank,
   type MinecraftServerStatus,
 } from "./minecraftIntegration.js";
-import { handleMusicCommand, musicCommand } from "./discordMusic.js";
+import { handleMusicCommand, musicCommand, playShortcutCommand } from "./discordMusic.js";
 import { ensureMusicTextChannel } from "./discordMusicChannel.js";
 import { ensureMinecraftStatusTextChannel } from "./discordMinecraftStatusChannel.js";
 import { getActiveManagedServerRuntimeConfig, type ManagedServerRuntimeConfig } from "./multiserverRuntime.js";
@@ -1359,6 +1364,7 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
         .setName("profile")
         .setDescription("🪪 ดูโปรไฟล์สมาชิก RitzSMP ที่เชื่อมกับ Minecraft"),
       musicCommand,
+      playShortcutCommand,
       new SlashCommandBuilder()
         .setName("setup")
         .setDescription("🛠️ สร้างระบบด้วยคำสั่งเท่านั้น (แอดมินเท่านั้น)")
@@ -1579,9 +1585,9 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
     pushLog("INFO", `Received command /${commandName} from ${interaction.user.tag}`);
 
     try {
-      if (commandName === "music") {
+      if (commandName === "music" || commandName === "play") {
         await handleMusicCommand(interaction);
-        pushLog("SUCCESS", "Handled /music command");
+        pushLog("SUCCESS", `Handled /${commandName} command`);
         return;
       }
 

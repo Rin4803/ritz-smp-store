@@ -10,11 +10,10 @@ import {
   type VoiceConnection,
 } from "@discordjs/voice";
 import { SlashCommandBuilder } from "discord.js";
-import { stream, validate, video_basic_info } from "play-dl";
-import { isMusicChannel } from "./discordMusicChannel.js";
+import { stream, validate, video_basic_info, search } from "play-dl";
 
 const MUSIC_IDLE_TIMEOUT_MS = 15 * 60 * 1000;
-const MUSIC_URL_MESSAGE = "รองรับลิงก์ YouTube หรือ SoundCloud โดยตรงเท่านั้นนะคะ เช่น https://youtu.be/...";
+const MUSIC_QUERY_MESSAGE = "กรุณาระบุชื่อเพลงหรือลิงก์ YouTube/SoundCloud ที่ต้องการเปิดนะคะ";
 
 type MusicTrack = {
   url: string;
@@ -36,19 +35,26 @@ const sessions = new Map<string, MusicSession>();
 
 export const musicCommand = new SlashCommandBuilder()
   .setName("music")
-  .setDescription("🎵 เปิดเพลงในห้องเสียงแบบฟรี (เพลงอาจหยุดเมื่อระบบพักเครื่อง)")
+  .setDescription("🎵 เปิดเพลงในห้องเสียงแบบฟรี (ใช้ได้ทุกช่องในเซิร์ฟเวอร์)")
   .addSubcommand(sub =>
     sub
       .setName("play")
-      .setDescription("เล่นเพลงจากลิงก์ YouTube หรือ SoundCloud")
+      .setDescription("เล่นเพลงจากชื่อ (Query) หรือลิงก์ YouTube / SoundCloud")
       .addStringOption(option =>
-        option.setName("url").setDescription("ลิงก์เพลงโดยตรง").setRequired(true)
+        option.setName("query").setDescription("ชื่อเพลง หรือลิงก์ YouTube / SoundCloud").setRequired(true)
       )
   )
   .addSubcommand(sub => sub.setName("queue").setDescription("ดูคิวเพลงปัจจุบัน"))
   .addSubcommand(sub => sub.setName("skip").setDescription("ข้ามเพลงปัจจุบัน"))
   .addSubcommand(sub => sub.setName("stop").setDescription("หยุดเพลงและล้างคิว"))
   .addSubcommand(sub => sub.setName("leave").setDescription("ให้น้องออกจากห้องเสียง"));
+
+export const playShortcutCommand = new SlashCommandBuilder()
+  .setName("play")
+  .setDescription("🎵 เล่นเพลงทันทีจากชื่อหรือลิงก์ YouTube / SoundCloud (ใช้ได้ทุกช่อง)")
+  .addStringOption(option =>
+    option.setName("query").setDescription("ชื่อเพลง หรือลิงก์ YouTube / SoundCloud").setRequired(true)
+  );
 
 export function resetMusicSessionsForTests(): void {
   for (const session of Array.from(sessions.values())) {
@@ -59,29 +65,44 @@ export function resetMusicSessionsForTests(): void {
   sessions.clear();
 }
 
-export function validateMusicUrl(value: unknown): { ok: true; url: string } | { ok: false; reason: string } {
+export function resolveMusicQuery(value: unknown): { ok: true; query: string; isUrl: boolean } | { ok: false; reason: string } {
   if (typeof value !== "string" || value.trim().length === 0) {
-    return { ok: false, reason: "กรุณาระบุลิงก์เพลงก่อนนะคะ" };
+    return { ok: false, reason: MUSIC_QUERY_MESSAGE };
   }
+  const trimmed = value.trim();
   try {
-    const url = new URL(value.trim());
-    if (url.protocol !== "https:") {
-      return { ok: false, reason: MUSIC_URL_MESSAGE };
+    const url = new URL(trimmed);
+    if (url.protocol === "https:" && ["youtube.com", "www.youtube.com", "youtu.be", "soundcloud.com", "www.soundcloud.com"].includes(url.hostname.toLowerCase())) {
+      return { ok: true, query: url.toString(), isUrl: true };
     }
-    if (!["youtube.com", "www.youtube.com", "youtu.be", "soundcloud.com", "www.soundcloud.com"].includes(url.hostname.toLowerCase())) {
-      return { ok: false, reason: MUSIC_URL_MESSAGE };
-    }
-    return { ok: true, url: url.toString() };
   } catch {
-    return { ok: false, reason: MUSIC_URL_MESSAGE };
+    // Not a direct URL
   }
+  return { ok: true, query: trimmed, isUrl: false };
 }
 
-function interactionReply(interaction: any, payload: any): Promise<any> {
-  if (interaction.deferred || interaction.replied) {
-    return interaction.editReply(payload);
+async function interactionReply(interaction: any, payload: any): Promise<any> {
+  try {
+    if (interaction.deferred || interaction.replied) {
+      if (typeof payload === "string") {
+        return await interaction.editReply({ content: payload, embeds: [], components: [] });
+      }
+      return await interaction.editReply(payload);
+    }
+    if (typeof payload === "string") {
+      return await interaction.reply({ content: payload, ephemeral: payload.includes("พี่ต้อง") || payload.includes("กรุณา") });
+    }
+    return await interaction.reply(payload);
+  } catch {
+    try {
+      if (typeof payload === "string") {
+        return await interaction.followUp({ content: payload, ephemeral: true });
+      }
+      return await interaction.followUp({ ...payload, ephemeral: true });
+    } catch {
+      // Ignore if interaction expired
+    }
   }
-  return interaction.reply(payload);
 }
 
 function getVoiceChannel(interaction: any): any | null {
@@ -142,17 +163,30 @@ async function getOrCreateSession(interaction: any, voiceChannel: any): Promise<
   return session;
 }
 
-async function getTrack(url: string, requestedBy: string): Promise<MusicTrack> {
-  const kind = await validate(url);
-  if (kind !== "yt_video" && kind !== "so_track") {
-    throw new Error(MUSIC_URL_MESSAGE);
+async function resolveTrackFromQuery(resolvedQuery: { query: string; isUrl: boolean }, requestedBy: string): Promise<MusicTrack> {
+  let targetUrl = resolvedQuery.query;
+  let title = resolvedQuery.query;
+
+  if (resolvedQuery.isUrl) {
+    const kind = await validate(targetUrl);
+    if (kind !== "yt_video" && kind !== "so_track") {
+      throw new Error("รองรับเฉพาะลิงก์ YouTube หรือ SoundCloud ที่ถูกต้องเท่านั้นค่ะ");
+    }
+    if (kind === "yt_video") {
+      const info = await video_basic_info(targetUrl);
+      title = info.video_details.title || targetUrl;
+    }
+  } else {
+    const searchResults = await search(resolvedQuery.query, { limit: 1 });
+    if (!searchResults || searchResults.length === 0) {
+      throw new Error(`ไม่พบเพลงจากคำค้นหา "${resolvedQuery.query}" ค่ะ กรุณาลองใหม่อีกครั้ง`);
+    }
+    const bestMatch = searchResults[0];
+    targetUrl = bestMatch.url;
+    title = bestMatch.title || resolvedQuery.query;
   }
-  let title = url;
-  if (kind === "yt_video") {
-    const info = await video_basic_info(url);
-    title = info.video_details.title || url;
-  }
-  return { url, title: title.slice(0, 180), requestedBy };
+
+  return { url: targetUrl, title: title.slice(0, 180), requestedBy };
 }
 
 async function playNext(session: MusicSession): Promise<void> {
@@ -185,21 +219,16 @@ function formatQueue(session: Pick<MusicSession, "current" | "queue">): string {
 
 export async function handleMusicCommand(interaction: any): Promise<boolean> {
   if (!interaction.guildId) {
-    await interactionReply(interaction, { content: "คำสั่งเพลงใช้ได้เฉพาะในเซิร์ฟเวอร์ Discord เท่านั้นค่ะ", ephemeral: true });
+    await interactionReply(interaction, "คำสั่งเพลงใช้ได้เฉพาะในเซิร์ฟเวอร์ Discord เท่านั้นค่ะ");
     return true;
   }
-  if (!isMusicChannel(interaction.channelId)) {
-    await interactionReply(interaction, {
-      content: "ระบบเพลงแยกไว้ในช่อง 🎵│ห้องเพลง เท่านั้นค่ะ เพื่อไม่รบกวนช่องรายชื่อผู้ซื้อยศและประกาศร้านค้า",
-      ephemeral: true,
-    });
-    return true;
-  }
-  const subcommand = interaction.options?.getSubcommand?.() ?? "";
+
+  const isStandalonePlay = interaction.commandName === "play";
+  const subcommand = isStandalonePlay ? "play" : (interaction.options?.getSubcommand?.() ?? "");
   const existing = sessions.get(interaction.guildId);
 
   if (subcommand === "queue") {
-    await interactionReply(interaction, { content: `🎵 คิวเพลง RitzSMP\n${formatQueue(existing ?? { current: undefined, queue: [] })}`, ephemeral: true });
+    await interactionReply(interaction, `🎵 คิวเพลง RitzSMP\n${formatQueue(existing ?? { current: undefined, queue: [] })}`);
     return true;
   }
 
@@ -210,7 +239,7 @@ export async function handleMusicCommand(interaction: any): Promise<boolean> {
       existing.connection.destroy();
       sessions.delete(interaction.guildId);
     }
-    await interactionReply(interaction, { content: "น้องออกจากห้องเสียงและล้างคิวให้แล้วค่ะ 🎵", ephemeral: true });
+    await interactionReply(interaction, "น้องออกจากห้องเสียงและล้างคิวให้แล้วค่ะ 🎵");
     return true;
   }
 
@@ -221,34 +250,41 @@ export async function handleMusicCommand(interaction: any): Promise<boolean> {
       existing.player.stop(true);
       scheduleIdleCleanup(existing);
     }
-    await interactionReply(interaction, { content: "หยุดเพลงและล้างคิวให้แล้วค่ะ ⏹️", ephemeral: true });
+    await interactionReply(interaction, "หยุดเพลงและล้างคิวให้แล้วค่ะ ⏹️");
     return true;
   }
 
   const voiceChannel = getVoiceChannel(interaction);
   if (!voiceChannel) {
-    await interactionReply(interaction, { content: "พี่ต้องเข้าห้องเสียงก่อน แล้วค่อยใช้คำสั่งเพลงนะคะ 💖", ephemeral: true });
+    await interactionReply(interaction, "พี่ต้องเข้าห้องเสียงก่อน แล้วค่อยใช้คำสั่งเพลงนะคะ 💖");
     return true;
   }
 
   if (subcommand === "skip") {
     if (!existing?.current) {
-      await interactionReply(interaction, { content: "ตอนนี้ยังไม่มีเพลงที่กำลังเล่นอยู่ค่ะ", ephemeral: true });
+      await interactionReply(interaction, "ตอนนี้ยังไม่มีเพลงที่กำลังเล่นอยู่ค่ะ");
       return true;
     }
     existing.player.stop();
-    await interactionReply(interaction, { content: "ข้ามเพลงให้แล้วค่ะ 🎶", ephemeral: true });
+    await interactionReply(interaction, "ข้ามเพลงให้แล้วค่ะ 🎶");
     return true;
   }
 
   if (subcommand === "play") {
-    const validated = validateMusicUrl(interaction.options.getString("url", true));
-    if (!validated.ok) {
-      await interactionReply(interaction, { content: validated.reason, ephemeral: true });
+    const rawQuery = isStandalonePlay
+      ? interaction.options.getString("query", true)
+      : (interaction.options.getString("query", false) || interaction.options.getString("url", false));
+    const resolved = resolveMusicQuery(rawQuery);
+    if (!resolved.ok) {
+      await interactionReply(interaction, resolved.reason);
       return true;
     }
+
     try {
-      const track = await getTrack(validated.url, interaction.user?.tag ?? "สมาชิก RitzSMP");
+      if (typeof interaction.deferReply === "function" && !interaction.deferred && !interaction.replied) {
+        await interaction.deferReply({ ephemeral: false }).catch(() => {});
+      }
+      const track = await resolveTrackFromQuery(resolved, interaction.user?.tag ?? "สมาชิก RitzSMP");
       const session = await getOrCreateSession(interaction, voiceChannel);
       session.queue.push(track);
       if (!session.current) await playNext(session);
@@ -257,11 +293,11 @@ export async function handleMusicCommand(interaction: any): Promise<boolean> {
         ephemeral: false,
       });
     } catch (error) {
-      await interactionReply(interaction, { content: `เปิดเพลงไม่สำเร็จค่ะ: ${error instanceof Error ? error.message : "แหล่งเพลงไม่พร้อมใช้งาน"}`, ephemeral: true });
+      await interactionReply(interaction, `เปิดเพลงไม่สำเร็จค่ะ: ${error instanceof Error ? error.message : "แหล่งเพลงไม่พร้อมใช้งาน"}`);
     }
     return true;
   }
 
-  await interactionReply(interaction, { content: "ใช้ /music play, /music queue, /music skip, /music stop หรือ /music leave ได้เลยค่ะ", ephemeral: true });
+  await interactionReply(interaction, "ใช้ /play query:... หรือ /music play, /music queue, /music skip, /music stop หรือ /music leave ได้เลยค่ะ");
   return true;
 }

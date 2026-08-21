@@ -1,41 +1,40 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { handleMusicCommand, musicCommand, validateMusicUrl } from "./discordMusic";
+import { handleMusicCommand, musicCommand, playShortcutCommand, resolveMusicQuery } from "./discordMusic";
 import { setMusicChannelIdForTests } from "./discordMusicChannel";
 
 describe("RitzSMP free music mode", () => {
   beforeEach(() => setMusicChannelIdForTests(""));
   afterEach(() => setMusicChannelIdForTests(""));
 
-  it("accepts secure YouTube and SoundCloud URLs", () => {
-    expect(validateMusicUrl("https://youtu.be/dQw4w9WgXcQ")).toEqual({
+  it("resolves direct URLs and free search queries", () => {
+    expect(resolveMusicQuery("https://youtu.be/dQw4w9WgXcQ")).toEqual({
       ok: true,
-      url: "https://youtu.be/dQw4w9WgXcQ",
+      query: "https://youtu.be/dQw4w9WgXcQ",
+      isUrl: true,
     });
-    expect(validateMusicUrl("https://soundcloud.com/example/track")).toEqual({
+    expect(resolveMusicQuery("เพลงสนุกๆ มายคราฟต์")).toEqual({
       ok: true,
-      url: "https://soundcloud.com/example/track",
+      query: "เพลงสนุกๆ มายคราฟต์",
+      isUrl: false,
     });
+    expect(resolveMusicQuery(" ").ok).toBe(false);
   });
 
-  it("rejects unsupported sources, insecure URLs, and empty input", () => {
-    expect(validateMusicUrl("https://open.spotify.com/track/example").ok).toBe(false);
-    expect(validateMusicUrl("http://youtu.be/dQw4w9WgXcQ").ok).toBe(false);
-    expect(validateMusicUrl(" ").ok).toBe(false);
-    expect(validateMusicUrl("not-a-url").ok).toBe(false);
-  });
-
-  it("registers the expected queue-control subcommands", () => {
+  it("registers the expected queue-control subcommands and standalone play command", () => {
     const json = musicCommand.toJSON();
     expect(json.name).toBe("music");
     expect(json.options?.map(option => option.name)).toEqual(["play", "queue", "skip", "stop", "leave"]);
+
+    const playJson = playShortcutCommand.toJSON();
+    expect(playJson.name).toBe("play");
   });
 
-  it("requires the dedicated music text channel when one is configured", async () => {
+  it("allows music commands in any channel since the restriction was removed", async () => {
     setMusicChannelIdForTests("music-channel");
     const reply = vi.fn().mockResolvedValue(undefined);
     const interaction = {
       guildId: "guild-1",
-      channelId: "rank-purchase-channel",
+      channelId: "any-channel",
       options: { getSubcommand: () => "queue" },
       reply,
       deferred: false,
@@ -43,10 +42,11 @@ describe("RitzSMP free music mode", () => {
     };
 
     await expect(handleMusicCommand(interaction)).resolves.toBe(true);
-    expect(reply).toHaveBeenCalledWith({
-      content: expect.stringContaining("ห้องเพลง"),
-      ephemeral: true,
-    });
+    expect(reply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.stringContaining("คิวเพลง RitzSMP"),
+      })
+    );
   });
 
   it("requires a guild and a voice channel before attempting playback", async () => {
@@ -61,10 +61,11 @@ describe("RitzSMP free music mode", () => {
     };
 
     await expect(handleMusicCommand(interaction)).resolves.toBe(true);
-    expect(reply).toHaveBeenCalledWith({
-      content: "พี่ต้องเข้าห้องเสียงก่อน แล้วค่อยใช้คำสั่งเพลงนะคะ 💖",
-      ephemeral: true,
-    });
+    expect(reply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: "พี่ต้องเข้าห้องเสียงก่อน แล้วค่อยใช้คำสั่งเพลงนะคะ 💖",
+      })
+    );
   });
 
   it("responds safely to queue and leave when no session exists", async () => {
@@ -77,6 +78,10 @@ describe("RitzSMP free music mode", () => {
       replied: false,
     };
     await expect(handleMusicCommand(interaction)).resolves.toBe(true);
-    expect(reply).toHaveBeenCalledWith(expect.objectContaining({ ephemeral: true }));
+    expect(reply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.any(String),
+      })
+    );
   });
 });

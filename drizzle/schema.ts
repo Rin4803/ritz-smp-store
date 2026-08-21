@@ -176,3 +176,37 @@ export const managedServerConfigs = mysqlTable("managed_server_configs", {
 
 export type ManagedServerConfig = typeof managedServerConfigs.$inferSelect;
 export type InsertManagedServerConfig = typeof managedServerConfigs.$inferInsert;
+
+/** Durable administrator-managed Discord Embed templates. */
+export const discordEmbedTemplates = mysqlTable("discord_embed_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  guildId: varchar("guildId", { length: 64 }).notNull(),
+  name: varchar("name", { length: 80 }).notNull(),
+  title: varchar("title", { length: 256 }).notNull(),
+  description: text("description").notNull(),
+  color: varchar("color", { length: 16 }).default("EC4899").notNull(),
+  imageUrl: varchar("imageUrl", { length: 1024 }),
+  footer: varchar("footer", { length: 2048 }),
+  defaultChannelId: varchar("defaultChannelId", { length: 64 }),
+  createdBy: varchar("createdBy", { length: 64 }).notNull(),
+  updatedBy: varchar("updatedBy", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DiscordEmbedTemplate = typeof discordEmbedTemplates.$inferSelect;
+export type InsertDiscordEmbedTemplate = typeof discordEmbedTemplates.$inferInsert;
+
+/** Bounded health/audit events for Discord, RCON and economy fulfillment. */
+export const healthEvents = mysqlTable("health_events", {
+  id: int("id").autoincrement().primaryKey(),
+  service: varchar("service", { length: 64 }).notNull(),
+  status: mysqlEnum("status", ["ok", "degraded", "down", "error"]).notNull(),
+  message: text("message").notNull(),
+  metadata: text("metadata").notNull(),
+  guildId: varchar("guildId", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type HealthEvent = typeof healthEvents.$inferSelect;
+export type InsertHealthEvent = typeof healthEvents.$inferInsert;

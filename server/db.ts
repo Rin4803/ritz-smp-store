@@ -23,6 +23,11 @@ import {
   ManagedServerConfig,
   managedServers,
   managedServerConfigs,
+  discordEmbedTemplates,
+  healthEvents,
+  DiscordEmbedTemplate,
+  InsertDiscordEmbedTemplate,
+  HealthEvent,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -673,4 +678,82 @@ export async function updateManagedServer(input: {
     }});
   });
   return getManagedServerById(input.id);
+}
+
+
+export async function listDiscordEmbedTemplates(guildId: string): Promise<DiscordEmbedTemplate[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(discordEmbedTemplates)
+    .where(eq(discordEmbedTemplates.guildId, guildId))
+    .orderBy(desc(discordEmbedTemplates.updatedAt));
+}
+
+export async function getDiscordEmbedTemplate(guildId: string, name: string): Promise<DiscordEmbedTemplate | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(discordEmbedTemplates)
+    .where(and(eq(discordEmbedTemplates.guildId, guildId), eq(discordEmbedTemplates.name, name)))
+    .limit(1);
+  return rows[0];
+}
+
+export async function createDiscordEmbedTemplate(input: InsertDiscordEmbedTemplate): Promise<DiscordEmbedTemplate> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const inserted = await db.insert(discordEmbedTemplates).values(input);
+  const rows = await db.select().from(discordEmbedTemplates)
+    .where(eq(discordEmbedTemplates.id, Number(inserted[0].insertId))).limit(1);
+  if (!rows[0]) throw new Error("ไม่สามารถบันทึก Embed Template ได้");
+  return rows[0];
+}
+
+export async function updateDiscordEmbedTemplate(
+  guildId: string,
+  name: string,
+  patch: Partial<Pick<InsertDiscordEmbedTemplate, "title" | "description" | "color" | "imageUrl" | "footer" | "defaultChannelId" | "updatedBy">>,
+): Promise<DiscordEmbedTemplate | undefined> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.update(discordEmbedTemplates).set(patch)
+    .where(and(eq(discordEmbedTemplates.guildId, guildId), eq(discordEmbedTemplates.name, name)));
+  return getDiscordEmbedTemplate(guildId, name);
+}
+
+export async function deleteDiscordEmbedTemplate(guildId: string, name: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db.delete(discordEmbedTemplates)
+    .where(and(eq(discordEmbedTemplates.guildId, guildId), eq(discordEmbedTemplates.name, name)));
+  return Number(result[0].affectedRows ?? 0) > 0;
+}
+
+export async function recordHealthEvent(input: {
+  service: string;
+  status: HealthEvent["status"];
+  message: string;
+  metadata?: Record<string, unknown>;
+  guildId?: string | null;
+}): Promise<HealthEvent | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const inserted = await db.insert(healthEvents).values({
+    service: input.service,
+    status: input.status,
+    message: input.message,
+    metadata: JSON.stringify(input.metadata ?? {}),
+    guildId: input.guildId ?? null,
+  });
+  const rows = await db.select().from(healthEvents)
+    .where(eq(healthEvents.id, Number(inserted[0].insertId))).limit(1);
+  return rows[0];
+}
+
+export async function getRecentHealthEvents(input?: { service?: string; limit?: number }): Promise<HealthEvent[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const condition = input?.service ? eq(healthEvents.service, input.service) : undefined;
+  const limit = Math.max(1, Math.min(input?.limit ?? 20, 100));
+  const query = db.select().from(healthEvents).orderBy(desc(healthEvents.createdAt)).limit(limit);
+  return condition ? query.where(condition) : query;
 }
