@@ -259,8 +259,14 @@ export const appRouter = router({
           refKey,
         );
 
-        // Execute RCON immediately or create an auto-approved order
-        const cmd = `lp user ${input.minecraftIGN} parent add ${rank.name.toLowerCase()}`;
+        // Execute RCON immediately for both rank and points (เหรียญ)
+        const rankCmd = `lp user ${input.minecraftIGN} parent add ${rank.name.toLowerCase()}`;
+        // Determine coin/points reward amount based on rank price or rank level
+        const rankIndex = rank.id;
+        const coinRewards = [100, 250, 450, 700, 1000, 1200, 1350, 1420, 1470, 1500];
+        const coinAmount = coinRewards[Math.min(Math.max(rankIndex - 1, 0), coinRewards.length - 1)] ?? 100;
+        const pointsCmd = `points give ${input.minecraftIGN} ${coinAmount}`;
+
         let rconDetail = "ไม่ต้องใช้ RCON";
         let rconExecuted = false;
 
@@ -268,11 +274,12 @@ export const appRouter = router({
           let rcon: Rcon | undefined;
           try {
             rcon = await Rcon.connect({ host: ENV.rconHost, port: ENV.rconPort, password: ENV.rconPassword });
-            const res = await rcon.send(cmd);
+            const res1 = await rcon.send(rankCmd);
+            const res2 = await rcon.send(pointsCmd);
             rconExecuted = true;
-            rconDetail = res || "RCON มอบยศสำเร็จ";
+            rconDetail = `${res1 || "มอบยศสำเร็จ"} | ${res2 || `เพิ่มเหรียญ ${coinAmount} แต้มสำเร็จ`}`;
           } catch (err: any) {
-            console.error("[RCON] Purchase rank auto-fulfillment error:", err);
+            console.error("[RCON] Purchase rank/points auto-fulfillment error:", err);
             rconDetail = `RCON ไม่สำเร็จ (${err?.message ?? String(err)} แต่หักเงินและบันทึกออเดอร์แล้ว)`;
           } finally {
             await rcon?.end().catch(() => undefined);

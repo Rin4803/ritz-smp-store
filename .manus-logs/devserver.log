@@ -2897,3 +2897,16 @@
 [2026-08-21T02:58:19.858Z] [RitzSmpAI] [SUCCESS] Reconciled one canonical panel in 📋│ระบบรายชื่อบัญชี
 [2026-08-21T02:58:24.999Z] [RitzSmpAI] [SUCCESS] Reconciled one welcome panel in 👋│ระบบต้อนรับ
 [2026-08-21T02:58:28.057Z] [RitzSmpAI] [SUCCESS] Reconciled one leave panel in 👋│ระบบสมาชิกออก
+[2026-08-21T02:59:08.536Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-21T03:03:06.055Z] 3:03:06 AM [tsx] change in ./server/routers.ts Restarting...
+[2026-08-21T03:03:06.951Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-21T03:03:07.267Z] Server running on http://localhost:3000/
+[2026-08-21T03:03:14.255Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-21T03:03:14.256Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-21T03:03:14.257Z] (node:75416) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-21T03:03:14.257Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-21T03:03:17.135Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-21T03:03:21.267Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540161713679376384
+[2026-08-21T03:03:23.055Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-21T03:03:30.754Z] [RitzSmpAI] [SUCCESS] Reconciled one canonical panel in 📋│ระบบรายชื่อบัญชี
+[2026-08-21T03:03:37.832Z] [RitzSmpAI] [SUCCESS] Reconciled one welcome panel in 👋│ระบบต้อนรับ
