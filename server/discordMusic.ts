@@ -9,7 +9,7 @@ import {
   type AudioPlayer,
   type VoiceConnection,
 } from "@discordjs/voice";
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { stream, validate, video_basic_info, search } from "play-dl";
 
 const MUSIC_IDLE_TIMEOUT_MS = 15 * 60 * 1000;
@@ -276,13 +276,46 @@ async function playNext(session: MusicSession): Promise<void> {
   }
 }
 
-function formatQueue(session: Pick<MusicSession, "current" | "queue">): string {
-  const lines: string[] = [];
-  if (session.current) lines.push(`กำลังเล่น: **${session.current.title}**`);
-  if (session.queue.length > 0) {
-    lines.push(...session.queue.slice(0, 10).map((track, index) => `${index + 1}. ${track.title}`));
+function buildMusicEmbed(session: Pick<MusicSession, "current" | "queue">): { embeds: any[]; components: any[] } {
+  const embed = new EmbedBuilder()
+    .setTitle("🎵 RitzSMP Music Player & Queue")
+    .setColor(0xec4899)
+    .setTimestamp();
+
+  if (session.current) {
+    embed.addFields({
+      name: "▶️ กำลังเล่นอยู่ตอนนี้",
+      value: `**[${session.current.title}](${session.current.url})**\n👤 ขอโดย: \`${session.current.requestedBy}\``,
+      inline: false,
+    });
+  } else {
+    embed.addFields({
+      name: "▶️ กำลังเล่นอยู่ตอนนี้",
+      value: "*ไม่มีเพลงกำลังเล่น (บอทพร้อมรับคำสั่งเปิดเพลง)*",
+      inline: false,
+    });
   }
-  return lines.length > 0 ? lines.join("\n") : "ตอนนี้ยังไม่มีเพลงในคิวค่ะ";
+
+  const queueList = session.queue.length > 0
+    ? session.queue.slice(0, 8).map((t, i) => `\`${i + 1}.\` [${t.title}](${t.url}) (ขอโดย: ${t.requestedBy})`).join("\n")
+    : "*คิวเพลงว่างเปล่า*";
+
+  embed.addFields({
+    name: `🎶 คิวเพลงถัดไป (${session.queue.length} เพลง)`,
+    value: queueList,
+    inline: false,
+  });
+
+  embed.setFooter({ text: "RitzSMP AI • ควบคุมเพลงผ่านปุ่มด้านล่างหรือใช้คำสั่ง /music" });
+
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder().setCustomId("music_pause_resume").setLabel("⏸️ เล่น/หยุดชั่วคราว").setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId("music_skip").setLabel("⏭️ ข้ามเพลง").setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId("music_stop").setLabel("⏹️ หยุดและล้างคิว").setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId("music_queue").setLabel("📜 ดูคิวทั้งหมด").setStyle(ButtonStyle.Success)
+  );
+
+  return { embeds: [embed], components: [row] };
 }
 
 export async function handleMusicCommand(interaction: any): Promise<boolean> {
@@ -296,10 +329,7 @@ export async function handleMusicCommand(interaction: any): Promise<boolean> {
   const existing = sessions.get(interaction.guildId);
 
   if (subcommand === "queue") {
-    await interactionReply(interaction, {
-      content: formatQueue(existing ?? { queue: [] }),
-      ephemeral: false,
-    });
+    await interactionReply(interaction, buildMusicEmbed(existing ?? { queue: [] }));
     return true;
   }
 
@@ -359,10 +389,7 @@ export async function handleMusicCommand(interaction: any): Promise<boolean> {
       const session = await getOrCreateSession(interaction, voiceChannel);
       session.queue.push(track);
       if (!session.current) await playNext(session);
-      await interactionReply(interaction, {
-        content: `เพิ่มเพลง **${track.title}** เข้า${session.current?.url === track.url ? "และเริ่มเล่น" : "คิว"}แล้วค่ะ 🎵\nใช้ /music queue เพื่อดูคิว`,
-        ephemeral: false,
-      });
+      await interactionReply(interaction, buildMusicEmbed(session));
     } catch (error) {
       await interactionReply(interaction, `เปิดเพลงไม่สำเร็จค่ะ: ${error instanceof Error ? error.message : "แหล่งเพลงไม่พร้อมใช้งาน"}`);
     }

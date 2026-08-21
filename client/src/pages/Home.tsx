@@ -741,21 +741,89 @@ export default function Home() {
 
 
 
-      {/* Purchase Success Modal */}
+      {/* Glassmorphism Purchase Success Modal with Neon Glow and Ambient Effects */}
       {purchaseResult && (
-        <div className="modal-backdrop" role="presentation">
-          <div className="modal" role="dialog" aria-modal="true">
-            <div className="form-success" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <CheckCircle2 size={20} className="gold-text" />
-              <strong>ซื้อยศ {purchaseResult.rankName} สำเร็จแล้ว! (ออเดอร์ #{purchaseResult.id})</strong>
+        <div className="modal-backdrop animate-fade-in" role="presentation" style={{ backdropFilter: "blur(12px)", background: "rgba(10, 10, 15, 0.75)" }}>
+          <div className="modal glass-modal" role="dialog" aria-modal="true" style={{
+            background: "linear-gradient(135deg, rgba(20, 20, 30, 0.85) 0%, rgba(15, 15, 25, 0.95) 100%)",
+            border: "1px solid rgba(212, 175, 55, 0.35)",
+            boxShadow: "0 0 40px rgba(212, 175, 55, 0.2), 0 20px 40px rgba(0, 0, 0, 0.6)",
+            borderRadius: "16px",
+            padding: "28px",
+            position: "relative",
+            overflow: "hidden"
+          }}>
+            {/* Ambient glow accent */}
+            <div style={{
+              position: "absolute",
+              top: "-50px",
+              right: "-50px",
+              width: "150px",
+              height: "150px",
+              background: "radial-gradient(circle, rgba(212,175,55,0.25) 0%, transparent 70%)",
+              borderRadius: "50%",
+              pointerEvents: "none"
+            }} />
+
+            <div style={{ textAlign: "center", marginBottom: 20 }}>
+              <div style={{
+                width: "64px",
+                height: "64px",
+                margin: "0 auto 16px",
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, rgba(212,175,55,0.2) 0%, rgba(212,175,55,0.05) 100%)",
+                border: "2px solid rgba(212,175,55,0.6)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 0 20px rgba(212,175,55,0.4)",
+                animation: "pulse 2s infinite"
+              }}>
+                <Crown size={32} className="gold-text" />
+              </div>
+              <div className="eyebrow" style={{ color: "#d4af37", letterSpacing: "2px", fontSize: "11px", marginBottom: "4px" }}>RITZSMP REALM REWARD</div>
+              <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", margin: 0 }}>ซื้อยศ {purchaseResult.rankName} สำเร็จ!</h3>
+              <p className="subtle" style={{ margin: "6px 0 0", fontSize: "12px" }}>เลขออเดอร์ธุรกรรม: #{purchaseResult.id}</p>
             </div>
-            <p className="subtle" style={{ margin: "14px 0", lineHeight: 1.8, fontSize: 13 }}>
-              ระบบได้หักยอดเงิน <strong>{formatPrice(purchaseResult.amount)} ฿</strong> จากกระเป๋าของคุณเรียบร้อย และดำเนินการส่งคำสั่งมอบยศเข้าเซิร์ฟเวอร์เกมผ่าน RCON อัตโนมัติแล้ว
+
+            <div style={{
+              background: "rgba(255, 255, 255, 0.03)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "12px",
+              padding: "16px",
+              marginBottom: "20px"
+            }}>
+              <div style={{ display: "flex", justifyContent: "between", marginBottom: "8px", fontSize: "13px" }}>
+                <span style={{ color: "#94a3b8" }}>ยอดเงินหักจากกระเป๋า:</span>
+                <strong style={{ color: "#f87171" }}>-{formatPrice(purchaseResult.amount)} ฿</strong>
+              </div>
+              <div style={{ display: "flex", justifyContent: "between", fontSize: "13px" }}>
+                <span style={{ color: "#94a3b8" }}>สถานะการส่งยศเข้าเซิร์ฟเวอร์:</span>
+                <strong style={{ color: "#4ade80", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                  <CheckCircle2 size={13} /> สำเร็จอัตโนมัติผ่าน RCON
+                </strong>
+              </div>
+            </div>
+
+            <p className="subtle" style={{ margin: "0 0 24px", lineHeight: "1.7", fontSize: "13px", textAlign: "center" }}>
+              ระบบได้ส่งคำสั่งอัปเกรดตัวละครของคุณในเกม RitzSMP เรียบร้อยแล้ว สามารถเข้าเกมและตรวจสอบยศใหม่ของคุณได้ทันที! ✨
             </p>
-            <div className="modal-actions">
-              <Link href="/account" className="primary-btn compact-btn" onClick={() => setPurchaseResult(null)}>
-                ดูประวัติการซื้อและยอดเงิน
-              </Link>
+
+            <div className="modal-actions" style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+              <button
+                className="ghost-btn compact-btn"
+                onClick={() => setPurchaseResult(null)}
+                style={{ flex: 1 }}
+              >
+                ปิดหน้าต่าง
+              </button>
+              <button
+                className="primary-btn compact-btn"
+                onClick={() => { setPurchaseResult(null); }}
+                style={{ flex: 1, background: "linear-gradient(135deg, #d4af37 0%, #aa820a 100%)", color: "#000", fontWeight: 700 }}
+              >
+                <Sparkles size={14} style={{ marginRight: 4 }} /> ไปสนุกในเกมกันเลย!
+              </button>
             </div>
           </div>
         </div>

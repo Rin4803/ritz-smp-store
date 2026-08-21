@@ -44,7 +44,8 @@ describe("RitzSMP free music mode", () => {
     await expect(handleMusicCommand(interaction)).resolves.toBe(true);
     expect(reply).toHaveBeenCalledWith(
       expect.objectContaining({
-        content: expect.any(String),
+        embeds: expect.any(Array),
+        components: expect.any(Array),
       })
     );
   });
