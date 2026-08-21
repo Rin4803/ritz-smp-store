@@ -3453,3 +3453,7 @@
 [2026-08-21T12:03:05.439Z] 12:03:05 PM [vite] (client) hmr update /src/index.css
 [2026-08-21T14:46:35.529Z] 2:46:35 PM [vite] (client) hmr update /src/index.css
 [2026-08-21T15:05:42.531Z] 3:05:42 PM [vite] (client) hmr update /src/index.css
+[2026-08-21T15:19:11.071Z] 3:19:11 PM [tsx] change in ./server/discordMusic.ts Restarting...
+[2026-08-21T15:19:11.977Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-21T15:19:12.380Z] Server running on http://localhost:3000/
+[2026-08-21T15:19:22.874Z] [RitzSmpAI] [ERROR] Discord login failed: Connect Timeout Error (attempted addresses: 162.159.128.233:443, timeout: 10000ms)

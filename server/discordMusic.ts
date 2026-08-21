@@ -207,25 +207,47 @@ async function resolveTrackFromQuery(resolvedQuery: { query: string; isUrl: bool
   );
 
   const lookupPromise = (async () => {
-    if (resolvedQuery.isUrl) {
-      const kind = await validate(targetUrl);
-      if (kind !== "yt_video" && kind !== "so_track") {
-        throw new Error("รองรับเฉพาะลิงก์ YouTube หรือ SoundCloud ที่ถูกต้องเท่านั้นค่ะ");
+    try {
+      if (resolvedQuery.isUrl) {
+        const kind = await validate(targetUrl).catch(err => {
+          if (String(err).includes("429") || String(err).includes("Too Many Requests")) {
+            throw new Error("YouTube กำลังจำกัดคำขอชั่วคราว (Rate Limit 429) กรุณาลองใหม่อีกครั้งในอีกสักครู่ค่ะ");
+          }
+          throw err;
+        });
+        if (kind !== "yt_video" && kind !== "so_track") {
+          throw new Error("รองรับเฉพาะลิงก์ YouTube หรือ SoundCloud ที่ถูกต้องเท่านั้นค่ะ");
+        }
+        if (kind === "yt_video") {
+          const info = await video_basic_info(targetUrl).catch(err => {
+            if (String(err).includes("429") || String(err).includes("Too Many Requests")) {
+              throw new Error("YouTube กำลังจำกัดคำขอชั่วคราว (Rate Limit 429) กรุณาลองใหม่อีกครั้งในอีกสักครู่ค่ะ");
+            }
+            throw err;
+          });
+          title = info.video_details.title || targetUrl;
+        }
+      } else {
+        const searchResults = await search(resolvedQuery.query, { limit: 1 }).catch(err => {
+          if (String(err).includes("429") || String(err).includes("Too Many Requests")) {
+            throw new Error("YouTube กำลังจำกัดคำขอชั่วคราว (Rate Limit 429) กรุณาลองใหม่อีกครั้งในอีกสักครู่ค่ะ");
+          }
+          throw err;
+        });
+        if (!searchResults || searchResults.length === 0) {
+          throw new Error(`ไม่พบเพลงจากคำค้นหา "${resolvedQuery.query}" ค่ะ กรุณาลองใหม่อีกครั้ง`);
+        }
+        const bestMatch = searchResults[0];
+        targetUrl = bestMatch.url;
+        title = bestMatch.title || resolvedQuery.query;
       }
-      if (kind === "yt_video") {
-        const info = await video_basic_info(targetUrl);
-        title = info.video_details.title || targetUrl;
+      return { url: targetUrl, title: title.slice(0, 180), requestedBy };
+    } catch (err: any) {
+      if (String(err).includes("429") || String(err).includes("Too Many Requests")) {
+        throw new Error("YouTube กำลังจำกัดคำขอชั่วคราว (Rate Limit 429) กรุณาลองใช้ลิงก์ตรงหรือค้นหาใหม่อีกครั้งค่ะ");
       }
-    } else {
-      const searchResults = await search(resolvedQuery.query, { limit: 1 });
-      if (!searchResults || searchResults.length === 0) {
-        throw new Error(`ไม่พบเพลงจากคำค้นหา "${resolvedQuery.query}" ค่ะ กรุณาลองใหม่อีกครั้ง`);
-      }
-      const bestMatch = searchResults[0];
-      targetUrl = bestMatch.url;
-      title = bestMatch.title || resolvedQuery.query;
+      throw err;
     }
-    return { url: targetUrl, title: title.slice(0, 180), requestedBy };
   })();
 
   return await Promise.race([lookupPromise, timeoutPromise]);
@@ -241,7 +263,10 @@ async function playNext(session: MusicSession): Promise<void> {
   session.current = next;
   session.started = true;
   try {
-    const streamData = await stream(next.url, { quality: 2, discordPlayerCompatibility: true });
+    const streamData = await stream(next.url, { quality: 2, discordPlayerCompatibility: true }).catch(async (err) => {
+      console.error("[Music Stream Error]", err);
+      throw err;
+    });
     const resource = createAudioResource(streamData.stream, { inputType: streamData.type });
     session.player.play(resource);
   } catch (err) {
