@@ -173,20 +173,20 @@
 - [x] Route guildMemberAdd only to the welcome channel and guildMemberRemove only to the leave channel
 - [x] Migrate the combined-channel panel safely and add regression coverage for separate channel routing
 - [x] Fix the `/verify` interaction path that logged `InteractionNotReplied` during live startup validation and add a regression test
-- [ ] Clean legacy Kanopi embeds from `📜│บันทึกรับยศสำเร็จ` without touching unrelated Discord channels
-- [ ] Ensure current rank-purchase notifications use one canonical RitzSMP AI format and do not duplicate
-- [ ] Add regression coverage for legacy rank-log classification and safe cleanup
-- [ ] Format the Discord member list as readable line-separated entries without literal `\\n` artifacts or ambiguous mentions
-- [ ] Make the Minecraft online-player button finish within a bounded timeout and show `ออนไลน์ 0 คน` when no players or no response is available
-- [ ] Add regression coverage for member-list formatting, zero-player fallback, timeout handling, and interaction acknowledgement
-- [ ] Reuse one active four-digit verification code per Discord account until it is consumed or expires
-- [ ] Add a visible cancel/unlink action for pending codes and existing Discord-to-Minecraft links
-- [ ] Enforce one Discord account to one Minecraft account and reject conflicting links safely
-- [ ] Add regression coverage for duplicate code clicks, cancellation, relinking, and consumed-code behavior
-- [ ] เพิ่ม tRPC query สำหรับดึงประวัติการทำรายการ (orders และ topup requests) ของผู้ใช้ที่ล็อกอินอยู่
-- [ ] เพิ่มหน้าหรือแท็บแสดงประวัติการทำรายการ (Transaction History) บนเว็บสโตร์
-- [ ] ทดสอบความถูกต้องของสิทธิ์การเข้าถึงและการแสดงผลข้อมูลย้อนหลัง
-- [ ] ตรวจสอบผ่าน Vitest และบันทึก checkpoint
+- [x] Clean legacy Kanopi embeds from `📜│บันทึกรับยศสำเร็จ` without touching unrelated Discord channels
+- [x] Ensure current rank-purchase notifications use one canonical RitzSMP AI format and do not duplicate
+- [x] Add regression coverage for legacy rank-log classification and safe cleanup
+- [x] Format the Discord member list as readable line-separated entries without literal `\\n` artifacts or ambiguous mentions
+- [x] Make the Minecraft online-player button finish within a bounded timeout and show `ออนไลน์ 0 คน` when no players or no response is available
+- [x] Add regression coverage for member-list formatting, zero-player fallback, timeout handling, and interaction acknowledgement
+- [x] Reuse one active four-digit verification code per Discord account until it is consumed or expires
+- [x] Add a visible cancel/unlink action for pending codes and existing Discord-to-Minecraft links
+- [x] Enforce one Discord account to one Minecraft account and reject conflicting links safely
+- [x] Add regression coverage for duplicate code clicks, cancellation, relinking, and consumed-code behavior
+- [x] เพิ่ม tRPC query สำหรับดึงประวัติการทำรายการ (orders และ topup requests) ของผู้ใช้ที่ล็อกอินอยู่
+- [x] เพิ่มหน้าหรือแท็บแสดงประวัติการทำรายการ (Transaction History) บนเว็บสโตร์
+- [x] ทดสอบความถูกต้องของสิทธิ์การเข้าถึงและการแสดงผลข้อมูลย้อนหลัง
+- [x] ตรวจสอบผ่าน Vitest และบันทึก checkpoint
 - [x] เพิ่ม tRPC query สำหรับดึงประวัติการทำรายการ (orders และ topup requests) ของผู้ใช้ที่ล็อกอินอยู่
 - [x] เพิ่มหน้าหรือแท็บแสดงประวัติการทำรายการ (Transaction History) บนเว็บสโตร์
 - [x] ทดสอบความถูกต้องของสิทธิ์การเข้าถึงและการแสดงผลข้อมูลย้อนหลัง
@@ -197,45 +197,45 @@
 - [x] เพิ่มสถานะไม่พบสินค้า (Empty state) พร้อมปุ่มล้างตัวกรองกรณีค้นหาไม่พบรายการ
 - [x] ตรวจสอบความถูกต้องและผ่านการทดสอบ Vitest ครบ 100 Tests สำเร็จ
 - [x] เปลี่ยนรางวัลหลังซื้อยศจาก Key ในเกมเป็นเหรียญในเกมตามระดับยศ (100 - 1,500 เหรียญ) ในรายการยศ (DEFAULT_RANKS) พร้อมรักษาการส่งคำสั่ง RCON แบบ realtime และผ่านการทดสอบ Vitest ครบ 100 Tests สมบูรณ์
-- [ ] ตรวจสอบและอัปเดตคำสั่ง RCON ในเซิร์ฟเวอร์เพื่อให้เมื่อซื้อยศแล้ว นอกจากจะให้ยศผ่าน LuckPerms แล้ว ยังรันคำสั่งเพิ่ม points (เหรียญ) ให้ผู้เล่นโดยอัตโนมัติ
-- [ ] ตรวจสอบว่าไม่มีข้อความ Key หลงเหลือในรายการยศหรือคำอธิบายหน้าเว็บ
-- [ ] รันชุดทดสอบ Vitest และบันทึก checkpoint
+- [x] ตรวจสอบและอัปเดตคำสั่ง RCON ในเซิร์ฟเวอร์เพื่อให้เมื่อซื้อยศแล้ว นอกจากจะให้ยศผ่าน LuckPerms แล้ว ยังรันคำสั่งเพิ่ม points (เหรียญ) ให้ผู้เล่นโดยอัตโนมัติ
+- [x] ตรวจสอบว่าไม่มีข้อความ Key หลงเหลือในรายการยศหรือคำอธิบายหน้าเว็บ
+- [x] รันชุดทดสอบ Vitest และบันทึก checkpoint
 - [x] ตรวจสอบและอัปเดตคำสั่ง RCON ในเซิร์ฟเวอร์เพื่อให้เมื่อซื้อยศแล้ว นอกจากจะให้ยศผ่าน LuckPerms แล้ว ยังรันคำสั่งเพิ่ม points (เหรียญ) บนสกอร์บอร์ดให้ผู้เล่นโดยอัตโนมัติ
 - [x] ตรวจสอบว่าไม่มีข้อความ Key หลงเหลือในรายการยศหรือคำอธิบายหน้าเว็บ ทุกยศแสดงรางวัลเป็น "รับเหรียญ X แต้ม" อย่างชัดเจน
 - [x] รันชุดทดสอบ Vitest ครบ 100 Tests สมบูรณ์และบันทึก checkpoint
 - [x] ลบข้อความ Key ออกจากฐานข้อมูลและบังคับซิงก์ `DEFAULT_RANKS` ให้แสดงเฉพาะเหรียญ points บนหน้าร้านเว็บไซต์
 - [x] ตรวจสอบและผ่านชุดทดสอบ Vitest ครบ 100 Tests สำเร็จ
-- [ ] ปรับปรุง RitzSMP AI ให้มีการจัดการ Rate Limit, สตรีมมิ่ง/ตอบกลับข้อความแบบพิมพ์ล่วงหน้า และการจัดการข้อผิดพลาดที่รวดเร็วขึ้น
-- [ ] เพิ่มระบบ Command Auto-Complete และปุ่มช่วยเหลือด่วนในหน้าต่างพูดคุยกับ AI
-- [ ] ผ่านชุดทดสอบ Vitest และตรวจสอบความเสถียรของบอทหลังการปรับปรุง
 - [x] ปรับปรุง RitzSMP AI ให้มีการจัดการ Rate Limit, สตรีมมิ่ง/ตอบกลับข้อความแบบพิมพ์ล่วงหน้า และการจัดการข้อผิดพลาดที่รวดเร็วขึ้น
 - [x] เพิ่มระบบ Command Auto-Complete และปุ่มช่วยเหลือด่วนในหน้าต่างพูดคุยกับ AI
 - [x] ผ่านชุดทดสอบ Vitest และตรวจสอบความเสถียรของบอทหลังการปรับปรุง
-- [ ] ออกแบบและติดตั้งระบบ GUI วาปสุดเท่ของ RitzSMP แยกหมวดหมู่ สีสัน และเอฟเฟกต์
-- [ ] ทดสอบและตรวจสอบความถูกต้องของระบบวาปบนเซิร์ฟเวอร์
+- [x] ปรับปรุง RitzSMP AI ให้มีการจัดการ Rate Limit, สตรีมมิ่ง/ตอบกลับข้อความแบบพิมพ์ล่วงหน้า และการจัดการข้อผิดพลาดที่รวดเร็วขึ้น
+- [x] เพิ่มระบบ Command Auto-Complete และปุ่มช่วยเหลือด่วนในหน้าต่างพูดคุยกับ AI
+- [x] ผ่านชุดทดสอบ Vitest และตรวจสอบความเสถียรของบอทหลังการปรับปรุง
 - [x] ออกแบบและติดตั้งระบบ GUI วาปสุดเท่ของ RitzSMP แยกหมวดหมู่ สีสัน และเอฟเฟกต์
 - [x] ทดสอบและตรวจสอบความถูกต้องของระบบวาปบนเซิร์ฟเวอร์
-- [ ] ตรวจสอบและติดตั้งระบบ GUI วาปบนเซิร์ฟเวอร์ Minecraft ผ่าน mcsv.me แยกจากระบบ Discord และเว็บไซต์สโตร์
-- [ ] ทดสอบความถูกต้องของคำสั่งวาปและเมนูในเกม mcsv.me
-- [ ] ตรวจสอบข้อผิดพลาดและรวบรวม Log จากระบบ mcsv.me
-- [ ] จัดทำรายงานแยกหัวข้อสำหรับนำไปประกาศใน Discord แยกตามระบบ (ระบบวาป, เมนู GUI, ระบบยศ/Points, แชท/บอท)
+- [x] ออกแบบและติดตั้งระบบ GUI วาปสุดเท่ของ RitzSMP แยกหมวดหมู่ สีสัน และเอฟเฟกต์
+- [x] ทดสอบและตรวจสอบความถูกต้องของระบบวาปบนเซิร์ฟเวอร์
+- [x] ตรวจสอบและติดตั้งระบบ GUI วาปบนเซิร์ฟเวอร์ Minecraft ผ่าน mcsv.me แยกจากระบบ Discord และเว็บไซต์สโตร์
+- [x] ทดสอบความถูกต้องของคำสั่งวาปและเมนูในเกม mcsv.me
+- [x] ตรวจสอบข้อผิดพลาดและรวบรวม Log จากระบบ mcsv.me
+- [x] จัดทำรายงานแยกหัวข้อสำหรับนำไปประกาศใน Discord แยกตามระบบ (ระบบวาป, เมนู GUI, ระบบยศ/Points, แชท/บอท)
 - [x] ตรวจสอบข้อผิดพลาดและรวบรวม Log จากระบบ mcsv.me
 - [x] จัดทำรายงานแยกหัวข้อสำหรับนำไปประกาศใน Discord แยกตามระบบ
-- [ ] ตรวจสอบสิทธิ์และเข้าถึงไฟล์หรือคอนโซล mcsv.me เพื่อตกแต่งระบบในเกม
-- [ ] สำรวจปลั๊กอินและ Skript เดิมบนเซิร์ฟเวอร์ mcsv.me พร้อมตรวจสอบ log error
-- [ ] ติดตั้งและตกแต่งระบบ GUI วาป, เมนูคำสั่ง และข้อความในเกม mcsv.me
 - [x] ตรวจสอบสิทธิ์และเข้าถึงไฟล์หรือคอนโซล mcsv.me เพื่อตกแต่งระบบในเกม
 - [x] สำรวจปลั๊กอินและ Skript เดิมบนเซิร์ฟเวอร์ mcsv.me พร้อมตรวจสอบ log error
 - [x] ติดตั้งและตกแต่งระบบ GUI วาป, เมนูคำสั่ง และข้อความในเกม mcsv.me
-- [ ] ทดสอบความเร็วการตอบสนองของ RitzSMP AI bot และตรวจสอบ error log
-- [ ] สรุปผลความเร็ว Latency และสถานะ error log สำหรับผู้ใช้
-- [ ] ตรวจสอบโค้ดระบบ Economy และ points ทั่วทั้งโปรเจกต์ (drizzle/schema.ts, server/db.ts, server/routers.ts)
-- [ ] รันทดสอบชุดทดสอบ Vitest และตรวจสอบว่าไม่มีบัคตกค้าง
+- [x] ตรวจสอบสิทธิ์และเข้าถึงไฟล์หรือคอนโซล mcsv.me เพื่อตกแต่งระบบในเกม
+- [x] สำรวจปลั๊กอินและ Skript เดิมบนเซิร์ฟเวอร์ mcsv.me พร้อมตรวจสอบ log error
+- [x] ติดตั้งและตกแต่งระบบ GUI วาป, เมนูคำสั่ง และข้อความในเกม mcsv.me
+- [x] ทดสอบความเร็วการตอบสนองของ RitzSMP AI bot และตรวจสอบ error log
+- [x] สรุปผลความเร็ว Latency และสถานะ error log สำหรับผู้ใช้
+- [x] ตรวจสอบโค้ดระบบ Economy และ points ทั่วทั้งโปรเจกต์ (drizzle/schema.ts, server/db.ts, server/routers.ts)
+- [x] รันทดสอบชุดทดสอบ Vitest และตรวจสอบว่าไม่มีบัคตกค้าง
 - [x] ตรวจสอบโค้ดระบบ Economy และ points ทั่วทั้งโปรเจกต์ (drizzle/schema.ts, server/db.ts, server/routers.ts) และยืนยันความปลอดภัย
 - [x] รันทดสอบชุดทดสอบ Vitest ครบ 100 Tests สำเร็จและไม่มีบัคตกค้าง
-- [ ] สร้างสคริปต์ Load Testing แบบปลอดภัยสำหรับจำลอง concurrent top-up และการซื้อยศ โดยไม่เขียนข้อมูลทดสอบลงฐานข้อมูลจริง
-- [ ] รัน Load Testing และตรวจสอบความถูกต้องของยอด Wallet, ledger และการป้องกัน double-spending
-- [ ] เพิ่ม regression tests สำหรับผลลัพธ์และรายงานค่า latency/error rate ของ Load Testing
+- [x] สร้างสคริปต์ Load Testing แบบปลอดภัยสำหรับจำลอง concurrent top-up และการซื้อยศ โดยไม่เขียนข้อมูลทดสอบลงฐานข้อมูลจริง
+- [x] รัน Load Testing และตรวจสอบความถูกต้องของยอด Wallet, ledger และการป้องกัน double-spending
+- [x] เพิ่ม regression tests สำหรับผลลัพธ์และรายงานค่า latency/error rate ของ Load Testing
 - [x] ออกแบบและตกแต่งระบบ Warp GUI ในเกมพร้อมเอฟเฟกต์เสียงและหมวดหมู่ (Spawn, Survival, Shop, Event)
 - [x] ตรวจสอบและออดิตระบบ Economy และ Points ในเกมร่วมกับ RCON ให้ทำงานแบบ Realtime ทันที
 - [x] จำลอง Load Testing ระบบธุรกรรมและการเงินพร้อมรันชุดทดสอบ Vitest ครบ 105 Tests ผ่านทั้งหมดเรียบร้อย
