@@ -3447,3 +3447,7 @@
 [2026-08-21T11:31:47.263Z] 11:31:47 AM [vite] (client) hmr update /src/index.css
 [2026-08-21T11:31:48.247Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
 [2026-08-21T11:34:08.867Z] 11:34:08 AM [vite] (client) hmr update /src/index.css
+[2026-08-21T11:36:08.438Z] [RitzSmpAI] [INFO] Received command /setup from tun_5555
+[2026-08-21T11:36:08.439Z] (node:126559) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-21T11:36:10.382Z] [RitzSmpAI] [ERROR] Could not defer interaction: DiscordAPIError[10062]: Unknown interaction
+[2026-08-21T12:03:05.439Z] 12:03:05 PM [vite] (client) hmr update /src/index.css
