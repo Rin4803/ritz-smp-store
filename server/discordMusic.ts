@@ -301,7 +301,12 @@ async function playNext(session: MusicSession): Promise<void> {
           highWaterMark: 1 << 25,
           quality: 'highestaudio',
           dlChunkSize: 0,
-          liveBuffer: 4999,
+          requestOptions: {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'Accept-Language': 'en-US,en;q=0.9',
+            }
+          }
         });
       } catch (err1) {
         console.warn("[Music] Primary ytdl stream failed, attempting fallback options", err1);
@@ -309,6 +314,11 @@ async function playNext(session: MusicSession): Promise<void> {
           filter: 'audioonly',
           quality: 'highest',
           highWaterMark: 1 << 25,
+          requestOptions: {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            }
+          }
         });
       }
 
