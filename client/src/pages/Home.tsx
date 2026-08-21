@@ -22,6 +22,7 @@ import {
   AlertCircle,
   RefreshCcw,
   Wallet,
+  Search,
 } from "lucide-react";
 
 const paymentAccounts = [
@@ -93,6 +94,8 @@ export default function Home() {
   const [topupResult, setTopupResult] = useState<number | null>(null);
   const [purchaseResult, setPurchaseResult] = useState<{ id: number; rankName: string; amount: string } | null>(null);
   const [toastMessage, setToastMessage] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [priceFilter, setPriceFilter] = useState<"all" | "budget" | "mid" | "prestige">("all");
   const [menuOpen, setMenuOpen] = useState(false);
 
   const ranks = ranksQuery.data ?? [];
@@ -311,6 +314,75 @@ export default function Home() {
               <p className="section-description">เลือกยศที่คุณต้องการเพื่อสนับสนุนการพัฒนาเซิร์ฟเวอร์ RitzSMP ระบบจะหักยอดเงินจากกระเป๋าของคุณอัตโนมัติทันที</p>
             </div>
 
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginBottom: "24px", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ position: "relative", flex: "1 1 260px", maxWidth: "400px" }}>
+                <span style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", display: "flex" }}>
+                  <Search size={16} />
+                </span>
+                <input
+                  type="text"
+                  placeholder="ค้นหายศ, สิทธิพิเศษ หรือคำอธิบาย..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={{
+                    width: "100%",
+                    background: "rgba(20, 20, 32, 0.7)",
+                    border: "1px solid rgba(212, 175, 55, 0.25)",
+                    borderRadius: "10px",
+                    padding: "10px 14px 10px 42px",
+                    color: "#f8fafc",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                  }}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className={`ghost-btn compact-btn ${priceFilter === "all" ? "active-filter" : ""}`}
+                  style={{ borderColor: priceFilter === "all" ? "#d4af37" : "rgba(255,255,255,0.15)", background: priceFilter === "all" ? "rgba(212,175,55,0.15)" : "transparent" }}
+                  onClick={() => setPriceFilter("all")}
+                >
+                  ทั้งหมด
+                </button>
+                <button
+                  type="button"
+                  className={`ghost-btn compact-btn`}
+                  style={{ borderColor: priceFilter === "budget" ? "#d4af37" : "rgba(255,255,255,0.15)", background: priceFilter === "budget" ? "rgba(212,175,55,0.15)" : "transparent" }}
+                  onClick={() => setPriceFilter("budget")}
+                >
+                  &le; 500 ฿
+                </button>
+                <button
+                  type="button"
+                  className={`ghost-btn compact-btn`}
+                  style={{ borderColor: priceFilter === "mid" ? "#d4af37" : "rgba(255,255,255,0.15)", background: priceFilter === "mid" ? "rgba(212,175,55,0.15)" : "transparent" }}
+                  onClick={() => setPriceFilter("mid")}
+                >
+                  501 - 1,500 ฿
+                </button>
+                <button
+                  type="button"
+                  className={`ghost-btn compact-btn`}
+                  style={{ borderColor: priceFilter === "prestige" ? "#d4af37" : "rgba(255,255,255,0.15)", background: priceFilter === "prestige" ? "rgba(212,175,55,0.15)" : "transparent" }}
+                  onClick={() => setPriceFilter("prestige")}
+                >
+                  &gt; 1,500 ฿
+                </button>
+              </div>
+            </div>
+
             {ranksQuery.isLoading ? (
               <div className="loading"><Loader2 className="animate-spin" size={24} /> กำลังโหลดรายการยศ...</div>
             ) : ranksQuery.isError ? (
@@ -321,40 +393,71 @@ export default function Home() {
                   <RefreshCcw size={14} /> โหลดใหม่
                 </button>
               </div>
-            ) : (
-              <div className="rank-grid">
-                {ranks.map((rank, index) => {
-                  const features = parseFeatures(rank.features);
-                  const isFreeTemplate = Number(rank.price) <= 0;
-                  return (
-                    <article key={rank.id} className={`rank-card ${rank.color} ${index === 1 ? "featured" : ""}`}>
-                      <span className="rank-ribbon">{rank.badge}</span>
-                      <div className="rank-icon"><Crown size={23} strokeWidth={1.7} /></div>
-                      <div className="rank-name">{rank.displayName}</div>
-                      <p className="rank-description">{rank.description}</p>
-                      <ul className="feature-list">
-                        {features.map(feature => (
-                          <li key={feature}><Check size={14} /> <span>{feature}</span></li>
-                        ))}
-                      </ul>
-                      <div className="rank-bottom">
-                        <div className="price">
-                          {!isFreeTemplate ? `${formatPrice(rank.price)} ฿` : "รอกำหนดราคา"}
-                          <small>{rank.duration}</small>
+            ) : (() => {
+              const filteredRanks = ranks.filter(rank => {
+                const query = searchQuery.toLowerCase().trim();
+                const matchesQuery = !query || rank.displayName.toLowerCase().includes(query) || rank.description.toLowerCase().includes(query) || rank.badge.toLowerCase().includes(query) || rank.features.toLowerCase().includes(query);
+                const priceNum = Number(rank.price);
+                const matchesPrice =
+                  priceFilter === "all" ? true :
+                  priceFilter === "budget" ? priceNum <= 500 :
+                  priceFilter === "mid" ? priceNum > 500 && priceNum <= 1500 :
+                  priceFilter === "prestige" ? priceNum > 1500 : true;
+                return matchesQuery && matchesPrice;
+              });
+
+              if (filteredRanks.length === 0) {
+                return (
+                  <div className="empty-box" style={{ padding: "48px 24px", textAlign: "center" }}>
+                    <Search size={32} style={{ color: "#d4af37", marginBottom: 12, opacity: 0.8 }} />
+                    <h3 style={{ fontSize: "18px", fontWeight: 700, margin: "0 0 8px", color: "#f8fafc" }}>ไม่พบยศที่ตรงกับการค้นหา</h3>
+                    <p className="subtle" style={{ margin: "0 0 16px" }}>ลองเปลี่ยนคำค้นหาหรือตัวกรองราคาใหม่อีกครั้ง</p>
+                    <button
+                      type="button"
+                      className="ghost-btn compact-btn"
+                      onClick={() => { setSearchQuery(""); setPriceFilter("all"); }}
+                    >
+                      ล้างตัวกรองทั้งหมด
+                    </button>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="rank-grid">
+                  {filteredRanks.map((rank, index) => {
+                    const features = parseFeatures(rank.features);
+                    const isFreeTemplate = Number(rank.price) <= 0;
+                    return (
+                      <article key={rank.id} className={`rank-card ${rank.color} ${index === 1 && !searchQuery ? "featured" : ""}`}>
+                        <span className="rank-ribbon">{rank.badge}</span>
+                        <div className="rank-icon"><Crown size={23} strokeWidth={1.7} /></div>
+                        <div className="rank-name">{rank.displayName}</div>
+                        <p className="rank-description">{rank.description}</p>
+                        <ul className="feature-list">
+                          {features.map(feature => (
+                            <li key={feature}><Check size={14} /> <span>{feature}</span></li>
+                          ))}
+                        </ul>
+                        <div className="rank-bottom">
+                          <div className="price">
+                            {!isFreeTemplate ? `${formatPrice(rank.price)} ฿` : "รอกำหนดราคา"}
+                            <small>{rank.duration}</small>
+                          </div>
+                          <button
+                            className="primary-btn compact-btn"
+                            onClick={() => openOrder(rank)}
+                            disabled={isFreeTemplate}
+                          >
+                            {!isFreeTemplate ? "ซื้อยศ" : "Template"} <ArrowRight size={14} />
+                          </button>
                         </div>
-                        <button
-                          className="primary-btn compact-btn"
-                          onClick={() => openOrder(rank)}
-                          disabled={isFreeTemplate}
-                        >
-                          {!isFreeTemplate ? "ซื้อยศ" : "Template"} <ArrowRight size={14} />
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            )}
+                      </article>
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
             {rankNotice && (
               <div className="hero-note" style={{ marginTop: 28 }}>
