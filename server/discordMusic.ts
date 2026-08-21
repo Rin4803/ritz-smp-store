@@ -10,7 +10,7 @@ import {
   type VoiceConnection,
 } from "@discordjs/voice";
 import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import { stream, validate, video_basic_info, search } from "play-dl";
+import ytdl from "@distube/ytdl-core";
 
 const MUSIC_IDLE_TIMEOUT_MS = 15 * 60 * 1000;
 const MUSIC_QUERY_MESSAGE = "กรุณาระบุชื่อเพลงหรือลิงก์ YouTube/SoundCloud ที่ต้องการเปิดนะคะ";
@@ -229,40 +229,15 @@ async function resolveTrackFromQuery(resolvedQuery: { query: string; isUrl: bool
 
   const lookupPromise = (async () => {
     try {
-      if (resolvedQuery.isUrl) {
-        const kind = await validate(targetUrl).catch(err => {
-          if (String(err).includes("429") || String(err).includes("Too Many Requests")) {
-            throw new Error("YouTube กำลังจำกัดคำขอชั่วคราว (Rate Limit 429) กรุณาลองใหม่อีกครั้งในอีกสักครู่ค่ะ");
-          }
-          throw err;
-        });
-        if (kind !== "yt_video" && kind !== "so_track") {
-          throw new Error("รองรับเฉพาะลิงก์ YouTube หรือ SoundCloud ที่ถูกต้องเท่านั้นค่ะ");
+      if (resolvedQuery.isUrl && ytdl.validateURL(targetUrl)) {
+        const info = await ytdl.getInfo(targetUrl).catch(() => null);
+        if (info?.videoDetails?.title) {
+          title = info.videoDetails.title;
         }
-        if (kind === "yt_video") {
-          const info = await video_basic_info(targetUrl).catch(() => null);
-          title = info?.video_details?.title || targetUrl;
-        }
-      } else {
-        const searchResults = await search(resolvedQuery.query, { limit: 1 }).catch(err => {
-          if (String(err).includes("429") || String(err).includes("Too Many Requests")) {
-            throw new Error("YouTube กำลังจำกัดคำขอชั่วคราว (Rate Limit 429) กรุณาลองใหม่อีกครั้งในอีกสักครู่ค่ะ");
-          }
-          throw err;
-        });
-        if (!searchResults || searchResults.length === 0) {
-          throw new Error(`ไม่พบเพลงจากคำค้นหา "${resolvedQuery.query}" ค่ะ กรุณาลองใหม่อีกครั้ง`);
-        }
-        const bestMatch = searchResults[0];
-        targetUrl = bestMatch.url;
-        title = bestMatch.title || resolvedQuery.query;
       }
       return { url: targetUrl, title: title.slice(0, 180), requestedBy };
     } catch (err: any) {
-      if (String(err).includes("429") || String(err).includes("Too Many Requests")) {
-        throw new Error("YouTube กำลังจำกัดคำขอชั่วคราว (Rate Limit 429) กรุณาลองใช้ลิงก์ตรงหรือค้นหาใหม่อีกครั้งค่ะ");
-      }
-      throw err;
+      return { url: targetUrl, title: targetUrl, requestedBy };
     }
   })();
 
@@ -279,31 +254,19 @@ async function playNext(session: MusicSession): Promise<void> {
   session.current = next;
   session.started = true;
     try {
-      console.log("[Music] Fetching stream for:", next.url);
-      let streamData: any = null;
-      
-      // Try multiple extraction strategies for play-dl to prevent 429 and stream drop errors
-      const strategies = [
-        () => stream(next.url, { quality: 2, discordPlayerCompatibility: true }),
-        () => stream(next.url, { quality: 0, discordPlayerCompatibility: true }),
-        () => stream(next.url, { quality: 2 }),
-      ];
+      console.log("[Music] Fetching ytdl stream for:", next.url);
+      const stream = ytdl(next.url, {
+        filter: 'audioonly',
+        highWaterMark: 1 << 25,
+        quality: 'highestaudio',
+        dlChunkSize: 0,
+      });
 
-      for (const strategy of strategies) {
-        try {
-          streamData = await strategy();
-          if (streamData && streamData.stream) break;
-        } catch (stratErr) {
-          console.warn("[Music Stream Strategy Warning]:", stratErr);
-        }
+      if (!stream) {
+        throw new Error("ไม่สามารถเปิดสตรีมเสียงจากลิงก์นี้ได้ผ่าน ytdl");
       }
 
-      if (!streamData || !streamData.stream) {
-        throw new Error("ไม่สามารถเปิดสตรีมเสียงจากลิงก์นี้ได้ (YouTube 429 หรือจำกัดสิทธิ์)");
-      }
-
-    const resource = createAudioResource(streamData.stream, { 
-      inputType: streamData.type,
+    const resource = createAudioResource(stream, { 
       inlineVolume: true,
     });
     if (resource.volume) {

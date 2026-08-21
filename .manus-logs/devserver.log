@@ -3603,3 +3603,14 @@
 [2026-08-21T16:23:43.989Z] at <anonymous> (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/play-dl@1.9.7/node_modules/play-dl/play-dl/Request/index.ts:50:20)
 [2026-08-21T16:23:43.989Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
 [2026-08-21T16:23:43.989Z] Node.js v22.13.0
+[2026-08-21T16:52:24.830Z] 4:52:24 PM [tsx] change in ./server/discordMusic.ts Rerunning...
+[2026-08-21T16:52:25.757Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-21T16:52:26.131Z] 4:52:26 PM [vite] (client) Re-optimizing dependencies because lockfile has changed
+[2026-08-21T16:52:26.172Z] Server running on http://localhost:3000/
+[2026-08-21T16:52:30.215Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-21T16:52:30.216Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-21T16:52:30.217Z] (node:159626) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-21T16:52:30.217Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-21T16:52:31.083Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-21T16:52:34.236Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540380693690060820
+[2026-08-21T16:52:35.779Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
