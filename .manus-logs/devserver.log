@@ -3325,3 +3325,16 @@
 [2026-08-21T10:45:51.223Z] [RitzSmpAI] [INFO] Registering global slash commands...
 [2026-08-21T10:45:51.224Z] (node:110895) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
 [2026-08-21T10:45:51.224Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-21T10:45:56.626Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-21T10:46:07.170Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540300496101707849
+[2026-08-21T10:46:09.368Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-21T10:46:27.726Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-21T10:46:33.052Z] [RitzSmpAI] [INFO] Received command /play from tun_5555
+[2026-08-21T10:46:33.054Z] (node:110895) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-21T10:46:36.116Z] /home/ubuntu/ritz-smp-store/node_modules/.pnpm/play-dl@1.9.7/node_modules/play-dl/play-dl/Request/index.ts:50
+[2026-08-21T10:46:36.116Z] reject(new Error(`Got ${res.statusCode} from the request`));
+[2026-08-21T10:46:36.116Z] ^
+[2026-08-21T10:46:36.116Z] Error: Got 429 from the request
+[2026-08-21T10:46:36.116Z] at <anonymous> (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/play-dl@1.9.7/node_modules/play-dl/play-dl/Request/index.ts:50:20)
+[2026-08-21T10:46:36.116Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2026-08-21T10:46:36.116Z] Node.js v22.13.0
