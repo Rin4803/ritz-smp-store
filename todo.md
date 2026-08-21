@@ -166,3 +166,10 @@
 - [x] Return a safe 403 response for unauthenticated Heartbeat callbacks instead of leaking a 500 session-cookie error
 - [x] Deduplicate the Discord account-list channel header, starter text, and RitzSMP AI panel so only one canonical panel remains after sync/restart
 - [x] Add regression coverage proving account-list panel synchronization is idempotent and removes stale duplicates safely
+- [x] Keep the purchase-success channel limited to rank-purchase notifications and remove welcome/connect-account panels from it
+- [x] Deduplicate welcome panels and route the welcome message only to the dedicated welcome channel
+- [x] Add regression coverage for welcome routing and repeated startup synchronization
+- [x] Create separate `👋│ระบบต้อนรับ` and `👋│ระบบสมาชิกออก` channels instead of one combined welcome/leave channel
+- [x] Route guildMemberAdd only to the welcome channel and guildMemberRemove only to the leave channel
+- [x] Migrate the combined-channel panel safely and add regression coverage for separate channel routing
+- [x] Fix the `/verify` interaction path that logged `InteractionNotReplied` during live startup validation and add a regression test

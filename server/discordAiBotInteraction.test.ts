@@ -2,16 +2,20 @@ import { describe, expect, it, vi } from "vitest";
 import { ensureDeferredReply, safeReply } from "./discordAiBot";
 
 function repliableInteraction(overrides: Record<string, unknown> = {}) {
-  return {
+  const interaction: any = {
     deferred: false,
     replied: false,
     isRepliable: () => true,
-    deferReply: vi.fn().mockResolvedValue(undefined),
-    reply: vi.fn().mockResolvedValue(undefined),
+    deferReply: vi.fn().mockImplementation(async () => {
+      interaction.deferred = true;
+    }),
+    reply: vi.fn().mockImplementation(async () => {
+      interaction.replied = true;
+    }),
     editReply: vi.fn().mockResolvedValue(undefined),
     followUp: vi.fn().mockResolvedValue(undefined),
-    ...overrides,
-  } as any;
+  };
+  return Object.assign(interaction, overrides);
 }
 
 describe("Discord interaction acknowledgement safety", () => {
@@ -50,11 +54,11 @@ describe("Discord interaction acknowledgement safety", () => {
     expect(interaction.editReply).toHaveBeenCalledWith({ content: "ตอบกลับแล้วค่ะ" });
   });
 
-  it("uses editReply when the onboarding handler marked the interaction as deferred", async () => {
+  it("does not trust a stale internal deferred marker over Discord state", async () => {
     const interaction = repliableInteraction({ __ritzDeferred: true });
 
     await expect(safeReply(interaction, { content: "ระบบได้บันทึกคำขอแล้วค่ะ" })).resolves.toBe(true);
-    expect(interaction.reply).not.toHaveBeenCalled();
-    expect(interaction.editReply).toHaveBeenCalledWith({ content: "ระบบได้บันทึกคำขอแล้วค่ะ" });
+    expect(interaction.reply).toHaveBeenCalledWith({ content: "ระบบได้บันทึกคำขอแล้วค่ะ" });
+    expect(interaction.editReply).not.toHaveBeenCalled();
   });
 });

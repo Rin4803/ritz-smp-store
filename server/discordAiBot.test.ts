@@ -8,6 +8,9 @@ import {
   isAccountListPanelMessage,
   planAccountListPanelCleanup,
   planManagedSystemChannelCleanup,
+  getPreferredWelcomeChannelId,
+  isMisroutedWelcomePanelMessage,
+  planMisroutedWelcomePanelCleanup,
 } from "./discordAiBot.js";
 
 describe("RitzSMP AI Bot Expanded Commands", () => {
@@ -73,6 +76,36 @@ describe("RitzSMP AI Bot Expanded Commands", () => {
       "ritz_discord_members_button",
       "ritz_players_button",
     ]);
+  });
+
+  it("identifies and plans removal of only misrouted welcome panels", () => {
+    const staleMessages = [
+      {
+        id: "welcome-1",
+        embeds: [{ title: "ยินดีต้อนรับเข้าสู่ RitzSMP นะคะ ✨", footer: { text: "RitzSMP AI • ยินดีต้อนรับสมาชิกใหม่" } }],
+        components: [{ components: [{ customId: "ritz_verify_button" }] }],
+      },
+      {
+        id: "purchase-1",
+        embeds: [{ title: "ซื้อยศสำเร็จ" }],
+        components: [],
+      },
+      {
+        id: "welcome-with-data-shape",
+        embeds: [{ data: { title: "ยินดีต้อนรับเข้าสู่ RitzSMP" } }],
+        components: [{ components: [{ data: { custom_id: "ritz_verify_button" } }] }],
+      },
+    ];
+
+    expect(isMisroutedWelcomePanelMessage(staleMessages[0])).toBe(true);
+    expect(isMisroutedWelcomePanelMessage(staleMessages[1])).toBe(false);
+    expect(planMisroutedWelcomePanelCleanup(staleMessages)).toEqual(["welcome-1", "welcome-with-data-shape"]);
+  });
+
+  it("never uses the purchase channel as an implicit welcome-channel fallback", () => {
+    expect(getPreferredWelcomeChannelId("", "")).toBe("");
+    expect(getPreferredWelcomeChannelId("managed-welcome", "purchase-success")).toBe("managed-welcome");
+    expect(getPreferredWelcomeChannelId(undefined, "explicit-welcome")).toBe("explicit-welcome");
   });
 
   it("coalesces concurrent startup work and resets after a failed attempt", async () => {

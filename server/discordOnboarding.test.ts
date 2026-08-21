@@ -9,7 +9,10 @@ import {
   buildRankClaimComponents,
   buildRankClaimEmbed,
   buildWelcomeMemberEmbed,
+  DISCORD_LEAVE_CHANNEL_NAME,
   DISCORD_WELCOME_CHANNEL_NAME,
+  isLeaveSystemPanelMessage,
+  isWelcomeSystemPanelMessage,
   handleOnboardingInteraction,
   RITZ_RANK_CLAIM_IMAGE_URL,
   RITZ_WELCOME_COVER_IMAGE_URL,
@@ -62,7 +65,7 @@ describe("Discord onboarding interactions", () => {
       isButton: () => true,
       isModalSubmit: () => false,
       isRepliable: () => true,
-      deferred: false,
+      deferred: true,
       replied: false,
       deferReply: vi.fn().mockResolvedValue(undefined),
       editReply: vi.fn().mockResolvedValue(undefined),
@@ -97,6 +100,8 @@ describe("Discord onboarding interactions", () => {
       guild: undefined,
       isButton: () => true,
       isModalSubmit: () => false,
+      deferred: true,
+      replied: false,
       deferReply: vi.fn().mockResolvedValue(undefined),
       editReply: vi.fn().mockResolvedValue(undefined),
     };
@@ -109,8 +114,16 @@ describe("Discord onboarding interactions", () => {
     }));
   });
 
-  it("uses a clear system name for the welcome and leave channel", () => {
-    expect(DISCORD_WELCOME_CHANNEL_NAME).toBe("👋│ระบบต้อนรับ-เข้าออก");
+  it("uses separate clear system names for welcome and leave channels", () => {
+    expect(DISCORD_WELCOME_CHANNEL_NAME).toBe("👋│ระบบต้อนรับ");
+    expect(DISCORD_LEAVE_CHANNEL_NAME).toBe("👋│ระบบสมาชิกออก");
+  });
+
+  it("classifies only the dedicated static welcome and leave panels", () => {
+    expect(isWelcomeSystemPanelMessage({ embeds: [{ title: "👋 ระบบต้อนรับสมาชิกใหม่ RitzSMP" }] })).toBe(true);
+    expect(isWelcomeSystemPanelMessage({ embeds: [{ title: "ยินดีต้อนรับเข้าสู่ RitzSMP" }] })).toBe(false);
+    expect(isLeaveSystemPanelMessage({ embeds: [{ footer: { text: "RitzSMP AI • ระบบแจ้งสมาชิกออก" } }] })).toBe(true);
+    expect(isLeaveSystemPanelMessage({ embeds: [{ footer: { text: "RitzSMP AI • สมาชิกออกจากเซิร์ฟเวอร์" } }] })).toBe(false);
   });
 
   it("uses the supplied cover images and exposes a single rank-claim button", () => {
@@ -155,7 +168,7 @@ describe("Discord onboarding interactions", () => {
       isButton: () => true,
       isModalSubmit: () => false,
       isRepliable: () => true,
-      deferred: false,
+      deferred: true,
       replied: false,
       deferReply: vi.fn().mockResolvedValue(undefined),
       editReply: vi.fn().mockResolvedValue(undefined),

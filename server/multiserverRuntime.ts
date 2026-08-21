@@ -3,6 +3,7 @@ import type { ManagedServer, ManagedServerConfig } from "../drizzle/schema.js";
 
 export interface ManagedServerChannelConfig {
   welcomeChannelId?: string;
+  leaveChannelId?: string;
   statusChannelId?: string;
   musicChannelId?: string;
   verificationChannelId?: string;
@@ -40,6 +41,7 @@ function parseChannelConfig(raw: string): ManagedServerChannelConfig {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     const allowedKeys: Array<keyof ManagedServerChannelConfig> = [
       "welcomeChannelId",
+      "leaveChannelId",
       "statusChannelId",
       "musicChannelId",
       "verificationChannelId",

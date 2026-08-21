@@ -126,7 +126,10 @@ export async function safeReply(interaction: any, options: any): Promise<boolean
     } else if (options && typeof options === "object" && typeof options.content === "string" && options.content.length > 1950) {
       payload = { ...options, content: options.content.slice(0, 1900) + "\n...(ถูกตัดทอนความยาว)" };
     }
-    if (interaction.deferred || interaction.replied || interaction.__ritzDeferred) {
+    // Discord.js state is authoritative. The internal marker only records that a
+    // defer was attempted; it must never force editReply when Discord reports that
+    // the interaction is still unacknowledged (a real-world race seen on /verify).
+    if (interaction.deferred || interaction.replied) {
       await interaction.editReply(payload);
     } else {
       await interaction.reply(payload);
@@ -144,7 +147,7 @@ export async function safeReply(interaction: any, options: any): Promise<boolean
     }
     pushLog("WARN", `safeReply failed: ${String(error)}`);
     try {
-      if (!interaction.replied && !interaction.deferred && !interaction.__ritzDeferred) {
+      if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({ content: "เกิดข้อผิดพลาดในการตอบสนอง กรุณาลองใหม่อีกครั้งนะคะ 💕", ephemeral: true });
       } else {
         await interaction.followUp({ content: "เกิดข้อผิดพลาดในการตอบสนอง กรุณาลองใหม่อีกครั้งนะคะ 💕", ephemeral: true });
@@ -204,6 +207,32 @@ export function buildWelcomeMemberEmbed(member: any) {
     .setFooter({ text: "RitzSMP AI • ยินดีต้อนรับสมาชิกใหม่" });
 }
 
+export type WelcomePanelMessageLike = {
+  id: string;
+  embeds?: any[];
+  components?: any[];
+};
+
+export function isMisroutedWelcomePanelMessage(message: WelcomePanelMessageLike): boolean {
+  const titles = (message.embeds ?? []).map(embed => String(embed?.title ?? embed?.data?.title ?? ""));
+  const footers = (message.embeds ?? []).map(embed => String(embed?.footer?.text ?? embed?.data?.footer?.text ?? ""));
+  const customIds = (message.components ?? []).flatMap(row => row?.components ?? [])
+    .map(component => String(component?.customId ?? component?.data?.custom_id ?? component?.custom_id ?? ""));
+  const isWelcomeTitle = titles.some(title => title.includes("ยินดีต้อนรับเข้าสู่ RitzSMP"));
+  const isWelcomeFooter = footers.some(footer => footer.includes("ยินดีต้อนรับสมาชิกใหม่"));
+  return (isWelcomeTitle || isWelcomeFooter) && customIds.includes("ritz_verify_button");
+}
+
+export function planMisroutedWelcomePanelCleanup(messages: Iterable<WelcomePanelMessageLike>) {
+  return Array.from(messages)
+    .filter(isMisroutedWelcomePanelMessage)
+    .map(message => message.id);
+}
+
+export function getPreferredWelcomeChannelId(runtimeChannelId?: string, configuredChannelId?: string): string {
+  return runtimeChannelId?.trim() || configuredChannelId?.trim() || "";
+}
+
 export function buildLeaveMemberEmbed(member: any) {
   return new EmbedBuilder()
     .setTitle("ไว้เจอกันใหม่นะคะ 👋")
@@ -253,10 +282,16 @@ export const RITZ_SYSTEM_CHANNEL_TARGETS = [
     topic: "ระบบยืนยันตัวตนและกดรับยศสมาชิก RitzSMP AI",
   },
   {
-    name: "👋│ระบบต้อนรับ-เข้าออก",
-    legacyNames: ["👋│welcome", "👋│ต้อนรับ-เข้าออก"],
+    name: "👋│ระบบต้อนรับ",
+    legacyNames: ["👋│welcome", "👋│ต้อนรับ-เข้าออก", "👋│ระบบต้อนรับ-เข้าออก", "🤞🏻│leave"],
     type: ChannelType.GuildText,
-    topic: "ระบบต้อนรับสมาชิกใหม่และแจ้งเตือนสมาชิกเข้า-ออก",
+    topic: "ระบบต้อนรับสมาชิกใหม่และแจ้งเตือนสมาชิกเข้าเซิร์ฟเวอร์",
+  },
+  {
+    name: "👋│ระบบสมาชิกออก",
+    legacyNames: ["👋│leave", "👋│สมาชิกออก", "👋│ระบบออกจากเซิร์ฟเวอร์"],
+    type: ChannelType.GuildText,
+    topic: "ระบบแจ้งเตือนสมาชิกออกจากเซิร์ฟเวอร์",
   },
 ] as const;
 
@@ -341,6 +376,24 @@ export function buildAccountListPanelPayload() {
 async function fetchRecentChannelMessages(channel: any, limit = 100): Promise<any[]> {
   const collection = await channel.messages.fetch({ limit });
   return Array.from(collection.values());
+}
+
+async function cleanupMisroutedWelcomePanels(client: Client): Promise<void> {
+  const purchaseChannelId = ENV.discordSupportChannelId?.trim() || "";
+  if (!purchaseChannelId) return;
+
+  const channel = await client.channels.fetch(purchaseChannelId).catch(() => null) as any;
+  if (!channel?.isTextBased?.() || !("messages" in channel)) return;
+
+  const messages = await fetchRecentChannelMessages(channel);
+  const staleIds = planMisroutedWelcomePanelCleanup(messages);
+  for (const message of messages.filter(message => staleIds.includes(message.id))) {
+    await message.delete("Remove misrouted welcome panel from purchase-success channel").then(() => {
+      pushLog("SUCCESS", `Removed misrouted welcome panel ${message.id} from purchase-success channel`);
+    }).catch((error: unknown) => {
+      pushLog("WARN", `Could not remove misrouted welcome panel ${message.id}: ${String(error)}`);
+    });
+  }
 }
 
 async function reconcileAccountListPanel(channel: any, client: Client): Promise<void> {
@@ -582,11 +635,11 @@ async function replyWithVerificationCode(interaction: any) {
       .setColor(0xec4899)
       .setFooter({ text: `รหัสนี้จะหมดอายุใน 10 นาที (${new Date(codeRow.expiresAt).toLocaleTimeString("th-TH")})` })
       .setTimestamp();
-    await interaction.editReply({ embeds: [embed] });
+    await safeReply(interaction, { embeds: [embed], ephemeral: true });
     pushLog("SUCCESS", `Generated verification code ${codeRow.code} for ${interaction.user.id}`);
   } catch (err) {
     pushLog("ERROR", `Failed to generate verification code: ${String(err)}`);
-    await interaction.editReply("ขออภัยค่ะ ไม่สามารถสร้างรหัสยืนยันได้ในขณะนี้ กรุณาลองใหม่อีกครั้งนะคะ");
+    await safeReply(interaction, { content: "ขออภัยค่ะ ไม่สามารถสร้างรหัสยืนยันได้ในขณะนี้ กรุณาลองใหม่อีกครั้งนะคะ", ephemeral: true });
   }
 }
 
@@ -718,27 +771,43 @@ async function updateProfileFromModal(interaction: any) {
   pushLog("SUCCESS", `Updated Discord profile for ${interaction.user.id}`);
 }
 
-export const DISCORD_WELCOME_CHANNEL_NAME = "👋│ระบบต้อนรับ-เข้าออก";
-export const LEGACY_DISCORD_WELCOME_CHANNEL_NAMES = ["👋│welcome", "👋│ต้อนรับ-เข้าออก"];
+export const DISCORD_WELCOME_CHANNEL_NAME = "👋│ระบบต้อนรับ";
+export const DISCORD_LEAVE_CHANNEL_NAME = "👋│ระบบสมาชิกออก";
+export const LEGACY_DISCORD_WELCOME_CHANNEL_NAMES = ["👋│welcome", "👋│ต้อนรับ-เข้าออก", "👋│ระบบต้อนรับ-เข้าออก", "🤞🏻│leave"];
+export const LEGACY_DISCORD_LEAVE_CHANNEL_NAMES = ["👋│leave", "👋│สมาชิกออก", "👋│ระบบออกจากเซิร์ฟเวอร์"];
 
-async function resolveWelcomeChannelId(client: Client): Promise<string> {
-  if (ENV.discordWelcomeChannelId?.trim()) return ENV.discordWelcomeChannelId.trim();
-  if (!getConfiguredDiscordGuildId()?.trim()) return "";
+export function getPreferredLeaveChannelId(managedChannelId?: string, configuredChannelId?: string): string {
+  return managedChannelId?.trim() || configuredChannelId?.trim() || "";
+}
 
-  const guild = await client.guilds.fetch(getConfiguredDiscordGuildId()).catch(() => null);
+async function resolveEventChannelId(
+  client: Client,
+  options: {
+    canonicalName: string;
+    legacyNames: readonly string[];
+    topic: string;
+    configuredChannelId?: string;
+    reason: string;
+  },
+): Promise<string> {
+  if (options.configuredChannelId?.trim()) return options.configuredChannelId.trim();
+  const guildId = getConfiguredDiscordGuildId()?.trim();
+  if (!guildId) return "";
+
+  const guild = await client.guilds.fetch(guildId).catch(() => null);
   if (!guild) return "";
   const channels = await guild.channels.fetch().catch(() => null);
   const existing = channels?.find(
     channel =>
       channel?.type === ChannelType.GuildText &&
-      (channel.name === DISCORD_WELCOME_CHANNEL_NAME || LEGACY_DISCORD_WELCOME_CHANNEL_NAMES.includes(channel.name)),
+      (channel.name === options.canonicalName || options.legacyNames.includes(channel.name)),
   );
   if (existing) {
-    if (existing.name !== DISCORD_WELCOME_CHANNEL_NAME && "setName" in existing) {
-      await (existing as any).setName(DISCORD_WELCOME_CHANNEL_NAME, "Standardize RitzSMP welcome channel name").catch(() => undefined);
+    if (existing.name !== options.canonicalName && "setName" in existing) {
+      await (existing as any).setName(options.canonicalName, `Standardize RitzSMP ${options.canonicalName} channel name`).catch(() => undefined);
     }
     if ("setTopic" in existing) {
-      await (existing as any).setTopic("ระบบต้อนรับสมาชิกใหม่และแจ้งเตือนสมาชิกเข้า-ออก").catch(() => undefined);
+      await (existing as any).setTopic(options.topic).catch(() => undefined);
     }
     return existing.id;
   }
@@ -747,13 +816,118 @@ async function resolveWelcomeChannelId(client: Client): Promise<string> {
   if (!botMember?.permissions.has("ManageChannels")) return "";
   const created = await guild.channels
     .create({
-      name: DISCORD_WELCOME_CHANNEL_NAME,
+      name: options.canonicalName,
       type: ChannelType.GuildText,
-      topic: "ระบบต้อนรับสมาชิกใหม่และแจ้งเตือนสมาชิกเข้า-ออก",
-      reason: "Create RitzSMP AI welcome and leave notification channel",
+      topic: options.topic,
+      reason: options.reason,
     })
     .catch(() => null);
   return created?.id ?? "";
+}
+
+async function resolveWelcomeChannelId(client: Client): Promise<string> {
+  return resolveEventChannelId(client, {
+    canonicalName: DISCORD_WELCOME_CHANNEL_NAME,
+    legacyNames: LEGACY_DISCORD_WELCOME_CHANNEL_NAMES,
+    topic: "ระบบต้อนรับสมาชิกใหม่และแจ้งเตือนสมาชิกเข้าเซิร์ฟเวอร์",
+    configuredChannelId: getPreferredWelcomeChannelId(
+      activeManagedServerRuntime?.channels.welcomeChannelId,
+      ENV.discordWelcomeChannelId,
+    ),
+    reason: "Create RitzSMP AI welcome channel",
+  });
+}
+
+async function resolveLeaveChannelId(client: Client): Promise<string> {
+  return resolveEventChannelId(client, {
+    canonicalName: DISCORD_LEAVE_CHANNEL_NAME,
+    legacyNames: LEGACY_DISCORD_LEAVE_CHANNEL_NAMES,
+    topic: "ระบบแจ้งเตือนสมาชิกออกจากเซิร์ฟเวอร์",
+    configuredChannelId: getPreferredLeaveChannelId(
+      activeManagedServerRuntime?.channels.leaveChannelId,
+      undefined,
+    ),
+    reason: "Create RitzSMP AI leave notification channel",
+  });
+}
+
+export function isWelcomeSystemPanelMessage(message: { embeds?: any[] }): boolean {
+  const titles = (message.embeds ?? []).map(embed => String(embed?.title ?? embed?.data?.title ?? ""));
+  const footers = (message.embeds ?? []).map(embed => String(embed?.footer?.text ?? embed?.data?.footer?.text ?? ""));
+  return titles.some(title => title.includes("ระบบต้อนรับสมาชิกใหม่ RitzSMP") || title.includes("ระบบต้อนรับและแจ้งเตือนเข้า-ออก")) ||
+    footers.some(footer => footer.includes("ระบบต้อนรับสมาชิกใหม่") || footer.includes("ระบบต้อนรับและสมาชิกเข้า-ออก"));
+}
+
+export function isLeaveSystemPanelMessage(message: { embeds?: any[] }): boolean {
+  const footers = (message.embeds ?? []).map(embed => String(embed?.footer?.text ?? embed?.data?.footer?.text ?? ""));
+  return footers.some(footer => footer.includes("ระบบแจ้งสมาชิกออก"));
+}
+
+function buildWelcomeSystemPanelPayload() {
+  const embed = new EmbedBuilder()
+    .setTitle("👋 ระบบต้อนรับสมาชิกใหม่ RitzSMP")
+    .setDescription("ช่องนี้ใช้สำหรับข้อความต้อนรับสมาชิกใหม่ที่เข้าร่วมเซิร์ฟเวอร์ค่ะ 💖")
+    .setColor(0xec4899)
+    .setImage(RITZ_WELCOME_COVER_IMAGE_URL)
+    .setTimestamp()
+    .setFooter({ text: "RitzSMP AI • ระบบต้อนรับสมาชิกใหม่" });
+  return { embeds: [embed] };
+}
+
+function buildLeaveSystemPanelPayload() {
+  const embed = new EmbedBuilder()
+    .setTitle("ไว้เจอกันใหม่นะคะ 👋")
+    .setDescription("ช่องนี้ใช้สำหรับแจ้งเตือนเมื่อสมาชิกออกจากเซิร์ฟเวอร์ RitzSMP ค่ะ")
+    .setColor(0xf472b6)
+    .setImage(RITZ_WELCOME_COVER_IMAGE_URL)
+    .setTimestamp()
+    .setFooter({ text: "RitzSMP AI • ระบบแจ้งสมาชิกออก" });
+  return { embeds: [embed] };
+}
+
+async function cleanupDuplicateMemberEventChannel(channel: any, client: Client, type: "welcome" | "leave"): Promise<void> {
+  if (!channel?.isTextBased?.() || !("messages" in channel)) return;
+  const messages = await fetchRecentChannelMessages(channel);
+  const botUserId = client.user?.id;
+  const stalePanels = messages.filter(message => {
+    if (botUserId && message.author?.id !== botUserId) return false;
+    return isWelcomeSystemPanelMessage(message) || isLeaveSystemPanelMessage(message);
+  });
+  for (const panel of stalePanels) {
+    await panel.delete(`Remove duplicate ${type} system panel from legacy channel`).catch((error: unknown) => {
+      pushLog("WARN", `Could not delete duplicate ${type} panel from legacy channel: ${String(error)}`);
+    });
+  }
+  const userMessages = messages.filter(message => !stalePanels.some(panel => panel.id === message.id));
+  if (userMessages.length === 0 && typeof channel.delete === "function") {
+    await channel.delete(`Remove duplicate ${type} notification channel`).then(() => {
+      pushLog("SUCCESS", `Removed duplicate ${type} notification channel ${channel.id}`);
+    }).catch((error: unknown) => {
+      pushLog("WARN", `Could not remove duplicate ${type} notification channel ${channel.id}: ${String(error)}`);
+    });
+  }
+}
+
+async function reconcileMemberEventSystemPanel(channel: any, client: Client, type: "welcome" | "leave"): Promise<void> {
+  if (!channel?.isTextBased?.() || !("messages" in channel)) return;
+  const messages = await fetchRecentChannelMessages(channel);
+  const botUserId = client.user?.id;
+  const detector = type === "welcome" ? isWelcomeSystemPanelMessage : isLeaveSystemPanelMessage;
+  const panels = messages
+    .filter(message => (!botUserId || message.author?.id === botUserId) && detector(message))
+    .sort((a, b) => (a.createdTimestamp ?? 0) - (b.createdTimestamp ?? 0) || a.id.localeCompare(b.id));
+  const canonicalPanel = panels[0];
+  const payload = type === "welcome" ? buildWelcomeSystemPanelPayload() : buildLeaveSystemPanelPayload();
+  if (canonicalPanel) {
+    await canonicalPanel.edit(payload);
+  } else {
+    await channel.send(payload);
+  }
+  for (const duplicate of panels.slice(1)) {
+    await duplicate.delete(`Remove duplicate ${type} system panel`).catch((error: unknown) => {
+      pushLog("WARN", `Could not delete duplicate ${type} system panel: ${String(error)}`);
+    });
+  }
 }
 
 export function startDiscordMemberEvents(client: Client) {
@@ -768,7 +942,7 @@ export function startDiscordMemberEvents(client: Client) {
 
   client.on("guildMemberRemove", async member => {
     const embed = buildLeaveMemberEmbed(member);
-    const channelId = await resolveWelcomeChannelId(client);
+    const channelId = await resolveLeaveChannelId(client);
     await sendToDiscordChannel(client, channelId, { embeds: [embed] });
   });
 }
@@ -985,6 +1159,7 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
         pushLog("WARN", "Minecraft status channel was not created; presence announcements remain disabled until it is configured.");
       }
 
+      await cleanupMisroutedWelcomePanels(client);
       startDiscordMemberEvents(client);
 
       // Auto-deploy onboarding & verification panels into user-requested channels
@@ -1003,6 +1178,15 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
               for (const duplicateId of cleanupPlan.duplicateIds) {
                 const duplicateChannel = guild.channels.cache.get(duplicateId);
                 await cleanupDuplicateAccountListChannel(duplicateChannel, client);
+              }
+            } else if (target.name === "👋│ระบบต้อนรับ" || target.name === "👋│ระบบสมาชิกออก") {
+              for (const duplicateId of cleanupPlan.duplicateIds) {
+                const duplicateChannel = guild.channels.cache.get(duplicateId);
+                await cleanupDuplicateMemberEventChannel(
+                  duplicateChannel,
+                  client,
+                  target.name === "👋│ระบบต้อนรับ" ? "welcome" : "leave",
+                );
               }
             }
 
@@ -1042,6 +1226,13 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
                 if (target.name === "📋│ระบบรายชื่อบัญชี") {
                   await reconcileAccountListPanel(channel, client);
                   pushLog("SUCCESS", `Reconciled one canonical panel in ${target.name}`);
+                } else if (target.name === "👋│ระบบต้อนรับ" || target.name === "👋│ระบบสมาชิกออก") {
+                  await reconcileMemberEventSystemPanel(
+                    channel,
+                    client,
+                    target.name === "👋│ระบบต้อนรับ" ? "welcome" : "leave",
+                  );
+                  pushLog("SUCCESS", `Reconciled one ${target.name === "👋│ระบบต้อนรับ" ? "welcome" : "leave"} panel in ${target.name}`);
                 } else {
                   const messages = await channel.messages.fetch({ limit: 100 });
                   const existingBotMsg = messages.find(m => m.author.id === client.user?.id);
@@ -1062,15 +1253,6 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
                       await channel.send({ embeds: [embed], components: buildOnboardingComponents() });
                     } else if (target.name === "🎖️│ระบบยืนยันรับยศ") {
                       await channel.send({ embeds: [buildRankClaimEmbed()], components: buildRankClaimComponents() });
-                    } else if (target.name === "👋│ระบบต้อนรับ-เข้าออก") {
-                      const embed = new EmbedBuilder()
-                        .setTitle("👋 ระบบต้อนรับและแจ้งเตือนเข้า-ออก RitzSMP")
-                        .setDescription("ช่องนี้ใช้สำหรับข้อความต้อนรับสมาชิกใหม่และแจ้งเตือนสมาชิกที่ออกจากเซิร์ฟเวอร์ค่ะ 💖")
-                        .setColor(0xec4899)
-                        .setImage(RITZ_WELCOME_COVER_IMAGE_URL)
-                        .setTimestamp()
-                        .setFooter({ text: "RitzSMP AI • ระบบต้อนรับและสมาชิกเข้า-ออก" });
-                      await channel.send({ embeds: [embed] });
                     }
                     pushLog("SUCCESS", `Posted panel to channel ${target.name}`);
                   }
