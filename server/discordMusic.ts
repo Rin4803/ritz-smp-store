@@ -241,10 +241,11 @@ async function playNext(session: MusicSession): Promise<void> {
   session.current = next;
   session.started = true;
   try {
-    const streamData = await stream(next.url, { quality: 2 });
+    const streamData = await stream(next.url, { quality: 2, discordPlayerCompatibility: true });
     const resource = createAudioResource(streamData.stream, { inputType: streamData.type });
     session.player.play(resource);
-  } catch {
+  } catch (err) {
+    console.error("[Music Error] Failed to stream URL:", next.url, err);
     session.current = undefined;
     await playNext(session);
   }

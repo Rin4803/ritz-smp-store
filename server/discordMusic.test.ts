@@ -106,3 +106,11 @@ describe("RitzSMP free music mode", () => {
     await expect(handleMusicCommand(interactionStop)).resolves.toBe(true);
     expect(reply).toHaveBeenCalled();
   });
+
+  it("handles stream compatibility option and logs errors safely", async () => {
+    expect(resolveMusicQuery("https://youtu.be/ETL8RLZrvek")).toEqual({
+      ok: true,
+      query: "https://youtu.be/ETL8RLZrvek",
+      isUrl: true,
+    });
+  });
