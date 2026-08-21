@@ -53,16 +53,16 @@ const rank = (
 
 /** Verified against the RitzSMP Discord rank announcement. Prices are Thai baht and all ranks are permanent. */
 export const DEFAULT_RANKS: Rank[] = [
-  rank(1, "VIP", "39.00", "silver", "ENTRY", "ยศเริ่มต้นสำหรับผู้สนับสนุน RitzSMP", ["/hat", "/craft", "ตั้งบ้าน 3 หลัง", "เงินในเกม 10,000", "Common Key ×3"]),
-  rank(2, "VIP+", "79.00", "gold", "POPULAR", "อัปเกรดจาก VIP พร้อมคำสั่งอำนวยความสะดวกเพิ่มเติม", ["สิทธิ์ VIP ทั้งหมด", "/enderchest", "/feed", "ตั้งบ้าน 5 หลัง", "เงินในเกม 25,000", "Common Key ×5", "Rare Key ×1"]),
-  rank(3, "Knight", "149.00", "ruby", "ADVENTURE", "ยศนักรบสำหรับผู้เล่นที่ต้องการความคล่องตัวมากขึ้น", ["สิทธิ์ VIP+ ทั้งหมด", "/ptime", "/pweather", "ตั้งบ้าน 8 หลัง", "เงินในเกม 50,000", "Common Key ×8", "Rare Key ×3"]),
-  rank(4, "Elite", "249.00", "gold", "ADVANCED", "ยศระดับสูงพร้อมเครื่องมือซ่อมและจัดการไอเทม", ["สิทธิ์ Knight ทั้งหมด", "/repair", "/anvil", "ตั้งบ้าน 10 หลัง", "เงินในเกม 80,000", "Rare Key ×5", "Epic Key ×2"]),
-  rank(5, "Noble", "399.00", "silver", "UTILITY", "ยศผู้ดีสำหรับผู้เล่นที่ต้องการความสะดวกในการเดินทาง", ["สิทธิ์ Elite ทั้งหมด", "/back", "Backpack Lv.1", "ตั้งบ้าน 15 หลัง", "เงินในเกม 120,000", "Rare Key ×8", "Epic Key ×5"]),
-  rank(6, "Lord", "599.00", "ruby", "PRESTIGE", "ยศศักดิ์ศรีพร้อมสีแชทและ Fly ที่ Spawn", ["สิทธิ์ Noble ทั้งหมด", "Chat Color", "Fly ที่ Spawn", "ตั้งบ้าน 20 หลัง", "เงินในเกม 200,000", "Epic Key ×8", "Legendary Key ×2"]),
-  rank(7, "Overlord", "899.00", "gold", "ELITE", "ยศชั้นสูงพร้อม Backpack และ Prefix ไล่สี", ["สิทธิ์ Lord ทั้งหมด", "Backpack Lv.2", "Prefix ไล่สี", "ตั้งบ้าน 30 หลัง", "เงินในเกม 350,000", "Epic Key ×10", "Legendary Key ×5"]),
-  rank(8, "Mythic", "1299.00", "ruby", "MYTHIC", "ยศ Mythic พร้อม Aura และ Cosmetic พิเศษ", ["สิทธิ์ Overlord ทั้งหมด", "Aura พิเศษ", "Cosmetic พิเศษ", "ตั้งบ้าน 40 หลัง", "เงินในเกม 500,000", "Legendary Key ×10", "Mythic Key ×3"]),
-  rank(9, "Celestial", "1799.00", "gold", "CELESTIAL", "ยศ Celestial พร้อม Join Message และ Chat Tag", ["สิทธิ์ Mythic ทั้งหมด", "Join Message", "Chat Tag", "ตั้งบ้าน 50 หลัง", "เงินในเกม 800,000", "Legendary Key ×15", "Mythic Key ×8"]),
-  rank(10, "Emperor", "2499.00", "ruby", "ULTIMATE", "ยศสูงสุดสำหรับผู้สนับสนุนระดับจักรพรรดิของ RitzSMP", ["สิทธิ์ทั้งหมด", "Homes ไม่จำกัด", "Cosmetic ทุกชนิด", "Join Message พิเศษ", "เงินในเกม 1,500,000", "Mythic Key ×20", "Emperor Key ×5"]),
+  rank(1, "VIP", "39.00", "silver", "ENTRY", "ยศเริ่มต้นสำหรับผู้สนับสนุน RitzSMP", ["/hat", "/craft", "ตั้งบ้าน 3 หลัง", "เงินในเกม 10,000", "รับเหรียญ 100 เหรียญ"]),
+  rank(2, "VIP+", "79.00", "gold", "POPULAR", "อัปเกรดจาก VIP พร้อมคำสั่งอำนวยความสะดวกเพิ่มเติม", ["สิทธิ์ VIP ทั้งหมด", "/enderchest", "/feed", "ตั้งบ้าน 5 หลัง", "เงินในเกม 25,000", "รับเหรียญ 250 เหรียญ"]),
+  rank(3, "Knight", "149.00", "ruby", "ADVENTURE", "ยศนักรบสำหรับผู้เล่นที่ต้องการความคล่องตัวมากขึ้น", ["สิทธิ์ VIP+ ทั้งหมด", "/ptime", "/pweather", "ตั้งบ้าน 8 หลัง", "เงินในเกม 50,000", "รับเหรียญ 450 เหรียญ"]),
+  rank(4, "Elite", "249.00", "gold", "ADVANCED", "ยศระดับสูงพร้อมเครื่องมือซ่อมและจัดการไอเทม", ["สิทธิ์ Knight ทั้งหมด", "/repair", "/anvil", "ตั้งบ้าน 10 หลัง", "เงินในเกม 80,000", "รับเหรียญ 700 เหรียญ"]),
+  rank(5, "Noble", "399.00", "silver", "UTILITY", "ยศผู้ดีสำหรับผู้เล่นที่ต้องการความสะดวกในการเดินทาง", ["สิทธิ์ Elite ทั้งหมด", "/back", "Backpack Lv.1", "ตั้งบ้าน 15 หลัง", "เงินในเกม 120,000", "รับเหรียญ 1,000 เหรียญ"]),
+  rank(6, "Lord", "599.00", "ruby", "PRESTIGE", "ยศศักดิ์ศรีพร้อมสีแชทและ Fly ที่ Spawn", ["สิทธิ์ Noble ทั้งหมด", "Chat Color", "Fly ที่ Spawn", "ตั้งบ้าน 20 หลัง", "เงินในเกม 200,000", "รับเหรียญ 1,200 เหรียญ"]),
+  rank(7, "Overlord", "899.00", "gold", "ELITE", "ยศชั้นสูงพร้อม Backpack และ Prefix ไล่สี", ["สิทธิ์ Lord ทั้งหมด", "Backpack Lv.2", "Prefix ไล่สี", "ตั้งบ้าน 30 หลัง", "เงินในเกม 350,000", "รับเหรียญ 1,350 เหรียญ"]),
+  rank(8, "Mythic", "1299.00", "ruby", "MYTHIC", "ยศ Mythic พร้อม Aura และ Cosmetic พิเศษ", ["สิทธิ์ Overlord ทั้งหมด", "Aura พิเศษ", "Cosmetic พิเศษ", "ตั้งบ้าน 40 หลัง", "เงินในเกม 500,000", "รับเหรียญ 1,420 เหรียญ"]),
+  rank(9, "Celestial", "1799.00", "gold", "CELESTIAL", "ยศ Celestial พร้อม Join Message และ Chat Tag", ["สิทธิ์ Mythic ทั้งหมด", "Join Message", "Chat Tag", "ตั้งบ้าน 50 หลัง", "เงินในเกม 800,000", "รับเหรียญ 1,470 เหรียญ"]),
+  rank(10, "Emperor", "2499.00", "ruby", "ULTIMATE", "ยศสูงสุดสำหรับผู้สนับสนุนระดับจักรพรรดิของ RitzSMP", ["สิทธิ์ทั้งหมด", "Homes ไม่จำกัด", "Cosmetic ทุกชนิด", "Join Message พิเศษ", "เงินในเกม 1,500,000", "รับเหรียญ 1,500 เหรียญ"]),
 ];
 
 export async function getDb() {
