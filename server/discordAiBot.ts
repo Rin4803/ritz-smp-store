@@ -1309,6 +1309,7 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
       GatewayIntentBits.GuildMembers,
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.MessageContent,
+      GatewayIntentBits.GuildVoiceStates,
     ],
   });
 
