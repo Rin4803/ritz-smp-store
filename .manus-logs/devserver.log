@@ -3471,3 +3471,6 @@
 [2026-08-21T15:33:23.712Z] 3:33:23 PM [vite] (client) hmr update /src/index.css
 [2026-08-21T15:35:57.809Z] 3:35:57 PM [vite] (client) hmr update /src/pages/Home.tsx, /src/index.css
 [2026-08-21T15:36:24.514Z] 3:36:24 PM [vite] (client) hmr update /src/index.css
+[2026-08-21T15:37:10.930Z] 3:37:10 PM [vite] (client) ✨ new dependencies optimized: canvas-confetti
+[2026-08-21T15:37:10.930Z] 3:37:10 PM [vite] (client) ✨ optimized dependencies changed. reloading
+[2026-08-21T15:40:13.160Z] 3:40:13 PM [vite] (client) hmr update /src/index.css
