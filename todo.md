@@ -183,3 +183,11 @@
 - [ ] Add a visible cancel/unlink action for pending codes and existing Discord-to-Minecraft links
 - [ ] Enforce one Discord account to one Minecraft account and reject conflicting links safely
 - [ ] Add regression coverage for duplicate code clicks, cancellation, relinking, and consumed-code behavior
+- [ ] เพิ่ม tRPC query สำหรับดึงประวัติการทำรายการ (orders และ topup requests) ของผู้ใช้ที่ล็อกอินอยู่
+- [ ] เพิ่มหน้าหรือแท็บแสดงประวัติการทำรายการ (Transaction History) บนเว็บสโตร์
+- [ ] ทดสอบความถูกต้องของสิทธิ์การเข้าถึงและการแสดงผลข้อมูลย้อนหลัง
+- [ ] ตรวจสอบผ่าน Vitest และบันทึก checkpoint
+- [x] เพิ่ม tRPC query สำหรับดึงประวัติการทำรายการ (orders และ topup requests) ของผู้ใช้ที่ล็อกอินอยู่
+- [x] เพิ่มหน้าหรือแท็บแสดงประวัติการทำรายการ (Transaction History) บนเว็บสโตร์
+- [x] ทดสอบความถูกต้องของสิทธิ์การเข้าถึงและการแสดงผลข้อมูลย้อนหลัง
+- [x] ตรวจสอบผ่าน Vitest และบันทึก checkpoint
