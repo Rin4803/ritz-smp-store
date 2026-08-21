@@ -173,3 +173,13 @@
 - [x] Route guildMemberAdd only to the welcome channel and guildMemberRemove only to the leave channel
 - [x] Migrate the combined-channel panel safely and add regression coverage for separate channel routing
 - [x] Fix the `/verify` interaction path that logged `InteractionNotReplied` during live startup validation and add a regression test
+- [ ] Clean legacy Kanopi embeds from `📜│บันทึกรับยศสำเร็จ` without touching unrelated Discord channels
+- [ ] Ensure current rank-purchase notifications use one canonical RitzSMP AI format and do not duplicate
+- [ ] Add regression coverage for legacy rank-log classification and safe cleanup
+- [ ] Format the Discord member list as readable line-separated entries without literal `\\n` artifacts or ambiguous mentions
+- [ ] Make the Minecraft online-player button finish within a bounded timeout and show `ออนไลน์ 0 คน` when no players or no response is available
+- [ ] Add regression coverage for member-list formatting, zero-player fallback, timeout handling, and interaction acknowledgement
+- [ ] Reuse one active four-digit verification code per Discord account until it is consumed or expires
+- [ ] Add a visible cancel/unlink action for pending codes and existing Discord-to-Minecraft links
+- [ ] Enforce one Discord account to one Minecraft account and reject conflicting links safely
+- [ ] Add regression coverage for duplicate code clicks, cancellation, relinking, and consumed-code behavior

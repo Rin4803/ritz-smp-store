@@ -11,6 +11,8 @@ import {
   getPreferredWelcomeChannelId,
   isMisroutedWelcomePanelMessage,
   planMisroutedWelcomePanelCleanup,
+  isLegacyKanopiRankLogMessage,
+  planLegacyKanopiRankLogCleanup,
 } from "./discordAiBot.js";
 
 describe("RitzSMP AI Bot Expanded Commands", () => {
@@ -65,7 +67,7 @@ describe("RitzSMP AI Bot Expanded Commands", () => {
     });
   });
 
-  it("builds one canonical account-list payload with stable marker and three actions", () => {
+  it("builds one canonical account-list payload with stable marker and four actions including unlink", () => {
     const payload = buildAccountListPanelPayload();
     const embed = payload.embeds[0].toJSON();
     const buttons = payload.components[0].toJSON().components;
@@ -75,6 +77,7 @@ describe("RitzSMP AI Bot Expanded Commands", () => {
       "ritz_profile_button",
       "ritz_discord_members_button",
       "ritz_players_button",
+      "ritz_unlink_button",
     ]);
   });
 
@@ -100,6 +103,37 @@ describe("RitzSMP AI Bot Expanded Commands", () => {
     expect(isMisroutedWelcomePanelMessage(staleMessages[0])).toBe(true);
     expect(isMisroutedWelcomePanelMessage(staleMessages[1])).toBe(false);
     expect(planMisroutedWelcomePanelCleanup(staleMessages)).toEqual(["welcome-1", "welcome-with-data-shape"]);
+  });
+
+  it("cleans only legacy Kanopi rank-log embeds from the purchase-success channel", () => {
+    const messages = [
+      {
+        id: "kanopi-rank-1",
+        author: { id: "1369921212062629939", username: "botnasa000", bot: true },
+        embeds: [{
+          fields: [
+            { name: "ชื่อในเกม ::", value: "Nasajjas" },
+            { name: "สไตล์ การเล่น::", value: "PvP" },
+          ],
+          footer: { text: "ID: 129719562230009919 • 11/8/69 00:40" },
+        }],
+      },
+      {
+        id: "current-rank-1",
+        author: { id: "ritz-ai", username: "RitzSMP AI" },
+        embeds: [{ title: "🎉 มีผู้สนับสนุน RitzSMP ใหม่ค่ะ!" }],
+      },
+      {
+        id: "human-1",
+        author: { id: "member-1", username: "KanopiFan" },
+        content: "ได้รับยศเรียบร้อยแล้ว",
+      },
+    ];
+
+    expect(isLegacyKanopiRankLogMessage(messages[0])).toBe(true);
+    expect(isLegacyKanopiRankLogMessage(messages[1])).toBe(false);
+    expect(isLegacyKanopiRankLogMessage(messages[2])).toBe(false);
+    expect(planLegacyKanopiRankLogCleanup(messages)).toEqual(["kanopi-rank-1"]);
   });
 
   it("never uses the purchase channel as an implicit welcome-channel fallback", () => {

@@ -40,6 +40,7 @@ describe("Discord interaction acknowledgement safety", () => {
   it("edits the existing response when the initial reply races with another listener", async () => {
     const interaction = repliableInteraction({
       reply: vi.fn().mockRejectedValue(Object.assign(new Error("Interaction has already been acknowledged"), { code: 40060 })),
+      deferred: true,
     });
 
     await expect(safeReply(interaction, { content: "พร้อมให้บริการค่ะ" })).resolves.toBe(true);

@@ -229,10 +229,22 @@ export function generateDiscordVerificationCode(): string {
   return randomInt(0, 10_000).toString().padStart(4, "0");
 }
 
-export async function createDiscordVerificationCode(discordUserId: string): Promise<DiscordVerificationCode> {
+export async function createDiscordVerificationCode(discordUserId: string, forceNew = false): Promise<DiscordVerificationCode> {
   if (!discordUserId) throw new Error("Discord user ID is required");
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
+
+  // Check if an active unexpired, unused code already exists
+  if (!forceNew) {
+    const existingRows = await db.select().from(discordVerificationCodes)
+      .where(eq(discordVerificationCodes.discordUserId, discordUserId)).limit(1);
+    const existing = existingRows[0];
+    const now = Date.now();
+    if (existing && !existing.usedAt && existing.expiresAt.getTime() > now) {
+      return existing; // Reuse existing active code idempotently
+    }
+  }
+
   const code = generateDiscordVerificationCode();
   const expiresAt = new Date(Date.now() + DISCORD_VERIFICATION_CODE_TTL_MS);
   await db.insert(discordVerificationCodes).values({
@@ -247,6 +259,23 @@ export async function createDiscordVerificationCode(discordUserId: string): Prom
     .where(eq(discordVerificationCodes.discordUserId, discordUserId)).limit(1);
   if (!created[0]) throw new Error("ไม่สามารถสร้างรหัสยืนยันตัวตนได้");
   return created[0];
+}
+
+export async function cancelDiscordVerificationCode(discordUserId: string): Promise<boolean> {
+  if (!discordUserId) return false;
+  const db = await getDb();
+  if (!db) return false;
+  await db.delete(discordVerificationCodes).where(eq(discordVerificationCodes.discordUserId, discordUserId));
+  return true;
+}
+
+export async function unlinkDiscordVerification(discordUserId: string): Promise<boolean> {
+  if (!discordUserId) return false;
+  const db = await getDb();
+  if (!db) return false;
+  await db.delete(discordVerifications).where(eq(discordVerifications.discordUserId, discordUserId));
+  await db.delete(discordVerificationCodes).where(eq(discordVerificationCodes.discordUserId, discordUserId));
+  return true;
 }
 
 export async function redeemDiscordVerificationCode(input: {

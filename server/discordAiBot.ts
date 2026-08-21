@@ -20,6 +20,8 @@ import { invokeLLM } from "./_core/llm.js";
 import {
   createDiscordVerification,
   createDiscordVerificationCode,
+  cancelDiscordVerificationCode,
+  unlinkDiscordVerification,
   getDiscordVerification,
   getDiscordVerificationByMinecraftUuid,
   updateDiscordProfile,
@@ -28,6 +30,7 @@ import {
   fetchMinecraftProfile,
   fetchMinecraftServerStatus,
   grantMinecraftRank,
+  type MinecraftServerStatus,
 } from "./minecraftIntegration.js";
 import { handleMusicCommand, musicCommand } from "./discordMusic.js";
 import { ensureMusicTextChannel } from "./discordMusicChannel.js";
@@ -104,11 +107,19 @@ export async function ensureDeferredReply(interaction: any, options: { ephemeral
   if (interaction.deferred || interaction.replied) return true;
   try {
     await interaction.deferReply(options);
+    // Discord.js normally updates `deferred` synchronously, but keeping a
+    // confirmation marker also makes the response path resilient to adapter
+    // mocks and rare state-update races.
     interaction.__ritzDeferred = true;
+    interaction.__ritzDeferConfirmed = true;
     return true;
   } catch (error) {
     if (interactionWasAlreadyAcknowledged(error) || interaction.deferred || interaction.replied) {
-      pushLog("INFO", "Interaction was acknowledged by another handler; continuing with editReply");
+      // A second listener may have acknowledged the interaction while this
+      // listener was deferring it. Follow up rather than calling editReply
+      // against a locally stale `deferred` flag.
+      interaction.__ritzAcknowledgedByRace = true;
+      pushLog("INFO", "Interaction was acknowledged by another handler; continuing with followUp");
       return true;
     }
     pushLog("ERROR", `Could not defer interaction: ${String(error)}`);
@@ -119,18 +130,20 @@ export async function ensureDeferredReply(interaction: any, options: { ephemeral
 export async function safeReply(interaction: any, options: any): Promise<boolean> {
   if (!interaction) return false;
   if (typeof interaction.isRepliable === "function" && !interaction.isRepliable()) return false;
+  let payload = options;
+  if (typeof options === "string") {
+    payload = { content: options.length > 1950 ? options.slice(0, 1900) + "\n...(ถูกตัดทอนความยาว)" : options };
+  } else if (options && typeof options === "object" && typeof options.content === "string" && options.content.length > 1950) {
+    payload = { ...options, content: options.content.slice(0, 1900) + "\n...(ถูกตัดทอนความยาว)" };
+  }
   try {
-    let payload = options;
-    if (typeof options === "string") {
-      payload = { content: options.length > 1950 ? options.slice(0, 1900) + "\n...(ถูกตัดทอนความยาว)" : options };
-    } else if (options && typeof options === "object" && typeof options.content === "string" && options.content.length > 1950) {
-      payload = { ...options, content: options.content.slice(0, 1900) + "\n...(ถูกตัดทอนความยาว)" };
-    }
-    // Discord.js state is authoritative. The internal marker only records that a
-    // defer was attempted; it must never force editReply when Discord reports that
-    // the interaction is still unacknowledged (a real-world race seen on /verify).
-    if (interaction.deferred || interaction.replied) {
+    // Use Discord.js state first. The confirmed marker is only set by the
+    // current invocation of ensureDeferredReply, so it is safer than trusting
+    // an arbitrary stale marker left by another handler or test fixture.
+    if (interaction.deferred || interaction.replied || interaction.__ritzDeferConfirmed) {
       await interaction.editReply(payload);
+    } else if (interaction.__ritzAcknowledgedByRace && typeof interaction.followUp === "function") {
+      await interaction.followUp(payload);
     } else {
       await interaction.reply(payload);
     }
@@ -138,7 +151,13 @@ export async function safeReply(interaction: any, options: any): Promise<boolean
   } catch (error) {
     if (interactionWasAlreadyAcknowledged(error)) {
       try {
-        await interaction.editReply(options);
+        if (interaction.deferred || interaction.replied || interaction.__ritzDeferConfirmed) {
+          await interaction.editReply(payload);
+        } else if (typeof interaction.followUp === "function") {
+          await interaction.followUp(payload);
+        } else {
+          await interaction.editReply(payload);
+        }
         return true;
       } catch (retryError) {
         pushLog("ERROR", `safeReply acknowledged retry failed: ${String(retryError)}`);
@@ -147,10 +166,13 @@ export async function safeReply(interaction: any, options: any): Promise<boolean
     }
     pushLog("WARN", `safeReply failed: ${String(error)}`);
     try {
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({ content: "เกิดข้อผิดพลาดในการตอบสนอง กรุณาลองใหม่อีกครั้งนะคะ 💕", ephemeral: true });
+      const fallbackPayload = { content: "เกิดข้อผิดพลาดในการตอบสนอง กรุณาลองใหม่อีกครั้งนะคะ 💕", ephemeral: true };
+      if (!interaction.replied && !interaction.deferred && !interaction.__ritzDeferConfirmed && !interaction.__ritzAcknowledgedByRace) {
+        await interaction.reply(fallbackPayload);
+      } else if (interaction.__ritzAcknowledgedByRace && typeof interaction.followUp === "function") {
+        await interaction.followUp(fallbackPayload);
       } else {
-        await interaction.followUp({ content: "เกิดข้อผิดพลาดในการตอบสนอง กรุณาลองใหม่อีกครั้งนะคะ 💕", ephemeral: true });
+        await interaction.editReply(fallbackPayload);
       }
       return true;
     } catch (fallbackError) {
@@ -169,6 +191,14 @@ function buildOnboardingComponents() {
       .setCustomId("ritz_verify_button")
       .setLabel("🔗 เชื่อมบัญชี")
       .setStyle(ButtonStyle.Success),
+    new ButtonBuilder()
+      .setCustomId("ritz_cancel_verify_button")
+      .setLabel("❌ ยกเลิกรหัส / เปลี่ยนบัญชี")
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId("ritz_unlink_button")
+      .setLabel("🔓 ยกเลิกการเชื่อมต่อทั้งหมด")
+      .setStyle(ButtonStyle.Danger),
   );
   return [actionRow];
 }
@@ -261,6 +291,36 @@ function buildOnboardingEmbed() {
 
 export const ACCOUNT_LIST_PANEL_MARKER = "RitzSMP AI • ระบบรายชื่อบัญชี • canonical-v1";
 export const LEGACY_ACCOUNT_LIST_LOG_CHANNEL_NAME = "🧾│บันทึกรับยศสำเร็จ";
+export const LEGACY_KANOPI_BOT_USER_ID = "1369921212062629939";
+
+export type RankLogMessageLike = {
+  id: string;
+  author?: { id?: string; username?: string; bot?: boolean };
+  content?: string;
+  embeds?: any[];
+};
+
+export function isLegacyKanopiRankLogMessage(message: RankLogMessageLike): boolean {
+  const authorId = String(message.author?.id ?? "");
+  const authorName = String(message.author?.username ?? "").toLowerCase();
+  const isLegacyAuthor = authorId === LEGACY_KANOPI_BOT_USER_ID ||
+    (message.author?.bot === true && (authorName === "botnasa000" || authorName.includes("kanopi")));
+  if (!isLegacyAuthor) return false;
+
+  const content = String(message.content ?? "");
+  const embedFields = (message.embeds ?? []).flatMap(embed => embed?.fields ?? embed?.data?.fields ?? []);
+  const fieldNames = embedFields.map(field => String(field?.name ?? "")).join(" ");
+  const footers = (message.embeds ?? []).map(embed => String(embed?.footer?.text ?? embed?.data?.footer?.text ?? ""));
+  const hasRankLogContent = content.includes("ได้รับยศเรียบร้อยแล้ว");
+  const hasRankLogFields = fieldNames.includes("ชื่อในเกม") && fieldNames.includes("สไตล์ การเล่น");
+  const hasLegacyIdFooter = footers.some(footer => /^ID:\s*\d+/.test(footer));
+  return hasRankLogContent || (hasRankLogFields && hasLegacyIdFooter);
+}
+
+export function planLegacyKanopiRankLogCleanup(messages: Iterable<RankLogMessageLike>): string[] {
+  return Array.from(messages).filter(isLegacyKanopiRankLogMessage).map(message => message.id);
+}
+
 
 export const RITZ_SYSTEM_CHANNEL_TARGETS = [
   {
@@ -369,6 +429,7 @@ export function buildAccountListPanelPayload() {
     new ButtonBuilder().setCustomId("ritz_profile_button").setLabel("🪪 ดูโปรไฟล์ของฉัน").setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId("ritz_discord_members_button").setLabel("👥 สมาชิก Discord").setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId("ritz_players_button").setLabel("⛏️ ผู้เล่น Minecraft ออนไลน์").setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId("ritz_unlink_button").setLabel("🔓 ยกเลิกเชื่อมบัญชี").setStyle(ButtonStyle.Danger),
   );
   return { embeds: [embed], components: [profileRow] };
 }
@@ -376,6 +437,24 @@ export function buildAccountListPanelPayload() {
 async function fetchRecentChannelMessages(channel: any, limit = 100): Promise<any[]> {
   const collection = await channel.messages.fetch({ limit });
   return Array.from(collection.values());
+}
+
+async function cleanupLegacyKanopiRankLogMessages(client: Client): Promise<void> {
+  const rankLogChannelId = ENV.discordSupportChannelId?.trim() || "";
+  if (!rankLogChannelId) return;
+
+  const channel = await client.channels.fetch(rankLogChannelId).catch(() => null) as any;
+  if (!channel?.isTextBased?.() || !("messages" in channel)) return;
+
+  const messages = await fetchRecentChannelMessages(channel);
+  const staleIds = planLegacyKanopiRankLogCleanup(messages);
+  for (const message of messages.filter(message => staleIds.includes(message.id))) {
+    await message.delete("Remove legacy Kanopi rank-log message from RitzSMP purchase-success channel").then(() => {
+      pushLog("SUCCESS", `Removed legacy Kanopi rank-log message ${message.id}`);
+    }).catch((error: unknown) => {
+      pushLog("WARN", `Could not remove legacy Kanopi rank-log message ${message.id}: ${String(error)}`);
+    });
+  }
 }
 
 async function cleanupMisroutedWelcomePanels(client: Client): Promise<void> {
@@ -573,7 +652,7 @@ export function buildDiscordMembersEmbed(members: any[]) {
     ? visibleMembers.map((member, index) => {
         const displayName = member.displayName || member.user?.globalName || member.user?.username || `สมาชิก ${index + 1}`;
         return `**${index + 1}.** ${displayName} (<@${member.id}>)`;
-      }).join("\\n")
+      }).join("\n")
     : "ยังไม่พบสมาชิก Discord ที่แสดงได้ในขณะนี้ค่ะ";
 
   return new EmbedBuilder()
@@ -604,18 +683,41 @@ async function replyWithDiscordMembers(interaction: any) {
   }
 }
 
-async function replyWithPlayers(interaction: any) {
-  if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return;
-  const mc = await fetchMinecraftServerStatus();
-  const names = mc.playerNames.length ? mc.playerNames.map(name => `• ${name}`).join("\n") : "ยังไม่มีรายชื่อที่ API เปิดเผยในขณะนี้ค่ะ";
-  const embed = new EmbedBuilder()
+export function buildMinecraftPlayersEmbed(status: MinecraftServerStatus) {
+  const playerCount = Number.isFinite(status.players) ? Math.max(0, status.players) : 0;
+  const maxPlayers = Number.isFinite(status.maxPlayers) ? Math.max(0, status.maxPlayers) : 0;
+  const description = status.online
+    ? playerCount === 0
+      ? "🟢 เซิร์ฟเวอร์ออนไลน์ค่ะ แต่ตอนนี้ยังไม่มีผู้เล่นอยู่ในเซิร์ฟเวอร์"
+      : status.playerNames.length > 0
+        ? status.playerNames.map(name => `• ${name}`).join("\n")
+        : "🟢 เซิร์ฟเวอร์ออนไลน์ แต่ API ยังไม่เปิดเผยรายชื่อผู้เล่นในขณะนี้ค่ะ"
+    : "🔴 ตรวจสอบเซิร์ฟเวอร์ไม่สำเร็จหรือเซิร์ฟเวอร์ออฟไลน์ค่ะ แสดงผู้เล่น 0 คนชั่วคราว";
+  const statusValue = status.online
+    ? `🟢 ออนไลน์ ${playerCount}/${maxPlayers} คน`
+    : "🔴 ตรวจสอบไม่ได้ • แสดง 0 คนชั่วคราว";
+
+  return new EmbedBuilder()
     .setTitle("👥 รายชื่อผู้เล่นใน RitzSMP")
-    .setDescription(mc.online ? names : "🔴 เซิร์ฟเวอร์ออฟไลน์หรือยังตรวจสอบไม่ได้ค่ะ")
-    .addFields({ name: "สถานะ", value: mc.online ? `🟢 ออนไลน์ ${mc.players}/${mc.maxPlayers} คน` : "🔴 ออฟไลน์", inline: true })
-    .setColor(mc.online ? 0x22c55e : 0xef4444)
+    .setDescription(description)
+    .addFields({ name: "สถานะ", value: statusValue, inline: true })
+    .setColor(status.online ? 0x22c55e : 0xef4444)
     .setTimestamp()
     .setFooter({ text: "ข้อมูลจาก Minecraft status API • กดปุ่มอีกครั้งเพื่อรีเฟรช" });
-  await interaction.editReply({ embeds: [embed] });
+}
+
+async function replyWithPlayers(interaction: any) {
+  if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return;
+  try {
+    const mc = await fetchMinecraftServerStatus();
+    await safeReply(interaction, { embeds: [buildMinecraftPlayersEmbed(mc)], ephemeral: true });
+  } catch (error) {
+    pushLog("WARN", `Minecraft player status fallback: ${String(error)}`);
+    await safeReply(interaction, {
+      content: "ตรวจสอบ Minecraft ไม่สำเร็จค่ะ แสดงผู้เล่น 0 คนชั่วคราวนะคะ",
+      ephemeral: true,
+    });
+  }
 }
 
 async function replyWithVerificationCode(interaction: any) {
@@ -990,6 +1092,24 @@ export async function handleOnboardingInteraction(interaction: any): Promise<boo
       await showProfileModal(interaction);
       return true;
     }
+    if (interaction.customId === "ritz_cancel_verify_button") {
+      if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return true;
+      await cancelDiscordVerificationCode(interaction.user.id);
+      await safeReply(interaction, {
+        content: "❌ ยกเลิกรหัสยืนยันตัวตนเดิมเรียบร้อยแล้วค่ะ คุณสามารถกดปุ่ม **🔗 เชื่อมบัญชี** เพื่อสร้างรหัสใหม่ 4 หลักได้ทันทีเลยนะคะ 💕",
+        ephemeral: true,
+      });
+      return true;
+    }
+    if (interaction.customId === "ritz_unlink_button") {
+      if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return true;
+      await unlinkDiscordVerification(interaction.user.id);
+      await safeReply(interaction, {
+        content: "🔓 ยกเลิกการเชื่อมต่อบัญชี Minecraft และรหัสยืนยันเรียบร้อยแล้วค่ะ หากต้องการเชื่อมต่อใหม่สามารถกดปุ่ม **🔗 เชื่อมบัญชี** ได้ตลอดเวลาเลยนะคะ ✨",
+        ephemeral: true,
+      });
+      return true;
+    }
   }
 
   if (interaction.isModalSubmit()) {
@@ -1160,6 +1280,7 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
       }
 
       await cleanupMisroutedWelcomePanels(client);
+      await cleanupLegacyKanopiRankLogMessages(client);
       startDiscordMemberEvents(client);
 
       // Auto-deploy onboarding & verification panels into user-requested channels
