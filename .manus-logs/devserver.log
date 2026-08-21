@@ -3445,3 +3445,5 @@
 [2026-08-21T11:31:42.888Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
 [2026-08-21T11:31:46.315Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540300496101707849
 [2026-08-21T11:31:47.263Z] 11:31:47 AM [vite] (client) hmr update /src/index.css
+[2026-08-21T11:31:48.247Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-21T11:34:08.867Z] 11:34:08 AM [vite] (client) hmr update /src/index.css
