@@ -82,3 +82,27 @@ describe("RitzSMP free music mode", () => {
     expect(reply).toHaveBeenCalled();
   });
 });
+
+  it("handles skip and stop subcommands safely when no active track or session exists", async () => {
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const interactionSkip = {
+      guildId: "guild-nonexistent",
+      member: { voice: { channel: { id: "vc-1", guild: { id: "guild-1", voiceAdapterCreator: {} } } } },
+      options: { getSubcommand: () => "skip" },
+      reply,
+      deferred: false,
+      replied: false,
+    };
+    await expect(handleMusicCommand(interactionSkip)).resolves.toBe(true);
+
+    const interactionStop = {
+      guildId: "guild-nonexistent",
+      member: { voice: { channel: { id: "vc-1", guild: { id: "guild-1", voiceAdapterCreator: {} } } } },
+      options: { getSubcommand: () => "stop" },
+      reply,
+      deferred: false,
+      replied: false,
+    };
+    await expect(handleMusicCommand(interactionStop)).resolves.toBe(true);
+    expect(reply).toHaveBeenCalled();
+  });
