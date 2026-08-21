@@ -56,6 +56,10 @@ export const playShortcutCommand = new SlashCommandBuilder()
     option.setName("query").setDescription("ชื่อเพลง หรือลิงก์ YouTube / SoundCloud").setRequired(true)
   );
 
+export const leaveShortcutCommand = new SlashCommandBuilder()
+  .setName("leave")
+  .setDescription("🚪 ให้น้องออกจากห้องเสียงและล้างคิวทันที (ใช้ได้ทุกคน)");
+
 export function resetMusicSessionsForTests(): void {
   for (const session of Array.from(sessions.values())) {
     session.idleTimer && clearTimeout(session.idleTimer);
@@ -360,7 +364,8 @@ export async function handleMusicCommand(interaction: any): Promise<boolean> {
   }
 
   const isStandalonePlay = interaction.commandName === "play";
-  const subcommand = isStandalonePlay ? "play" : (interaction.options?.getSubcommand?.() ?? "");
+  const isStandaloneLeave = interaction.commandName === "leave";
+  const subcommand = isStandalonePlay ? "play" : isStandaloneLeave ? "leave" : (interaction.options?.getSubcommand?.() ?? "");
   const existing = sessions.get(interaction.guildId);
 
   if (subcommand === "queue") {
