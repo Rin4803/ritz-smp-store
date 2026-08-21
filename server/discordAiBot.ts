@@ -104,7 +104,7 @@ function interactionWasAlreadyAcknowledged(error: unknown): boolean {
 export async function ensureDeferredReply(interaction: any, options: { ephemeral?: boolean } = {}): Promise<boolean> {
   if (!interaction) return false;
   if (typeof interaction.isRepliable === "function" && !interaction.isRepliable()) return false;
-  if (interaction.deferred || interaction.replied) return true;
+  if (interaction.deferred || interaction.replied || interaction.__ritzDeferConfirmed) return true;
   try {
     await interaction.deferReply(options);
     // Discord.js normally updates `deferred` synchronously, but keeping a

@@ -2925,3 +2925,55 @@
 [2026-08-21T03:09:06.811Z] [RitzSmpAI] [SUCCESS] Reconciled one canonical panel in 📋│ระบบรายชื่อบัญชี
 [2026-08-21T03:09:11.262Z] [RitzSmpAI] [SUCCESS] Reconciled one welcome panel in 👋│ระบบต้อนรับ
 [2026-08-21T03:09:14.055Z] [RitzSmpAI] [SUCCESS] Reconciled one leave panel in 👋│ระบบสมาชิกออก
+[2026-08-21T03:09:59.418Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-21T03:11:57.465Z] (node:76665) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-21T03:11:59.700Z] [RitzSmpAI] [INFO] Interaction was acknowledged by another handler; continuing with followUp
+[2026-08-21T03:12:02.596Z] [RitzSmpAI] [WARN] safeReply failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-21T03:12:02.596Z] [RitzSmpAI] [ERROR] safeReply fallback failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-21T03:12:02.596Z] [RitzSmpAI] [SUCCESS] Handled onboarding interaction ritz_players_button
+[2026-08-21T03:12:13.634Z] [RitzSmpAI] [INFO] Interaction was acknowledged by another handler; continuing with followUp
+[2026-08-21T03:12:13.701Z] [RitzSmpAI] [ERROR] Error in handleOnboardingInteraction: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-21T03:12:13.701Z] [RitzSmpAI] [WARN] safeReply failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-21T03:12:13.701Z] [RitzSmpAI] [ERROR] safeReply fallback failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-21T03:12:13.701Z] [RitzSmpAI] [SUCCESS] Handled onboarding interaction ritz_profile_button
+[2026-08-21T03:12:19.211Z] [RitzSmpAI] [SUCCESS] Handled onboarding interaction ritz_discord_members_button
+[2026-08-21T03:12:40.969Z] [RitzSmpAI] [INFO] Interaction was acknowledged by another handler; continuing with followUp
+[2026-08-21T03:12:41.050Z] [RitzSmpAI] [WARN] safeReply failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-21T03:12:41.050Z] [RitzSmpAI] [ERROR] safeReply fallback failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-21T03:12:41.050Z] [RitzSmpAI] [SUCCESS] Handled onboarding interaction ritz_unlink_button
+[2026-08-21T03:12:44.293Z] [RitzSmpAI] [INFO] Interaction was acknowledged by another handler; continuing with followUp
+[2026-08-21T03:12:44.381Z] [RitzSmpAI] [WARN] safeReply failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-21T03:12:44.381Z] [RitzSmpAI] [ERROR] safeReply fallback failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-21T03:12:44.381Z] [RitzSmpAI] [SUCCESS] Handled onboarding interaction ritz_unlink_button
+[2026-08-21T03:12:57.772Z] [RitzSmpAI] [ERROR] Error in handleOnboardingInteraction: Error: Invalid string length
+[2026-08-21T03:12:59.800Z] [RitzSmpAI] [ERROR] safeReply acknowledged retry failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-21T03:12:59.801Z] [RitzSmpAI] [SUCCESS] Handled onboarding interaction ritz_claim_rank_button
+[2026-08-21T03:13:18.879Z] [RitzSmpAI] [INFO] Interaction was acknowledged by another handler; continuing with followUp
+[2026-08-21T03:13:20.835Z] [RitzSmpAI] [WARN] safeReply failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-21T03:13:20.835Z] [RitzSmpAI] [ERROR] safeReply fallback failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-21T03:13:20.835Z] [RitzSmpAI] [SUCCESS] Handled onboarding interaction ritz_players_button
+[2026-08-21T03:13:23.192Z] [RitzSmpAI] [SUCCESS] Handled onboarding interaction ritz_discord_members_button
+[2026-08-21T03:13:44.271Z] [RitzSmpAI] [INFO] Interaction was acknowledged by another handler; continuing with followUp
+[2026-08-21T03:13:44.314Z] [RitzSmpAI] [WARN] safeReply failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-21T03:13:44.314Z] [RitzSmpAI] [ERROR] safeReply fallback failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-21T03:13:44.314Z] [RitzSmpAI] [SUCCESS] Generated verification code 4513 for 1400488200769769684
+[2026-08-21T03:13:44.314Z] [RitzSmpAI] [SUCCESS] Handled onboarding interaction ritz_verify_button
+[2026-08-21T03:13:48.052Z] [RitzSmpAI] [INFO] Interaction was acknowledged by another handler; continuing with followUp
+[2026-08-21T03:13:48.105Z] [RitzSmpAI] [WARN] safeReply failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-21T03:13:48.105Z] [RitzSmpAI] [ERROR] safeReply fallback failed: DiscordjsError [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
+[2026-08-21T03:13:48.105Z] [RitzSmpAI] [SUCCESS] Generated verification code 4513 for 1400488200769769684
+[2026-08-21T03:13:48.105Z] [RitzSmpAI] [SUCCESS] Handled onboarding interaction ritz_verify_button
+[2026-08-21T04:42:07.184Z] [Auth] Missing session cookie
+[2026-08-21T05:27:58.618Z] 5:27:58 AM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-21T05:27:59.439Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-21T05:27:59.760Z] Server running on http://localhost:3000/
+[2026-08-21T05:28:04.412Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-21T05:28:04.413Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-21T05:28:04.414Z] (node:82850) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-21T05:28:04.414Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-21T05:28:05.108Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-21T05:28:07.544Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540161713679376384
+[2026-08-21T05:28:08.784Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-21T05:28:13.349Z] [RitzSmpAI] [SUCCESS] Reconciled one canonical panel in 📋│ระบบรายชื่อบัญชี
+[2026-08-21T05:28:16.400Z] [RitzSmpAI] [SUCCESS] Reconciled one welcome panel in 👋│ระบบต้อนรับ
+[2026-08-21T05:28:18.305Z] [RitzSmpAI] [SUCCESS] Reconciled one leave panel in 👋│ระบบสมาชิกออก
