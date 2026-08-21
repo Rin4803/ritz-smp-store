@@ -3775,3 +3775,171 @@
 [2026-08-21T16:55:12.540Z] [Music] AudioPlayer entered Idle state
 [2026-08-21T16:55:13.621Z] [RitzSmpAI] [SUCCESS] Handled /play command
 [2026-08-21T17:00:01.663Z] 5:00:01 PM [vite] (client) hmr update /src/index.css
+[2026-08-21T17:02:25.294Z] [RitzSmpAI] [INFO] Received command /play from tun_5555
+[2026-08-21T17:02:27.250Z] [Music] Fetching ytdl stream for: https://youtube.com/playlist?list=RDh33ykFMbQh8&playnext=1&si=Vto13OyqcpTNF-h5
+[2026-08-21T17:02:27.253Z] [Music] AudioPlayer playing resource for: https://youtube.com/playlist?list=RDh33ykFMbQh8&playnext=1&si=Vto13OyqcpTNF-h5
+[2026-08-21T17:02:27.256Z] [Music Error] AudioPlayer encountered error: AudioPlayerError: No video id found: "https://youtube.com/playlist?list=RDh33ykFMbQh8&playnext=1&si=Vto13OyqcpTNF-h5"
+[2026-08-21T17:02:27.257Z] at exports.getURLVideoID (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/url-utils.js:36:11)
+[2026-08-21T17:02:27.257Z] at exports.getVideoID (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/url-utils.js:59:20)
+[2026-08-21T17:02:27.257Z] at exports.<computed> [as getInfo] (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/info.js:654:31)
+[2026-08-21T17:02:27.257Z] at ytdl (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/index.js:18:8)
+[2026-08-21T17:02:27.257Z] at playNext (/home/ubuntu/ritz-smp-store/server/discordMusic.ts:258:22)
+[2026-08-21T17:02:27.257Z] at handleMusicCommand (/home/ubuntu/ritz-smp-store/server/discordMusic.ts:400:35)
+[2026-08-21T17:02:27.257Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2026-08-21T17:02:27.257Z] at async Client.<anonymous> (/home/ubuntu/ritz-smp-store/server/discordAiBot.ts:1591:9) {
+[2026-08-21T17:02:27.257Z] resource: AudioResource {
+[2026-08-21T17:02:27.257Z] playStream: Encoder {
+[2026-08-21T17:02:27.257Z] _events: [Object],
+[2026-08-21T17:02:27.257Z] _readableState: [ReadableState],
+[2026-08-21T17:02:27.257Z] _writableState: [WritableState],
+[2026-08-21T17:02:27.257Z] allowHalfOpen: true,
+[2026-08-21T17:02:27.257Z] _maxListeners: undefined,
+[2026-08-21T17:02:27.257Z] _eventsCount: 6,
+[2026-08-21T17:02:27.257Z] encoder: null,
+[2026-08-21T17:02:27.257Z] _options: [Object],
+[2026-08-21T17:02:27.257Z] _required: 3840,
+[2026-08-21T17:02:27.257Z] _buffer: null,
+[2026-08-21T17:02:27.257Z] [Symbol(shapeMode)]: true,
+[2026-08-21T17:02:27.257Z] [Symbol(kCapture)]: false,
+[2026-08-21T17:02:27.257Z] [Symbol(kCallback)]: null
+[2026-08-21T17:02:27.257Z] },
+[2026-08-21T17:02:27.257Z] edges: [ [Object], [Object], [Object] ],
+[2026-08-21T17:02:27.257Z] metadata: null,
+[2026-08-21T17:02:27.257Z] volume: VolumeTransformer {
+[2026-08-21T17:02:27.257Z] _events: [Object],
+[2026-08-21T17:02:27.257Z] _readableState: [ReadableState],
+[2026-08-21T17:02:27.257Z] _writableState: [WritableState],
+[2026-08-21T17:02:27.257Z] allowHalfOpen: true,
+[2026-08-21T17:02:27.257Z] _maxListeners: undefined,
+[2026-08-21T17:02:27.257Z] _eventsCount: 5,
+[2026-08-21T17:02:27.257Z] _readInt: [Function (anonymous)],
+[2026-08-21T17:02:27.257Z] _writeInt: [Function (anonymous)],
+[2026-08-21T17:02:27.257Z] _bits: 16,
+[2026-08-21T17:02:27.257Z] _bytes: 2,
+[2026-08-21T17:02:27.257Z] _extremum: 32768,
+[2026-08-21T17:02:27.257Z] volume: 1,
+[2026-08-21T17:02:27.257Z] _chunk: null,
+[2026-08-21T17:02:27.257Z] [Symbol(shapeMode)]: true,
+[2026-08-21T17:02:27.257Z] [Symbol(kCapture)]: false,
+[2026-08-21T17:02:27.257Z] [Symbol(kCallback)]: null
+[2026-08-21T17:02:27.257Z] },
+[2026-08-21T17:02:27.257Z] encoder: Encoder {
+[2026-08-21T17:02:27.257Z] _events: [Object],
+[2026-08-21T17:02:27.257Z] _readableState: [ReadableState],
+[2026-08-21T17:02:27.257Z] _writableState: [WritableState],
+[2026-08-21T17:02:27.257Z] allowHalfOpen: true,
+[2026-08-21T17:02:27.257Z] _maxListeners: undefined,
+[2026-08-21T17:02:27.257Z] _eventsCount: 6,
+[2026-08-21T17:02:27.257Z] encoder: null,
+[2026-08-21T17:02:27.257Z] _options: [Object],
+[2026-08-21T17:02:27.257Z] _required: 3840,
+[2026-08-21T17:02:27.257Z] _buffer: null,
+[2026-08-21T17:02:27.257Z] [Symbol(shapeMode)]: true,
+[2026-08-21T17:02:27.257Z] [Symbol(kCapture)]: false,
+[2026-08-21T17:02:27.257Z] [Symbol(kCallback)]: null
+[2026-08-21T17:02:27.257Z] },
+[2026-08-21T17:02:27.257Z] audioPlayer: AudioPlayer {
+[2026-08-21T17:02:27.257Z] _events: [Object: null prototype],
+[2026-08-21T17:02:27.257Z] _eventsCount: 3,
+[2026-08-21T17:02:27.257Z] _maxListeners: undefined,
+[2026-08-21T17:02:27.257Z] _state: [Object],
+[2026-08-21T17:02:27.257Z] subscribers: [Array],
+[2026-08-21T17:02:27.257Z] behaviors: [Object],
+[2026-08-21T17:02:27.257Z] debug: [Function (anonymous)],
+[2026-08-21T17:02:27.257Z] [Symbol(shapeMode)]: false,
+[2026-08-21T17:02:27.257Z] [Symbol(kCapture)]: false
+[2026-08-21T17:02:27.257Z] },
+[2026-08-21T17:02:27.257Z] playbackDuration: 0,
+[2026-08-21T17:02:27.257Z] started: false,
+[2026-08-21T17:02:27.257Z] silencePaddingFrames: 5,
+[2026-08-21T17:02:27.257Z] silenceRemaining: -1
+[2026-08-21T17:02:27.257Z] }
+[2026-08-21T17:02:27.257Z] }
+[2026-08-21T17:02:27.257Z] [Music] AudioPlayer entered Idle state
+[2026-08-21T17:02:29.010Z] [RitzSmpAI] [SUCCESS] Handled /play command
+[2026-08-21T17:03:04.051Z] [RitzSmpAI] [INFO] Received command /play from tun_5555
+[2026-08-21T17:03:08.074Z] [Music] Fetching ytdl stream for: https://youtu.be/nPI6R6MfCuI?si=z40oFWH9XtxZG-mu
+[2026-08-21T17:03:08.076Z] [Music] AudioPlayer playing resource for: https://youtu.be/nPI6R6MfCuI?si=z40oFWH9XtxZG-mu
+[2026-08-21T17:03:08.863Z] [Music Error] AudioPlayer encountered error: AudioPlayerError: Status code: 429
+[2026-08-21T17:03:08.863Z] at exports.request (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/utils.js:219:13)
+[2026-08-21T17:03:08.863Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-21T17:03:08.863Z] resource: AudioResource {
+[2026-08-21T17:03:08.863Z] playStream: Encoder {
+[2026-08-21T17:03:08.863Z] _events: [Object],
+[2026-08-21T17:03:08.863Z] _readableState: [ReadableState],
+[2026-08-21T17:03:08.863Z] _writableState: [WritableState],
+[2026-08-21T17:03:08.863Z] allowHalfOpen: true,
+[2026-08-21T17:03:08.863Z] _maxListeners: undefined,
+[2026-08-21T17:03:08.863Z] _eventsCount: 6,
+[2026-08-21T17:03:08.863Z] encoder: null,
+[2026-08-21T17:03:08.863Z] _options: [Object],
+[2026-08-21T17:03:08.863Z] _required: 3840,
+[2026-08-21T17:03:08.863Z] _buffer: null,
+[2026-08-21T17:03:08.863Z] [Symbol(shapeMode)]: true,
+[2026-08-21T17:03:08.863Z] [Symbol(kCapture)]: false,
+[2026-08-21T17:03:08.863Z] [Symbol(kCallback)]: null
+[2026-08-21T17:03:08.863Z] },
+[2026-08-21T17:03:08.863Z] edges: [ [Object], [Object], [Object] ],
+[2026-08-21T17:03:08.863Z] metadata: null,
+[2026-08-21T17:03:08.863Z] volume: VolumeTransformer {
+[2026-08-21T17:03:08.863Z] _events: [Object],
+[2026-08-21T17:03:08.863Z] _readableState: [ReadableState],
+[2026-08-21T17:03:08.864Z] _writableState: [WritableState],
+[2026-08-21T17:03:08.864Z] allowHalfOpen: true,
+[2026-08-21T17:03:08.864Z] _maxListeners: undefined,
+[2026-08-21T17:03:08.864Z] _eventsCount: 5,
+[2026-08-21T17:03:08.864Z] _readInt: [Function (anonymous)],
+[2026-08-21T17:03:08.864Z] _writeInt: [Function (anonymous)],
+[2026-08-21T17:03:08.864Z] _bits: 16,
+[2026-08-21T17:03:08.864Z] _bytes: 2,
+[2026-08-21T17:03:08.864Z] _extremum: 32768,
+[2026-08-21T17:03:08.864Z] volume: 1,
+[2026-08-21T17:03:08.864Z] _chunk: null,
+[2026-08-21T17:03:08.864Z] [Symbol(shapeMode)]: true,
+[2026-08-21T17:03:08.864Z] [Symbol(kCapture)]: false,
+[2026-08-21T17:03:08.864Z] [Symbol(kCallback)]: null
+[2026-08-21T17:03:08.864Z] },
+[2026-08-21T17:03:08.864Z] encoder: Encoder {
+[2026-08-21T17:03:08.864Z] _events: [Object],
+[2026-08-21T17:03:08.864Z] _readableState: [ReadableState],
+[2026-08-21T17:03:08.864Z] _writableState: [WritableState],
+[2026-08-21T17:03:08.864Z] allowHalfOpen: true,
+[2026-08-21T17:03:08.864Z] _maxListeners: undefined,
+[2026-08-21T17:03:08.864Z] _eventsCount: 6,
+[2026-08-21T17:03:08.864Z] encoder: null,
+[2026-08-21T17:03:08.864Z] _options: [Object],
+[2026-08-21T17:03:08.864Z] _required: 3840,
+[2026-08-21T17:03:08.864Z] _buffer: null,
+[2026-08-21T17:03:08.864Z] [Symbol(shapeMode)]: true,
+[2026-08-21T17:03:08.864Z] [Symbol(kCapture)]: false,
+[2026-08-21T17:03:08.864Z] [Symbol(kCallback)]: null
+[2026-08-21T17:03:08.864Z] },
+[2026-08-21T17:03:08.864Z] audioPlayer: AudioPlayer {
+[2026-08-21T17:03:08.864Z] _events: [Object: null prototype],
+[2026-08-21T17:03:08.864Z] _eventsCount: 3,
+[2026-08-21T17:03:08.864Z] _maxListeners: undefined,
+[2026-08-21T17:03:08.864Z] _state: [Object],
+[2026-08-21T17:03:08.864Z] subscribers: [Array],
+[2026-08-21T17:03:08.864Z] behaviors: [Object],
+[2026-08-21T17:03:08.864Z] debug: [Function (anonymous)],
+[2026-08-21T17:03:08.864Z] [Symbol(shapeMode)]: false,
+[2026-08-21T17:03:08.864Z] [Symbol(kCapture)]: false
+[2026-08-21T17:03:08.864Z] },
+[2026-08-21T17:03:08.864Z] playbackDuration: 0,
+[2026-08-21T17:03:08.864Z] started: false,
+[2026-08-21T17:03:08.864Z] silencePaddingFrames: 5,
+[2026-08-21T17:03:08.864Z] silenceRemaining: -1
+[2026-08-21T17:03:08.864Z] }
+[2026-08-21T17:03:08.864Z] }
+[2026-08-21T17:03:08.864Z] [Music] AudioPlayer entered Idle state
+[2026-08-21T17:03:08.864Z] [RitzSmpAI] [SUCCESS] Handled /play command
+[2026-08-21T17:05:37.284Z] 5:05:37 PM [tsx] change in ./server/discordMusic.ts Restarting...
+[2026-08-21T17:05:38.005Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-21T17:05:38.412Z] Server running on http://localhost:3000/
+[2026-08-21T17:05:42.721Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-21T17:05:42.722Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-21T17:05:42.723Z] (node:161455) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-21T17:05:42.723Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-21T17:05:43.411Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-21T17:05:46.287Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540380693690060820
+[2026-08-21T17:05:47.606Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
