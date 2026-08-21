@@ -4047,3 +4047,105 @@
 [2026-08-21T17:08:44.647Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
 [2026-08-21T17:08:47.215Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540380693690060820
 [2026-08-21T17:08:48.616Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-21T17:09:29.948Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-21T17:10:07.830Z] [RitzSmpAI] [INFO] Received command /play from tun_5555
+[2026-08-21T17:10:07.832Z] (node:162732) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-21T17:10:15.896Z] [Music] ytdl.getInfo warning for URL: https://youtu.be/ZrVMVczQOQk?si=yGtC6c_WNy9I768q Status code: 429
+[2026-08-21T17:10:15.896Z] [Music] Fetching ytdl stream for: https://youtu.be/ZrVMVczQOQk?si=yGtC6c_WNy9I768q
+[2026-08-21T17:10:16.001Z] [Music] AudioPlayer playing resource for: https://youtu.be/ZrVMVczQOQk?si=yGtC6c_WNy9I768q
+[2026-08-21T17:10:16.811Z] [Music Error] ytdl stream emitted error: Error: Status code: 429
+[2026-08-21T17:10:16.811Z] at exports.request (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/utils.js:219:13)
+[2026-08-21T17:10:16.811Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-21T17:10:16.811Z] statusCode: 429
+[2026-08-21T17:10:16.811Z] }
+[2026-08-21T17:10:16.813Z] [Music Error] AudioPlayer encountered error: AudioPlayerError: Status code: 429
+[2026-08-21T17:10:16.813Z] at exports.request (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/utils.js:219:13)
+[2026-08-21T17:10:16.813Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-21T17:10:16.813Z] resource: AudioResource {
+[2026-08-21T17:10:16.813Z] playStream: Encoder {
+[2026-08-21T17:10:16.813Z] _events: [Object],
+[2026-08-21T17:10:16.813Z] _readableState: [ReadableState],
+[2026-08-21T17:10:16.813Z] _writableState: [WritableState],
+[2026-08-21T17:10:16.813Z] allowHalfOpen: true,
+[2026-08-21T17:10:16.813Z] _maxListeners: undefined,
+[2026-08-21T17:10:16.813Z] _eventsCount: 6,
+[2026-08-21T17:10:16.813Z] encoder: null,
+[2026-08-21T17:10:16.813Z] _options: [Object],
+[2026-08-21T17:10:16.813Z] _required: 3840,
+[2026-08-21T17:10:16.813Z] _buffer: null,
+[2026-08-21T17:10:16.813Z] [Symbol(shapeMode)]: true,
+[2026-08-21T17:10:16.813Z] [Symbol(kCapture)]: false,
+[2026-08-21T17:10:16.813Z] [Symbol(kCallback)]: null
+[2026-08-21T17:10:16.813Z] },
+[2026-08-21T17:10:16.813Z] edges: [ [Object], [Object], [Object] ],
+[2026-08-21T17:10:16.813Z] metadata: null,
+[2026-08-21T17:10:16.813Z] volume: VolumeTransformer {
+[2026-08-21T17:10:16.813Z] _events: [Object],
+[2026-08-21T17:10:16.813Z] _readableState: [ReadableState],
+[2026-08-21T17:10:16.813Z] _writableState: [WritableState],
+[2026-08-21T17:10:16.813Z] allowHalfOpen: true,
+[2026-08-21T17:10:16.813Z] _maxListeners: undefined,
+[2026-08-21T17:10:16.813Z] _eventsCount: 5,
+[2026-08-21T17:10:16.813Z] _readInt: [Function (anonymous)],
+[2026-08-21T17:10:16.813Z] _writeInt: [Function (anonymous)],
+[2026-08-21T17:10:16.813Z] _bits: 16,
+[2026-08-21T17:10:16.813Z] _bytes: 2,
+[2026-08-21T17:10:16.813Z] _extremum: 32768,
+[2026-08-21T17:10:16.813Z] volume: 1,
+[2026-08-21T17:10:16.813Z] _chunk: null,
+[2026-08-21T17:10:16.813Z] [Symbol(shapeMode)]: true,
+[2026-08-21T17:10:16.813Z] [Symbol(kCapture)]: false,
+[2026-08-21T17:10:16.813Z] [Symbol(kCallback)]: null
+[2026-08-21T17:10:16.813Z] },
+[2026-08-21T17:10:16.813Z] encoder: Encoder {
+[2026-08-21T17:10:16.813Z] _events: [Object],
+[2026-08-21T17:10:16.813Z] _readableState: [ReadableState],
+[2026-08-21T17:10:16.813Z] _writableState: [WritableState],
+[2026-08-21T17:10:16.813Z] allowHalfOpen: true,
+[2026-08-21T17:10:16.813Z] _maxListeners: undefined,
+[2026-08-21T17:10:16.813Z] _eventsCount: 6,
+[2026-08-21T17:10:16.813Z] encoder: null,
+[2026-08-21T17:10:16.813Z] _options: [Object],
+[2026-08-21T17:10:16.813Z] _required: 3840,
+[2026-08-21T17:10:16.813Z] _buffer: null,
+[2026-08-21T17:10:16.813Z] [Symbol(shapeMode)]: true,
+[2026-08-21T17:10:16.813Z] [Symbol(kCapture)]: false,
+[2026-08-21T17:10:16.813Z] [Symbol(kCallback)]: null
+[2026-08-21T17:10:16.813Z] },
+[2026-08-21T17:10:16.813Z] audioPlayer: AudioPlayer {
+[2026-08-21T17:10:16.813Z] _events: [Object: null prototype],
+[2026-08-21T17:10:16.813Z] _eventsCount: 3,
+[2026-08-21T17:10:16.813Z] _maxListeners: undefined,
+[2026-08-21T17:10:16.813Z] _state: [Object],
+[2026-08-21T17:10:16.813Z] subscribers: [Array],
+[2026-08-21T17:10:16.813Z] behaviors: [Object],
+[2026-08-21T17:10:16.813Z] debug: [Function (anonymous)],
+[2026-08-21T17:10:16.813Z] [Symbol(shapeMode)]: false,
+[2026-08-21T17:10:16.813Z] [Symbol(kCapture)]: false
+[2026-08-21T17:10:16.813Z] },
+[2026-08-21T17:10:16.813Z] playbackDuration: 0,
+[2026-08-21T17:10:16.813Z] started: false,
+[2026-08-21T17:10:16.813Z] silencePaddingFrames: 5,
+[2026-08-21T17:10:16.813Z] silenceRemaining: -1
+[2026-08-21T17:10:16.813Z] }
+[2026-08-21T17:10:16.813Z] }
+[2026-08-21T17:10:16.813Z] [Music] AudioPlayer entered Idle state
+[2026-08-21T17:10:17.931Z] [RitzSmpAI] [SUCCESS] Handled /play command
+[2026-08-21T17:11:26.018Z] [Music Error] VoiceConnection encountered error: Error: Cannot perform IP discovery - socket closed
+[2026-08-21T17:11:26.018Z] at Socket.<anonymous> (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+voice@0.19.2_@discordjs+opus@0.10.0_@emnapi+core@1.11.3_@emnapi+runtime@1.11.3_opusscript@0.1.1/node_modules/@discordjs/voice/dist/index.mjs:1039:46)
+[2026-08-21T17:11:26.018Z] at Object.onceWrapper (node:events:638:28)
+[2026-08-21T17:11:26.018Z] at Socket.emit (node:events:536:35)
+[2026-08-21T17:11:26.018Z] at socketCloseNT (node:dgram:808:8)
+[2026-08-21T17:11:26.018Z] at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+[2026-08-21T17:11:26.018Z] [Music] Attempting to recover voice connection due to socket/IP error...
+[2026-08-21T17:11:48.058Z] 5:11:48 PM [tsx] change in ./server/discordMusic.ts Restarting...
+[2026-08-21T17:11:48.736Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-21T17:11:49.109Z] Server running on http://localhost:3000/
+[2026-08-21T17:11:51.627Z] 5:11:51 PM [tsx] change in ./server/discordMusic.ts Restarting...
+[2026-08-21T17:11:52.376Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-21T17:11:52.745Z] Server running on http://localhost:3000/
+[2026-08-21T17:11:59.758Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-21T17:11:59.760Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-21T17:11:59.762Z] (node:163940) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-21T17:11:59.762Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-21T17:12:02.096Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.

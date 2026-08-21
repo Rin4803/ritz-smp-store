@@ -355,3 +355,6 @@
 [2026-08-21T17:06:34.974Z] {"timestamp":1787331992966,"level":"DEBUG","args":["[Manus] Debug collector initialized (no rrweb, UI events only)"],"stack":null}
 [2026-08-21T17:06:34.974Z] {"timestamp":1787331992971,"level":"DEBUG","args":["[vite] connected."],"stack":null}
 [2026-08-21T17:06:34.974Z] {"timestamp":1787331993406,"level":"INFO","args":["%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools","font-weight:bold"],"stack":null}
+[2026-08-21T17:09:32.026Z] {"timestamp":1787332170011,"level":"DEBUG","args":["[Manus] Debug collector initialized (no rrweb, UI events only)"],"stack":null}
+[2026-08-21T17:09:32.026Z] {"timestamp":1787332170016,"level":"DEBUG","args":["[vite] connected."],"stack":null}
+[2026-08-21T17:09:32.026Z] {"timestamp":1787332170425,"level":"INFO","args":["%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools","font-weight:bold"],"stack":null}

@@ -301,12 +301,13 @@ async function playNext(session: MusicSession): Promise<void> {
           highWaterMark: 1 << 25,
           quality: 'highestaudio',
           dlChunkSize: 0,
+          liveBuffer: 4999,
         });
       } catch (err1) {
         console.warn("[Music] Primary ytdl stream failed, attempting fallback options", err1);
         stream = ytdl(next.url, {
           filter: 'audioonly',
-          quality: 140, // fallback to m4a/aac stream
+          quality: 'highest',
           highWaterMark: 1 << 25,
         });
       }
