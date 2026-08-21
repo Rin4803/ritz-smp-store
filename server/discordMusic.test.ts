@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { handleMusicCommand, musicCommand, playShortcutCommand, resolveMusicQuery } from "./discordMusic";
+import { handleMusicCommand, musicCommand, playShortcutCommand, leaveShortcutCommand, resolveMusicQuery } from "./discordMusic";
 import { setMusicChannelIdForTests } from "./discordMusicChannel";
 
 describe("RitzSMP free music mode", () => {
@@ -27,6 +27,9 @@ describe("RitzSMP free music mode", () => {
 
     const playJson = playShortcutCommand.toJSON();
     expect(playJson.name).toBe("play");
+
+    const leaveJson = leaveShortcutCommand.toJSON();
+    expect(leaveJson.name).toBe("leave");
   });
 
   it("allows music commands in any channel since the restriction was removed", async () => {
