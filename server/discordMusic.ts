@@ -278,27 +278,29 @@ async function playNext(session: MusicSession): Promise<void> {
   }
   session.current = next;
   session.started = true;
-  try {
-    console.log("[Music] Fetching stream for:", next.url);
-    let streamData: any = null;
     try {
-      streamData = await stream(next.url, { 
-        quality: 2, 
-        discordPlayerCompatibility: true,
-      });
-    } catch (e1) {
-      console.warn("[Music Stream] First play-dl stream attempt failed, trying fallback options:", e1);
-      try {
-        streamData = await stream(next.url, { quality: 0 });
-      } catch (e2) {
-        console.error("[Music Stream Error] All play-dl stream attempts failed:", e2);
-        throw new Error("ไม่สามารถเปิดสตรีมเสียงจากลิงก์นี้ได้ (YouTube อาจบล็อก IP หรือลิงก์ไม่รองรับ)");
+      console.log("[Music] Fetching stream for:", next.url);
+      let streamData: any = null;
+      
+      // Try multiple extraction strategies for play-dl to prevent 429 and stream drop errors
+      const strategies = [
+        () => stream(next.url, { quality: 2, discordPlayerCompatibility: true }),
+        () => stream(next.url, { quality: 0, discordPlayerCompatibility: true }),
+        () => stream(next.url, { quality: 2 }),
+      ];
+
+      for (const strategy of strategies) {
+        try {
+          streamData = await strategy();
+          if (streamData && streamData.stream) break;
+        } catch (stratErr) {
+          console.warn("[Music Stream Strategy Warning]:", stratErr);
+        }
       }
-    }
-    
-    if (!streamData || !streamData.stream) {
-      throw new Error("ไม่สามารถเปิดสตรีมเสียงจากลิงก์นี้ได้");
-    }
+
+      if (!streamData || !streamData.stream) {
+        throw new Error("ไม่สามารถเปิดสตรีมเสียงจากลิงก์นี้ได้ (YouTube 429 หรือจำกัดสิทธิ์)");
+      }
 
     const resource = createAudioResource(streamData.stream, { 
       inputType: streamData.type,
