@@ -184,15 +184,32 @@ async function getOrCreateSession(interaction: any, voiceChannel: any): Promise<
   sessions.set(interaction.guildId, session);
 
   player.on(AudioPlayerStatus.Idle, () => {
+    console.log("[Music] AudioPlayer entered Idle state");
     session.current = undefined;
     void playNext(session);
   });
-  player.on("error", () => {
+  player.on(AudioPlayerStatus.Playing, () => {
+    console.log("[Music] AudioPlayer is now PLAYING audio output!");
+  });
+  player.on("error", (error) => {
+    console.error("[Music Error] AudioPlayer encountered error:", error);
     session.current = undefined;
     void playNext(session);
   });
-  connection.on("error", () => {
+  connection.on("error", (error) => {
+    console.error("[Music Error] VoiceConnection encountered error:", error);
     sessions.delete(session.guildId);
+  });
+  connection.on(VoiceConnectionStatus.Disconnected, async () => {
+    try {
+      await Promise.race([
+        entersState(connection, VoiceConnectionStatus.Signalling, 5000),
+        entersState(connection, VoiceConnectionStatus.Connecting, 5000),
+      ]);
+    } catch {
+      sessions.delete(session.guildId);
+      connection.destroy();
+    }
   });
   scheduleIdleCleanup(session);
   return session;
@@ -263,12 +280,30 @@ async function playNext(session: MusicSession): Promise<void> {
   session.current = next;
   session.started = true;
   try {
-    const streamData = await stream(next.url, { quality: 2, discordPlayerCompatibility: true }).catch(async (err) => {
-      console.error("[Music Stream Error]", err);
-      throw err;
+    console.log("[Music] Fetching stream for:", next.url);
+    const streamData = await stream(next.url, { 
+      quality: 2, 
+      discordPlayerCompatibility: true,
+    }).catch(async (err) => {
+      console.error("[Music Stream Error] play-dl stream failed:", err);
+      // Fallback attempt without discordPlayerCompatibility or standard options
+      return await stream(next.url, { quality: 1 });
     });
-    const resource = createAudioResource(streamData.stream, { inputType: streamData.type });
+    
+    if (!streamData || !streamData.stream) {
+      throw new Error("ไม่สามารถเปิดสตรีมเสียงจากลิงก์นี้ได้");
+    }
+
+    const resource = createAudioResource(streamData.stream, { 
+      inputType: streamData.type,
+      inlineVolume: true,
+    });
+    if (resource.volume) {
+      resource.volume.setVolume(1.0);
+    }
+    
     session.player.play(resource);
+    console.log("[Music] AudioPlayer playing resource for:", next.title);
   } catch (err) {
     console.error("[Music Error] Failed to stream URL:", next.url, err);
     session.current = undefined;
@@ -385,8 +420,10 @@ export async function handleMusicCommand(interaction: any): Promise<boolean> {
       if (typeof interaction.deferReply === "function" && !interaction.deferred && !interaction.replied) {
         await interaction.deferReply({ ephemeral: false }).catch(() => {});
       }
-      const track = await resolveTrackFromQuery(resolved, interaction.user?.tag ?? "สมาชิก RitzSMP");
+      // Join voice channel immediately so bot enters channel without waiting for YouTube resolve
       const session = await getOrCreateSession(interaction, voiceChannel);
+      
+      const track = await resolveTrackFromQuery(resolved, interaction.user?.tag ?? "สมาชิก RitzSMP");
       session.queue.push(track);
       if (!session.current) await playNext(session);
       await interactionReply(interaction, buildMusicEmbed(session));
