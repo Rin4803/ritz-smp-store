@@ -35,7 +35,7 @@ const sessions = new Map<string, MusicSession>();
 
 export const musicCommand = new SlashCommandBuilder()
   .setName("music")
-  .setDescription("🎵 เปิดเพลงในห้องเสียงแบบฟรี (ใช้ได้ทุกช่องในเซิร์ฟเวอร์)")
+  .setDescription("🎵 เปิดเพลงในห้องเสียงแบบฟรี (ใช้ได้ทุกห้องในเซิร์ฟเวอร์สำหรับทุกคน)")
   .addSubcommand(sub =>
     sub
       .setName("play")
@@ -51,7 +51,7 @@ export const musicCommand = new SlashCommandBuilder()
 
 export const playShortcutCommand = new SlashCommandBuilder()
   .setName("play")
-  .setDescription("🎵 เล่นเพลงทันทีจากชื่อหรือลิงก์ YouTube / SoundCloud (ใช้ได้ทุกช่อง)")
+  .setDescription("🎵 เล่นเพลงทันทีจากชื่อหรือลิงก์ YouTube / SoundCloud (ใช้ได้ทุกช่องสำหรับทุกคน)")
   .addStringOption(option =>
     option.setName("query").setDescription("ชื่อเพลง หรือลิงก์ YouTube / SoundCloud").setRequired(true)
   );
@@ -106,7 +106,26 @@ async function interactionReply(interaction: any, payload: any): Promise<any> {
 }
 
 function getVoiceChannel(interaction: any): any | null {
-  return interaction.member?.voice?.channel ?? null;
+  // 1. ตรวจจาก interaction.member.voice.channel ตามปกติ
+  if (interaction.member?.voice?.channel) {
+    return interaction.member.voice.channel;
+  }
+  // 2. ตรวจจาก guild voiceStates cache หาก interaction.member ไม่ส่ง voice data มา
+  const userId = interaction.user?.id;
+  if (userId && interaction.guild?.voiceStates?.cache) {
+    const voiceState = interaction.guild.voiceStates.cache.get(userId);
+    if (voiceState?.channel) {
+      return voiceState.channel;
+    }
+  }
+  // 3. ตรวจจาก guild members cache ถ้ามี
+  if (userId && interaction.guild?.members?.cache) {
+    const member = interaction.guild.members.cache.get(userId);
+    if (member?.voice?.channel) {
+      return member.voice.channel;
+    }
+  }
+  return null;
 }
 
 function scheduleIdleCleanup(session: MusicSession): void {
@@ -263,7 +282,7 @@ export async function handleMusicCommand(interaction: any): Promise<boolean> {
       existing.idleTimer && clearTimeout(existing.idleTimer);
       existing.player.stop(true);
       existing.connection.destroy();
-      sessions.delete(interaction.guildId);
+      sessions.delete(existing.guildId);
     }
     await interactionReply(interaction, "น้องออกจากห้องเสียงและล้างคิวให้แล้วค่ะ 🎵");
     return true;
