@@ -101,10 +101,16 @@ function interactionWasAlreadyAcknowledged(error: unknown): boolean {
   return code === 40060 || /already been acknowledged|already acknowledged/i.test(String(error));
 }
 
+function interactionWasNotReplied(error: unknown): boolean {
+  return /InteractionNotReplied|reply to this interaction has not been sent or deferred/i.test(String(error));
+}
+
 export async function ensureDeferredReply(interaction: any, options: { ephemeral?: boolean } = {}): Promise<boolean> {
   if (!interaction) return false;
   if (typeof interaction.isRepliable === "function" && !interaction.isRepliable()) return false;
-  if (interaction.deferred || interaction.replied || interaction.__ritzDeferConfirmed) return true;
+  // Only trust Discord.js' live state. A marker can become stale when another
+  // handler or an adapter mock touches the same interaction object.
+  if (interaction.deferred || interaction.replied) return true;
   try {
     await interaction.deferReply(options);
     // Discord.js normally updates `deferred` synchronously, but keeping a
@@ -149,14 +155,27 @@ export async function safeReply(interaction: any, options: any): Promise<boolean
     }
     return true;
   } catch (error) {
+    if (interactionWasNotReplied(error)) {
+      try {
+        await interaction.reply(payload);
+        return true;
+      } catch (replyError) {
+        if (interactionWasAlreadyAcknowledged(replyError) && typeof interaction.followUp === "function") {
+          await interaction.followUp(payload);
+          return true;
+        }
+        pushLog("ERROR", `safeReply reply recovery failed: ${String(replyError)}`);
+        return false;
+      }
+    }
     if (interactionWasAlreadyAcknowledged(error)) {
       try {
         if (interaction.deferred || interaction.replied || interaction.__ritzDeferConfirmed) {
           await interaction.editReply(payload);
-        } else if (typeof interaction.followUp === "function") {
+        } else if (interaction.__ritzAcknowledgedByRace && typeof interaction.followUp === "function") {
           await interaction.followUp(payload);
         } else {
-          await interaction.editReply(payload);
+          await interaction.reply(payload);
         }
         return true;
       } catch (retryError) {
@@ -167,7 +186,7 @@ export async function safeReply(interaction: any, options: any): Promise<boolean
     pushLog("WARN", `safeReply failed: ${String(error)}`);
     try {
       const fallbackPayload = { content: "เกิดข้อผิดพลาดในการตอบสนอง กรุณาลองใหม่อีกครั้งนะคะ 💕", ephemeral: true };
-      if (!interaction.replied && !interaction.deferred && !interaction.__ritzDeferConfirmed && !interaction.__ritzAcknowledgedByRace) {
+      if (!interaction.replied && !interaction.deferred && !interaction.__ritzAcknowledgedByRace) {
         await interaction.reply(fallbackPayload);
       } else if (interaction.__ritzAcknowledgedByRace && typeof interaction.followUp === "function") {
         await interaction.followUp(fallbackPayload);
@@ -235,6 +254,115 @@ export function buildWelcomeMemberEmbed(member: any) {
     .setThumbnail(member.user.displayAvatarURL())
     .setTimestamp()
     .setFooter({ text: "RitzSMP AI • ยินดีต้อนรับสมาชิกใหม่" });
+}
+
+export const AUTO_SYSTEM_PANEL_DEPLOYMENT_ENABLED = false;
+
+export type ManualEmbedKind = "welcome" | "leave";
+
+export type ManualEmbedOptions = {
+  title: string;
+  description: string;
+  color?: string | number;
+  imageUrl?: string | null;
+  buttonLabel?: string | null;
+  buttonUrl?: string | null;
+  footerText?: string;
+};
+
+export function parseEmbedColor(input: string | number | undefined, fallback = 0xec4899): number {
+  if (typeof input === "number" && Number.isInteger(input) && input >= 0 && input <= 0xffffff) {
+    return input;
+  }
+  const normalized = String(input ?? "").trim().replace(/^#/, "");
+  return /^[0-9a-f]{6}$/i.test(normalized) ? parseInt(normalized, 16) : fallback;
+}
+
+function isHttpUrl(value: string | null | undefined): value is string {
+  if (!value?.trim()) return false;
+  try {
+    const parsed = new URL(value.trim());
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export function buildManualEmbedPayload(options: ManualEmbedOptions) {
+  const embed = new EmbedBuilder()
+    .setTitle(options.title.trim().slice(0, 256))
+    .setDescription(options.description.trim().slice(0, 4096))
+    .setColor(parseEmbedColor(options.color))
+    .setTimestamp()
+    .setFooter({ text: (options.footerText || "ประกาศโดยแอดมิน • RitzSMP AI").slice(0, 2048) });
+
+  if (isHttpUrl(options.imageUrl)) embed.setImage(options.imageUrl);
+
+  const components: ActionRowBuilder<ButtonBuilder>[] = [];
+  if (options.buttonLabel?.trim() && isHttpUrl(options.buttonUrl)) {
+    components.push(new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setLabel(options.buttonLabel.trim().slice(0, 80))
+        .setStyle(ButtonStyle.Link)
+        .setURL(options.buttonUrl),
+    ));
+  }
+
+  return { embeds: [embed], components };
+}
+
+export function buildManualSystemPanelPayload(
+  kind: ManualEmbedKind,
+  overrides: Partial<ManualEmbedOptions> = {},
+) {
+  const defaults = kind === "welcome"
+    ? {
+        title: "👋 ระบบต้อนรับสมาชิกใหม่ RitzSMP",
+        description: "ช่องนี้ใช้สำหรับข้อความต้อนรับสมาชิกใหม่ค่ะ กดปุ่มเชื่อมบัญชีเพื่อเริ่มใช้งานระบบได้เลยนะคะ 💖",
+        color: 0xec4899,
+        imageUrl: RITZ_WELCOME_COVER_IMAGE_URL,
+        footerText: "RitzSMP AI • แผงต้อนรับที่แอดมินสั่งสร้าง",
+      }
+    : {
+        title: "ไว้เจอกันใหม่นะคะ 👋",
+        description: "ช่องนี้ใช้สำหรับข้อความแจ้งสมาชิกออกจากเซิร์ฟเวอร์ RitzSMP ค่ะ",
+        color: 0xf472b6,
+        imageUrl: RITZ_WELCOME_COVER_IMAGE_URL,
+        footerText: "RitzSMP AI • แผงสมาชิกออกที่แอดมินสั่งสร้าง",
+      };
+  return buildManualEmbedPayload({ ...defaults, ...overrides });
+}
+
+export function isDiscordAdministrator(interaction: any): boolean {
+  if (!interaction?.guild) return false;
+  const permissions = interaction.memberPermissions ?? interaction.member?.permissions;
+  if (permissions?.has) return permissions.has(PermissionsBitField.Flags.Administrator);
+  return false;
+}
+
+function getEmbedData(message: any) {
+  const source = message?.embeds?.[0]?.data ?? message?.embeds?.[0] ?? {};
+  return {
+    title: String(source.title ?? "ประกาศ RitzSMP AI"),
+    description: String(source.description ?? ""),
+    color: source.color,
+    imageUrl: source.image?.url ?? null,
+    footerText: source.footer?.text ?? "แก้ไขโดยแอดมิน • RitzSMP AI",
+  };
+}
+
+async function requireDiscordAdministrator(interaction: any): Promise<boolean> {
+  if (isDiscordAdministrator(interaction)) return true;
+  await safeReply(interaction, {
+    content: "คำสั่งนี้ใช้ได้เฉพาะแอดมินเซิร์ฟเวอร์เท่านั้นค่ะ 🔒",
+    ephemeral: true,
+  });
+  return false;
+}
+
+function getInteractionTextChannel(interaction: any): any | null {
+  const channel = interaction?.channel;
+  return channel?.isTextBased?.() && typeof channel.send === "function" ? channel : null;
 }
 
 export type WelcomePanelMessageLike = {
@@ -1033,6 +1161,11 @@ async function reconcileMemberEventSystemPanel(channel: any, client: Client, typ
 }
 
 export function startDiscordMemberEvents(client: Client) {
+  if (!AUTO_SYSTEM_PANEL_DEPLOYMENT_ENABLED) {
+    pushLog("INFO", "Automatic member welcome/leave notifications are disabled; use /setup welcome or /setup leave.");
+    return;
+  }
+
   client.on("guildMemberAdd", async member => {
     const embed = buildWelcomeMemberEmbed(member);
     const channelId = await resolveWelcomeChannelId(client);
@@ -1228,9 +1361,11 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
       musicCommand,
       new SlashCommandBuilder()
         .setName("setup")
-        .setDescription("🛠️ ตั้งค่าแผงต้อนรับและยืนยันตัวตน (แอดมินเท่านั้น)")
+        .setDescription("🛠️ สร้างระบบด้วยคำสั่งเท่านั้น (แอดมินเท่านั้น)")
         .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator)
-        .addSubcommand(sub => sub.setName("panel").setDescription("ส่งแผงยืนยันตัวตนและรับยศลงช่องนี้")),
+        .addSubcommand(sub => sub.setName("panel").setDescription("ส่งแผงเชื่อมบัญชีและรับยศลงช่องนี้"))
+        .addSubcommand(sub => sub.setName("welcome").setDescription("สร้าง Embed ต้อนรับลงช่องนี้ด้วยตนเอง"))
+        .addSubcommand(sub => sub.setName("leave").setDescription("สร้าง Embed แจ้งสมาชิกออกลงช่องนี้ด้วยตนเอง")),
       new SlashCommandBuilder()
         .setName("help")
         .setDescription("📖 แสดงคู่มือและรายการคำสั่งทั้งหมดของ RitzSMP AI"),
@@ -1246,13 +1381,31 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
         .addSubcommand(sub =>
           sub
             .setName("create")
-            .setDescription("สร้างข้อความประกาศ Embed แบบกำหนดเอง (แอดมิน)")
-            .addStringOption(o => o.setName("title").setDescription("หัวข้อประกาศ (Title)").setRequired(true))
-            .addStringOption(o => o.setName("description").setDescription("เนื้อหาประกาศ (Description)").setRequired(true))
-            .addStringOption(o => o.setName("color").setDescription("สีของ Embed เช่น #ff69b4 หรือ #00ffcc (ไม่บังคับ)").setRequired(false))
-            .addStringOption(o => o.setName("image_url").setDescription("ลิงก์รูปภาพประกอบ (Image URL, ไม่บังคับ)").setRequired(false))
-            .addStringOption(o => o.setName("button_label").setDescription("ข้อความบนปุ่มลิงก์ (ถ้าต้องการใส่ปุ่ม)").setRequired(false))
-            .addStringOption(o => o.setName("button_url").setDescription("ลิงก์ URL ปลายทางของปุ่ม (ถ้าต้องการใส่ปุ่ม)").setRequired(false))
+            .setDescription("สร้างข้อความประกาศ Embed แบบกำหนดเอง")
+            .addStringOption(o => o.setName("title").setDescription("หัวข้อประกาศ").setRequired(true))
+            .addStringOption(o => o.setName("description").setDescription("เนื้อหาประกาศ").setRequired(true))
+            .addStringOption(o => o.setName("color").setDescription("สี เช่น #ff69b4 หรือ #00ffcc").setRequired(false))
+            .addStringOption(o => o.setName("image_url").setDescription("ลิงก์รูปภาพประกอบ").setRequired(false))
+            .addStringOption(o => o.setName("button_label").setDescription("ข้อความบนปุ่มลิงก์").setRequired(false))
+            .addStringOption(o => o.setName("button_url").setDescription("ลิงก์ปลายทางของปุ่ม").setRequired(false))
+        )
+        .addSubcommand(sub =>
+          sub
+            .setName("edit")
+            .setDescription("แก้ไข Embed ของ RitzSMP AI ตาม Message ID")
+            .addStringOption(o => o.setName("message_id").setDescription("Message ID ของ Embed ที่ต้องการแก้").setRequired(true))
+            .addStringOption(o => o.setName("title").setDescription("หัวข้อใหม่ (ไม่บังคับ)").setRequired(false))
+            .addStringOption(o => o.setName("description").setDescription("เนื้อหาใหม่ (ไม่บังคับ)").setRequired(false))
+            .addStringOption(o => o.setName("color").setDescription("สีใหม่ เช่น #ff69b4 (ไม่บังคับ)").setRequired(false))
+            .addStringOption(o => o.setName("image_url").setDescription("URL รูปใหม่ (ไม่บังคับ)").setRequired(false))
+            .addStringOption(o => o.setName("button_label").setDescription("ข้อความปุ่มใหม่ (ไม่บังคับ)").setRequired(false))
+            .addStringOption(o => o.setName("button_url").setDescription("URL ปุ่มใหม่ (ไม่บังคับ)").setRequired(false))
+        )
+        .addSubcommand(sub =>
+          sub
+            .setName("delete")
+            .setDescription("ลบ Embed ของ RitzSMP AI ตาม Message ID")
+            .addStringOption(o => o.setName("message_id").setDescription("Message ID ของ Embed ที่ต้องการลบ").setRequired(true))
         ),
     ].map(cmd => cmd.toJSON());
 
@@ -1281,10 +1434,12 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
 
       await cleanupMisroutedWelcomePanels(client);
       await cleanupLegacyKanopiRankLogMessages(client);
-      startDiscordMemberEvents(client);
 
-      // Auto-deploy onboarding & verification panels into user-requested channels
-      try {
+      // Member welcome/leave messages and system panels are now manual commands.
+      // Keep the cleanup helpers above for legacy messages, but never post or create
+      // these panels during bot startup.
+      if (AUTO_SYSTEM_PANEL_DEPLOYMENT_ENABLED) {
+        try {
         const guild = await client.guilds.fetch(getConfiguredDiscordGuildId()).catch(() => null);
         if (guild) {
           const channelsToEnsure = RITZ_SYSTEM_CHANNEL_TARGETS;
@@ -1384,8 +1539,9 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
             }
           }
         }
-      } catch (panelDeployErr) {
-        pushLog("WARN", `Channel auto-deployment note: ${String(panelDeployErr)}`);
+        } catch (panelDeployErr) {
+          pushLog("WARN", `Channel auto-deployment note: ${String(panelDeployErr)}`);
+        }
       }
     } catch (error) {
       pushLog("ERROR", `RitzSMP AI ready bootstrap failed after command registration: ${String(error)}`);
@@ -1569,8 +1725,12 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
             { name: "/topup", value: "ดูคู่มือขั้นตอนการเติมเงินและซื้อยศ", inline: false },
             { name: "/profile", value: "ดูโปรไฟล์สมาชิกและแก้ไขคำแนะนำตัว/สไตล์การเล่น", inline: false },
             { name: "/music play <url>", value: "เล่นเพลงจาก YouTube/SoundCloud; ใช้ /music queue, /music skip, /music stop และ /music leave ควบคุมคิวค่ะ (โหมดฟรีอาจหยุดเมื่อระบบพักเครื่อง)", inline: false },
+            { name: "/setup panel", value: "สร้างแผงเชื่อมบัญชีและรับยศด้วยคำสั่งแอดมินเท่านั้น", inline: false },
+            { name: "/setup welcome / /setup leave", value: "สร้างข้อความต้อนรับหรือแจ้งสมาชิกออกเองครั้งเดียว ระบบไม่โพสต์ซ้ำตอนรีสตาร์ต", inline: false },
             { name: "/embed default", value: "ส่งประกาศร้านค้าสำเร็จรูปพร้อมปุ่มลิงก์", inline: false },
-            { name: "/embed create", value: "สร้างประกาศ Embed แบบกำหนดเอง (สำหรับแอดมิน)", inline: false }
+            { name: "/embed create", value: "สร้างประกาศ Embed แบบกำหนดเอง", inline: false },
+            { name: "/embed edit <message_id>", value: "แก้ไข Embed ที่ RitzSMP AI สร้างในช่องปัจจุบัน", inline: false },
+            { name: "/embed delete <message_id>", value: "ลบ Embed ที่ RitzSMP AI สร้างในช่องปัจจุบัน", inline: false }
           )
           .setTimestamp()
           .setFooter({ text: "RitzSMP AI Bot • พัฒนาด้วยความรักค่ะ 💖" });
@@ -1581,9 +1741,16 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
       }
 
       if (commandName === "setup") {
+        if (!(await requireDiscordAdministrator(interaction))) return;
         const subcommand = interaction.options.getSubcommand();
+        const channel = getInteractionTextChannel(interaction);
+        if (!channel) {
+          await safeReply(interaction, { content: "คำสั่งนี้ต้องใช้ในช่องข้อความของเซิร์ฟเวอร์ค่ะ", ephemeral: true });
+          return;
+        }
+        if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return;
+
         if (subcommand === "panel") {
-          if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return;
           const onboardingEmbed = new EmbedBuilder()
             .setTitle("✨ ระบบยืนยันตัวตนและจัดการบัญชี RitzSMP")
             .setDescription(
@@ -1596,20 +1763,30 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
             )
             .setColor(0xec4899)
             .setTimestamp()
-            .setFooter({ text: "RitzSMP AI • ระบบอัตโนมัติ 24 ชั่วโมง" });
+            .setFooter({ text: "RitzSMP AI • สร้างด้วยคำสั่งแอดมิน" });
 
-          if (interaction.channel && "send" in interaction.channel) {
-            await (interaction.channel as any).send({ embeds: [onboardingEmbed], components: buildOnboardingComponents() });
-            await (interaction.channel as any).send({ embeds: [buildRankClaimEmbed()], components: buildRankClaimComponents() });
-          }
-          await safeReply(interaction, { content: "ส่งแผงเชื่อมบัญชี ยืนยันตัวตน และรับยศลงในช่องนี้เรียบร้อยแล้วค่ะ! ✨", ephemeral: true });
+          await channel.send({ embeds: [onboardingEmbed], components: buildOnboardingComponents() });
+          await channel.send({ embeds: [buildRankClaimEmbed()], components: buildRankClaimComponents() });
+          await safeReply(interaction, { content: "สร้างแผงเชื่อมบัญชี ยืนยันตัวตน และรับยศลงในช่องนี้แล้วค่ะ ✨", ephemeral: true });
           pushLog("SUCCESS", "Executed /setup panel successfully");
+          return;
+        }
+
+        if (subcommand === "welcome" || subcommand === "leave") {
+          await channel.send(buildManualSystemPanelPayload(subcommand));
+          await safeReply(interaction, {
+            content: `สร้าง Embed ${subcommand === "welcome" ? "ต้อนรับสมาชิก" : "แจ้งสมาชิกออก"} ลงในช่องนี้แล้วค่ะ โดยระบบจะไม่สร้างซ้ำเองตอนบอทรีสตาร์ตนะคะ`,
+            ephemeral: true,
+          });
+          pushLog("SUCCESS", `Executed /setup ${subcommand} successfully`);
           return;
         }
       }
 
       if (commandName === "embed") {
+        if (!(await requireDiscordAdministrator(interaction))) return;
         const subcommand = interaction.options.getSubcommand();
+        const channel = getInteractionTextChannel(interaction);
         if (subcommand === "default") {
           const embed = new EmbedBuilder()
             .setTitle("🌟 ประกาศสำคัญจากเซิร์ฟเวอร์ RitzSMP")
@@ -1645,40 +1822,87 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
           const imageUrl = interaction.options.getString("image_url");
           const btnLabel = interaction.options.getString("button_label");
           const btnUrl = interaction.options.getString("button_url");
-
-          let colorVal = 0xec4899;
-          try {
-            if (colorInput.startsWith("#")) {
-              colorVal = parseInt(colorInput.replace("#", ""), 16);
-            }
-          } catch (e) {
-            colorVal = 0xec4899;
+          if ((btnLabel && !btnUrl) || (!btnLabel && btnUrl)) {
+            await safeReply(interaction, { content: "ถ้าจะเพิ่มปุ่ม ต้องใส่ทั้ง button_label และ button_url นะคะ", ephemeral: true });
+            return;
+          }
+          if (imageUrl && !isHttpUrl(imageUrl)) {
+            await safeReply(interaction, { content: "image_url ต้องเป็นลิงก์ http หรือ https เท่านั้นค่ะ", ephemeral: true });
+            return;
           }
 
-          const embed = new EmbedBuilder()
-            .setTitle(title)
-            .setDescription(description)
-            .setColor(colorVal)
-            .setTimestamp()
-            .setFooter({ text: "ประกาศโดยแอดมิน • RitzSMP Store" });
-
-          if (imageUrl) {
-            embed.setImage(imageUrl);
-          }
-
-          const components: ActionRowBuilder<ButtonBuilder>[] = [];
-          if (btnLabel && btnUrl) {
-            const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-              new ButtonBuilder()
-                .setLabel(btnLabel)
-                .setStyle(ButtonStyle.Link)
-                .setURL(btnUrl)
-            );
-            components.push(row);
-          }
-
-          await safeReply(interaction, { embeds: [embed], components, ephemeral: false });
+          await safeReply(interaction, {
+            ...buildManualEmbedPayload({
+              title,
+              description,
+              color: parseEmbedColor(colorInput),
+              imageUrl,
+              buttonLabel: btnLabel,
+              buttonUrl: btnUrl,
+              footerText: "ประกาศโดยแอดมิน • RitzSMP AI",
+            }),
+            ephemeral: false,
+          });
           pushLog("SUCCESS", "Executed /embed create successfully");
+          return;
+        }
+
+        if (subcommand === "edit" || subcommand === "delete") {
+          if (!channel) {
+            await safeReply(interaction, { content: "คำสั่งนี้ต้องใช้ในช่องข้อความที่มี Embed เป้าหมายค่ะ", ephemeral: true });
+            return;
+          }
+          const messageId = interaction.options.getString("message_id", true);
+          if (!(await ensureDeferredReply(interaction, { ephemeral: true }))) return;
+          let message: any;
+          try {
+            message = await channel.messages.fetch(messageId);
+          } catch {
+            await safeReply(interaction, { content: "หา Message ID นี้ในช่องปัจจุบันไม่เจอค่ะ ตรวจสอบ ID แล้วลองใหม่อีกครั้งนะคะ", ephemeral: true });
+            return;
+          }
+          if (message.author?.id && message.author.id !== client.user?.id) {
+            await safeReply(interaction, { content: "เพื่อความปลอดภัย คำสั่งนี้แก้ไขหรือลบได้เฉพาะข้อความที่ RitzSMP AI เป็นผู้สร้างเท่านั้นค่ะ", ephemeral: true });
+            return;
+          }
+
+          if (subcommand === "delete") {
+            await message.delete();
+            await safeReply(interaction, { content: `ลบ Embed ของ RitzSMP AI แล้วค่ะ (Message ID: ${messageId})`, ephemeral: true });
+            pushLog("SUCCESS", `Executed /embed delete successfully for message ${messageId}`);
+            return;
+          }
+
+          const existing = getEmbedData(message);
+          const title = interaction.options.getString("title") ?? existing.title;
+          const description = interaction.options.getString("description") ?? existing.description;
+          const colorInput = interaction.options.getString("color");
+          const imageUrl = interaction.options.getString("image_url");
+          const buttonLabel = interaction.options.getString("button_label");
+          const buttonUrl = interaction.options.getString("button_url");
+          if ((buttonLabel && !buttonUrl) || (!buttonLabel && buttonUrl)) {
+            await safeReply(interaction, { content: "ถ้าจะแก้ปุ่ม ต้องใส่ทั้ง button_label และ button_url นะคะ", ephemeral: true });
+            return;
+          }
+          if (imageUrl && !isHttpUrl(imageUrl)) {
+            await safeReply(interaction, { content: "image_url ต้องเป็นลิงก์ http หรือ https เท่านั้นค่ะ", ephemeral: true });
+            return;
+          }
+          const payload = buildManualEmbedPayload({
+            title,
+            description,
+            color: colorInput ?? existing.color ?? 0xec4899,
+            imageUrl: imageUrl ?? existing.imageUrl,
+            buttonLabel,
+            buttonUrl,
+            footerText: existing.footerText,
+          });
+          await message.edit({
+            embeds: payload.embeds,
+            components: buttonLabel || buttonUrl ? payload.components : message.components ?? [],
+          });
+          await safeReply(interaction, { content: `แก้ไข Embed ของ RitzSMP AI เรียบร้อยแล้วค่ะ (Message ID: ${messageId})`, ephemeral: true });
+          pushLog("SUCCESS", `Executed /embed edit successfully for message ${messageId}`);
           return;
         }
       }

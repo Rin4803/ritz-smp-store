@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { SlashCommandBuilder } from "discord.js";
+import { vi } from "vitest";
 import {
   ACCOUNT_LIST_PANEL_MARKER,
   RITZ_SYSTEM_CHANNEL_TARGETS,
@@ -13,6 +14,12 @@ import {
   planMisroutedWelcomePanelCleanup,
   isLegacyKanopiRankLogMessage,
   planLegacyKanopiRankLogCleanup,
+  AUTO_SYSTEM_PANEL_DEPLOYMENT_ENABLED,
+  buildManualEmbedPayload,
+  parseEmbedColor,
+  isDiscordAdministrator,
+  safeReply,
+  startDiscordMemberEvents,
 } from "./discordAiBot.js";
 
 describe("RitzSMP AI Bot Expanded Commands", () => {
@@ -140,6 +147,53 @@ describe("RitzSMP AI Bot Expanded Commands", () => {
     expect(getPreferredWelcomeChannelId("", "")).toBe("");
     expect(getPreferredWelcomeChannelId("managed-welcome", "purchase-success")).toBe("managed-welcome");
     expect(getPreferredWelcomeChannelId(undefined, "explicit-welcome")).toBe("explicit-welcome");
+  });
+
+  it("keeps automatic onboarding deployment disabled so setup is command-driven", () => {
+    expect(AUTO_SYSTEM_PANEL_DEPLOYMENT_ENABLED).toBe(false);
+  });
+
+  it("does not register automatic member event listeners in command-driven mode", () => {
+    const client = { on: vi.fn() } as any;
+    startDiscordMemberEvents(client);
+    expect(client.on).not.toHaveBeenCalled();
+  });
+
+  it("builds a safe manual embed payload and rejects invalid colors with the fallback", () => {
+    const payload = buildManualEmbedPayload({
+      title: "  ประกาศทดสอบ  ",
+      description: "ข้อความที่แอดมินกำหนดเอง",
+      color: "#00ffcc",
+      imageUrl: "https://example.com/banner.png",
+      buttonLabel: "เปิดร้านค้า",
+      buttonUrl: "https://ritzsmpstore-94jhsfkx.manus.space",
+    });
+    const embed = payload.embeds[0].toJSON();
+    expect(embed.title).toBe("ประกาศทดสอบ");
+    expect(embed.color).toBe(0x00ffcc);
+    expect(embed.image?.url).toBe("https://example.com/banner.png");
+    expect(payload.components).toHaveLength(1);
+    expect(parseEmbedColor("not-a-color")).toBe(0xec4899);
+  });
+
+  it("recognizes only guild administrators for command-managed embeds", () => {
+    const admin = { guild: { id: "guild-1" }, memberPermissions: { has: () => true } };
+    const member = { guild: { id: "guild-1" }, memberPermissions: { has: () => false } };
+    const directMessage = { guild: null, memberPermissions: { has: () => true } };
+    expect(isDiscordAdministrator(admin)).toBe(true);
+    expect(isDiscordAdministrator(member)).toBe(false);
+    expect(isDiscordAdministrator(directMessage)).toBe(false);
+  });
+
+  it("uses reply instead of editReply when a stale deferred marker exists", async () => {
+    const interaction: any = {
+      __ritzDeferConfirmed: true,
+      isRepliable: () => true,
+      reply: async () => { interaction.replied = true; },
+      editReply: async () => { throw new Error("InteractionNotReplied"); },
+    };
+    await expect(safeReply(interaction, { content: "manual embed" })).resolves.toBe(true);
+    expect(interaction.replied).toBe(true);
   });
 
   it("coalesces concurrent startup work and resets after a failed attempt", async () => {
