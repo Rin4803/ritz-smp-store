@@ -90,15 +90,15 @@ async function interactionReply(interaction: any, payload: any): Promise<any> {
       return await interaction.editReply(payload);
     }
     if (typeof payload === "string") {
-      return await interaction.reply({ content: payload, ephemeral: payload.includes("พี่ต้อง") || payload.includes("กรุณา") });
+      return await interaction.reply({ content: payload, ephemeral: false });
     }
-    return await interaction.reply(payload);
+    return await interaction.reply({ ...payload, ephemeral: false });
   } catch {
     try {
       if (typeof payload === "string") {
-        return await interaction.followUp({ content: payload, ephemeral: true });
+        return await interaction.followUp({ content: payload, ephemeral: false });
       }
-      return await interaction.followUp({ ...payload, ephemeral: true });
+      return await interaction.followUp({ ...payload, ephemeral: false });
     } catch {
       // Ignore if interaction expired
     }
@@ -106,31 +106,24 @@ async function interactionReply(interaction: any, payload: any): Promise<any> {
 }
 
 function getVoiceChannel(interaction: any): any | null {
-  // 1. ตรวจจาก interaction.member.voice.channel ตามปกติ
-  if (interaction.member?.voice?.channel) {
-    return interaction.member.voice.channel;
-  }
   const userId = interaction.user?.id;
-  // 2. ตรวจจาก guild voiceStates cache โดยตรง
+  // 1. ตรวจจาก guild.voiceStates.cache โดยตรง (แม่นยำที่สุดใน production)
   if (userId && interaction.guild?.voiceStates?.cache) {
     const voiceState = interaction.guild.voiceStates.cache.get(userId);
     if (voiceState?.channel) {
       return voiceState.channel;
     }
   }
-  // 3. ตรวจจาก guild members cache
+  // 2. ตรวจจาก interaction.member.voice.channel
+  if (interaction.member?.voice?.channel) {
+    return interaction.member.voice.channel;
+  }
+  // 3. ตรวจจาก guild.members cache
   if (userId && interaction.guild?.members?.cache) {
     const member = interaction.guild.members.cache.get(userId);
     if (member?.voice?.channel) {
       return member.voice.channel;
     }
-  }
-  // 4. รองรับ guild.members.fetch ถ้า guild รองรับ async (บันทึกกรณี cache เปล่า)
-  if (userId && interaction.guild?.voiceStates?.fetch) {
-    try {
-      const vs = interaction.guild.voiceStates.cache.get(userId);
-      if (vs?.channel) return vs.channel;
-    } catch {}
   }
   return null;
 }
@@ -248,8 +241,8 @@ async function playNext(session: MusicSession): Promise<void> {
   session.current = next;
   session.started = true;
   try {
-    const source = await stream(next.url, { discordPlayerCompatibility: true });
-    const resource = createAudioResource(source.stream, { inputType: source.type });
+    const streamData = await stream(next.url, { quality: 2 });
+    const resource = createAudioResource(streamData.stream, { inputType: streamData.type });
     session.player.play(resource);
   } catch {
     session.current = undefined;
