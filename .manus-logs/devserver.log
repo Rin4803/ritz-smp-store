@@ -3614,3 +3614,164 @@
 [2026-08-21T16:52:31.083Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
 [2026-08-21T16:52:34.236Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540380693690060820
 [2026-08-21T16:52:35.779Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-21T16:53:27.491Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-21T16:54:18.474Z] [RitzSmpAI] [INFO] Received command /play from tun_5555
+[2026-08-21T16:54:18.477Z] (node:159626) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-21T16:54:29.564Z] [Music] Fetching ytdl stream for: https://youtu.be/UR00Xyo77Ys?si=2rjD04_-VEwLCLPR
+[2026-08-21T16:54:29.835Z] [Music] AudioPlayer playing resource for: https://youtu.be/UR00Xyo77Ys?si=2rjD04_-VEwLCLPR
+[2026-08-21T16:54:30.625Z] [Music Error] AudioPlayer encountered error: AudioPlayerError: Status code: 429
+[2026-08-21T16:54:30.625Z] at exports.request (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/utils.js:219:13)
+[2026-08-21T16:54:30.625Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-21T16:54:30.625Z] resource: AudioResource {
+[2026-08-21T16:54:30.625Z] playStream: Encoder {
+[2026-08-21T16:54:30.625Z] _events: [Object],
+[2026-08-21T16:54:30.625Z] _readableState: [ReadableState],
+[2026-08-21T16:54:30.625Z] _writableState: [WritableState],
+[2026-08-21T16:54:30.625Z] allowHalfOpen: true,
+[2026-08-21T16:54:30.625Z] _maxListeners: undefined,
+[2026-08-21T16:54:30.625Z] _eventsCount: 6,
+[2026-08-21T16:54:30.625Z] encoder: null,
+[2026-08-21T16:54:30.625Z] _options: [Object],
+[2026-08-21T16:54:30.625Z] _required: 3840,
+[2026-08-21T16:54:30.625Z] _buffer: null,
+[2026-08-21T16:54:30.625Z] [Symbol(shapeMode)]: true,
+[2026-08-21T16:54:30.625Z] [Symbol(kCapture)]: false,
+[2026-08-21T16:54:30.625Z] [Symbol(kCallback)]: null
+[2026-08-21T16:54:30.625Z] },
+[2026-08-21T16:54:30.625Z] edges: [ [Object], [Object], [Object] ],
+[2026-08-21T16:54:30.625Z] metadata: null,
+[2026-08-21T16:54:30.625Z] volume: VolumeTransformer {
+[2026-08-21T16:54:30.625Z] _events: [Object],
+[2026-08-21T16:54:30.625Z] _readableState: [ReadableState],
+[2026-08-21T16:54:30.625Z] _writableState: [WritableState],
+[2026-08-21T16:54:30.625Z] allowHalfOpen: true,
+[2026-08-21T16:54:30.625Z] _maxListeners: undefined,
+[2026-08-21T16:54:30.625Z] _eventsCount: 5,
+[2026-08-21T16:54:30.625Z] _readInt: [Function (anonymous)],
+[2026-08-21T16:54:30.625Z] _writeInt: [Function (anonymous)],
+[2026-08-21T16:54:30.625Z] _bits: 16,
+[2026-08-21T16:54:30.625Z] _bytes: 2,
+[2026-08-21T16:54:30.625Z] _extremum: 32768,
+[2026-08-21T16:54:30.625Z] volume: 1,
+[2026-08-21T16:54:30.625Z] _chunk: null,
+[2026-08-21T16:54:30.625Z] [Symbol(shapeMode)]: true,
+[2026-08-21T16:54:30.625Z] [Symbol(kCapture)]: false,
+[2026-08-21T16:54:30.625Z] [Symbol(kCallback)]: null
+[2026-08-21T16:54:30.625Z] },
+[2026-08-21T16:54:30.625Z] encoder: Encoder {
+[2026-08-21T16:54:30.625Z] _events: [Object],
+[2026-08-21T16:54:30.625Z] _readableState: [ReadableState],
+[2026-08-21T16:54:30.625Z] _writableState: [WritableState],
+[2026-08-21T16:54:30.625Z] allowHalfOpen: true,
+[2026-08-21T16:54:30.625Z] _maxListeners: undefined,
+[2026-08-21T16:54:30.625Z] _eventsCount: 6,
+[2026-08-21T16:54:30.625Z] encoder: null,
+[2026-08-21T16:54:30.625Z] _options: [Object],
+[2026-08-21T16:54:30.625Z] _required: 3840,
+[2026-08-21T16:54:30.625Z] _buffer: null,
+[2026-08-21T16:54:30.625Z] [Symbol(shapeMode)]: true,
+[2026-08-21T16:54:30.625Z] [Symbol(kCapture)]: false,
+[2026-08-21T16:54:30.625Z] [Symbol(kCallback)]: null
+[2026-08-21T16:54:30.625Z] },
+[2026-08-21T16:54:30.625Z] audioPlayer: AudioPlayer {
+[2026-08-21T16:54:30.625Z] _events: [Object: null prototype],
+[2026-08-21T16:54:30.625Z] _eventsCount: 3,
+[2026-08-21T16:54:30.625Z] _maxListeners: undefined,
+[2026-08-21T16:54:30.625Z] _state: [Object],
+[2026-08-21T16:54:30.625Z] subscribers: [Array],
+[2026-08-21T16:54:30.625Z] behaviors: [Object],
+[2026-08-21T16:54:30.625Z] debug: [Function (anonymous)],
+[2026-08-21T16:54:30.625Z] [Symbol(shapeMode)]: false,
+[2026-08-21T16:54:30.625Z] [Symbol(kCapture)]: false
+[2026-08-21T16:54:30.625Z] },
+[2026-08-21T16:54:30.625Z] playbackDuration: 0,
+[2026-08-21T16:54:30.625Z] started: false,
+[2026-08-21T16:54:30.625Z] silencePaddingFrames: 5,
+[2026-08-21T16:54:30.625Z] silenceRemaining: -1
+[2026-08-21T16:54:30.625Z] }
+[2026-08-21T16:54:30.625Z] }
+[2026-08-21T16:54:30.625Z] [Music] AudioPlayer entered Idle state
+[2026-08-21T16:54:31.812Z] [RitzSmpAI] [SUCCESS] Handled /play command
+[2026-08-21T16:54:53.879Z] [Music Error] VoiceConnection encountered error: Error: Cannot perform IP discovery - socket closed
+[2026-08-21T16:54:53.879Z] at Socket.<anonymous> (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@discordjs+voice@0.19.2_@discordjs+opus@0.10.0_@emnapi+core@1.11.3_@emnapi+runtime@1.11.3_opusscript@0.1.1/node_modules/@discordjs/voice/dist/index.mjs:1039:46)
+[2026-08-21T16:54:53.879Z] at Object.onceWrapper (node:events:638:28)
+[2026-08-21T16:54:53.879Z] at Socket.emit (node:events:536:35)
+[2026-08-21T16:54:53.879Z] at socketCloseNT (node:dgram:808:8)
+[2026-08-21T16:54:53.879Z] at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+[2026-08-21T16:55:02.149Z] [RitzSmpAI] [INFO] Received command /play from tun_5555
+[2026-08-21T16:55:11.707Z] [Music] Fetching ytdl stream for: https://youtu.be/UR00Xyo77Ys?si=2rjD04_-VEwLCLPR
+[2026-08-21T16:55:11.709Z] [Music] AudioPlayer playing resource for: https://youtu.be/UR00Xyo77Ys?si=2rjD04_-VEwLCLPR
+[2026-08-21T16:55:12.540Z] [Music Error] AudioPlayer encountered error: AudioPlayerError: Status code: 429
+[2026-08-21T16:55:12.540Z] at exports.request (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/utils.js:219:13)
+[2026-08-21T16:55:12.540Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-21T16:55:12.540Z] resource: AudioResource {
+[2026-08-21T16:55:12.540Z] playStream: Encoder {
+[2026-08-21T16:55:12.540Z] _events: [Object],
+[2026-08-21T16:55:12.540Z] _readableState: [ReadableState],
+[2026-08-21T16:55:12.540Z] _writableState: [WritableState],
+[2026-08-21T16:55:12.540Z] allowHalfOpen: true,
+[2026-08-21T16:55:12.540Z] _maxListeners: undefined,
+[2026-08-21T16:55:12.540Z] _eventsCount: 6,
+[2026-08-21T16:55:12.540Z] encoder: null,
+[2026-08-21T16:55:12.540Z] _options: [Object],
+[2026-08-21T16:55:12.540Z] _required: 3840,
+[2026-08-21T16:55:12.540Z] _buffer: null,
+[2026-08-21T16:55:12.540Z] [Symbol(shapeMode)]: true,
+[2026-08-21T16:55:12.540Z] [Symbol(kCapture)]: false,
+[2026-08-21T16:55:12.540Z] [Symbol(kCallback)]: null
+[2026-08-21T16:55:12.540Z] },
+[2026-08-21T16:55:12.540Z] edges: [ [Object], [Object], [Object] ],
+[2026-08-21T16:55:12.540Z] metadata: null,
+[2026-08-21T16:55:12.540Z] volume: VolumeTransformer {
+[2026-08-21T16:55:12.540Z] _events: [Object],
+[2026-08-21T16:55:12.540Z] _readableState: [ReadableState],
+[2026-08-21T16:55:12.540Z] _writableState: [WritableState],
+[2026-08-21T16:55:12.540Z] allowHalfOpen: true,
+[2026-08-21T16:55:12.540Z] _maxListeners: undefined,
+[2026-08-21T16:55:12.540Z] _eventsCount: 5,
+[2026-08-21T16:55:12.540Z] _readInt: [Function (anonymous)],
+[2026-08-21T16:55:12.540Z] _writeInt: [Function (anonymous)],
+[2026-08-21T16:55:12.540Z] _bits: 16,
+[2026-08-21T16:55:12.540Z] _bytes: 2,
+[2026-08-21T16:55:12.540Z] _extremum: 32768,
+[2026-08-21T16:55:12.540Z] volume: 1,
+[2026-08-21T16:55:12.540Z] _chunk: null,
+[2026-08-21T16:55:12.540Z] [Symbol(shapeMode)]: true,
+[2026-08-21T16:55:12.540Z] [Symbol(kCapture)]: false,
+[2026-08-21T16:55:12.540Z] [Symbol(kCallback)]: null
+[2026-08-21T16:55:12.540Z] },
+[2026-08-21T16:55:12.540Z] encoder: Encoder {
+[2026-08-21T16:55:12.540Z] _events: [Object],
+[2026-08-21T16:55:12.540Z] _readableState: [ReadableState],
+[2026-08-21T16:55:12.540Z] _writableState: [WritableState],
+[2026-08-21T16:55:12.540Z] allowHalfOpen: true,
+[2026-08-21T16:55:12.540Z] _maxListeners: undefined,
+[2026-08-21T16:55:12.540Z] _eventsCount: 6,
+[2026-08-21T16:55:12.540Z] encoder: null,
+[2026-08-21T16:55:12.540Z] _options: [Object],
+[2026-08-21T16:55:12.540Z] _required: 3840,
+[2026-08-21T16:55:12.540Z] _buffer: null,
+[2026-08-21T16:55:12.540Z] [Symbol(shapeMode)]: true,
+[2026-08-21T16:55:12.540Z] [Symbol(kCapture)]: false,
+[2026-08-21T16:55:12.540Z] [Symbol(kCallback)]: null
+[2026-08-21T16:55:12.540Z] },
+[2026-08-21T16:55:12.540Z] audioPlayer: AudioPlayer {
+[2026-08-21T16:55:12.540Z] _events: [Object: null prototype],
+[2026-08-21T16:55:12.540Z] _eventsCount: 3,
+[2026-08-21T16:55:12.540Z] _maxListeners: undefined,
+[2026-08-21T16:55:12.540Z] _state: [Object],
+[2026-08-21T16:55:12.540Z] subscribers: [Array],
+[2026-08-21T16:55:12.540Z] behaviors: [Object],
+[2026-08-21T16:55:12.540Z] debug: [Function (anonymous)],
+[2026-08-21T16:55:12.540Z] [Symbol(shapeMode)]: false,
+[2026-08-21T16:55:12.540Z] [Symbol(kCapture)]: false
+[2026-08-21T16:55:12.540Z] },
+[2026-08-21T16:55:12.540Z] playbackDuration: 0,
+[2026-08-21T16:55:12.540Z] started: false,
+[2026-08-21T16:55:12.540Z] silencePaddingFrames: 5,
+[2026-08-21T16:55:12.540Z] silenceRemaining: -1
+[2026-08-21T16:55:12.540Z] }
+[2026-08-21T16:55:12.540Z] }
+[2026-08-21T16:55:12.540Z] [Music] AudioPlayer entered Idle state
+[2026-08-21T16:55:13.621Z] [RitzSmpAI] [SUCCESS] Handled /play command
+[2026-08-21T17:00:01.663Z] 5:00:01 PM [vite] (client) hmr update /src/index.css

@@ -277,3 +277,6 @@
 - [ ] Investigate root cause of YouTube music playback failure in discordMusic.ts and ensure actual audio streams to voice channel
 - [ ] Verify 100% end-to-end music streaming and voice channel output in Discord with live validation
 - [ ] Test alternative music streaming libraries (yt-dlp and ytdl-core) to replace play-dl
+- [ ] Fix music title extraction in discordMusic.ts to avoid displaying raw YouTube URLs
+- [ ] Ensure Discord bot shows green speaking/playing indicator ring when streaming audio
+- [ ] Verify updated discordMusic.ts with all 108 tests passing
