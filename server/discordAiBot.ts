@@ -230,6 +230,169 @@ function buildOnboardingEmbed() {
     .setTimestamp();
 }
 
+export const ACCOUNT_LIST_PANEL_MARKER = "RitzSMP AI • ระบบรายชื่อบัญชี • canonical-v1";
+export const LEGACY_ACCOUNT_LIST_LOG_CHANNEL_NAME = "🧾│บันทึกรับยศสำเร็จ";
+
+export const RITZ_SYSTEM_CHANNEL_TARGETS = [
+  {
+    name: "🔗│ระบบเชื่อมบัญชี",
+    legacyNames: ["✅│เชื่อมต่อดิสคอร์ด", "🔗│เชื่อมบัญชี-Minecraft"],
+    type: ChannelType.GuildText,
+    topic: "ระบบเชื่อมบัญชี Discord กับ Minecraft และรับรหัส /verify 4 หลัก",
+  },
+  {
+    name: "📋│ระบบรายชื่อบัญชี",
+    legacyNames: ["📋│รายชื่อบัญชี", "📋︱รายชื่อบัญชี", "📋│รายชื่อ-บัญชีผู้เล่น"],
+    type: ChannelType.GuildText,
+    topic: "ระบบแสดงรายชื่อสมาชิกและบัญชี Minecraft ที่ยืนยันแล้ว",
+  },
+  {
+    name: "🎖️│ระบบยืนยันรับยศ",
+    legacyNames: ["🪪│ยืนยันตัวตนแมะ", "🎖️│ยืนยันตัวตน-รับยศ"],
+    type: ChannelType.GuildText,
+    topic: "ระบบยืนยันตัวตนและกดรับยศสมาชิก RitzSMP AI",
+  },
+  {
+    name: "👋│ระบบต้อนรับ-เข้าออก",
+    legacyNames: ["👋│welcome", "👋│ต้อนรับ-เข้าออก"],
+    type: ChannelType.GuildText,
+    topic: "ระบบต้อนรับสมาชิกใหม่และแจ้งเตือนสมาชิกเข้า-ออก",
+  },
+] as const;
+
+export type ManagedSystemChannelLike = {
+  id: string;
+  name: string;
+  type?: number;
+  position?: number;
+};
+
+export function planManagedSystemChannelCleanup(
+  channels: Iterable<ManagedSystemChannelLike>,
+  target: { name: string; legacyNames: readonly string[] },
+) {
+  const candidates = Array.from(channels)
+    .filter(channel =>
+      (channel.type === undefined || channel.type === ChannelType.GuildText) &&
+      (channel.name === target.name || target.legacyNames.includes(channel.name)),
+    )
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || a.id.localeCompare(b.id));
+
+  const exactMatches = candidates.filter(channel => channel.name === target.name);
+  const canonical = exactMatches[0] ?? candidates[0];
+
+  return {
+    canonicalId: canonical?.id ?? null,
+    duplicateIds: candidates.filter(channel => channel.id !== canonical?.id).map(channel => channel.id),
+  };
+}
+
+export function isAccountListPanelMessage(
+  message: { author?: { id?: string }; embeds?: any[]; components?: any[] },
+  botUserId?: string,
+): boolean {
+  if (botUserId && message.author?.id !== botUserId) return false;
+
+  const titles = (message.embeds ?? []).map(embed => String(embed?.title ?? embed?.data?.title ?? ""));
+  const customIds = (message.components ?? []).flatMap(row => row?.components ?? [])
+    .map(component => String(component?.customId ?? component?.data?.custom_id ?? ""));
+
+  return titles.some(title => title.includes("รายชื่อสมาชิกและบัญชี")) ||
+    customIds.includes("ritz_profile_button");
+}
+
+export type AccountListPanelMessageLike = {
+  id: string;
+  author?: { id?: string };
+  embeds?: any[];
+  components?: any[];
+  createdTimestamp?: number;
+};
+
+export function planAccountListPanelCleanup(
+  messages: Iterable<AccountListPanelMessageLike>,
+  botUserId?: string,
+) {
+  const panels = Array.from(messages)
+    .filter(message => isAccountListPanelMessage(message, botUserId))
+    .sort((a, b) => (a.createdTimestamp ?? 0) - (b.createdTimestamp ?? 0) || a.id.localeCompare(b.id));
+
+  return {
+    canonicalId: panels[0]?.id ?? null,
+    duplicateIds: panels.slice(1).map(message => message.id),
+  };
+}
+
+export function buildAccountListPanelPayload() {
+  const embed = new EmbedBuilder()
+    .setTitle("📋 รายชื่อสมาชิกและบัญชีที่ยืนยันตัวตน")
+    .setDescription("ระบบบันทึกรายชื่อสมาชิกผู้เล่น RitzSMP ทั้งหมดโดยอัตโนมัติ กดปุ่มด้านล่างเพื่อตรวจสอบโปรไฟล์ของคุณได้เลยค่ะ ✨")
+    .setColor(0x3b82f6)
+    .setFooter({ text: ACCOUNT_LIST_PANEL_MARKER })
+    .setTimestamp();
+  const profileRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder().setCustomId("ritz_profile_button").setLabel("🪪 ดูโปรไฟล์ของฉัน").setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId("ritz_discord_members_button").setLabel("👥 สมาชิก Discord").setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId("ritz_players_button").setLabel("⛏️ ผู้เล่น Minecraft ออนไลน์").setStyle(ButtonStyle.Secondary),
+  );
+  return { embeds: [embed], components: [profileRow] };
+}
+
+async function fetchRecentChannelMessages(channel: any, limit = 100): Promise<any[]> {
+  const collection = await channel.messages.fetch({ limit });
+  return Array.from(collection.values());
+}
+
+async function reconcileAccountListPanel(channel: any, client: Client): Promise<void> {
+  const messages = await fetchRecentChannelMessages(channel);
+  const botUserId = client.user?.id;
+  const cleanupPlan = planAccountListPanelCleanup(messages, botUserId);
+  const canonicalPanel = messages.find(message => message.id === cleanupPlan.canonicalId);
+
+  if (canonicalPanel) {
+    await canonicalPanel.edit(buildAccountListPanelPayload());
+  } else {
+    await channel.send(buildAccountListPanelPayload());
+  }
+
+  for (const stalePanel of messages.filter(message => cleanupPlan.duplicateIds.includes(message.id))) {
+    await stalePanel.delete("Remove duplicate RitzSMP AI account-list panel").catch((error: unknown) => {
+      pushLog("WARN", `Could not delete duplicate account-list panel: ${String(error)}`);
+    });
+  }
+}
+
+async function cleanupDuplicateAccountListChannel(channel: any, client: Client): Promise<void> {
+  if (!channel?.isTextBased?.() || !("messages" in channel)) return;
+
+  const messages = await fetchRecentChannelMessages(channel);
+  const botUserId = client.user?.id;
+  const duplicatePanels = messages.filter(message => isAccountListPanelMessage(message, botUserId));
+  for (const panel of duplicatePanels) {
+    await panel.delete("Remove duplicate RitzSMP AI account-list panel from legacy channel").catch((error: unknown) => {
+      pushLog("WARN", `Could not delete legacy account-list panel: ${String(error)}`);
+    });
+  }
+
+  const nonPanelMessages = messages.filter(message => !isAccountListPanelMessage(message, botUserId));
+  if (nonPanelMessages.length > 0) {
+    if (channel.name !== LEGACY_ACCOUNT_LIST_LOG_CHANNEL_NAME && typeof channel.setName === "function") {
+      const previousName = channel.name;
+      await channel.setName(LEGACY_ACCOUNT_LIST_LOG_CHANNEL_NAME, "Clarify preserved rank-fulfillment log channel").then(() => {
+        pushLog("SUCCESS", `Renamed preserved legacy channel ${previousName} to ${LEGACY_ACCOUNT_LIST_LOG_CHANNEL_NAME}`);
+      }).catch((error: unknown) => {
+        pushLog("WARN", `Could not rename preserved legacy account-list channel ${channel.id}: ${String(error)}`);
+      });
+    }
+    return;
+  }
+  if (messages.length < 100 && typeof channel.delete === "function") {
+    await channel.delete("Remove empty legacy RitzSMP AI account-list channel").catch((error: unknown) => {
+      pushLog("WARN", `Could not delete duplicate account-list channel ${channel.id}: ${String(error)}`);
+    });
+  }
+}
+
 async function sendToDiscordChannel(client: Client, channelId: string, payload: any): Promise<boolean> {
   if (!channelId) {
     pushLog("WARN", "Discord channel is not configured for this event");
@@ -828,43 +991,32 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
       try {
         const guild = await client.guilds.fetch(getConfiguredDiscordGuildId()).catch(() => null);
         if (guild) {
-          const channelsToEnsure = [
-            {
-              name: "🔗│ระบบเชื่อมบัญชี",
-              legacyNames: ["✅│เชื่อมต่อดิสคอร์ด", "🔗│เชื่อมบัญชี-Minecraft"],
-              type: ChannelType.GuildText,
-              topic: "ระบบเชื่อมบัญชี Discord กับ Minecraft และรับรหัส /verify 4 หลัก",
-            },
-            {
-              name: "📋│ระบบรายชื่อบัญชี",
-              legacyNames: ["📋│รายชื่อบัญชี", "📋│รายชื่อ-บัญชีผู้เล่น"],
-              type: ChannelType.GuildText,
-              topic: "ระบบแสดงรายชื่อสมาชิกและบัญชี Minecraft ที่ยืนยันแล้ว",
-            },
-            {
-              name: "🎖️│ระบบยืนยันรับยศ",
-              legacyNames: ["🪪│ยืนยันตัวตนแมะ", "🎖️│ยืนยันตัวตน-รับยศ"],
-              type: ChannelType.GuildText,
-              topic: "ระบบยืนยันตัวตนและกดรับยศสมาชิก RitzSMP AI",
-            },
-            {
-              name: "👋│ระบบต้อนรับ-เข้าออก",
-              legacyNames: ["👋│welcome", "👋│ต้อนรับ-เข้าออก"],
-              type: ChannelType.GuildText,
-              topic: "ระบบต้อนรับสมาชิกใหม่และแจ้งเตือนสมาชิกเข้า-ออก",
-            },
-          ];
+          const channelsToEnsure = RITZ_SYSTEM_CHANNEL_TARGETS;
 
           for (const target of channelsToEnsure) {
-            let channel = guild.channels.cache.find(
-              c => c.type === ChannelType.GuildText && (c.name === target.name || target.legacyNames.includes(c.name)),
+            const cleanupPlan = planManagedSystemChannelCleanup(
+              guild.channels.cache.values(),
+              target,
             );
+
+            if (target.name === "📋│ระบบรายชื่อบัญชี") {
+              for (const duplicateId of cleanupPlan.duplicateIds) {
+                const duplicateChannel = guild.channels.cache.get(duplicateId);
+                await cleanupDuplicateAccountListChannel(duplicateChannel, client);
+              }
+            }
+
+            let channel = cleanupPlan.canonicalId
+              ? guild.channels.cache.get(cleanupPlan.canonicalId)
+              : undefined;
+
             if (channel && channel.name !== target.name) {
+              const previousName = channel.name;
               try {
                 await (channel as any).setName(target.name, "Standardize RitzSMP AI system channel name");
-                pushLog("SUCCESS", `Renamed legacy channel ${channel.name} to ${target.name}`);
+                pushLog("SUCCESS", `Renamed legacy channel ${previousName} to ${target.name}`);
               } catch (renameErr) {
-                pushLog("WARN", `Could not rename legacy channel ${channel.name} to ${target.name}: ${String(renameErr)}`);
+                pushLog("WARN", `Could not rename legacy channel ${previousName} to ${target.name}: ${String(renameErr)}`);
               }
             }
             if (channel && channel.type === ChannelType.GuildText && "setTopic" in channel) {
@@ -887,48 +1039,41 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
 
             if (channel && channel.isTextBased()) {
               try {
-                const messages = await channel.messages.fetch({ limit: 5 });
-                const existingBotMsg = messages.find(m => m.author.id === client.user?.id);
-                if (!existingBotMsg) {
-                  if (target.name === "🔗│ระบบเชื่อมบัญชี") {
-                    const embed = new EmbedBuilder()
-                      .setTitle("✨ ระบบเชื่อมบัญชี Minecraft RitzSMP")
-                      .setDescription(
-                        "ยินดีต้อนรับสู่ RitzSMP! 🌸\n\n" +
-                        "📌 **ขั้นตอนการเชื่อมบัญชี:**\n" +
-                        "1. กดปุ่ม **🔗 เชื่อมบัญชี** ด้านล่างนี้เพื่อรับรหัส 4 หลัก\n" +
-                        "2. เข้าเกม Minecraft พิมพ์คำสั่ง `/verify <รหัส 4 หลัก>` เพื่อผูกบัญชีทันทีค่ะ! 💕"
-                      )
-                      .setColor(0xec4899)
-                      .setImage(RITZ_WELCOME_COVER_IMAGE_URL)
-                      .setTimestamp()
-                      .setFooter({ text: "RitzSMP AI • ระบบเชื่อมบัญชีอัตโนมัติ 24 ชม." });
-                    await channel.send({ embeds: [embed], components: buildOnboardingComponents() });
-                  } else if (target.name === "🎖️│ระบบยืนยันรับยศ") {
-                    await channel.send({ embeds: [buildRankClaimEmbed()], components: buildRankClaimComponents() });
-                  } else if (target.name === "📋│ระบบรายชื่อบัญชี") {
-                    const embed = new EmbedBuilder()
-                      .setTitle("📋 รายชื่อสมาชิกและบัญชีที่ยืนยันตัวตน")
-                      .setDescription("ระบบบันทึกรายชื่อสมาชิกผู้เล่น RitzSMP ทั้งหมดโดยอัตโนมัติ กดปุ่มด้านล่างเพื่อตรวจสอบโปรไฟล์ของคุณได้เลยค่ะ ✨")
-                      .setColor(0x3b82f6)
-                      .setTimestamp();
-                    const profileRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-                      new ButtonBuilder().setCustomId("ritz_profile_button").setLabel("🪪 ดูโปรไฟล์ของฉัน").setStyle(ButtonStyle.Primary),
-                      new ButtonBuilder().setCustomId("ritz_discord_members_button").setLabel("👥 สมาชิก Discord").setStyle(ButtonStyle.Secondary),
-                      new ButtonBuilder().setCustomId("ritz_players_button").setLabel("⛏️ ผู้เล่น Minecraft ออนไลน์").setStyle(ButtonStyle.Secondary)
-                    );
-                    await channel.send({ embeds: [embed], components: [profileRow] });
-                  } else if (target.name === "👋│ระบบต้อนรับ-เข้าออก") {
-                    const embed = new EmbedBuilder()
-                      .setTitle("👋 ระบบต้อนรับและแจ้งเตือนเข้า-ออก RitzSMP")
-                      .setDescription("ช่องนี้ใช้สำหรับข้อความต้อนรับสมาชิกใหม่และแจ้งเตือนสมาชิกที่ออกจากเซิร์ฟเวอร์ค่ะ 💖")
-                      .setColor(0xec4899)
-                      .setImage(RITZ_WELCOME_COVER_IMAGE_URL)
-                      .setTimestamp()
-                      .setFooter({ text: "RitzSMP AI • ระบบต้อนรับและสมาชิกเข้า-ออก" });
-                    await channel.send({ embeds: [embed] });
+                if (target.name === "📋│ระบบรายชื่อบัญชี") {
+                  await reconcileAccountListPanel(channel, client);
+                  pushLog("SUCCESS", `Reconciled one canonical panel in ${target.name}`);
+                } else {
+                  const messages = await channel.messages.fetch({ limit: 100 });
+                  const existingBotMsg = messages.find(m => m.author.id === client.user?.id);
+                  if (!existingBotMsg) {
+                    if (target.name === "🔗│ระบบเชื่อมบัญชี") {
+                      const embed = new EmbedBuilder()
+                        .setTitle("✨ ระบบเชื่อมบัญชี Minecraft RitzSMP")
+                        .setDescription(
+                          "ยินดีต้อนรับสู่ RitzSMP! 🌸\n\n" +
+                          "📌 **ขั้นตอนการเชื่อมบัญชี:**\n" +
+                          "1. กดปุ่ม **🔗 เชื่อมบัญชี** ด้านล่างนี้เพื่อรับรหัส 4 หลัก\n" +
+                          "2. เข้าเกม Minecraft พิมพ์คำสั่ง `/verify <รหัส 4 หลัก>` เพื่อผูกบัญชีทันทีค่ะ! 💕"
+                        )
+                        .setColor(0xec4899)
+                        .setImage(RITZ_WELCOME_COVER_IMAGE_URL)
+                        .setTimestamp()
+                        .setFooter({ text: "RitzSMP AI • ระบบเชื่อมบัญชีอัตโนมัติ 24 ชม." });
+                      await channel.send({ embeds: [embed], components: buildOnboardingComponents() });
+                    } else if (target.name === "🎖️│ระบบยืนยันรับยศ") {
+                      await channel.send({ embeds: [buildRankClaimEmbed()], components: buildRankClaimComponents() });
+                    } else if (target.name === "👋│ระบบต้อนรับ-เข้าออก") {
+                      const embed = new EmbedBuilder()
+                        .setTitle("👋 ระบบต้อนรับและแจ้งเตือนเข้า-ออก RitzSMP")
+                        .setDescription("ช่องนี้ใช้สำหรับข้อความต้อนรับสมาชิกใหม่และแจ้งเตือนสมาชิกที่ออกจากเซิร์ฟเวอร์ค่ะ 💖")
+                        .setColor(0xec4899)
+                        .setImage(RITZ_WELCOME_COVER_IMAGE_URL)
+                        .setTimestamp()
+                        .setFooter({ text: "RitzSMP AI • ระบบต้อนรับและสมาชิกเข้า-ออก" });
+                      await channel.send({ embeds: [embed] });
+                    }
+                    pushLog("SUCCESS", `Posted panel to channel ${target.name}`);
                   }
-                  pushLog("SUCCESS", `Posted panel to channel ${target.name}`);
                 }
               } catch (msgErr) {
                 pushLog("WARN", `Could not post panel to ${target.name}: ${String(msgErr)}`);

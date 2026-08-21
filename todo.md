@@ -164,3 +164,5 @@
 - [x] Fix intermittent `RangeError: Maximum call stack size exceeded` during Discord global command registration and prevent duplicate bot startup work
 - [x] Fix production `InteractionNotReplied` in the onboarding interaction error path and verify profile/button handling in live logs
 - [x] Return a safe 403 response for unauthenticated Heartbeat callbacks instead of leaking a 500 session-cookie error
+- [x] Deduplicate the Discord account-list channel header, starter text, and RitzSMP AI panel so only one canonical panel remains after sync/restart
+- [x] Add regression coverage proving account-list panel synchronization is idempotent and removes stale duplicates safely
