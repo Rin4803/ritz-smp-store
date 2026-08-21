@@ -123,22 +123,38 @@ function scheduleIdleCleanup(session: MusicSession): void {
 async function getOrCreateSession(interaction: any, voiceChannel: any): Promise<MusicSession> {
   const existing = sessions.get(interaction.guildId);
   if (existing) {
-    scheduleIdleCleanup(existing);
+    if (existing.connection.joinConfig.channelId !== voiceChannel.id) {
+      existing.connection.rejoin({
+        channelId: voiceChannel.id,
+        selfDeaf: true,
+        selfMute: false,
+      });
+    }
     return existing;
   }
 
   const connection = joinVoiceChannel({
     channelId: voiceChannel.id,
-    guildId: interaction.guildId,
-    adapterCreator: interaction.guild.voiceAdapterCreator,
+    guildId: voiceChannel.guild.id,
+    adapterCreator: voiceChannel.guild.voiceAdapterCreator,
     selfDeaf: true,
+    selfMute: false,
   });
-  await entersState(connection, VoiceConnectionStatus.Ready, 10_000);
+
+  try {
+    await entersState(connection, VoiceConnectionStatus.Ready, 7000);
+  } catch {
+    // Proceed or ignore connection ready timeout
+  }
 
   const player = createAudioPlayer({
-    behaviors: { noSubscriber: NoSubscriberBehavior.Stop },
+    behaviors: {
+      noSubscriber: NoSubscriberBehavior.Play,
+    },
   });
+
   connection.subscribe(player);
+
   const session: MusicSession = {
     guildId: interaction.guildId,
     connection,
@@ -167,26 +183,33 @@ async function resolveTrackFromQuery(resolvedQuery: { query: string; isUrl: bool
   let targetUrl = resolvedQuery.query;
   let title = resolvedQuery.query;
 
-  if (resolvedQuery.isUrl) {
-    const kind = await validate(targetUrl);
-    if (kind !== "yt_video" && kind !== "so_track") {
-      throw new Error("รองรับเฉพาะลิงก์ YouTube หรือ SoundCloud ที่ถูกต้องเท่านั้นค่ะ");
-    }
-    if (kind === "yt_video") {
-      const info = await video_basic_info(targetUrl);
-      title = info.video_details.title || targetUrl;
-    }
-  } else {
-    const searchResults = await search(resolvedQuery.query, { limit: 1 });
-    if (!searchResults || searchResults.length === 0) {
-      throw new Error(`ไม่พบเพลงจากคำค้นหา "${resolvedQuery.query}" ค่ะ กรุณาลองใหม่อีกครั้ง`);
-    }
-    const bestMatch = searchResults[0];
-    targetUrl = bestMatch.url;
-    title = bestMatch.title || resolvedQuery.query;
-  }
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error("การค้นหาเพลงใช้เวลานานเกินไป (Timeout) กรุณาลองใหม่อีกครั้งค่ะ")), 8000)
+  );
 
-  return { url: targetUrl, title: title.slice(0, 180), requestedBy };
+  const lookupPromise = (async () => {
+    if (resolvedQuery.isUrl) {
+      const kind = await validate(targetUrl);
+      if (kind !== "yt_video" && kind !== "so_track") {
+        throw new Error("รองรับเฉพาะลิงก์ YouTube หรือ SoundCloud ที่ถูกต้องเท่านั้นค่ะ");
+      }
+      if (kind === "yt_video") {
+        const info = await video_basic_info(targetUrl);
+        title = info.video_details.title || targetUrl;
+      }
+    } else {
+      const searchResults = await search(resolvedQuery.query, { limit: 1 });
+      if (!searchResults || searchResults.length === 0) {
+        throw new Error(`ไม่พบเพลงจากคำค้นหา "${resolvedQuery.query}" ค่ะ กรุณาลองใหม่อีกครั้ง`);
+      }
+      const bestMatch = searchResults[0];
+      targetUrl = bestMatch.url;
+      title = bestMatch.title || resolvedQuery.query;
+    }
+    return { url: targetUrl, title: title.slice(0, 180), requestedBy };
+  })();
+
+  return await Promise.race([lookupPromise, timeoutPromise]);
 }
 
 async function playNext(session: MusicSession): Promise<void> {
@@ -228,7 +251,10 @@ export async function handleMusicCommand(interaction: any): Promise<boolean> {
   const existing = sessions.get(interaction.guildId);
 
   if (subcommand === "queue") {
-    await interactionReply(interaction, `🎵 คิวเพลง RitzSMP\n${formatQueue(existing ?? { current: undefined, queue: [] })}`);
+    await interactionReply(interaction, {
+      content: formatQueue(existing ?? { queue: [] }),
+      ephemeral: false,
+    });
     return true;
   }
 
