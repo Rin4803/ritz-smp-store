@@ -3369,3 +3369,13 @@
 [2026-08-21T11:03:16.078Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
 [2026-08-21T11:03:18.968Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540300496101707849
 [2026-08-21T11:03:20.637Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-21T11:03:55.065Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-21T11:04:16.596Z] [RitzSmpAI] [INFO] Received command /play from tun_5555
+[2026-08-21T11:04:16.599Z] (node:116463) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-21T11:04:20.797Z] /home/ubuntu/ritz-smp-store/node_modules/.pnpm/play-dl@1.9.7/node_modules/play-dl/play-dl/Request/index.ts:50
+[2026-08-21T11:04:20.797Z] reject(new Error(`Got ${res.statusCode} from the request`));
+[2026-08-21T11:04:20.797Z] ^
+[2026-08-21T11:04:20.797Z] Error: Got 429 from the request
+[2026-08-21T11:04:20.797Z] at <anonymous> (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/play-dl@1.9.7/node_modules/play-dl/play-dl/Request/index.ts:50:20)
+[2026-08-21T11:04:20.797Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2026-08-21T11:04:20.797Z] Node.js v22.13.0
