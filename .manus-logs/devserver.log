@@ -3574,3 +3574,8 @@
 [2026-08-21T15:54:02.507Z] c[OAuth] Initialized with baseURL: https://api.manus.im
 [2026-08-21T15:54:02.847Z] Server running on http://localhost:3000/
 [2026-08-21T15:54:13.340Z] [RitzSmpAI] [ERROR] Discord login failed: Connect Timeout Error (attempted addresses: 162.159.136.232:443, timeout: 10000ms)
+[2026-08-21T15:55:14.635Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-21T15:58:37.777Z] 3:58:37 PM [tsx] change in ./server/discordMusic.ts Restarting...
+[2026-08-21T15:58:38.515Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-21T15:58:38.836Z] Server running on http://localhost:3000/
+[2026-08-21T15:58:49.327Z] [RitzSmpAI] [ERROR] Discord login failed: Connect Timeout Error (attempted addresses: 162.159.138.232:443, timeout: 10000ms)

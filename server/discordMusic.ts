@@ -280,14 +280,21 @@ async function playNext(session: MusicSession): Promise<void> {
   session.started = true;
   try {
     console.log("[Music] Fetching stream for:", next.url);
-    const streamData = await stream(next.url, { 
-      quality: 2, 
-      discordPlayerCompatibility: true,
-    }).catch(async (err) => {
-      console.error("[Music Stream Error] play-dl stream failed:", err);
-      // Fallback attempt without discordPlayerCompatibility or standard options
-      return await stream(next.url, { quality: 1 });
-    });
+    let streamData: any = null;
+    try {
+      streamData = await stream(next.url, { 
+        quality: 2, 
+        discordPlayerCompatibility: true,
+      });
+    } catch (e1) {
+      console.warn("[Music Stream] First play-dl stream attempt failed, trying fallback options:", e1);
+      try {
+        streamData = await stream(next.url, { quality: 0 });
+      } catch (e2) {
+        console.error("[Music Stream Error] All play-dl stream attempts failed:", e2);
+        throw new Error("ไม่สามารถเปิดสตรีมเสียงจากลิงก์นี้ได้ (YouTube อาจบล็อก IP หรือลิงก์ไม่รองรับ)");
+      }
+    }
     
     if (!streamData || !streamData.stream) {
       throw new Error("ไม่สามารถเปิดสตรีมเสียงจากลิงก์นี้ได้");
