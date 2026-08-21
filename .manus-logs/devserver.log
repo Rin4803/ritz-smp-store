@@ -3943,3 +3943,107 @@
 [2026-08-21T17:05:43.411Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
 [2026-08-21T17:05:46.287Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540380693690060820
 [2026-08-21T17:05:47.606Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-21T17:06:17.848Z] [RitzSmpAI] [INFO] Received command /play from tun_5555
+[2026-08-21T17:06:17.850Z] (node:161455) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-21T17:06:26.810Z] [Music] Fetching ytdl stream for: https://youtube.com/playlist?list=RDh33ykFMbQh8&playnext=1&si=Vto13OyqcpTNF-h5
+[2026-08-21T17:06:26.924Z] [Music] AudioPlayer playing resource for: https://youtube.com/playlist?list=RDh33ykFMbQh8&playnext=1&si=Vto13OyqcpTNF-h5
+[2026-08-21T17:06:26.929Z] [Music Error] ytdl stream emitted error: Error: No video id found: "https://youtube.com/playlist?list=RDh33ykFMbQh8&playnext=1&si=Vto13OyqcpTNF-h5"
+[2026-08-21T17:06:26.929Z] at exports.getURLVideoID (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/url-utils.js:36:11)
+[2026-08-21T17:06:26.929Z] at exports.getVideoID (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/url-utils.js:59:20)
+[2026-08-21T17:06:26.929Z] at exports.<computed> [as getInfo] (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/info.js:654:31)
+[2026-08-21T17:06:26.929Z] at ytdl (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/index.js:18:8)
+[2026-08-21T17:06:26.930Z] at playNext (/home/ubuntu/ritz-smp-store/server/discordMusic.ts:271:18)
+[2026-08-21T17:06:26.930Z] at handleMusicCommand (/home/ubuntu/ritz-smp-store/server/discordMusic.ts:426:35)
+[2026-08-21T17:06:26.930Z] at async Client.<anonymous> (/home/ubuntu/ritz-smp-store/server/discordAiBot.ts:1591:9)
+[2026-08-21T17:06:26.936Z] [Music Error] AudioPlayer encountered error: AudioPlayerError: No video id found: "https://youtube.com/playlist?list=RDh33ykFMbQh8&playnext=1&si=Vto13OyqcpTNF-h5"
+[2026-08-21T17:06:26.936Z] at exports.getURLVideoID (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/url-utils.js:36:11)
+[2026-08-21T17:06:26.936Z] at exports.getVideoID (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/url-utils.js:59:20)
+[2026-08-21T17:06:26.936Z] at exports.<computed> [as getInfo] (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/info.js:654:31)
+[2026-08-21T17:06:26.936Z] at ytdl (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/index.js:18:8)
+[2026-08-21T17:06:26.936Z] at playNext (/home/ubuntu/ritz-smp-store/server/discordMusic.ts:271:18)
+[2026-08-21T17:06:26.936Z] at handleMusicCommand (/home/ubuntu/ritz-smp-store/server/discordMusic.ts:426:35)
+[2026-08-21T17:06:26.936Z] at async Client.<anonymous> (/home/ubuntu/ritz-smp-store/server/discordAiBot.ts:1591:9) {
+[2026-08-21T17:06:26.936Z] resource: AudioResource {
+[2026-08-21T17:06:26.936Z] playStream: Encoder {
+[2026-08-21T17:06:26.936Z] _events: [Object],
+[2026-08-21T17:06:26.936Z] _readableState: [ReadableState],
+[2026-08-21T17:06:26.936Z] _writableState: [WritableState],
+[2026-08-21T17:06:26.936Z] allowHalfOpen: true,
+[2026-08-21T17:06:26.936Z] _maxListeners: undefined,
+[2026-08-21T17:06:26.936Z] _eventsCount: 6,
+[2026-08-21T17:06:26.936Z] encoder: null,
+[2026-08-21T17:06:26.936Z] _options: [Object],
+[2026-08-21T17:06:26.936Z] _required: 3840,
+[2026-08-21T17:06:26.936Z] _buffer: null,
+[2026-08-21T17:06:26.936Z] [Symbol(shapeMode)]: true,
+[2026-08-21T17:06:26.936Z] [Symbol(kCapture)]: false,
+[2026-08-21T17:06:26.936Z] [Symbol(kCallback)]: null
+[2026-08-21T17:06:26.936Z] },
+[2026-08-21T17:06:26.936Z] edges: [ [Object], [Object], [Object] ],
+[2026-08-21T17:06:26.936Z] metadata: null,
+[2026-08-21T17:06:26.936Z] volume: VolumeTransformer {
+[2026-08-21T17:06:26.936Z] _events: [Object],
+[2026-08-21T17:06:26.936Z] _readableState: [ReadableState],
+[2026-08-21T17:06:26.936Z] _writableState: [WritableState],
+[2026-08-21T17:06:26.936Z] allowHalfOpen: true,
+[2026-08-21T17:06:26.936Z] _maxListeners: undefined,
+[2026-08-21T17:06:26.936Z] _eventsCount: 5,
+[2026-08-21T17:06:26.936Z] _readInt: [Function (anonymous)],
+[2026-08-21T17:06:26.936Z] _writeInt: [Function (anonymous)],
+[2026-08-21T17:06:26.936Z] _bits: 16,
+[2026-08-21T17:06:26.936Z] _bytes: 2,
+[2026-08-21T17:06:26.936Z] _extremum: 32768,
+[2026-08-21T17:06:26.936Z] volume: 1,
+[2026-08-21T17:06:26.936Z] _chunk: null,
+[2026-08-21T17:06:26.936Z] [Symbol(shapeMode)]: true,
+[2026-08-21T17:06:26.936Z] [Symbol(kCapture)]: false,
+[2026-08-21T17:06:26.936Z] [Symbol(kCallback)]: null
+[2026-08-21T17:06:26.936Z] },
+[2026-08-21T17:06:26.936Z] encoder: Encoder {
+[2026-08-21T17:06:26.936Z] _events: [Object],
+[2026-08-21T17:06:26.936Z] _readableState: [ReadableState],
+[2026-08-21T17:06:26.936Z] _writableState: [WritableState],
+[2026-08-21T17:06:26.936Z] allowHalfOpen: true,
+[2026-08-21T17:06:26.936Z] _maxListeners: undefined,
+[2026-08-21T17:06:26.936Z] _eventsCount: 6,
+[2026-08-21T17:06:26.936Z] encoder: null,
+[2026-08-21T17:06:26.936Z] _options: [Object],
+[2026-08-21T17:06:26.936Z] _required: 3840,
+[2026-08-21T17:06:26.936Z] _buffer: null,
+[2026-08-21T17:06:26.936Z] [Symbol(shapeMode)]: true,
+[2026-08-21T17:06:26.936Z] [Symbol(kCapture)]: false,
+[2026-08-21T17:06:26.936Z] [Symbol(kCallback)]: null
+[2026-08-21T17:06:26.936Z] },
+[2026-08-21T17:06:26.936Z] audioPlayer: AudioPlayer {
+[2026-08-21T17:06:26.936Z] _events: [Object: null prototype],
+[2026-08-21T17:06:26.936Z] _eventsCount: 3,
+[2026-08-21T17:06:26.936Z] _maxListeners: undefined,
+[2026-08-21T17:06:26.936Z] _state: [Object],
+[2026-08-21T17:06:26.936Z] subscribers: [Array],
+[2026-08-21T17:06:26.936Z] behaviors: [Object],
+[2026-08-21T17:06:26.936Z] debug: [Function (anonymous)],
+[2026-08-21T17:06:26.936Z] [Symbol(shapeMode)]: false,
+[2026-08-21T17:06:26.936Z] [Symbol(kCapture)]: false
+[2026-08-21T17:06:26.936Z] },
+[2026-08-21T17:06:26.936Z] playbackDuration: 0,
+[2026-08-21T17:06:26.936Z] started: false,
+[2026-08-21T17:06:26.936Z] silencePaddingFrames: 5,
+[2026-08-21T17:06:26.936Z] silenceRemaining: -1
+[2026-08-21T17:06:26.936Z] }
+[2026-08-21T17:06:26.936Z] }
+[2026-08-21T17:06:26.936Z] [Music] AudioPlayer entered Idle state
+[2026-08-21T17:06:28.679Z] [RitzSmpAI] [SUCCESS] Handled /play command
+[2026-08-21T17:06:32.898Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-21T17:08:33.134Z] 5:08:33 PM [tsx] change in ./server/discordMusic.ts Restarting...
+[2026-08-21T17:08:33.951Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-21T17:08:34.353Z] Server running on http://localhost:3000/
+[2026-08-21T17:08:38.593Z] 5:08:38 PM [tsx] change in ./server/discordMusic.ts Restarting...
+[2026-08-21T17:08:39.426Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-21T17:08:39.833Z] Server running on http://localhost:3000/
+[2026-08-21T17:08:44.006Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-21T17:08:44.008Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-21T17:08:44.009Z] (node:162732) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-21T17:08:44.009Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-21T17:08:44.647Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-21T17:08:47.215Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540380693690060820
+[2026-08-21T17:08:48.616Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566

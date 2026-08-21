@@ -202,7 +202,25 @@ async function getOrCreateSession(interaction: any, voiceChannel: any): Promise<
   });
   connection.on("error", (error) => {
     console.error("[Music Error] VoiceConnection encountered error:", error);
-    sessions.delete(session.guildId);
+    // Attempt automatic reconnection if socket closed or IP discovery failed
+    try {
+      if (error?.message?.includes("IP discovery") || error?.message?.includes("socket closed")) {
+        console.warn("[Music] Attempting to recover voice connection due to socket/IP error...");
+        setTimeout(() => {
+          try {
+            connection.rejoin({
+              channelId: voiceChannel.id,
+              selfDeaf: true,
+              selfMute: false,
+            });
+          } catch (rejoinErr) {
+            console.error("[Music Error] Rejoin failed:", rejoinErr);
+          }
+        }, 2000);
+      }
+    } catch (rcErr) {
+      console.error("[Music] Error in recovery handler:", rcErr);
+    }
   });
   connection.on(VoiceConnectionStatus.Disconnected, async () => {
     try {
@@ -229,13 +247,23 @@ async function resolveTrackFromQuery(resolvedQuery: { query: string; isUrl: bool
 
   const lookupPromise = (async () => {
     try {
-      if (resolvedQuery.isUrl && ytdl.validateURL(targetUrl)) {
-        const info = await ytdl.getInfo(targetUrl).catch((err) => {
-          console.warn("[Music] ytdl.getInfo warning for URL:", targetUrl, err?.message);
-          return null;
-        });
-        if (info?.videoDetails?.title) {
-          title = info.videoDetails.title;
+      if (resolvedQuery.isUrl) {
+        if (targetUrl.includes("list=")) {
+          // If it's a playlist or mix URL, extract video id if present or clean up
+          const urlObj = new URL(targetUrl);
+          const vParam = urlObj.searchParams.get("v");
+          if (vParam) {
+            targetUrl = `https://www.youtube.com/watch?v=${vParam}`;
+          }
+        }
+        if (ytdl.validateURL(targetUrl)) {
+          const info = await ytdl.getInfo(targetUrl).catch((err) => {
+            console.warn("[Music] ytdl.getInfo warning for URL:", targetUrl, err?.message);
+            return null;
+          });
+          if (info?.videoDetails?.title) {
+            title = info.videoDetails.title;
+          }
         }
       } else {
         // If query is plain text (not a URL), use yt-search or fallback to YouTube search URL
