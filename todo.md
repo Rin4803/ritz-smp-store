@@ -264,3 +264,4 @@
 - [x] แก้ไขฟังก์ชันดึง VoiceChannel ในบอทเพลงให้ตรวจสอบจาก guild member cache หรือ guild voiceStates ป้องกันกรณี interaction.member ไม่ส่งข้อมูล voice มาด้วย
 - [x] ตรวจสอบและแก้ไขคำสั่งเพลง `/play` ใน Discord ให้ทำงานสำเร็จลุล่วง ไม่เกิดข้อผิดพลาด Interaction timed out หรือ แอปพลิเคชันไม่ตอบสนอง
 - [ ] ทดสอบและแก้ไขระบบสตรีมเพลงด้วยลิงก์ `https://youtu.be/ETL8RLZrvek?si=gp-nBctb7lXD5kDv` ให้ดึงข้อมูลและเล่นในห้องเสียงได้สำเร็จอย่างไร้ข้อผิดพลาด
+- [ ] ตรวจสอบและยืนยันสถานะระบบเพลงในบอท Discord หลังปรับปรุง VoiceState และ timeout protection

@@ -3379,3 +3379,17 @@
 [2026-08-21T11:04:20.797Z] at <anonymous> (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/play-dl@1.9.7/node_modules/play-dl/play-dl/Request/index.ts:50:20)
 [2026-08-21T11:04:20.797Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
 [2026-08-21T11:04:20.797Z] Node.js v22.13.0
+[2026-08-21T11:13:46.486Z] ELIFECYCLE  Command failed.
+[2026-08-21T11:13:46.494Z] Dev server exited with code -1
+[2026-08-21T11:13:47.593Z] Starting dev server with command: pnpm run dev
+[2026-08-21T11:13:47.945Z] > ritz-smp-store@1.0.0 dev /home/ubuntu/ritz-smp-store
+[2026-08-21T11:13:47.945Z] > NODE_ENV=development tsx watch server/_core/index.ts
+[2026-08-21T11:13:48.819Z] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-21T11:13:49.158Z] Server running on http://localhost:3000/
+[2026-08-21T11:13:49.752Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-21T11:13:54.304Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-21T11:13:54.305Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-21T11:13:54.306Z] (node:122023) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-21T11:13:54.306Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-21T11:13:55.381Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-21T11:13:56.683Z] 11:13:56 AM [vite] (client) hmr update /src/index.css
