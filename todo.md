@@ -227,3 +227,12 @@
 - [x] ตรวจสอบสิทธิ์และเข้าถึงไฟล์หรือคอนโซล mcsv.me เพื่อตกแต่งระบบในเกม
 - [x] สำรวจปลั๊กอินและ Skript เดิมบนเซิร์ฟเวอร์ mcsv.me พร้อมตรวจสอบ log error
 - [x] ติดตั้งและตกแต่งระบบ GUI วาป, เมนูคำสั่ง และข้อความในเกม mcsv.me
+- [ ] ทดสอบความเร็วการตอบสนองของ RitzSMP AI bot และตรวจสอบ error log
+- [ ] สรุปผลความเร็ว Latency และสถานะ error log สำหรับผู้ใช้
+- [ ] ตรวจสอบโค้ดระบบ Economy และ points ทั่วทั้งโปรเจกต์ (drizzle/schema.ts, server/db.ts, server/routers.ts)
+- [ ] รันทดสอบชุดทดสอบ Vitest และตรวจสอบว่าไม่มีบัคตกค้าง
+- [x] ตรวจสอบโค้ดระบบ Economy และ points ทั่วทั้งโปรเจกต์ (drizzle/schema.ts, server/db.ts, server/routers.ts) และยืนยันความปลอดภัย
+- [x] รันทดสอบชุดทดสอบ Vitest ครบ 100 Tests สำเร็จและไม่มีบัคตกค้าง
+- [ ] สร้างสคริปต์ Load Testing แบบปลอดภัยสำหรับจำลอง concurrent top-up และการซื้อยศ โดยไม่เขียนข้อมูลทดสอบลงฐานข้อมูลจริง
+- [ ] รัน Load Testing และตรวจสอบความถูกต้องของยอด Wallet, ledger และการป้องกัน double-spending
+- [ ] เพิ่ม regression tests สำหรับผลลัพธ์และรายงานค่า latency/error rate ของ Load Testing

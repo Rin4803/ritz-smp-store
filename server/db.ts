@@ -514,8 +514,16 @@ export async function adjustUserBalance(
           .from(walletTransactions)
           .where(eq(walletTransactions.referenceKey, referenceKey))
           .limit(1);
-        if (existing[0]?.userId !== userId) {
+        const existingTransaction = existing[0];
+        if (existingTransaction?.userId !== userId) {
           throw new Error("รายการกระเป๋าเงินอ้างอิงซ้ำกับผู้ใช้อื่น");
+        }
+        if (
+          !existingTransaction
+          || Number(existingTransaction.amount) !== amount
+          || existingTransaction.type !== type
+        ) {
+          throw new Error("referenceKey ถูกใช้กับรายการกระเป๋าเงินคนละรายการ");
         }
         const current = await tx.select().from(wallets).where(eq(wallets.userId, userId)).limit(1);
         return { userId, newBalance: Number(current[0]?.balance) || 0, alreadyApplied: true };

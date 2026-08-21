@@ -2981,3 +2981,23 @@
 [2026-08-21T05:39:07.564Z] 5:39:07 AM [vite] (client) hmr update /src/index.css
 [2026-08-21T05:44:04.569Z] 5:44:04 AM [vite] (client) hmr update /src/index.css
 [2026-08-21T05:48:01.300Z] 5:48:01 AM [vite] (client) hmr update /src/index.css
+[2026-08-21T05:57:40.035Z] 5:57:40 AM [tsx] change in ./server/db.ts Restarting...
+[2026-08-21T05:57:41.030Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-21T05:57:41.430Z] Server running on http://localhost:3000/
+[2026-08-21T05:57:46.164Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-21T05:57:46.165Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-21T05:57:46.166Z] (node:88302) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-21T05:57:46.166Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-21T05:57:46.269Z] 5:57:46 AM [tsx] change in ./server/routers.ts Restarting...
+[2026-08-21T05:57:47.087Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-21T05:57:47.433Z] Server running on http://localhost:3000/
+[2026-08-21T05:57:53.017Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-21T05:57:53.018Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-21T05:57:53.019Z] (node:88333) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-21T05:57:53.019Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-21T05:57:53.700Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-21T05:57:56.411Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540161713679376384
+[2026-08-21T05:57:57.530Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-21T05:58:01.807Z] [RitzSmpAI] [SUCCESS] Reconciled one canonical panel in 📋│ระบบรายชื่อบัญชี
+[2026-08-21T05:58:04.811Z] [RitzSmpAI] [SUCCESS] Reconciled one welcome panel in 👋│ระบบต้อนรับ
+[2026-08-21T05:58:06.652Z] [RitzSmpAI] [SUCCESS] Reconciled one leave panel in 👋│ระบบสมาชิกออก

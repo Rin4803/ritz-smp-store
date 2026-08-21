@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { notifyOwner } from "./_core/notification";
@@ -250,7 +251,7 @@ export const appRouter = router({
         }
 
         // Deduct balance and record purchase
-        const refKey = `purchase-rank-${ctx.user.id}-${rank.id}-${Date.now()}`;
+        const refKey = `purchase-rank-${ctx.user.id}-${rank.id}-${Date.now()}-${randomUUID()}`;
         await adjustUserBalance(
           ctx.user.id,
           -priceNum,
