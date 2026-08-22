@@ -5051,3 +5051,92 @@
 [2026-08-22T06:12:31.746Z] > NODE_ENV=development tsx watch server/_core/index.ts
 [2026-08-22T06:12:33.479Z] [OAuth] Initialized with baseURL: https://api.manus.im
 [2026-08-22T06:12:34.357Z] Server running on http://localhost:3000/
+[2026-08-22T06:12:46.148Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-22T06:12:46.151Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-22T06:12:46.154Z] (node:8677) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-22T06:12:46.154Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-22T06:12:51.694Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
+[2026-08-22T06:13:02.779Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540380693690060820
+[2026-08-22T06:13:09.194Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-22T06:13:13.862Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-22T06:30:11.180Z] [RitzSmpAI] [INFO] Received command /play from tun_5555
+[2026-08-22T06:30:11.184Z] (node:8677) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-22T06:30:24.675Z] [Music] ytdl.getInfo warning for URL: https://youtu.be/QbHBfxAOucI?si=HjVBlB8Jc7huJiD6 Sign in to confirm you’re not a bot
+[2026-08-22T06:30:24.675Z] [Music] Fetching audio stream for: https://youtu.be/QbHBfxAOucI?si=HjVBlB8Jc7huJiD6
+[2026-08-22T06:30:24.891Z] [Music] AudioPlayer playing resource for: YouTube Music (RitzSMP Audio)
+[2026-08-22T06:30:24.892Z] [33mWARNING:[0m Using old cookie format, please use the new one instead. (https://github.com/distubejs/ytdl-core#cookies-support)
+[2026-08-22T06:30:27.737Z] [Music Error] Stream emitted error (triggering fallback): Status code: 429
+[2026-08-22T06:30:27.742Z] [Music Error] AudioPlayer encountered error: AudioPlayerError: Status code: 429
+[2026-08-22T06:30:27.743Z] at exports.request (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/utils.js:219:13)
+[2026-08-22T06:30:27.743Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-22T06:30:27.743Z] resource: AudioResource {
+[2026-08-22T06:30:27.743Z] playStream: Encoder {
+[2026-08-22T06:30:27.743Z] _events: [Object],
+[2026-08-22T06:30:27.743Z] _readableState: [ReadableState],
+[2026-08-22T06:30:27.743Z] _writableState: [WritableState],
+[2026-08-22T06:30:27.743Z] allowHalfOpen: true,
+[2026-08-22T06:30:27.743Z] _maxListeners: undefined,
+[2026-08-22T06:30:27.743Z] _eventsCount: 6,
+[2026-08-22T06:30:27.743Z] encoder: null,
+[2026-08-22T06:30:27.743Z] _options: [Object],
+[2026-08-22T06:30:27.743Z] _required: 3840,
+[2026-08-22T06:30:27.743Z] _buffer: null,
+[2026-08-22T06:30:27.743Z] [Symbol(shapeMode)]: true,
+[2026-08-22T06:30:27.743Z] [Symbol(kCapture)]: false,
+[2026-08-22T06:30:27.743Z] [Symbol(kCallback)]: null
+[2026-08-22T06:30:27.743Z] },
+[2026-08-22T06:30:27.743Z] edges: [ [Object], [Object], [Object] ],
+[2026-08-22T06:30:27.743Z] metadata: null,
+[2026-08-22T06:30:27.743Z] volume: VolumeTransformer {
+[2026-08-22T06:30:27.743Z] _events: [Object],
+[2026-08-22T06:30:27.743Z] _readableState: [ReadableState],
+[2026-08-22T06:30:27.743Z] _writableState: [WritableState],
+[2026-08-22T06:30:27.743Z] allowHalfOpen: true,
+[2026-08-22T06:30:27.743Z] _maxListeners: undefined,
+[2026-08-22T06:30:27.743Z] _eventsCount: 5,
+[2026-08-22T06:30:27.743Z] _readInt: [Function (anonymous)],
+[2026-08-22T06:30:27.743Z] _writeInt: [Function (anonymous)],
+[2026-08-22T06:30:27.743Z] _bits: 16,
+[2026-08-22T06:30:27.743Z] _bytes: 2,
+[2026-08-22T06:30:27.743Z] _extremum: 32768,
+[2026-08-22T06:30:27.743Z] volume: 1,
+[2026-08-22T06:30:27.743Z] _chunk: null,
+[2026-08-22T06:30:27.743Z] [Symbol(shapeMode)]: true,
+[2026-08-22T06:30:27.743Z] [Symbol(kCapture)]: false,
+[2026-08-22T06:30:27.743Z] [Symbol(kCallback)]: null
+[2026-08-22T06:30:27.743Z] },
+[2026-08-22T06:30:27.743Z] encoder: Encoder {
+[2026-08-22T06:30:27.743Z] _events: [Object],
+[2026-08-22T06:30:27.743Z] _readableState: [ReadableState],
+[2026-08-22T06:30:27.743Z] _writableState: [WritableState],
+[2026-08-22T06:30:27.743Z] allowHalfOpen: true,
+[2026-08-22T06:30:27.743Z] _maxListeners: undefined,
+[2026-08-22T06:30:27.743Z] _eventsCount: 6,
+[2026-08-22T06:30:27.743Z] encoder: null,
+[2026-08-22T06:30:27.743Z] _options: [Object],
+[2026-08-22T06:30:27.743Z] _required: 3840,
+[2026-08-22T06:30:27.743Z] _buffer: null,
+[2026-08-22T06:30:27.743Z] [Symbol(shapeMode)]: true,
+[2026-08-22T06:30:27.743Z] [Symbol(kCapture)]: false,
+[2026-08-22T06:30:27.743Z] [Symbol(kCallback)]: null
+[2026-08-22T06:30:27.743Z] },
+[2026-08-22T06:30:27.743Z] audioPlayer: AudioPlayer {
+[2026-08-22T06:30:27.743Z] _events: [Object: null prototype],
+[2026-08-22T06:30:27.743Z] _eventsCount: 3,
+[2026-08-22T06:30:27.743Z] _maxListeners: undefined,
+[2026-08-22T06:30:27.743Z] _state: [Object],
+[2026-08-22T06:30:27.743Z] subscribers: [Array],
+[2026-08-22T06:30:27.743Z] behaviors: [Object],
+[2026-08-22T06:30:27.743Z] debug: [Function (anonymous)],
+[2026-08-22T06:30:27.743Z] [Symbol(shapeMode)]: false,
+[2026-08-22T06:30:27.743Z] [Symbol(kCapture)]: false
+[2026-08-22T06:30:27.743Z] },
+[2026-08-22T06:30:27.743Z] playbackDuration: 0,
+[2026-08-22T06:30:27.743Z] started: false,
+[2026-08-22T06:30:27.743Z] silencePaddingFrames: 5,
+[2026-08-22T06:30:27.743Z] silenceRemaining: -1
+[2026-08-22T06:30:27.743Z] }
+[2026-08-22T06:30:27.743Z] }
+[2026-08-22T06:30:27.743Z] [Music] AudioPlayer entered Idle state
+[2026-08-22T06:30:30.423Z] [RitzSmpAI] [SUCCESS] Handled /play command
+[2026-08-22T06:35:39.473Z] 6:35:39 AM [vite] (client) hmr update /src/index.css
