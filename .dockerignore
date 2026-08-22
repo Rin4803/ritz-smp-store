@@ -1,0 +1,34 @@
+node_modules
+.pnpm-store
+dist
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+secrets
+*.log
+.manus-logs
+coverage
+.vscode
+.idea
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+Dockerfile*
+compose*.yml
+backup*.sql
+storage/*
+!storage/.gitkeep
+
+# Local-only test and temporary artifacts
+.tmp
+tmp
+/tmp
+.cache
+
+# Never send browser/session material to the image
+cookies*.txt
+youtube-cookies*.txt
+*.sqlite
+*.db

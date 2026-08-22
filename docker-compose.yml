@@ -1,15 +1,13 @@
-version: '3.8'
-
 services:
   db:
     image: mariadb:11.2
     container_name: ritz_db
-    restart: always
+    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-secure_root_password}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME:-ritz_smp}
       MYSQL_USER: ${DB_USER:-ritz_user}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-secure_user_password}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - mariadb_data:/var/lib/mysql
     networks:
@@ -18,38 +16,76 @@ services:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 12
+      start_period: 20s
 
+  # The web store and RitzSMP AI Discord bot intentionally run in one process.
+  # server/_core/index.ts starts Express first and then starts the bot gateway.
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: ritz_app
-    restart: always
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
     depends_on:
       db:
         condition: service_healthy
     ports:
       - "${PORT:-3000}:3000"
     environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - DATABASE_URL=mysql://${DB_USER:-ritz_user}:${DB_PASSWORD:-secure_user_password}@db:3306/${DB_NAME:-ritz_smp}
-      - JWT_SECRET=${JWT_SECRET}
-      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
-      - DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
-      - DISCORD_STORE_CHANNEL_ID=${DISCORD_STORE_CHANNEL_ID}
-      - DISCORD_ORDERS_CHANNEL_ID=${DISCORD_ORDERS_CHANNEL_ID}
-      - DISCORD_DONATE_LOG_CHANNEL_ID=${DISCORD_DONATE_LOG_CHANNEL_ID}
-      - DISCORD_SUPPORT_CHANNEL_ID=${DISCORD_SUPPORT_CHANNEL_ID}
-      - DISCORD_ADMIN_ROLE_ID=${DISCORD_ADMIN_ROLE_ID}
-      - RCON_HOST=${RCON_HOST}
-      - RCON_PORT=${RCON_PORT:-25575}
-      - RCON_PASSWORD=${RCON_PASSWORD}
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: mysql://${DB_USER:-ritz_user}:${DB_PASSWORD}@db:3306/${DB_NAME:-ritz_smp}
+      JWT_SECRET: ${JWT_SECRET}
+      BUILT_IN_FORGE_API_URL: ${BUILT_IN_FORGE_API_URL:-}
+      BUILT_IN_FORGE_API_KEY: ${BUILT_IN_FORGE_API_KEY:-}
+      OAUTH_SERVER_URL: ${OAUTH_SERVER_URL:-}
+      VITE_APP_ID: ${VITE_APP_ID:-}
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
+      DISCORD_AI_BOT_TOKEN: ${DISCORD_AI_BOT_TOKEN}
+      DISCORD_GUILD_ID: ${DISCORD_GUILD_ID}
+      DISCORD_STORE_CHANNEL_ID: ${DISCORD_STORE_CHANNEL_ID:-}
+      DISCORD_ORDERS_CHANNEL_ID: ${DISCORD_ORDERS_CHANNEL_ID:-}
+      DISCORD_DONATE_CHANNEL_ID: ${DISCORD_DONATE_CHANNEL_ID:-}
+      DISCORD_DONATE_LOG_CHANNEL_ID: ${DISCORD_DONATE_LOG_CHANNEL_ID:-}
+      DISCORD_SUPPORT_CHANNEL_ID: ${DISCORD_SUPPORT_CHANNEL_ID:-}
+      DISCORD_ADMIN_ROLE_ID: ${DISCORD_ADMIN_ROLE_ID:-}
+      DISCORD_MEMBER_ROLE_ID: ${DISCORD_MEMBER_ROLE_ID:-}
+      DISCORD_VERIFICATION_CHANNEL_ID: ${DISCORD_VERIFICATION_CHANNEL_ID:-}
+      DISCORD_VERIFIED_ROLE_ID: ${DISCORD_VERIFIED_ROLE_ID:-}
+      DISCORD_WELCOME_CHANNEL_ID: ${DISCORD_WELCOME_CHANNEL_ID:-}
+      DISCORD_MUSIC_CHANNEL_ID: ${DISCORD_MUSIC_CHANNEL_ID:-}
+      DISCORD_ONLINE_CHANNEL_ID: ${DISCORD_ONLINE_CHANNEL_ID:-}
+      RCON_HOST: ${RCON_HOST}
+      RCON_PORT: ${RCON_PORT:-25575}
+      RCON_PASSWORD: ${RCON_PASSWORD}
+      PUBLIC_STORE_URL: ${PUBLIC_STORE_URL:-}
+      RITZ_ACTIVE_SERVER_ID: ${RITZ_ACTIVE_SERVER_ID:-}
+      # Override these only when the binary is installed outside PATH.
+      YTDLP_PATH: ${YTDLP_PATH:-yt-dlp}
+      FFMPEG_PATH: ${FFMPEG_PATH:-ffmpeg}
+      YTDLP_COOKIES_PATH: ${YTDLP_COOKIES_PATH:-/run/ritz-secrets/youtube-cookies.txt}
     volumes:
       - app_storage:/app/storage
+      # Optional Netscape cookies file for a VPS that still receives YouTube bot checks.
+      # Never commit this file. Create it on the VPS at ./secrets/youtube-cookies.txt.
+      - ./secrets:/run/ritz-secrets:ro
     networks:
       - ritz_net
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   mariadb_data:

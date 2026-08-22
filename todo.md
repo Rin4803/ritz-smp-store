@@ -274,12 +274,19 @@
 - [ ] ทดสอบและแก้ไขคำสั่งบอท RitzSMP AI (รวมระบบเพลงและคำสั่งหลัก) ใน Discord แบบวนรอบด้วยตัวเองจนกว่าจะใช้งานได้สมบูรณ์
 - [ ] ตรวจสอบและทดสอบการใช้งานบอท RitzSMP AI ใน Discord จริงแบบมีหลักฐานยืนยัน
 - [ ] ตรวจสอบหน้า mcsv.me และระบบซื้อขายไอเทมในเกมเพื่อยืนยันว่าการจ่ายเงินเข้าบัญชีผู้เล่นทำงานปกติ
-- [ ] Investigate root cause of YouTube music playback failure in discordMusic.ts and ensure actual audio streams to voice channel
+- [x] Investigate root cause of YouTube music playback failure in discordMusic.ts; root cause documented and real audio pipeline implemented, with live voice output still requiring VPS validation
 - [ ] Verify 100% end-to-end music streaming and voice channel output in Discord with live validation
 - [ ] Test alternative music streaming libraries (yt-dlp and ytdl-core) to replace play-dl
-- [ ] Fix music title extraction in discordMusic.ts to avoid displaying raw YouTube URLs
+- [x] Fix music title extraction in discordMusic.ts to avoid displaying raw YouTube URLs
 - [ ] Ensure Discord bot shows green speaking/playing indicator ring when streaming audio
 - [ ] Verify updated discordMusic.ts with all 108 tests passing
 - [ ] แก้ระบบสตรีมเสียงเพลง Discord บอทให้ส่งเสียงได้จริง (AudioPlayer Playing และ Green Ring)
 - [ ] ตรวจสอบและแก้ไข @distube/ytdl-core stream extraction ให้ดึงเสียงและชื่อเพลงถูกต้อง
 - [ ] ทดสอบคำสั่ง /play, /music, และ /leave ให้ทำงานสมบูรณ์ 100% บน production
+- [ ] ตรวจหาสาเหตุที่บอทเข้าห้องเสียงได้แต่ไม่มีเสียงเพลงออกจริง
+- [x] เปลี่ยน fallback ที่เป็นเสียงเงียบให้แจ้งข้อผิดพลาดแทนการทำให้ดูเหมือนเล่นสำเร็จ
+- [x] เพิ่มเส้นทางสตรีมเสียงที่มี FFmpeg/yt-dlp พร้อมตรวจสอบ AudioResource และ VoiceConnection
+- [x] เพิ่ม regression tests สำหรับ stream error, audio resource, ปุ่มควบคุม และสถานะ AudioPlayer
+- [x] ตรวจสอบ Docker runtime ให้มี FFmpeg, yt-dlp, Python และ dependency ที่จำเป็นสำหรับ Discord voice
+- [ ] ทดสอบจริงบน VPS/Discord voice channel และแยกผลจากข้อจำกัด YouTube/UDP ของ sandbox
+- [x] อัปเดตคู่มือ VPS และสรุปสถานะเพลงโดยไม่อ้างว่าเสียงใช้งานได้จนกว่าจะมีผู้ฟังยืนยัน

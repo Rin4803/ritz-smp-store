@@ -1,37 +1,26 @@
-FROM node:22-alpine AS builder
+FROM node:22-slim
+
+# Discord voice needs FFmpeg to decode the yt-dlp media stream. yt-dlp's current
+# YouTube extractor also needs a supported JavaScript runtime and EJS scripts;
+# Node 22 is already in this image and yt-dlp[default] installs yt-dlp-ejs.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+      ca-certificates \
+      ffmpeg \
+      python3 \
+      python3-pip \
+    && python3 -m pip install --no-cache-dir --break-system-packages "yt-dlp[default]" \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# Copy package files
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-
-# Copy source code
+# Keep the package manager pinned by package.json and include patches before install.
 COPY . .
-
-# Build application
-RUN pnpm build
-
-FROM node:22-alpine AS runner
-
-WORKDIR /app
-
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN npm install -g corepack@latest \
+    && corepack pnpm install --frozen-lockfile \
+    && corepack pnpm run build
 
 ENV NODE_ENV=production
 
-# Copy built files and dependencies
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --prod --frozen-lockfile
-
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/drizzle ./drizzle
-COPY --from=builder /app/server ./server
-COPY --from=builder /app/shared ./shared
-
 EXPOSE 3000
-
-CMD ["pnpm", "start"]
+CMD ["node", "dist/index.js"]
