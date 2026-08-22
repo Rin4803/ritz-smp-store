@@ -4376,3 +4376,99 @@
 [2026-08-22T05:39:17.448Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
 [2026-08-22T05:39:20.329Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540380693690060820
 [2026-08-22T05:39:22.115Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-22T05:40:17.006Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-22T05:41:25.332Z] [RitzSmpAI] [INFO] Received command /play from tun_5555
+[2026-08-22T05:41:25.337Z] (node:1447) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-22T05:41:35.664Z] [Music] ytdl.getInfo warning for URL: https://youtu.be/QbHBfxAOucI?si=HjVBlB8Jc7huJiD6 Sign in to confirm you’re not a bot
+[2026-08-22T05:41:35.664Z] [Music] Fetching ytdl stream for: https://youtu.be/QbHBfxAOucI?si=HjVBlB8Jc7huJiD6
+[2026-08-22T05:41:36.271Z] [Music] AudioPlayer playing resource for: https://youtu.be/QbHBfxAOucI?si=HjVBlB8Jc7huJiD6
+[2026-08-22T05:41:38.319Z] [RitzSmpAI] [SUCCESS] Handled /play command
+[2026-08-22T05:41:38.557Z] [Music Error] ytdl stream emitted error: Error: Status code: 429
+[2026-08-22T05:41:38.557Z] at exports.request (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/utils.js:219:13)
+[2026-08-22T05:41:38.557Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-22T05:41:38.557Z] statusCode: 429
+[2026-08-22T05:41:38.557Z] }
+[2026-08-22T05:41:38.560Z] [Music Error] AudioPlayer encountered error: AudioPlayerError: Status code: 429
+[2026-08-22T05:41:38.560Z] at exports.request (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@distube+ytdl-core@4.16.12/node_modules/@distube/ytdl-core/lib/utils.js:219:13)
+[2026-08-22T05:41:38.560Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-22T05:41:38.560Z] resource: AudioResource {
+[2026-08-22T05:41:38.560Z] playStream: Encoder {
+[2026-08-22T05:41:38.560Z] _events: [Object],
+[2026-08-22T05:41:38.560Z] _readableState: [ReadableState],
+[2026-08-22T05:41:38.560Z] _writableState: [WritableState],
+[2026-08-22T05:41:38.560Z] allowHalfOpen: true,
+[2026-08-22T05:41:38.560Z] _maxListeners: undefined,
+[2026-08-22T05:41:38.560Z] _eventsCount: 6,
+[2026-08-22T05:41:38.560Z] encoder: null,
+[2026-08-22T05:41:38.560Z] _options: [Object],
+[2026-08-22T05:41:38.560Z] _required: 3840,
+[2026-08-22T05:41:38.560Z] _buffer: null,
+[2026-08-22T05:41:38.560Z] [Symbol(shapeMode)]: true,
+[2026-08-22T05:41:38.560Z] [Symbol(kCapture)]: false,
+[2026-08-22T05:41:38.560Z] [Symbol(kCallback)]: null
+[2026-08-22T05:41:38.560Z] },
+[2026-08-22T05:41:38.560Z] edges: [ [Object], [Object], [Object] ],
+[2026-08-22T05:41:38.560Z] metadata: null,
+[2026-08-22T05:41:38.560Z] volume: VolumeTransformer {
+[2026-08-22T05:41:38.560Z] _events: [Object],
+[2026-08-22T05:41:38.560Z] _readableState: [ReadableState],
+[2026-08-22T05:41:38.560Z] _writableState: [WritableState],
+[2026-08-22T05:41:38.560Z] allowHalfOpen: true,
+[2026-08-22T05:41:38.561Z] _maxListeners: undefined,
+[2026-08-22T05:41:38.561Z] _eventsCount: 5,
+[2026-08-22T05:41:38.561Z] _readInt: [Function (anonymous)],
+[2026-08-22T05:41:38.561Z] _writeInt: [Function (anonymous)],
+[2026-08-22T05:41:38.561Z] _bits: 16,
+[2026-08-22T05:41:38.561Z] _bytes: 2,
+[2026-08-22T05:41:38.561Z] _extremum: 32768,
+[2026-08-22T05:41:38.561Z] volume: 1,
+[2026-08-22T05:41:38.561Z] _chunk: null,
+[2026-08-22T05:41:38.561Z] [Symbol(shapeMode)]: true,
+[2026-08-22T05:41:38.561Z] [Symbol(kCapture)]: false,
+[2026-08-22T05:41:38.561Z] [Symbol(kCallback)]: null
+[2026-08-22T05:41:38.561Z] },
+[2026-08-22T05:41:38.561Z] encoder: Encoder {
+[2026-08-22T05:41:38.561Z] _events: [Object],
+[2026-08-22T05:41:38.561Z] _readableState: [ReadableState],
+[2026-08-22T05:41:38.561Z] _writableState: [WritableState],
+[2026-08-22T05:41:38.561Z] allowHalfOpen: true,
+[2026-08-22T05:41:38.561Z] _maxListeners: undefined,
+[2026-08-22T05:41:38.561Z] _eventsCount: 6,
+[2026-08-22T05:41:38.561Z] encoder: null,
+[2026-08-22T05:41:38.561Z] _options: [Object],
+[2026-08-22T05:41:38.561Z] _required: 3840,
+[2026-08-22T05:41:38.561Z] _buffer: null,
+[2026-08-22T05:41:38.561Z] [Symbol(shapeMode)]: true,
+[2026-08-22T05:41:38.561Z] [Symbol(kCapture)]: false,
+[2026-08-22T05:41:38.561Z] [Symbol(kCallback)]: null
+[2026-08-22T05:41:38.561Z] },
+[2026-08-22T05:41:38.561Z] audioPlayer: AudioPlayer {
+[2026-08-22T05:41:38.561Z] _events: [Object: null prototype],
+[2026-08-22T05:41:38.561Z] _eventsCount: 3,
+[2026-08-22T05:41:38.561Z] _maxListeners: undefined,
+[2026-08-22T05:41:38.561Z] _state: [Object],
+[2026-08-22T05:41:38.561Z] subscribers: [Array],
+[2026-08-22T05:41:38.561Z] behaviors: [Object],
+[2026-08-22T05:41:38.561Z] debug: [Function (anonymous)],
+[2026-08-22T05:41:38.561Z] [Symbol(shapeMode)]: false,
+[2026-08-22T05:41:38.561Z] [Symbol(kCapture)]: false
+[2026-08-22T05:41:38.561Z] },
+[2026-08-22T05:41:38.561Z] playbackDuration: 0,
+[2026-08-22T05:41:38.561Z] started: false,
+[2026-08-22T05:41:38.561Z] silencePaddingFrames: 5,
+[2026-08-22T05:41:38.561Z] silenceRemaining: -1
+[2026-08-22T05:41:38.561Z] }
+[2026-08-22T05:41:38.561Z] }
+[2026-08-22T05:41:38.561Z] [Music] AudioPlayer entered Idle state
+[2026-08-22T05:44:51.215Z] ELIFECYCLE  Command failed.
+[2026-08-22T05:44:51.277Z] Dev server exited with code -1
+[2026-08-22T05:44:52.328Z] Starting dev server with command: pnpm run dev
+[2026-08-22T05:44:53.024Z] > ritz-smp-store@1.0.0 dev /home/ubuntu/ritz-smp-store
+[2026-08-22T05:44:53.024Z] > NODE_ENV=development tsx watch server/_core/index.ts
+[2026-08-22T05:44:54.649Z] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-22T05:44:55.462Z] Server running on http://localhost:3000/
+[2026-08-22T05:45:01.173Z] [RitzSmpAI] [SUCCESS] RitzSMP AI bot logged in as RitzSMP AI#4684
+[2026-08-22T05:45:01.175Z] [RitzSmpAI] [INFO] Registering global slash commands...
+[2026-08-22T05:45:01.176Z] (node:3824) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+[2026-08-22T05:45:01.176Z] (Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-22T05:45:02.105Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
