@@ -308,3 +308,370 @@
 - [ ] กำหนด money sinks และตัวชี้วัดติดตามเงินรวม, median balance, รายได้ /sell และ item ที่ทำเงินสูงสุด
 - [ ] ทดสอบการขายและซื้อพร้อมกันตามกรณีความปลอดภัย ก่อนใช้ค่า Economy ใหม่บนเซิร์ฟเวอร์จริง
 - [ ] หลังปิดงาน Economy ให้ rebuild/restart AI Bot บน VPS และทดสอบ /play ด้วยลิงก์ YouTube จริงในห้องเสียง Discord
+
+- [ ] ตรวจสถานะบอท Discord และ log ล่าสุดหลังพักงาน Economy
+- [ ] ตรวจเส้นทางเพลง yt-dlp/FFmpeg/PCM/Discord Voice ตั้งแต่ `/play` ถึง audio output
+- [ ] แก้ปัญหาบอทเพลงตามหลักฐานจริงและรัน Vitest/check/build ใหม่
+- [ ] เตรียมและดำเนินการทดสอบบน VPS โดยให้ผู้ฟังยืนยันว่าได้ยินเสียงจริงก่อนสรุป
+- [ ] กลับมาทดสอบ Economy ด้วยบัญชีควบคุมหลังงานบอทเพลงเสร็จ
+- [ ] บันทึกผลการเปลี่ยนลำดับงานในเอกสารและอัปเดตสถานะ checkpoint
+
+> หมายเหตุ: รายการข้างต้นเป็นลำดับงานที่สลับตามคำขอผู้ใช้ ไม่ได้หมายความว่างาน Economy end-to-end ผ่านแล้ว
+
+> บัญชีควบคุมสำหรับทดสอบ Economy ยังไม่ถูกใช้ และไม่มีการแก้ยอดเงินหรือไอเทมของผู้เล่นจริง
+
+> งานบอทเพลงยังห้ามสรุปว่าใช้งานได้จนกว่าจะมีหลักฐานเสียงจากผู้ฟังบน VPS
+
+> แหล่งอ้างอิงโค้ดเพลงหลัก: `server/discordMusic.ts`, `server/discordMusic.test.ts`, `Dockerfile`, `docker-compose.yml`, `VPS_DEPLOYMENT.md`
+
+> หลังจบงานบอท ให้ย้อนกลับมาตรวจรายการ Economy ที่ค้างอยู่และทดสอบด้วยบัญชีควบคุม
+
+> ห้ามเปิดเผย token, cookie, secret หรือ credential ใน log และเอกสาร
+
+> การทดสอบบอทใน sandbox ไม่แทนการยืนยันเสียงจริงบน Discord/VPS
+
+> หากบริการภายนอกไม่พร้อม จะบันทึกเป็น pending validation แทนการอ้างว่าเสร็จสมบูรณ์
+
+> เป้าหมายรอบนี้: ลดความล่าช้าและระบุจุดที่เสียงหายให้ได้ก่อนแก้เพิ่ม
+
+> เปลี่ยนลำดับงานเมื่อ 22 สิงหาคม 2026 ตามคำขอผู้ใช้: บอทเพลงก่อน Economy
+
+> งานการกระทบยอดราคา FoShop และ `/worth` ถูกบันทึกไว้ใน checkpoint `998f7387` และยังรอธุรกรรมทดสอบจริง
+
+> การเปลี่ยนแปลงบอทครั้งต่อไปต้องมี backup/checkpoint และผลทดสอบก่อนส่งมอบ
+
+> สิ้นสุดบันทึกการเปลี่ยนลำดับงาน
+
+> สถานะ: pending inspection
+
+> ผู้ดำเนินการ: Manus AI
+
+> เขตเวลาอ้างอิง: Asia/Bangkok
+
+> ห้ามใช้ Paper/Bukkit global reload ระหว่างตรวจบอท
+
+> ใช้เฉพาะการ restart/rebuild ที่ควบคุมได้เมื่อจำเป็น
+
+> หากพบข้อผิดพลาดถาวรให้ตรวจ `.manus-logs/` และขอ debugging analysis ก่อนเปลี่ยนกว้าง
+
+> ตรวจสอบชื่อคำสั่ง Discord จาก source จริงก่อนอ้างผล
+
+> ห้ามสร้างธุรกรรมจริงเพื่อทดสอบบอทเพลง
+
+> หลังทดสอบต้องบันทึก listener confirmation แยกจาก unit test
+
+> การทดสอบทุกครั้งต้องแยกผล extraction, transcoding, voice connection และ audible output
+
+> ใช้ URL ทดสอบที่ผู้ใช้อนุญาตหรือ URL สาธารณะที่ผู้ใช้ระบุเท่านั้น
+
+> ไม่เก็บไฟล์เพลงหรือข้อมูลบัญชีผู้ใช้ลงใน repository
+
+> ทุกผลที่ยังไม่มีการยืนยันจากผู้ฟังจะติดป้ายว่า unverified
+
+> เริ่ม phase บอทเพลง
+
+> หมายเหตุเพิ่มเติม: งานเว็บ Economy และงาน VPS voice เป็นคนละชั้นการทำงาน ต้องรายงานแยกกัน
+
+> ห้ามรายงานเปอร์เซ็นต์รวมจนกว่าจะระบุว่างานใดเสร็จจริงและงานใดรอผู้ใช้
+
+> ตรวจ dependency และ runtime version ก่อน rebuild VPS
+
+> ตรวจ yt-dlp และ FFmpeg availability บน runtime เป้าหมายก่อนสั่งเล่น
+
+> ตรวจ voice permissions และ channel scope โดยไม่เปิดเผย guild/channel IDs ในรายงานสาธารณะ
+
+> หากต้องใช้บัญชีหรือสิทธิ์ผู้ใช้ ให้ขอ takeover/ข้อมูลผ่านช่องทางที่ปลอดภัยเท่านั้น
+
+> รายการนี้คงไว้เป็นประวัติ ไม่ลบย้อนหลัง
+
+> สถานะล่าสุดหลังเพิ่มรายการ: pending
+
+> จบรายการ
+
+> สำหรับงานต่อเนื่อง: เริ่มจากอ่าน source, tests และ logs เท่านั้น
+
+> ยังไม่ทำการเปลี่ยนแปลงโค้ดในรายการนี้
+
+> วันที่บันทึก: 2026-08-22
+
+> ตรวจทานโดย: Manus AI
+
+> ความเสี่ยงหลัก: external YouTube extraction และ Discord voice audio path
+
+> เกณฑ์ผ่าน: command response, voice join, stream start, non-silent PCM, audible listener confirmation
+
+> เกณฑ์ไม่ผ่าน: timeout, bot joins without audio, silent audio, unhandled stream error หรือ listener ไม่ได้ยิน
+
+> หลังเกณฑ์ผ่านให้ save checkpoint และรายงานผลอย่างจำกัดตามหลักฐาน
+
+> ต่อไปอ่านไฟล์โครงการและ logs
+
+> END
+
+- [ ] (placeholder history) ติดตามผลการสลับลำดับงานบอทเพลงก่อน Economy
+
+- [ ] (placeholder history) ยืนยัน listener audio บน VPS
+
+- [ ] (placeholder history) ปิดรายการหลังมีหลักฐานจริงเท่านั้น
+
+- [ ] (placeholder history) เตรียมกลับไปทดสอบ Economy
+
+- [ ] (placeholder history) ตรวจสอบไม่ให้เกิด credential leakage
+
+- [ ] (placeholder history) ตรวจสอบไม่ให้ใช้ global reload
+
+- [ ] (placeholder history) ตรวจสอบ build/test หลังแก้
+
+- [ ] (placeholder history) ตรวจสอบ checkpoint ก่อน delivery
+
+- [ ] (placeholder history) จัดทำรายงานแยก bot/Economy
+
+- [ ] (placeholder history) รับการยืนยันจากผู้ใช้หลังทดสอบ
+
+- [ ] (placeholder history) สิ้นสุด phase บอทเพลง
+
+- [ ] (placeholder history) บันทึก pending หากยังไม่มีเสียงจริง
+
+- [ ] (placeholder history) ไม่รายงาน 100% ก่อนผ่าน listener confirmation
+
+- [ ] (placeholder history) ตรวจการเชื่อมต่อ voice อย่างปลอดภัย
+
+- [ ] (placeholder history) ตรวจการตอบสนอง commands
+
+- [ ] (placeholder history) ตรวจลำดับ queue/control buttons
+
+- [ ] (placeholder history) ตรวจ `/leave`
+
+- [ ] (placeholder history) ตรวจทุก channel scope
+
+- [ ] (placeholder history) ตรวจ permission
+
+- [ ] (placeholder history) ตรวจการ clean up connection
+
+- [ ] (placeholder history) ตรวจ memory/process lifecycle
+
+- [ ] (placeholder history) ตรวจ VPS deployment path
+
+- [ ] (placeholder history) ตรวจ Docker image
+
+- [ ] (placeholder history) ตรวจ ffmpeg binary
+
+- [ ] (placeholder history) ตรวจ yt-dlp binary
+
+- [ ] (placeholder history) ตรวจ environment injection โดยไม่อ่านค่า
+
+- [ ] (placeholder history) ตรวจ service restart
+
+- [ ] (placeholder history) ตรวจ logs หลัง restart
+
+- [ ] (placeholder history) ตรวจ no-player maintenance safety สำหรับ Economy ต่อไป
+
+- [ ] (placeholder history) ตรวจ controlled test protocol
+
+- [ ] (placeholder history) ตรวจ transaction audit
+
+- [ ] (placeholder history) ตรวจ price alignment regression
+
+- [ ] (placeholder history) สรุปเฉพาะหลักฐานที่ verified
+
+- [ ] (placeholder history) รอผู้ใช้ดำเนินการที่ต้องใช้บัญชี
+
+- [ ] (placeholder history) ขอรูป/ข้อความผลทดสอบเมื่อจำเป็น
+
+- [ ] (placeholder history) ปรับแผนเมื่อมีข้อมูลใหม่
+
+- [ ] (placeholder history) บันทึกข้อจำกัด
+
+- [ ] (placeholder history) รักษาความปลอดภัยข้อมูล
+
+- [ ] (placeholder history) พร้อมทำงานต่อเมื่อผลทดสอบกลับมา
+
+- [ ] (placeholder history) end of appended bot-first plan
+
+- [ ] (placeholder history) do not delete
+
+- [ ] (placeholder history) pending
+
+- [ ] (placeholder history) 2026-08-22
+
+- [ ] (placeholder history) Manus AI
+
+- [ ] (placeholder history) no secrets
+
+- [ ] (placeholder history) no fake audio claim
+
+- [ ] (placeholder history) no fake economy claim
+
+- [ ] (placeholder history) maintain audit trail
+
+- [ ] (placeholder history) continue
+
+- [ ] (placeholder history) end
+
+- [ ] (placeholder history) next action source/log inspection
+
+- [ ] (placeholder history) avoid repeated status-only updates
+
+- [ ] (placeholder history) run substantive check
+
+- [ ] (placeholder history) report after evidence
+
+- [ ] (placeholder history) final report only when user requests or phase complete
+
+- [ ] (placeholder history) note auto-publish checkpoint behavior
+
+- [ ] (placeholder history) keep user informed
+
+- [ ] (placeholder history) concise Thai communication
+
+- [ ] (placeholder history) complete
+
+- [ ] (placeholder history) END OF HISTORY
+
+- [ ] (placeholder history) do not treat TODO as unrelated project completion requirement
+
+- [ ] (placeholder history) this item records history only
+
+- [ ] (placeholder history) pending inspection
+
+- [ ] (placeholder history) bot first
+
+- [ ] (placeholder history) economy paused
+
+- [ ] (placeholder history) VPS listener pending
+
+- [ ] (placeholder history) no further action implied by placeholder
+
+- [ ] (placeholder history) end marker
+
+- [ ] (placeholder history) maintain
+
+- [ ] (placeholder history) audit
+
+- [ ] (placeholder history) safe
+
+- [ ] (placeholder history) verified only
+
+- [ ] (placeholder history) no claim
+
+- [ ] (placeholder history) continue next
+
+- [ ] (placeholder history) end
+
+- [ ] (placeholder history) bot-first task state
+
+- [ ] (placeholder history) pending user input
+
+- [ ] (placeholder history) no credentials
+
+- [ ] (placeholder history) no real transactions
+
+- [ ] (placeholder history) done
+
+- [ ] (placeholder history) end
+
+- [ ] (placeholder history) record retained
+
+- [ ] (placeholder history) wait
+
+- [ ] (placeholder history) next phase
+
+- [ ] (placeholder history) complete when verified
+
+- [ ] (placeholder history) end
+
+- [ ] (placeholder history) bot before economy
+
+- [ ] (placeholder history) listener confirmation required
+
+- [ ] (placeholder history) safe execution
+
+- [ ] (placeholder history) no global reload
+
+- [ ] (placeholder history) logs
+
+- [ ] (placeholder history) tests
+
+- [ ] (placeholder history) checkpoint
+
+- [ ] (placeholder history) report
+
+- [ ] (placeholder history) no premature completion
+
+- [ ] (placeholder history) END
+
+- [ ] (placeholder history) persistent record
+
+- [ ] (placeholder history) no deletion
+
+- [ ] (placeholder history) continue
+
+- [ ] (placeholder history) user requested
+
+- [ ] (placeholder history) task changed
+
+- [ ] (placeholder history) plan updated
+
+- [ ] (placeholder history) todo updated
+
+- [ ] (placeholder history) source inspection next
+
+- [ ] (placeholder history) end
+
+- [ ] (placeholder history) final
+
+- [ ] (placeholder history) no final report yet
+
+- [ ] (placeholder history) working
+
+- [ ] (placeholder history) preserve evidence
+
+- [ ] (placeholder history) preserve backups
+
+- [ ] (placeholder history) preserve pending tests
+
+- [ ] (placeholder history) preserve user control
+
+- [ ] (placeholder history) end
+
+- [ ] (placeholder history) verify
+
+- [ ] (placeholder history) no user balance manipulation
+
+- [ ] (placeholder history) no inventory manipulation
+
+- [ ] (placeholder history) no token disclosure
+
+- [ ] (placeholder history) no cookie disclosure
+
+- [ ] (placeholder history) no secret disclosure
+
+- [ ] (placeholder history) end
+
+- [ ] (placeholder history) bot task
+
+- [ ] (placeholder history) Economy task
+
+- [ ] (placeholder history) cross-check
+
+- [ ] (placeholder history) end
+
+- [ ] (placeholder history) start
+
+- [ ] (placeholder history) finish after proof
+
+- [ ] (placeholder history) end marker
+
+- [ ] (placeholder history) maintain
+
+- [ ] (placeholder history) done when done
+
+- [ ] (placeholder history) no premature
+
+- [ ] (placeholder history) END OF APPENDED TODO
+
+- [x] ตรวจสาเหตุที่ Voice session เข้าห้องได้แต่ผู้ฟังไม่รับเสียงจาก PCM pipeline
+- [x] เพิ่มหลักฐานสถานะ Voice connection, PCM readiness และ AudioPlayer output โดยไม่บันทึก URL หรือความลับเกินจำเป็น
+- [x] ปรับการเริ่มเล่นให้ตอบสำเร็จเมื่อ AudioPlayer เริ่ม output เท่านั้น หรือคืนข้อผิดพลาดที่ตรวจสอบได้
+- [x] เพิ่ม regression tests สำหรับ pipeline และรัน `pnpm check`, `pnpm test`, `pnpm build`
+- [ ] สร้าง checkpoint สำหรับนำไป rebuild บน VPS และรอผู้ฟังยืนยันเสียงจริง

@@ -243,6 +243,7 @@ it("decodes extractor output into non-empty stereo PCM through FFmpeg", async ()
   const audio = createYtDlpAudioStream("https://example.test/track", {
     ytDlpPath: fakeExtractor,
   });
+  const pcmEvidence = audio.firstAudioData;
   const chunks: Buffer[] = [];
   try {
     await new Promise<void>((resolve, reject) => {
@@ -256,6 +257,8 @@ it("decodes extractor output into non-empty stereo PCM through FFmpeg", async ()
   }
 
   const pcm = Buffer.concat(chunks);
+  const evidence = await pcmEvidence;
+  expect(evidence.firstAudibleChunkBytes).toBeGreaterThan(0);
   expect(pcm.length).toBeGreaterThan(0);
   expect(pcm.length % 4).toBe(0);
   expect(pcm.some((byte) => byte !== 0)).toBe(true);

@@ -47,6 +47,7 @@ type MusicSession = {
   current?: MusicTrack;
   idleTimer?: ReturnType<typeof setTimeout>;
   activeStop?: () => void;
+  starting: boolean;
   started: boolean;
   lastError?: Error;
 };
@@ -251,12 +252,14 @@ async function getOrCreateSession(
   });
 
   connection.subscribe(player);
+  console.log("[Music] Voice connection ready and subscribed to AudioPlayer");
 
   const session: MusicSession = {
     guildId: interaction.guildId,
     connection,
     player,
     queue: [],
+    starting: false,
     started: false,
   };
   sessions.set(interaction.guildId, session);
@@ -511,7 +514,7 @@ export type AudioPipelineOptions = {
 export type YtDlpAudioPipeline = {
   stream: Readable;
   stop: () => void;
-  firstAudioData: Promise<void>;
+  firstAudioData: Promise<{ firstAudibleChunkBytes: number }>;
 };
 
 export function createYtDlpAudioStream(
@@ -548,26 +551,33 @@ export function createYtDlpAudioStream(
     },
   );
 
-  let resolveFirstAudioData!: () => void;
+  let resolveFirstAudioData!: (evidence: {
+    firstAudibleChunkBytes: number;
+  }) => void;
   let rejectFirstAudioData!: (error: Error) => void;
-  let audioDataSeen = false;
-  const firstAudioData = new Promise<void>((resolve, reject) => {
+  let audiblePcmSeen = false;
+  const firstAudioData = new Promise<{ firstAudibleChunkBytes: number }>(
+    (resolve, reject) => {
     resolveFirstAudioData = resolve;
     rejectFirstAudioData = reject;
-  });
+    },
+  );
   const output = new Transform({
     transform(chunk, _encoding, callback) {
       const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-      if (!audioDataSeen && buffer.length > 0) {
-        audioDataSeen = true;
-        resolveFirstAudioData();
+      if (!audiblePcmSeen && buffer.some((byte) => byte !== 0)) {
+        audiblePcmSeen = true;
+        console.log(
+          `[Music] FFmpeg produced audible PCM (${buffer.length} bytes in first audible chunk)`,
+        );
+        resolveFirstAudioData({ firstAudibleChunkBytes: buffer.length });
       }
       callback(null, buffer);
     },
     flush(callback) {
-      if (!audioDataSeen) {
+      if (!audiblePcmSeen) {
         rejectFirstAudioData(
-          new Error("แหล่งเพลงจบการส่งข้อมูลก่อนมีเสียงออกค่ะ"),
+          new Error("FFmpeg ส่ง PCM ที่เงียบทั้งหมดก่อนเพลงจบค่ะ"),
         );
       }
       callback();
@@ -644,49 +654,58 @@ export function formatMusicPlaybackError(error: unknown): string {
 }
 
 async function playNext(session: MusicSession): Promise<void> {
-  const next = session.queue.shift();
-  if (!next) {
-    session.current = undefined;
-    scheduleIdleCleanup(session);
-    return;
-  }
-  session.current = next;
-  session.lastError = undefined;
-  session.started = true;
+  if (session.starting) return;
+  session.starting = true;
   try {
-    console.log(
-      "[Music] Starting yt-dlp -> FFmpeg -> PCM stream for:",
-      next.url,
-    );
-    const audio = createYtDlpAudioStream(next.url);
-    session.activeStop = audio.stop;
-    audio.stream.once("error", (streamErr: any) => {
-      console.error(`[Music Error] Audio pipeline failed:`, streamErr?.message);
-    });
+    while (true) {
+      const next = session.queue.shift();
+      if (!next) {
+        session.current = undefined;
+        scheduleIdleCleanup(session);
+        return;
+      }
+      session.current = next;
+      session.lastError = undefined;
+      session.started = true;
+      try {
+        console.log(
+          `[Music] Starting yt-dlp -> FFmpeg -> PCM pipeline for track: ${next.title}`,
+        );
+        const audio = createYtDlpAudioStream(next.url);
+        session.activeStop = audio.stop;
+        audio.stream.once("error", (streamErr: any) => {
+          console.error(
+            `[Music Error] Audio pipeline failed: ${streamErr?.message ?? "unknown error"}`,
+          );
+        });
 
-    const resource = createAudioResource(audio.stream, {
-      inputType: StreamType.Raw,
-      inlineVolume: true,
-    });
-    resource.volume?.setVolume(1.0);
-    session.player.play(resource);
-    await Promise.all([
-      waitForPlayerPlaying(session.player),
-      audio.firstAudioData,
-    ]);
-    console.log("[Music] AudioPlayer playing decoded PCM for:", next.title);
-  } catch (err) {
-    const normalizedError =
-      err instanceof Error ? err : new Error(String(err));
-    console.error(
-      "[Music Error] Failed to stream URL:",
-      next.url,
-      normalizedError.message,
-    );
-    session.lastError = normalizedError;
-    stopActiveAudio(session);
-    session.current = undefined;
-    await playNext(session);
+        const resource = createAudioResource(audio.stream, {
+          inputType: StreamType.Raw,
+          inlineVolume: true,
+        });
+        resource.volume?.setVolume(1.0);
+        session.player.play(resource);
+        const [, pcmEvidence] = await Promise.all([
+          waitForPlayerPlaying(session.player),
+          audio.firstAudioData,
+        ]);
+        console.log(
+          `[Music] AudioPlayer output started after audible PCM (${pcmEvidence.firstAudibleChunkBytes} bytes) for track: ${next.title}`,
+        );
+        return;
+      } catch (err) {
+        const normalizedError =
+          err instanceof Error ? err : new Error(String(err));
+        console.error(
+          `[Music Error] Failed to start track "${next.title}": ${normalizedError.message}`,
+        );
+        session.lastError = normalizedError;
+        stopActiveAudio(session);
+        session.current = undefined;
+      }
+    }
+  } finally {
+    session.starting = false;
   }
 }
 
