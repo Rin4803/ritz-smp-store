@@ -13,6 +13,7 @@ import {
   playShortcutCommand,
   leaveShortcutCommand,
   resolveMusicQuery,
+  resolveTrackFromQuery,
 } from "./discordMusic";
 import { setMusicChannelIdForTests } from "./discordMusicChannel";
 
@@ -202,6 +203,19 @@ it("builds an IPv4, Node-EJS yt-dlp audio pipeline command", () => {
   expect(args.at(-1)).toBe("https://youtu.be/ETL8RLZrvek");
 });
 
+it("skips metadata preflight for direct URLs", async () => {
+  await expect(
+    resolveTrackFromQuery(
+      { query: "https://youtu.be/QbHBfxAOucI?si=test", isUrl: true },
+      "tester#0001",
+    ),
+  ).resolves.toEqual({
+    url: "https://youtu.be/QbHBfxAOucI?si=test",
+    title: "YouTube Music Track",
+    requestedBy: "tester#0001",
+  });
+});
+
 it("uses yt-dlp search resolution for non-URL queries", () => {
   const args = buildYtDlpMetadataArgs("เพลงเปิดร้าน", false);
   expect(args).toEqual(
@@ -259,4 +273,12 @@ it("explains missing audio runtime dependencies", () => {
   expect(formatMusicPlaybackError(new Error("spawn yt-dlp ENOENT"))).toContain(
     "yt-dlp หรือ FFmpeg",
   );
+});
+
+it("turns generic resolution timeouts into VPS troubleshooting guidance", () => {
+  expect(
+    formatMusicPlaybackError(
+      new Error("การค้นหาเพลงใช้เวลานานเกินไป (Timeout)"),
+    ),
+  ).toContain("YTDLP_COOKIES_PATH");
 });

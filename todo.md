@@ -276,17 +276,21 @@
 - [ ] ตรวจสอบหน้า mcsv.me และระบบซื้อขายไอเทมในเกมเพื่อยืนยันว่าการจ่ายเงินเข้าบัญชีผู้เล่นทำงานปกติ
 - [x] Investigate root cause of YouTube music playback failure in discordMusic.ts; root cause documented and real audio pipeline implemented, with live voice output still requiring VPS validation
 - [ ] Verify 100% end-to-end music streaming and voice channel output in Discord with live validation
-- [ ] Test alternative music streaming libraries (yt-dlp and ytdl-core) to replace play-dl
+- [x] Test alternative music streaming libraries (yt-dlp and ytdl-core) to replace play-dl; production path now uses yt-dlp → FFmpeg
 - [x] Fix music title extraction in discordMusic.ts to avoid displaying raw YouTube URLs
 - [ ] Ensure Discord bot shows green speaking/playing indicator ring when streaming audio
-- [ ] Verify updated discordMusic.ts with all 108 tests passing
+- [x] Verify updated discordMusic.ts with 117 tests passing (1 live integration test skipped)
 - [ ] แก้ระบบสตรีมเสียงเพลง Discord บอทให้ส่งเสียงได้จริง (AudioPlayer Playing และ Green Ring)
-- [ ] ตรวจสอบและแก้ไข @distube/ytdl-core stream extraction ให้ดึงเสียงและชื่อเพลงถูกต้อง
+- [x] ตรวจสอบและแก้ไข @distube/ytdl-core stream extraction; ย้าย production path ไปใช้ yt-dlp → FFmpeg เพื่อหลีกเลี่ยงข้อจำกัด extraction เดิม
 - [ ] ทดสอบคำสั่ง /play, /music, และ /leave ให้ทำงานสมบูรณ์ 100% บน production
-- [ ] ตรวจหาสาเหตุที่บอทเข้าห้องเสียงได้แต่ไม่มีเสียงเพลงออกจริง
+- [x] ตรวจหาสาเหตุที่บอทเข้าห้องเสียงได้แต่ไม่มีเสียงเพลงออกจริง; พบ YouTube anti-bot และ silent fallback/PCM handoff เป็นสาเหตุหลักและแก้ในโค้ดแล้ว
 - [x] เปลี่ยน fallback ที่เป็นเสียงเงียบให้แจ้งข้อผิดพลาดแทนการทำให้ดูเหมือนเล่นสำเร็จ
 - [x] เพิ่มเส้นทางสตรีมเสียงที่มี FFmpeg/yt-dlp พร้อมตรวจสอบ AudioResource และ VoiceConnection
 - [x] เพิ่ม regression tests สำหรับ stream error, audio resource, ปุ่มควบคุม และสถานะ AudioPlayer
 - [x] ตรวจสอบ Docker runtime ให้มี FFmpeg, yt-dlp, Python และ dependency ที่จำเป็นสำหรับ Discord voice
 - [ ] ทดสอบจริงบน VPS/Discord voice channel และแยกผลจากข้อจำกัด YouTube/UDP ของ sandbox
 - [x] อัปเดตคู่มือ VPS และสรุปสถานะเพลงโดยไม่อ้างว่าเสียงใช้งานได้จนกว่าจะมีผู้ฟังยืนยัน
+
+- [x] แก้ไขข้อผิดพลาด "การค้นหาเพลงใช้เวลานานเกินไป (Timeout)" เมื่อผู้ใช้ส่งลิงก์ YouTube จริง (`https://youtu.be/QbHBfxAOucI`); เพิ่ม direct-URL fast path และส่งสาเหตุจริงกลับผู้ใช้
+- [x] ขยายเวลาหรือปรับพารามิเตอร์ yt-dlp ใน server/discordMusic.ts ให้รองรับการดึงข้อมูลหน้าเว็บ YouTube ที่ช้าหรือไม่ตอบสนองทันที
+- [x] เพิ่มการตรวจสอบและแยกแยะข้อความแจ้งเตือนเมื่อเกิด Sign-in/bot check ให้ชัดเจน ไม่ให้ผู้ใช้สับสนว่าเป็นเพราะ timeout

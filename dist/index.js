@@ -1556,12 +1556,20 @@ import {
   ButtonStyle
 } from "discord.js";
 var MUSIC_IDLE_TIMEOUT_MS = 15 * 60 * 1e3;
-var MUSIC_RESOLVE_TIMEOUT_MS = 12e3;
+var MUSIC_RESOLVE_TIMEOUT_MS = positiveEnvMs("MUSIC_RESOLVE_TIMEOUT_MS", 2e4);
+var MUSIC_AUDIO_START_TIMEOUT_MS = positiveEnvMs(
+  "MUSIC_AUDIO_START_TIMEOUT_MS",
+  15e3
+);
 var YTDLP_BIN = process.env.YTDLP_PATH || "yt-dlp";
 var FFMPEG_BIN = process.env.FFMPEG_PATH || "ffmpeg";
 var YTDLP_COOKIES_PATH = process.env.YTDLP_COOKIES_PATH || "";
 var MUSIC_QUERY_MESSAGE = "\u0E01\u0E23\u0E38\u0E13\u0E32\u0E23\u0E30\u0E1A\u0E38\u0E0A\u0E37\u0E48\u0E2D\u0E40\u0E1E\u0E25\u0E07\u0E2B\u0E23\u0E37\u0E2D\u0E25\u0E34\u0E07\u0E01\u0E4C YouTube/SoundCloud \u0E17\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E40\u0E1B\u0E34\u0E14\u0E19\u0E30\u0E04\u0E30";
 var sessions = /* @__PURE__ */ new Map();
+function positiveEnvMs(name, fallback) {
+  const parsed = Number.parseInt(process.env[name] ?? "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
 var musicCommand = new SlashCommandBuilder().setName("music").setDescription(
   "\u{1F3B5} \u0E40\u0E1B\u0E34\u0E14\u0E40\u0E1E\u0E25\u0E07\u0E43\u0E19\u0E2B\u0E49\u0E2D\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E41\u0E1A\u0E1A\u0E1F\u0E23\u0E35 (\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E17\u0E38\u0E01\u0E2B\u0E49\u0E2D\u0E07\u0E43\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E17\u0E38\u0E01\u0E04\u0E19)"
 ).addSubcommand(
@@ -1799,6 +1807,9 @@ function buildYtDlpMetadataArgs(query, isUrl) {
     isUrl ? query : `ytsearch1:${query}`
   ];
 }
+function lastNonEmptyLine(text2) {
+  return text2.trim().split(/\r?\n/).filter(Boolean).slice(-1)[0] ?? "";
+}
 function runYtDlp(args, timeoutMs = MUSIC_RESOLVE_TIMEOUT_MS) {
   return new Promise((resolve, reject) => {
     const child = spawn(YTDLP_BIN, args, {
@@ -1812,9 +1823,11 @@ function runYtDlp(args, timeoutMs = MUSIC_RESOLVE_TIMEOUT_MS) {
       if (settled) return;
       settled = true;
       child.kill("SIGKILL");
+      const detail = lastNonEmptyLine(stderr);
+      const isBotCheck = /sign in to confirm|not a bot|cookies?/i.test(detail);
       reject(
         new Error(
-          "\u0E01\u0E32\u0E23\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E40\u0E1E\u0E25\u0E07\u0E43\u0E0A\u0E49\u0E40\u0E27\u0E25\u0E32\u0E19\u0E32\u0E19\u0E40\u0E01\u0E34\u0E19\u0E44\u0E1B (Timeout) \u0E01\u0E23\u0E38\u0E13\u0E32\u0E25\u0E2D\u0E07\u0E43\u0E2B\u0E21\u0E48\u0E2D\u0E35\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07\u0E04\u0E48\u0E30"
+          isBotCheck ? `YouTube \u0E1B\u0E0F\u0E34\u0E40\u0E2A\u0E18\u0E01\u0E32\u0E23\u0E14\u0E36\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07: ${detail}` : `\u0E01\u0E32\u0E23\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E40\u0E1E\u0E25\u0E07\u0E43\u0E0A\u0E49\u0E40\u0E27\u0E25\u0E32\u0E19\u0E32\u0E19\u0E40\u0E01\u0E34\u0E19\u0E44\u0E1B (Timeout): ${detail || "\u0E44\u0E21\u0E48\u0E21\u0E35\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14\u0E08\u0E32\u0E01 yt-dlp"}`
         )
       );
     }, timeoutMs);
@@ -1839,7 +1852,7 @@ function runYtDlp(args, timeoutMs = MUSIC_RESOLVE_TIMEOUT_MS) {
       if (code === 0) {
         resolve({ stdout, stderr });
       } else {
-        const detail = stderr.trim().split(/\r?\n/).filter(Boolean).slice(-1)[0] || `exit code ${code}`;
+        const detail = lastNonEmptyLine(stderr) || `exit code ${code}`;
         reject(new Error(`\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E40\u0E1E\u0E25\u0E07\u0E44\u0E21\u0E48\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19: ${detail.slice(0, 220)}`));
       }
     });
@@ -1864,6 +1877,13 @@ function parseYtDlpMetadata(stdout) {
   throw new Error("yt-dlp \u0E44\u0E21\u0E48\u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E40\u0E1E\u0E25\u0E07\u0E01\u0E25\u0E31\u0E1A\u0E21\u0E32");
 }
 async function resolveTrackFromQuery(resolvedQuery, requestedBy) {
+  if (resolvedQuery.isUrl) {
+    return {
+      url: resolvedQuery.query,
+      title: "YouTube Music Track",
+      requestedBy
+    };
+  }
   const metadata = await runYtDlp(
     buildYtDlpMetadataArgs(resolvedQuery.query, resolvedQuery.isUrl)
   );
@@ -1874,7 +1894,7 @@ async function resolveTrackFromQuery(resolvedQuery, requestedBy) {
     requestedBy
   };
 }
-function waitForPlayerPlaying(player, timeoutMs = 5e3) {
+function waitForPlayerPlaying(player, timeoutMs = MUSIC_AUDIO_START_TIMEOUT_MS) {
   if (player.state.status === AudioPlayerStatus.Playing)
     return Promise.resolve();
   return new Promise((resolve, reject) => {
@@ -2008,6 +2028,9 @@ function formatMusicPlaybackError(error) {
   if (/ENOENT|ไม่พบโปรแกรม yt-dlp|ไม่พบโปรแกรม ffmpeg/i.test(message)) {
     return "\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35 yt-dlp \u0E2B\u0E23\u0E37\u0E2D FFmpeg \u0E04\u0E23\u0E1A\u0E04\u0E48\u0E30 \u0E43\u0E2B\u0E49\u0E23\u0E31\u0E19\u0E02\u0E31\u0E49\u0E19\u0E15\u0E2D\u0E19\u0E15\u0E34\u0E14\u0E15\u0E31\u0E49\u0E07\u0E08\u0E32\u0E01 VPS_DEPLOYMENT.md \u0E41\u0E25\u0E49\u0E27\u0E23\u0E35\u0E2A\u0E15\u0E32\u0E23\u0E4C\u0E15\u0E1A\u0E2D\u0E17\u0E04\u0E48\u0E30";
   }
+  if (/Timeout|หมดเวลา|ใช้เวลานานเกินไป/i.test(message)) {
+    return "\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E40\u0E1E\u0E25\u0E07\u0E44\u0E21\u0E48\u0E17\u0E31\u0E19\u0E40\u0E27\u0E25\u0E32\u0E04\u0E48\u0E30 \u0E2B\u0E32\u0E01\u0E40\u0E1B\u0E47\u0E19\u0E25\u0E34\u0E07\u0E01\u0E4C YouTube \u0E43\u0E2B\u0E49\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32 YTDLP_COOKIES_PATH \u0E1A\u0E19 VPS \u0E41\u0E25\u0E30\u0E15\u0E23\u0E27\u0E08\u0E27\u0E48\u0E32 VPS \u0E2D\u0E2D\u0E01\u0E2D\u0E34\u0E19\u0E40\u0E17\u0E2D\u0E23\u0E4C\u0E40\u0E19\u0E47\u0E15\u0E44\u0E14\u0E49 \u0E08\u0E32\u0E01\u0E19\u0E31\u0E49\u0E19\u0E25\u0E2D\u0E07 /play \u0E43\u0E2B\u0E21\u0E48\u0E04\u0E48\u0E30";
+  }
   return message;
 }
 async function playNext(session) {
@@ -2018,6 +2041,7 @@ async function playNext(session) {
     return;
   }
   session.current = next;
+  session.lastError = void 0;
   session.started = true;
   try {
     console.log(
@@ -2041,7 +2065,13 @@ async function playNext(session) {
     ]);
     console.log("[Music] AudioPlayer playing decoded PCM for:", next.title);
   } catch (err) {
-    console.error("[Music Error] Failed to stream URL:", next.url, err);
+    const normalizedError = err instanceof Error ? err : new Error(String(err));
+    console.error(
+      "[Music Error] Failed to stream URL:",
+      next.url,
+      normalizedError.message
+    );
+    session.lastError = normalizedError;
     stopActiveAudio(session);
     session.current = void 0;
     await playNext(session);
@@ -2159,15 +2189,18 @@ async function handleMusicCommand(interaction) {
         await interaction.deferReply({ ephemeral: false }).catch(() => {
         });
       }
-      const session = await getOrCreateSession(interaction, voiceChannel);
+      console.log(
+        `[Music] Resolving ${resolved.isUrl ? "direct URL" : "search query"} before playback`
+      );
       const track = await resolveTrackFromQuery(
         resolved,
         interaction.user?.tag ?? "\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 RitzSMP"
       );
+      const session = await getOrCreateSession(interaction, voiceChannel);
       session.queue.push(track);
       if (!session.current) await playNext(session);
       if (!session.current) {
-        throw new Error(
+        throw session.lastError ?? new Error(
           "\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E40\u0E1E\u0E25\u0E07\u0E2A\u0E48\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E2D\u0E2D\u0E01\u0E21\u0E32\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E04\u0E48\u0E30 \u0E01\u0E23\u0E38\u0E13\u0E32\u0E25\u0E2D\u0E07\u0E25\u0E34\u0E07\u0E01\u0E4C\u0E2D\u0E37\u0E48\u0E19\u0E2B\u0E23\u0E37\u0E2D\u0E25\u0E2D\u0E07\u0E43\u0E2B\u0E21\u0E48\u0E2D\u0E35\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07"
         );
       }

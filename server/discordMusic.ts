@@ -22,7 +22,11 @@ import {
 } from "discord.js";
 
 const MUSIC_IDLE_TIMEOUT_MS = 15 * 60 * 1000;
-const MUSIC_RESOLVE_TIMEOUT_MS = 12_000;
+const MUSIC_RESOLVE_TIMEOUT_MS = positiveEnvMs("MUSIC_RESOLVE_TIMEOUT_MS", 20_000);
+const MUSIC_AUDIO_START_TIMEOUT_MS = positiveEnvMs(
+  "MUSIC_AUDIO_START_TIMEOUT_MS",
+  15_000,
+);
 const YTDLP_BIN = process.env.YTDLP_PATH || "yt-dlp";
 const FFMPEG_BIN = process.env.FFMPEG_PATH || "ffmpeg";
 const YTDLP_COOKIES_PATH = process.env.YTDLP_COOKIES_PATH || "";
@@ -44,9 +48,15 @@ type MusicSession = {
   idleTimer?: ReturnType<typeof setTimeout>;
   activeStop?: () => void;
   started: boolean;
+  lastError?: Error;
 };
 
 const sessions = new Map<string, MusicSession>();
+
+function positiveEnvMs(name: string, fallback: number): number {
+  const parsed = Number.parseInt(process.env[name] ?? "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
 
 export const musicCommand = new SlashCommandBuilder()
   .setName("music")
@@ -361,6 +371,10 @@ export function buildYtDlpMetadataArgs(
   ];
 }
 
+function lastNonEmptyLine(text: string): string {
+  return text.trim().split(/\r?\n/).filter(Boolean).slice(-1)[0] ?? "";
+}
+
 function runYtDlp(
   args: string[],
   timeoutMs = MUSIC_RESOLVE_TIMEOUT_MS,
@@ -377,9 +391,13 @@ function runYtDlp(
       if (settled) return;
       settled = true;
       child.kill("SIGKILL");
+      const detail = lastNonEmptyLine(stderr);
+      const isBotCheck = /sign in to confirm|not a bot|cookies?/i.test(detail);
       reject(
         new Error(
-          "การค้นหาเพลงใช้เวลานานเกินไป (Timeout) กรุณาลองใหม่อีกครั้งค่ะ",
+          isBotCheck
+            ? `YouTube ปฏิเสธการดึงเสียง: ${detail}`
+            : `การค้นหาเพลงใช้เวลานานเกินไป (Timeout): ${detail || "ไม่มีรายละเอียดจาก yt-dlp"}`,
         ),
       );
     }, timeoutMs);
@@ -405,9 +423,7 @@ function runYtDlp(
       if (code === 0) {
         resolve({ stdout, stderr });
       } else {
-        const detail =
-          stderr.trim().split(/\r?\n/).filter(Boolean).slice(-1)[0] ||
-          `exit code ${code}`;
+        const detail = lastNonEmptyLine(stderr) || `exit code ${code}`;
         reject(new Error(`แหล่งเพลงไม่พร้อมใช้งาน: ${detail.slice(0, 220)}`));
       }
     });
@@ -441,10 +457,22 @@ function parseYtDlpMetadata(stdout: string): { url: string; title: string } {
   throw new Error("yt-dlp ไม่ส่งข้อมูลเพลงกลับมา");
 }
 
-async function resolveTrackFromQuery(
+export async function resolveTrackFromQuery(
   resolvedQuery: { query: string; isUrl: boolean },
   requestedBy: string,
 ): Promise<MusicTrack> {
+  // A direct URL is already a complete track reference. Avoid a second
+  // metadata request before playback because YouTube commonly blocks metadata
+  // requests before the actual stream attempt. The stream process remains the
+  // source of truth for whether audio can be played.
+  if (resolvedQuery.isUrl) {
+    return {
+      url: resolvedQuery.query,
+      title: "YouTube Music Track",
+      requestedBy,
+    };
+  }
+
   const metadata = await runYtDlp(
     buildYtDlpMetadataArgs(resolvedQuery.query, resolvedQuery.isUrl),
   );
@@ -458,7 +486,7 @@ async function resolveTrackFromQuery(
 
 function waitForPlayerPlaying(
   player: AudioPlayer,
-  timeoutMs = 5_000,
+  timeoutMs = MUSIC_AUDIO_START_TIMEOUT_MS,
 ): Promise<void> {
   if (player.state.status === AudioPlayerStatus.Playing)
     return Promise.resolve();
@@ -609,6 +637,9 @@ export function formatMusicPlaybackError(error: unknown): string {
   if (/ENOENT|ไม่พบโปรแกรม yt-dlp|ไม่พบโปรแกรม ffmpeg/i.test(message)) {
     return "เซิร์ฟเวอร์ยังไม่มี yt-dlp หรือ FFmpeg ครบค่ะ ให้รันขั้นตอนติดตั้งจาก VPS_DEPLOYMENT.md แล้วรีสตาร์ตบอทค่ะ";
   }
+  if (/Timeout|หมดเวลา|ใช้เวลานานเกินไป/i.test(message)) {
+    return "เชื่อมต่อแหล่งเพลงไม่ทันเวลาค่ะ หากเป็นลิงก์ YouTube ให้ตั้งค่า YTDLP_COOKIES_PATH บน VPS และตรวจว่า VPS ออกอินเทอร์เน็ตได้ จากนั้นลอง /play ใหม่ค่ะ";
+  }
   return message;
 }
 
@@ -620,6 +651,7 @@ async function playNext(session: MusicSession): Promise<void> {
     return;
   }
   session.current = next;
+  session.lastError = undefined;
   session.started = true;
   try {
     console.log(
@@ -644,7 +676,14 @@ async function playNext(session: MusicSession): Promise<void> {
     ]);
     console.log("[Music] AudioPlayer playing decoded PCM for:", next.title);
   } catch (err) {
-    console.error("[Music Error] Failed to stream URL:", next.url, err);
+    const normalizedError =
+      err instanceof Error ? err : new Error(String(err));
+    console.error(
+      "[Music Error] Failed to stream URL:",
+      next.url,
+      normalizedError.message,
+    );
+    session.lastError = normalizedError;
     stopActiveAudio(session);
     session.current = undefined;
     await playNext(session);
@@ -812,18 +851,24 @@ export async function handleMusicCommand(interaction: any): Promise<boolean> {
       ) {
         await interaction.deferReply({ ephemeral: false }).catch(() => {});
       }
-      // Join voice channel immediately so bot enters channel without waiting for YouTube resolve
-      const session = await getOrCreateSession(interaction, voiceChannel);
-
+      console.log(
+        `[Music] Resolving ${resolved.isUrl ? "direct URL" : "search query"} before playback`,
+      );
       const track = await resolveTrackFromQuery(
         resolved,
         interaction.user?.tag ?? "สมาชิก RitzSMP",
       );
+
+      // Do not leave a silent bot in the channel when YouTube resolution fails.
+      const session = await getOrCreateSession(interaction, voiceChannel);
       session.queue.push(track);
       if (!session.current) await playNext(session);
       if (!session.current) {
-        throw new Error(
-          "แหล่งเพลงส่งเสียงออกมาไม่ได้ค่ะ กรุณาลองลิงก์อื่นหรือลองใหม่อีกครั้ง",
+        throw (
+          session.lastError ??
+          new Error(
+            "แหล่งเพลงส่งเสียงออกมาไม่ได้ค่ะ กรุณาลองลิงก์อื่นหรือลองใหม่อีกครั้ง",
+          )
         );
       }
       await interactionReply(interaction, buildMusicEmbed(session));
