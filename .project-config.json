@@ -16,8 +16,8 @@
   ],
   "git_remote": {
     "repo_url": "https://7f0548f6b28a1758d9bf7be630d36cb4.artifacts.cloudflare.net/git/prod/94JhSFkXJqP4gFDWbmkP7v.git",
-    "expiration": "2026-08-21T09:52:14.844Z",
-    "token": "art_v2_x_4228d178ceba1ad9fe2b8642cc8211293e7a791d?expires=1787305934",
+    "expiration": "2026-08-23T05:31:27.318Z",
+    "token": "art_v2_x_384e45b53e01e3ffa0fb724d25582fbb677d8f37?expires=1787463087",
     "backend": "GIT_BACKEND_ARTIFACTS"
   },
   "name": "ritz-smp-store",
