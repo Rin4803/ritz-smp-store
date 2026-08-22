@@ -280,3 +280,6 @@
 - [ ] Fix music title extraction in discordMusic.ts to avoid displaying raw YouTube URLs
 - [ ] Ensure Discord bot shows green speaking/playing indicator ring when streaming audio
 - [ ] Verify updated discordMusic.ts with all 108 tests passing
+- [ ] แก้ระบบสตรีมเสียงเพลง Discord บอทให้ส่งเสียงได้จริง (AudioPlayer Playing และ Green Ring)
+- [ ] ตรวจสอบและแก้ไข @distube/ytdl-core stream extraction ให้ดึงเสียงและชื่อเพลงถูกต้อง
+- [ ] ทดสอบคำสั่ง /play, /music, และ /leave ให้ทำงานสมบูรณ์ 100% บน production

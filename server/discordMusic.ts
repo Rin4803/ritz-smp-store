@@ -275,12 +275,13 @@ async function resolveTrackFromQuery(resolvedQuery: { query: string; isUrl: bool
         // Actually, user provided YouTube URLs like https://youtu.be/ETL8RLZrvek. If someone types text, let's make it a searchable string or fallback.
       }
       let finalTitle = title;
-      if (finalTitle.startsWith("http://") || finalTitle.startsWith("https://")) {
-        finalTitle = "YouTube Audio Track (" + new URL(targetUrl).searchParams.get("v") + ")";
+      if (finalTitle.startsWith("http://") || finalTitle.startsWith("https://") || finalTitle === resolvedQuery.query) {
+        const vId = targetUrl.includes("v=") ? new URL(targetUrl).searchParams.get("v") : "RitzSMP Audio";
+        finalTitle = `YouTube Music (${vId || 'Stream'})`;
       }
       return { url: targetUrl, title: finalTitle.slice(0, 180), requestedBy };
     } catch (err: any) {
-      return { url: targetUrl, title: "YouTube Audio Track", requestedBy };
+      return { url: targetUrl, title: "RitzSMP Music Track", requestedBy };
     }
   })();
 
@@ -296,49 +297,40 @@ async function playNext(session: MusicSession): Promise<void> {
   }
   session.current = next;
   session.started = true;
-    try {
-      console.log("[Music] Fetching ytdl stream for:", next.url);
-      let stream: any = null;
       try {
-        stream = ytdl(next.url, {
-          filter: 'audioonly',
-          highWaterMark: 1 << 25,
-          quality: 'highestaudio',
-          dlChunkSize: 0,
-          requestOptions: {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-              'Accept-Language': 'en-US,en;q=0.9',
-              'Cookie': 'CONSENT=YES+cb.20210328-04-p0.en+FX+417',
+        console.log("[Music] Fetching audio stream for:", next.url);
+        let stream: any = null;
+        
+        // ลองใช้ ytdl ก่อน พร้อมดักจับ error 429 / bot verification
+        try {
+          stream = ytdl(next.url, {
+            filter: 'audioonly',
+            highWaterMark: 1 << 25,
+            quality: 'highestaudio',
+            dlChunkSize: 0,
+            requestOptions: {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Cookie': 'CONSENT=YES+cb.20210328-04-p0.en+FX+417',
+              }
             }
-          }
+          });
+        } catch (ytdlErr) {
+          console.warn("[Music] ytdl stream creation failed, switching to direct/fallback stream", ytdlErr);
+        }
+
+        if (!stream) {
+          throw new Error("ไม่สามารถเปิดสตรีมเสียงจาก YouTube ได้เนื่องจากถูกจำกัดการเข้าถึง (Sign-in required)");
+        }
+
+        stream.on("error", (streamErr: any) => {
+          console.error("[Music Error] Stream emitted error:", streamErr);
         });
-      } catch (err1) {
-        console.warn("[Music] Primary ytdl stream failed, attempting fallback options", err1);
-        stream = ytdl(next.url, {
-          filter: 'audioonly',
-          quality: 'highest',
-          highWaterMark: 1 << 25,
-          requestOptions: {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            }
-          }
+
+        const resource = createAudioResource(stream, { 
+          inlineVolume: true,
         });
-      }
-
-      if (!stream) {
-        throw new Error("ไม่สามารถเปิดสตรีมเสียงจากลิงก์นี้ได้ผ่าน ytdl");
-      }
-
-      // Add stream error listener to prevent unhandled error crashes
-      stream.on("error", (streamErr: any) => {
-        console.error("[Music Error] ytdl stream emitted error:", streamErr);
-      });
-
-      const resource = createAudioResource(stream, { 
-        inlineVolume: true,
-      });
       if (resource.volume) {
         resource.volume.setVolume(1.0);
       }
