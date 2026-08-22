@@ -5359,3 +5359,8 @@
 [2026-08-22T07:56:26.361Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
 [2026-08-22T08:04:08.756Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
 [2026-08-22T08:04:15.324Z] 8:04:15 AM [vite] (client) hmr update /src/index.css
+[2026-08-22T08:07:17.052Z] [RitzSmpAI] [INFO] Received command /play from tun_5555
+[2026-08-22T08:07:17.057Z] (node:24465) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
+[2026-08-22T08:07:20.042Z] [Music] Resolving direct URL before playback
+[2026-08-22T08:07:32.847Z] [RitzSmpAI] [SUCCESS] Handled /play command
+[2026-08-22T15:40:05.963Z] 3:40:05 PM [vite] (client) hmr update /src/index.css
