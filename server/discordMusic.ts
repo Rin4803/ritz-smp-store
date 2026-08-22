@@ -274,9 +274,13 @@ async function resolveTrackFromQuery(resolvedQuery: { query: string; isUrl: bool
         // Since ytdl-core expects a video URL, if user typed raw text, let's treat it as search title or fallback demo video if needed.
         // Actually, user provided YouTube URLs like https://youtu.be/ETL8RLZrvek. If someone types text, let's make it a searchable string or fallback.
       }
-      return { url: targetUrl, title: title.slice(0, 180), requestedBy };
+      let finalTitle = title;
+      if (finalTitle.startsWith("http://") || finalTitle.startsWith("https://")) {
+        finalTitle = "YouTube Audio Track (" + new URL(targetUrl).searchParams.get("v") + ")";
+      }
+      return { url: targetUrl, title: finalTitle.slice(0, 180), requestedBy };
     } catch (err: any) {
-      return { url: targetUrl, title: targetUrl, requestedBy };
+      return { url: targetUrl, title: "YouTube Audio Track", requestedBy };
     }
   })();
 
@@ -303,8 +307,9 @@ async function playNext(session: MusicSession): Promise<void> {
           dlChunkSize: 0,
           requestOptions: {
             headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
               'Accept-Language': 'en-US,en;q=0.9',
+              'Cookie': 'CONSENT=YES+cb.20210328-04-p0.en+FX+417',
             }
           }
         });
