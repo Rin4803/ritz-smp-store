@@ -112,4 +112,30 @@ describe("Discord web-store notifications", () => {
     expect(result).toMatchObject({ sent: false, reason: "Discord bot token is not configured" });
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("uses the configured report channel endpoint with the existing AI bot token", async () => {
+    vi.stubEnv("DISCORD_REPORT_CHANNEL_ID", "report-channel-secret-test");
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({ id: "report-message-1" }), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { notifyPlayerReport } = await import("./discordNotifications");
+    const result = await notifyPlayerReport({
+      reportId: 1,
+      guildId: "guild-1",
+      reporterDisplayName: "ผู้รายงาน",
+      targetDiscordName: "ผู้ถูกรายงาน",
+      targetMinecraftIGN: "RitzPlayer",
+      category: "อื่น ๆ",
+      details: "รายละเอียดการทดสอบที่ยาวพอสำหรับการตรวจสอบระบบ",
+    });
+    expect(result).toMatchObject({ sent: true, channelId: "report-channel-secret-test", messageId: "report-message-1" });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://discord.com/api/v10/channels/report-channel-secret-test/messages",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({ Authorization: "Bot unit-test-ai-token" }),
+      }),
+    );
+  });
 });

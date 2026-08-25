@@ -28,6 +28,9 @@ import {
   DiscordEmbedTemplate,
   InsertDiscordEmbedTemplate,
   HealthEvent,
+  PlayerReport,
+  InsertPlayerReport,
+  playerReports,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -756,4 +759,60 @@ export async function getRecentHealthEvents(input?: { service?: string; limit?: 
   const limit = Math.max(1, Math.min(input?.limit ?? 20, 100));
   const query = db.select().from(healthEvents).orderBy(desc(healthEvents.createdAt)).limit(limit);
   return condition ? query.where(condition) : query;
+}
+
+export type CreatePlayerReportInput = Omit<InsertPlayerReport, "id" | "createdAt" | "updatedAt" | "editCount" | "status"> & {
+  status?: PlayerReport["status"];
+};
+
+export async function createPlayerReport(input: CreatePlayerReportInput): Promise<PlayerReport> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const result = await db.insert(playerReports).values({
+    ...input,
+    status: input.status ?? "ใหม่",
+    editCount: 0,
+  });
+  const created = await db.select().from(playerReports).where(eq(playerReports.id, result[0].insertId)).limit(1);
+  if (!created[0]) throw new Error("ไม่สามารถสร้างรายงานได้");
+  return created[0];
+}
+
+export async function getPlayerReportById(id: number): Promise<PlayerReport | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(playerReports).where(eq(playerReports.id, id)).limit(1);
+  return rows[0];
+}
+export async function getLinkedDiscordVerifications(): Promise<DiscordVerification[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(discordVerifications).orderBy(desc(discordVerifications.minecraftIGN));
+}
+export async function getLatestPlayerReportByReporter(reporterDiscordId: string): Promise<PlayerReport | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(playerReports)
+    .where(eq(playerReports.reporterDiscordId, reporterDiscordId))
+    .orderBy(desc(playerReports.createdAt)).limit(1);
+  return rows[0];
+}
+
+export async function updatePlayerReportOnce(input: {
+  id: number;
+  reporterDiscordId: string;
+  category: string;
+  details: string;
+}): Promise<PlayerReport | undefined> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const result = await db.update(playerReports)
+    .set({ category: input.category, details: input.details, editCount: 1, updatedAt: new Date() })
+    .where(and(
+      eq(playerReports.id, input.id),
+      eq(playerReports.reporterDiscordId, input.reporterDiscordId),
+      eq(playerReports.editCount, 0),
+    ));
+  if (!result[0].affectedRows) return undefined;
+  return getPlayerReportById(input.id);
 }

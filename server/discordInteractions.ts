@@ -3,14 +3,21 @@ import type { RequestHandler } from "express";
 import { ENV } from "./_core/env.js";
 import {
   cancelDiscordVerificationCode,
+  createPlayerReport,
   getDiscordVerification,
+  getLatestPlayerReportByReporter,
+  getLinkedDiscordVerifications,
+  getPlayerReportById,
   unlinkDiscordVerification,
+  updatePlayerReportOnce,
 } from "./db.js";
 import {
+  announceMinecraftPlayerReport,
   fetchMinecraftServerStatus,
   getMinecraftDiscordVerificationCode,
   type MinecraftServerStatus,
 } from "./minecraftIntegration.js";
+import { notifyPlayerReport } from "./discordNotifications.js";
 import {
   buildDiscordMembersMessage,
   editDiscordOriginalInteractionResponse,
@@ -42,6 +49,8 @@ type DiscordInteractionPayload = {
   data?: {
     name?: string;
     custom_id?: string;
+    values?: string[];
+    components?: Array<{ components?: Array<{ custom_id?: string; value?: string }> }>;
   };
   member?: {
     user?: {
@@ -62,6 +71,11 @@ export type RitzSmpInteractionAction =
   | "profile"
   | "minecraft-players"
   | "discord-members"
+  | "report-open"
+  | "report-target"
+  | "report-submit"
+  | "report-edit-open"
+  | "report-edit-submit"
   | "unsupported";
 
 export function identifyRitzSmpInteractionAction(
@@ -82,6 +96,11 @@ export function identifyRitzSmpInteractionAction(
   if (customId === "ritz_profile_button") return "profile";
   if (customId === "ritz_players_button") return "minecraft-players";
   if (customId === "ritz_discord_members_button") return "discord-members";
+  if (customId === "ritz_report_button") return "report-open";
+  if (customId === "ritz_report_target") return "report-target";
+  if (customId?.startsWith("ritz_report_modal:")) return "report-submit";
+  if (customId?.startsWith("ritz_report_edit:")) return "report-edit-open";
+  if (customId?.startsWith("ritz_report_edit_modal:")) return "report-edit-submit";
   return "unsupported";
 }
 
@@ -254,7 +273,10 @@ function isConfiguredGuildInteraction(
   );
 }
 
-function ephemeralResponse(content: string) {
+function ephemeralResponse(content: string): {
+  type: number;
+  data: { content: string; flags: number; components?: unknown[] };
+} {
   return {
     type: DISCORD_RESPONSE_CHANNEL_MESSAGE,
     data: {
@@ -286,6 +308,80 @@ async function finishDeferredMinecraftPlayersInteraction(
     interactionToken,
     content: buildMinecraftPlayersMessage(status),
   });
+}
+
+const REPORT_CATEGORIES = [
+  "โกงหรือใช้โปรแกรมช่วยเล่น",
+  "ทำร้ายหรือก่อกวนผู้เล่น",
+  "แชตไม่เหมาะสม/สแปม",
+  "ใช้บั๊กหรือช่องโหว่",
+  "ชื่อหรือสกินไม่เหมาะสม",
+  "อื่น ๆ",
+] as const;
+const REPORT_COOLDOWN_DEFAULT_MS = 0;
+
+export function validatePlayerReportInput(input: { category: string; details: string }): boolean {
+  return REPORT_CATEGORIES.includes(input.category as (typeof REPORT_CATEGORIES)[number]) && input.details.trim().length >= 10 && input.details.trim().length <= 1000;
+}
+export function getPlayerReportCooldownRemainingMs(createdAt: Date | string | number | undefined, now = Date.now(), cooldownMs = reportCooldownMs()): number {
+  if (!createdAt || cooldownMs <= 0) return 0;
+  const timestamp = new Date(createdAt).getTime();
+  if (!Number.isFinite(timestamp)) return 0;
+  return Math.max(0, cooldownMs - Math.max(0, now - timestamp));
+}
+
+function reportCooldownMs(): number {
+  const seconds = Number(process.env.DISCORD_REPORT_COOLDOWN_SECONDS ?? "0");
+  return Number.isFinite(seconds) && seconds >= 0 ? Math.floor(seconds * 1000) : REPORT_COOLDOWN_DEFAULT_MS;
+}
+function getInteractionDisplayName(interaction: DiscordInteractionPayload): string {
+  return (interaction.member?.user?.username ?? interaction.user?.username ?? "สมาชิก Discord").trim().slice(0, 128);
+}
+function modalFieldValues(interaction: DiscordInteractionPayload): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const row of interaction.data?.components ?? []) {
+    for (const component of row.components ?? []) {
+      if (component.custom_id && typeof component.value === "string") values[component.custom_id] = component.value.trim();
+    }
+  }
+  return values;
+}
+function reportModalResponse(customId: string, title: string, defaults?: { category?: string; details?: string }) {
+  return {
+    type: 9,
+    data: {
+      custom_id: customId,
+      title,
+      components: [
+        {
+          type: 1,
+          components: [{ type: 4, custom_id: "category", label: "หมวดหมู่", style: 1, required: true, min_length: 1, max_length: 64, value: defaults?.category ?? REPORT_CATEGORIES[0] }],
+        },
+        {
+          type: 1,
+          components: [{ type: 4, custom_id: "details", label: "รายละเอียด", style: 2, required: true, min_length: 10, max_length: 1000, value: defaults?.details ?? "" }],
+        },
+      ],
+    },
+  };
+}
+function buildReportTargetResponse(verifications: Awaited<ReturnType<typeof getLinkedDiscordVerifications>>) {
+  const options = verifications.slice(0, 25).map((verification) => ({
+    label: `${verification.minecraftIGN} • Discord เชื่อมแล้ว`.slice(0, 100),
+    value: verification.discordUserId,
+    description: "เลือกผู้เล่นที่ต้องการรายงาน".slice(0, 100),
+  }));
+  return {
+    type: DISCORD_RESPONSE_CHANNEL_MESSAGE,
+    data: {
+      content: "เลือกผู้เล่นที่ต้องการรายงานได้เลยค่ะ ระบบจะแสดงบัญชี Minecraft ที่เชื่อมกับ Discord เท่านั้น",
+      flags: EPHEMERAL_MESSAGE_FLAG,
+      components: [{ type: 1, components: [{ type: 3, custom_id: "ritz_report_target", placeholder: "เลือกผู้เล่น", min_values: 1, max_values: 1, options }] }],
+    },
+  };
+}
+function reportEditButton(reportId: number) {
+  return [{ type: 1, components: [{ type: 2, style: 2, label: "แก้ไขรายงาน (ได้อีก 1 ครั้ง)", custom_id: `ritz_report_edit:${reportId}` }] }];
 }
 
 export const handleRitzSmpDiscordInteraction: RequestHandler = async (
@@ -379,13 +475,18 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
           );
         }
 
+        // Send the ACK first, then keep this async request alive while the
+        // autoscale runtime completes the webhook edit. Returning before the
+        // promise settles can terminate the instance before PATCH is sent.
         res.status(200).json(deferredEphemeralResponse());
-        void finishDeferredMinecraftPlayersInteraction(interaction).catch(() => {
+        try {
+          await finishDeferredMinecraftPlayersInteraction(interaction);
+        } catch {
           // Keep interaction tokens and upstream error details out of logs.
           console.error(
             "[DiscordInteractions] Minecraft players response could not be completed",
           );
-        });
+        }
         return;
       }
       case "discord-members": {
@@ -407,6 +508,72 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
               : "ยังไม่สามารถดึงรายชื่อสมาชิกผ่าน Discord API ได้ในขณะนี้ค่ะ โปรดดูรายชื่อจากแถบสมาชิกของ Discord แล้วลองกดปุ่มใหม่ภายหลัง",
           ),
         );
+      }
+      case "report-open": {
+        if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("ระบบรายงานใช้ได้เฉพาะใน Discord RitzSMP ที่ตั้งค่าไว้ค่ะ"));
+        const linked = await getLinkedDiscordVerifications();
+        return res.status(200).json(linked.length ? buildReportTargetResponse(linked) : ephemeralResponse("ยังไม่มีบัญชี Minecraft ที่เชื่อมกับ Discord ให้เลือกค่ะ"));
+      }
+      case "report-target": {
+        if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("ระบบรายงานใช้ได้เฉพาะใน Discord RitzSMP ที่ตั้งค่าไว้ค่ะ"));
+        const targetId = interaction.data?.values?.[0];
+        const linked = targetId ? (await getLinkedDiscordVerifications()).find((item) => item.discordUserId === targetId) : undefined;
+        if (!linked) return res.status(200).json(ephemeralResponse("ไม่พบผู้เล่นที่เลือกหรือบัญชีนี้ไม่ได้เชื่อมอยู่ค่ะ กรุณาเปิดเมนูใหม่แล้วลองอีกครั้ง"));
+        return res.status(200).json(reportModalResponse(`ritz_report_modal:${linked.discordUserId}`, "รายงานผู้เล่น RitzSMP"));
+      }
+      case "report-submit": {
+        if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("ระบบรายงานใช้ได้เฉพาะใน Discord RitzSMP ที่ตั้งค่าไว้ค่ะ"));
+        const customId = interaction.data?.custom_id ?? "";
+        const targetId = customId.slice("ritz_report_modal:".length);
+        const linked = (await getLinkedDiscordVerifications()).find((item) => item.discordUserId === targetId);
+        const fields = modalFieldValues(interaction);
+        const category = fields.category ?? "";
+        const details = fields.details ?? "";
+        if (!linked || !validatePlayerReportInput({ category, details })) {
+          return res.status(200).json(ephemeralResponse("ข้อมูลรายงานไม่ครบถ้วนค่ะ กรุณาเลือกหมวดหมู่และใส่รายละเอียดอย่างน้อย 10 ตัวอักษร"));
+        }
+        const latest = await getLatestPlayerReportByReporter(userId);
+        const cooldown = reportCooldownMs();
+        const elapsed = latest ? Date.now() - new Date(latest.createdAt).getTime() : Number.POSITIVE_INFINITY;
+        const remainingMs = getPlayerReportCooldownRemainingMs(latest?.createdAt, Date.now(), cooldown);
+        if (remainingMs > 0) {
+          const remaining = Math.ceil(remainingMs / 60000);
+          return res.status(200).json(ephemeralResponse(`คุณเพิ่งส่งรายงานไปค่ะ กรุณารออีกประมาณ ${remaining} นาทีจึงจะส่งรายงานใหม่ได้`));
+        }
+        const report = await createPlayerReport({
+          guildId: interaction.guild_id ?? ENV.discordGuildId,
+          reporterDiscordId: userId,
+          reporterDisplayName: getInteractionDisplayName(interaction),
+          targetDiscordId: linked.discordUserId,
+          targetDiscordName: linked.minecraftIGN,
+          targetMinecraftIGN: linked.minecraftIGN,
+          category,
+          details,
+        });
+        const message = `ส่งรายงาน #${report.id} เรียบร้อยแล้วค่ะ ทีมงานจะตรวจสอบข้อมูลเพิ่มเติมใน Discord`;
+        const response = ephemeralResponse(message);
+        response.data.components = reportEditButton(report.id);
+        void Promise.allSettled([
+          notifyPlayerReport({ reportId: report.id, guildId: report.guildId, reporterDisplayName: report.reporterDisplayName, targetDiscordName: report.targetDiscordName, targetMinecraftIGN: report.targetMinecraftIGN, category: report.category, details: report.details, createdAt: report.createdAt }),
+          announceMinecraftPlayerReport({ reportId: report.id, targetName: report.targetMinecraftIGN ?? report.targetDiscordName }),
+        ]);
+        return res.status(200).json(response);
+      }
+      case "report-edit-open": {
+        const reportId = Number((interaction.data?.custom_id ?? "").slice("ritz_report_edit:".length));
+        const report = Number.isInteger(reportId) ? await getPlayerReportById(reportId) : undefined;
+        if (!report || report.reporterDiscordId !== userId) return res.status(200).json(ephemeralResponse("ไม่พบรายงานของคุณค่ะ หรือรายงานนี้ไม่สามารถแก้ไขจากบัญชีนี้ได้"));
+        if (report.editCount >= 1) return res.status(200).json(ephemeralResponse("รายงานนี้ถูกแก้ไขไปแล้วหนึ่งครั้ง จึงไม่สามารถแก้ไขซ้ำได้ค่ะ"));
+        return res.status(200).json(reportModalResponse(`ritz_report_edit_modal:${report.id}`, "แก้ไขรายงานผู้เล่น", { category: report.category, details: report.details }));
+      }
+      case "report-edit-submit": {
+        const reportId = Number((interaction.data?.custom_id ?? "").slice("ritz_report_edit_modal:".length));
+        const fields = modalFieldValues(interaction);
+        const category = fields.category ?? "";
+        const details = fields.details ?? "";
+        if (!Number.isInteger(reportId) || !validatePlayerReportInput({ category, details })) return res.status(200).json(ephemeralResponse("ข้อมูลแก้ไขไม่ครบถ้วนค่ะ กรุณาตรวจสอบหมวดหมู่และรายละเอียด"));
+        const updated = await updatePlayerReportOnce({ id: reportId, reporterDiscordId: userId, category, details });
+        return res.status(200).json(ephemeralResponse(updated ? `แก้ไขรายงาน #${reportId} สำเร็จแล้วค่ะ การแก้ไขครั้งนี้ถูกใช้เรียบร้อย` : "รายงานนี้ไม่พบหรือถูกแก้ไขไปแล้วค่ะ"));
       }
       default:
         return res.status(200).json(

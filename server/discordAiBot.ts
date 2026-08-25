@@ -287,7 +287,7 @@ export const RITZ_WELCOME_COVER_IMAGE_URL =
 export const RITZ_RANK_CLAIM_IMAGE_URL =
   "https://ritzsmpstore-94jhsfkx.manus.space/manus-storage/rank-claim_2909f231.png";
 
-function buildOnboardingComponents() {
+export function buildOnboardingComponents() {
   const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId("ritz_verify_button")
@@ -301,6 +301,10 @@ function buildOnboardingComponents() {
       .setCustomId("ritz_unlink_button")
       .setLabel("🔓 ยกเลิกการเชื่อมต่อทั้งหมด")
       .setStyle(ButtonStyle.Danger),
+    new ButtonBuilder()
+      .setCustomId("ritz_report_button")
+      .setLabel("📝 รายงานผู้เล่น")
+      .setStyle(ButtonStyle.Secondary),
   );
   return [actionRow];
 }
@@ -2416,7 +2420,8 @@ export function createRitzSmpAiBot(
                 "• **✅ ยืนยันตัวตน:** ผูกบัญชี Discord ของคุณกับระบบเพื่อรับยศ Verified และสิทธิ์พิเศษ\n" +
                 "• **🎖️ รับยศผู้เล่น:** กดรับกลุ่ม LuckPerms ในเซิร์ฟเวอร์ Minecraft และยศสมาชิกในดิสคอร์ด\n" +
                 "• **👥 รายชื่อในเซิร์ฟ:** ตรวจสอบผู้เล่นที่ออนไลน์อยู่แบบเรียลไทม์\n" +
-                "• **🪪 โปรไฟล์ของฉัน:** ดูและแก้ไขคำแนะนำตัวหรือสไตล์การเล่นของคุณ\n\n" +
+                "• **🪪 โปรไฟล์ของฉัน:** ดูและแก้ไขคำแนะนำตัวหรือสไตล์การเล่นของคุณ\n" +
+                "• **📝 รายงานผู้เล่น:** เลือกผู้เล่นและส่งรายละเอียดให้ทีมงานตรวจสอบ\n\n" +
                 "กรุณากดปุ่มด้านล่างเพื่อเริ่มใช้งานได้เลยนะคะ! 💕",
             )
             .setColor(0xec4899)

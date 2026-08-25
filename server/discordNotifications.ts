@@ -205,6 +205,35 @@ export async function notifyMinecraftPresence(input: {
   return postDiscordMessage(channelId, { embeds: [embed] });
 }
 
+export async function notifyPlayerReport(input: {
+  reportId: number;
+  guildId: string;
+  reporterDisplayName: string;
+  targetDiscordName: string;
+  targetMinecraftIGN?: string | null;
+  category: string;
+  details: string;
+  createdAt?: Date | string | number;
+}): Promise<DiscordNotificationResult> {
+  const channelId = process.env.DISCORD_REPORT_CHANNEL_ID?.trim() || "";
+  const embed: DiscordEmbed = {
+    title: "🚨 รายงานผู้เล่น RitzSMP",
+    description: "มีรายงานใหม่จากสมาชิก Discord กรุณาตรวจสอบข้อมูลตามขั้นตอนของทีมงาน",
+    color: 0xef4444,
+    fields: [
+      { name: "เลขที่รายงาน", value: `#${input.reportId}`, inline: true },
+      { name: "ผู้รายงาน", value: input.reporterDisplayName.slice(0, 1024) || "ไม่ระบุชื่อ", inline: true },
+      { name: "ผู้ถูกรายงาน", value: input.targetDiscordName.slice(0, 1024), inline: true },
+      { name: "Minecraft IGN", value: input.targetMinecraftIGN ? "`" + input.targetMinecraftIGN.slice(0, 1000) + "`" : "ไม่พบข้อมูลที่เชื่อม", inline: true },
+      { name: "หมวดหมู่", value: input.category.slice(0, 1024), inline: true },
+      { name: "รายละเอียด", value: input.details.slice(0, 1024), inline: false },
+    ],
+    footer: { text: `RitzSMP • Guild ${input.guildId} • สถานะ: ใหม่` },
+    timestamp: formatTimestamp(input.createdAt),
+  };
+  return postDiscordMessage(channelId, { embeds: [embed] });
+}
+
 export async function notifyPurchaseCompleted(input: {
   order: OrderLike;
   userName: string;

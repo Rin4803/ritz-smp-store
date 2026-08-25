@@ -6036,3 +6036,82 @@
 [2026-08-25T14:38:22.193Z] 2:38:22 PM [tsx] change in ./server/discordInteractions.ts Restarting...
 [2026-08-25T14:38:23.045Z] c[OAuth] Initialized with baseURL: https://api.manus.im
 [2026-08-25T14:38:23.323Z] Server running on http://localhost:3000/
+[2026-08-25T14:47:12.500Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-25T14:50:01.498Z] 2:50:01 PM [tsx] change in ./server/discordInteractions.ts Restarting...
+[2026-08-25T14:50:02.326Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T14:50:02.622Z] Server running on http://localhost:3000/
+[2026-08-25T14:55:44.362Z] 2:55:44 PM [tsx] change in ./drizzle/schema.ts Restarting...
+[2026-08-25T14:55:45.295Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T14:55:45.599Z] Server running on http://localhost:3000/
+[2026-08-25T15:00:17.559Z] 3:00:17 PM [tsx] change in ./server/db.ts Restarting...
+[2026-08-25T15:00:18.398Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:00:18.691Z] Server running on http://localhost:3000/
+[2026-08-25T15:00:27.644Z] 3:00:27 PM [tsx] change in ./server/db.ts Restarting...
+[2026-08-25T15:00:28.440Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:00:28.734Z] Server running on http://localhost:3000/
+[2026-08-25T15:17:54.786Z] 3:17:54 PM [tsx] change in ./server/db.ts Restarting...
+[2026-08-25T15:17:55.647Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:17:55.946Z] Server running on http://localhost:3000/
+[2026-08-25T15:18:05.398Z] 3:18:05 PM [tsx] change in ./server/discordNotifications.ts Restarting...
+[2026-08-25T15:18:05.636Z] c
+[2026-08-25T15:18:05.636Z] node:internal/modules/run_main:122
+[2026-08-25T15:18:05.636Z] triggerUncaughtException(
+[2026-08-25T15:18:05.636Z] ^
+[2026-08-25T15:18:05.636Z] Error [TransformError]: Transform failed with 1 error:
+[2026-08-25T15:18:05.636Z] /home/ubuntu/ritz-smp-store/server/discordNotifications.ts:227:69: ERROR: Expected ":" but found "$"
+[2026-08-25T15:18:05.636Z] at failureErrorWithLog (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/esbuild@0.25.10/node_modules/esbuild/lib/main.js:1467:15)
+[2026-08-25T15:18:05.636Z] at /home/ubuntu/ritz-smp-store/node_modules/.pnpm/esbuild@0.25.10/node_modules/esbuild/lib/main.js:736:50
+[2026-08-25T15:18:05.636Z] at responseCallbacks.<computed> (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/esbuild@0.25.10/node_modules/esbuild/lib/main.js:603:9)
+[2026-08-25T15:18:05.636Z] at handleIncomingPacket (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/esbuild@0.25.10/node_modules/esbuild/lib/main.js:658:12)
+[2026-08-25T15:18:05.636Z] at Socket.readFromStdout (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/esbuild@0.25.10/node_modules/esbuild/lib/main.js:581:7)
+[2026-08-25T15:18:05.636Z] at Socket.emit (node:events:524:28)
+[2026-08-25T15:18:05.636Z] at addChunk (node:internal/streams/readable:561:12)
+[2026-08-25T15:18:05.636Z] at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+[2026-08-25T15:18:05.636Z] at Readable.push (node:internal/streams/readable:392:5)
+[2026-08-25T15:18:05.636Z] at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2026-08-25T15:18:05.636Z] Node.js v22.13.0
+[2026-08-25T15:18:15.882Z] 3:18:15 PM [tsx] change in ./server/discordNotifications.ts Rerunning...
+[2026-08-25T15:18:16.809Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:18:17.101Z] Server running on http://localhost:3000/
+[2026-08-25T15:18:30.566Z] 3:18:30 PM [tsx] change in ./server/minecraftIntegration.ts Restarting...
+[2026-08-25T15:18:31.421Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:18:31.720Z] Server running on http://localhost:3000/
+[2026-08-25T15:18:43.736Z] 3:18:43 PM [tsx] change in ./server/discordInteractions.ts Restarting...
+[2026-08-25T15:18:44.515Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:18:44.797Z] Server running on http://localhost:3000/
+[2026-08-25T15:18:55.391Z] 3:18:55 PM [tsx] change in ./server/discordInteractions.ts Restarting...
+[2026-08-25T15:18:56.186Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:18:56.499Z] Server running on http://localhost:3000/
+[2026-08-25T15:19:29.443Z] 3:19:29 PM [tsx] change in ./server/discordInteractions.ts Restarting...
+[2026-08-25T15:19:30.255Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:19:30.541Z] Server running on http://localhost:3000/
+[2026-08-25T15:19:36.909Z] 3:19:36 PM [tsx] change in ./server/discordInteractions.ts Restarting...
+[2026-08-25T15:19:37.708Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:19:37.987Z] Server running on http://localhost:3000/
+[2026-08-25T15:19:56.606Z] 3:19:56 PM [tsx] change in ./server/discordInteractions.ts Restarting...
+[2026-08-25T15:19:57.775Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:19:58.056Z] Server running on http://localhost:3000/
+[2026-08-25T15:21:37.968Z] 3:21:37 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-25T15:21:38.908Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:21:39.227Z] Server running on http://localhost:3000/
+[2026-08-25T15:21:55.695Z] 3:21:55 PM [tsx] change in ./server/discordNotifications.ts Restarting...
+[2026-08-25T15:21:56.458Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:21:56.740Z] Server running on http://localhost:3000/
+[2026-08-25T15:22:19.275Z] 3:22:19 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-25T15:22:20.313Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:22:20.623Z] Server running on http://localhost:3000/
+[2026-08-25T15:24:26.805Z] ELIFECYCLE  Command failed.
+[2026-08-25T15:24:26.861Z] Dev server exited with code -1
+[2026-08-25T15:24:27.913Z] Starting dev server with command: pnpm run dev
+[2026-08-25T15:24:28.249Z] > ritz-smp-store@1.0.0 dev /home/ubuntu/ritz-smp-store
+[2026-08-25T15:24:28.249Z] > NODE_ENV=development tsx watch server/_core/index.ts
+[2026-08-25T15:24:29.067Z] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:24:29.351Z] Server running on http://localhost:3000/
+[2026-08-25T15:24:30.131Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-25T15:25:19.104Z] ELIFECYCLE  Command failed.
+[2026-08-25T15:25:19.145Z] Dev server exited with code -1
+[2026-08-25T15:25:20.227Z] Starting dev server with command: pnpm run dev
+[2026-08-25T15:25:20.564Z] > ritz-smp-store@1.0.0 dev /home/ubuntu/ritz-smp-store
+[2026-08-25T15:25:20.565Z] > NODE_ENV=development tsx watch server/_core/index.ts
+[2026-08-25T15:25:21.398Z] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:25:21.702Z] Server running on http://localhost:3000/

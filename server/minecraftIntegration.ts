@@ -189,6 +189,24 @@ export async function grantMinecraftRank(minecraftIGN: string, groupName: string
   }
 }
 
+export async function announceMinecraftPlayerReport(input: {
+  reportId: number;
+  targetName: string;
+}): Promise<{ executed: boolean; detail: string }> {
+  const safeTarget = input.targetName.replace(/[^a-zA-Z0-9_ก-๙ +.-]/g, "").slice(0, 32) || "ไม่ระบุชื่อ";
+  const reportId = Math.max(0, Math.floor(input.reportId));
+  const message = `มีรายงานผู้เล่น #${reportId} ของ ${safeTarget} แล้วค่ะ กรุณาตรวจสอบรายละเอียดเพิ่มเติมใน Discord`;
+  if (!hasUsableRconConfiguration()) {
+    return { executed: false, detail: "ยังไม่ได้ตั้งค่า RCON สำหรับประกาศรายงานในเกม" };
+  }
+  try {
+    await sendRconCommand(`tellraw @a ${JSON.stringify({ text: `[RitzSMP] ${message}`, color: "gold" })}`);
+    return { executed: true, detail: "ประกาศรายงานใน Minecraft สำเร็จ" };
+  } catch {
+    return { executed: false, detail: "ประกาศรายงานใน Minecraft ไม่สำเร็จ" };
+  }
+}
+
 /**
  * ตรวจสอบ RCON ด้วยคำสั่ง `list` ที่อ่านอย่างเดียวเท่านั้น
  * ห้ามใช้ฟังก์ชันนี้สร้าง แก้ไข หรือลบข้อมูลใน Minecraft

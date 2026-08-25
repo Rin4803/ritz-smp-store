@@ -210,3 +210,24 @@ export const healthEvents = mysqlTable("health_events", {
 
 export type HealthEvent = typeof healthEvents.$inferSelect;
 export type InsertHealthEvent = typeof healthEvents.$inferInsert;
+
+/** Player reports submitted from Discord. Cooldown is enforced in application logic. */
+export const playerReports = mysqlTable("player_reports", {
+  id: int("id").autoincrement().primaryKey(),
+  guildId: varchar("guildId", { length: 64 }).notNull(),
+  reporterDiscordId: varchar("reporterDiscordId", { length: 64 }).notNull(),
+  reporterDisplayName: varchar("reporterDisplayName", { length: 128 }).notNull(),
+  targetDiscordId: varchar("targetDiscordId", { length: 64 }),
+  targetDiscordName: varchar("targetDiscordName", { length: 128 }).notNull(),
+  targetMinecraftIGN: varchar("targetMinecraftIGN", { length: 16 }),
+  category: varchar("category", { length: 64 }).notNull(),
+  details: text("details").notNull(),
+  status: mysqlEnum("status", ["ใหม่", "กำลังตรวจสอบ", "ปิดแล้ว"]).default("ใหม่").notNull(),
+  editCount: int("editCount").default(0).notNull(),
+  discordMessageId: varchar("discordMessageId", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PlayerReport = typeof playerReports.$inferSelect;
+export type InsertPlayerReport = typeof playerReports.$inferInsert;

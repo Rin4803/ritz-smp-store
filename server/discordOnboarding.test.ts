@@ -6,6 +6,7 @@ import {
   addConfiguredRole,
   buildLeaveMemberEmbed,
   buildDiscordMembersEmbed,
+  buildOnboardingComponents,
   buildRankClaimComponents,
   buildRankClaimEmbed,
   buildWelcomeMemberEmbed,
@@ -124,6 +125,16 @@ describe("Discord onboarding interactions", () => {
     expect(isWelcomeSystemPanelMessage({ embeds: [{ title: "ยินดีต้อนรับเข้าสู่ RitzSMP" }] })).toBe(false);
     expect(isLeaveSystemPanelMessage({ embeds: [{ footer: { text: "RitzSMP AI • ระบบแจ้งสมาชิกออก" } }] })).toBe(true);
     expect(isLeaveSystemPanelMessage({ embeds: [{ footer: { text: "RitzSMP AI • สมาชิกออกจากเซิร์ฟเวอร์" } }] })).toBe(false);
+  });
+
+  it("exposes the report button alongside the existing onboarding actions", () => {
+    const components = buildOnboardingComponents();
+    const ids = components.flatMap((row) => row.toJSON().components.map((component) => component.custom_id));
+
+    expect(ids).toContain("ritz_verify_button");
+    expect(ids).toContain("ritz_cancel_verify_button");
+    expect(ids).toContain("ritz_unlink_button");
+    expect(ids).toContain("ritz_report_button");
   });
 
   it("uses the supplied cover images and exposes a single rank-claim button", () => {
