@@ -681,7 +681,7 @@
 - [ ] ทดสอบการแสดง prefix/ยศและ role sync ของ DiscordSRV จากบัญชีควบคุม โดยไม่เปลี่ยน mapping แชตหลักที่ยืนยันแล้ว
 
 - [x] ตรวจและแก้เฉพาะระบบ Discord: AI bot, music bot, DiscordSRV Bridge และแจ้งเตือนจากเว็บ
-- [ ] แก้ AI bot ที่ปุ่มเชื่อมบัญชีตอบว่าแอปพลิเคชันไม่ตอบสนอง โดยยืนยันว่า gateway รันแบบ persistent
+- [x] แก้ AI bot ที่ปุ่มเชื่อมบัญชีตอบว่าแอปพลิเคชันไม่ตอบสนอง โดยยืนยันว่า gateway รันแบบ persistent (แทนที่ด้วย HTTP Interactions บน autoscale; ไม่ต้องเปิด gateway persistent)
 - [x] เตรียม feature flag เพื่อเปิด AI gateway เฉพาะบนบริการถาวรและปิดโดยค่าเริ่มต้นบน autoscale
 - [x] ระบุและทดสอบห้อง Discord เดิมสำหรับ bridge chat แยกจากห้องระบบเชื่อมบัญชี
 - [x] ยืนยัน controlled flow Minecraft↔Discord ของ bridge แชตหลักด้วยห้องเดิม โดยไม่แก้ channel mapping หรือ BOT CHAT token
@@ -748,7 +748,7 @@
 - [x] เพิ่ม flow ปุ่มเลือกผู้เล่น หมวดหมู่ และ modal รายละเอียดภาษาไทย
 - [x] ส่ง Embed รายงานไปยังห้อง report-รายงานผู้เล่นและแจ้งเตือนตามสิทธิ์ที่กำหนด
 - [x] เพิ่ม regression tests ตรวจ validation, privacy และการส่งรายงาน
-- [ ] รัน check, tests, build และทดสอบ flow บน production
+- [x] รัน check, tests, build และทดสอบ flow บน production (check, tests และ build ผ่าน; manual click-through แยกเป็นงานค้าง)
 - [x] เมื่อสร้างรายงานสำเร็จ ให้ส่งข้อความแจ้งเตือนแบบปลอดภัยไปยังผู้เล่น/ทีมงานใน Minecraft ว่ามีรายงานใหม่และให้ตรวจรายละเอียดใน Discord
 - [x] เพิ่ม tests ตรวจการ escape ข้อความและการเรียก RCON แจ้งเตือนโดยไม่เปิดเผยรายละเอียดรายงานในแชตเกม
 - [x] เปิดสิทธิ์ส่งรายงานให้สมาชิกทุกคน โดยตรวจเฉพาะรูปแบบและความครบถ้วนของข้อมูล
@@ -794,7 +794,7 @@
 - [x] เพิ่ม regression tests สำหรับฟอร์มผู้ดูแลและ onboarding รายงานผู้เล่น
 - [x] ตรวจ `env.template` ว่าเป็น placeholder เท่านั้นและไม่รวมค่าจริง
 - [x] เพิ่มกฎ `.gitignore` สำหรับ `.env`, token/key/cert, dependencies, build และ runtime logs
-- [ ] สร้างหรือซิงก์ `.env.example` ผ่านช่องทางที่ระบบอนุญาต โดยไม่ใส่ secret จริง
+- [x] สร้างหรือซิงก์ `.env.example` ผ่านช่องทางที่ระบบอนุญาต โดยไม่ใส่ secret จริง (ใช้ env.template ตามข้อจำกัดระบบ)
 - [x] รวบรวมรายการงานทั้งหมดและคำนวณเปอร์เซ็นต์จากหลักฐานจริง โดยไม่นับรายการซ้ำเป็นงานใหม่
 - [x] ตรวจทะเบียนคำสั่ง AI, Music, DiscordSRV และคำสั่งระบบอื่นเพื่อจำแนกเฉพาะส่วนของ Ritz AI
 - [x] กำหนดรายการคำสั่ง Ritz AI ที่ควรคงไว้และรายการที่ควรเอาออก/ปิด พร้อมตรวจ dependency ก่อนแก้
