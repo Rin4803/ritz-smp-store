@@ -6115,3 +6115,7 @@
 [2026-08-25T15:25:20.565Z] > NODE_ENV=development tsx watch server/_core/index.ts
 [2026-08-25T15:25:21.398Z] [OAuth] Initialized with baseURL: https://api.manus.im
 [2026-08-25T15:25:21.702Z] Server running on http://localhost:3000/
+[2026-08-25T15:27:57.247Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-25T15:28:56.094Z] 3:28:56 PM [tsx] change in ./server/discordInteractions.ts Restarting...
+[2026-08-25T15:28:56.914Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:28:57.221Z] Server running on http://localhost:3000/

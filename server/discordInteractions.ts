@@ -295,15 +295,22 @@ export function deferredEphemeralResponse() {
   };
 }
 
-async function finishDeferredMinecraftPlayersInteraction(
+export async function finishDeferredMinecraftPlayersInteraction(
   interaction: DiscordInteractionPayload,
+  dependencies: {
+    fetchStatus?: typeof fetchMinecraftServerStatus;
+    editResponse?: typeof editDiscordOriginalInteractionResponse;
+  } = {},
 ): Promise<void> {
   const applicationId = interaction.application_id;
   const interactionToken = interaction.token;
   if (!applicationId || !interactionToken) return;
 
-  const status = await fetchMinecraftServerStatus({ timeoutMs: 2_200 });
-  await editDiscordOriginalInteractionResponse({
+  const fetchStatus = dependencies.fetchStatus ?? fetchMinecraftServerStatus;
+  const editResponse =
+    dependencies.editResponse ?? editDiscordOriginalInteractionResponse;
+  const status = await fetchStatus({ timeoutMs: 2_200 });
+  await editResponse({
     applicationId,
     interactionToken,
     content: buildMinecraftPlayersMessage(status),

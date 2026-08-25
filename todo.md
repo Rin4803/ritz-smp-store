@@ -741,8 +741,8 @@
 - [x] ป้องกัน `ritz_players_button` หมดเวลาตอบกลับภายในกรอบ Discord ด้วย timeout ที่จำกัดเฉพาะ interaction และตอบสถานะที่ตรวจสอบได้อย่างปลอดภัย
 - [x] เพิ่ม deferred acknowledgement สำหรับ ritz_players_button และแก้ข้อความผลลัพธ์ผ่าน interaction webhook เพื่อไม่ให้ Discord หมดเวลา
 - [x] เพิ่ม regression tests สำหรับ deferred response และการแก้ข้อความผลลัพธ์ของปุ่มผู้เล่น
-- [ ] แก้ lifecycle ของ deferred interaction ให้รอ PATCH หลังส่ง ACK เพื่อไม่ให้ autoscale ยุติงานเบื้องหลังเร็วเกินไป
-- [ ] เพิ่ม regression test ว่า handler await งาน PATCH และเก็บผลลัพธ์หลัง response ถูกส่งแล้ว
+- [x] แก้ lifecycle ของ deferred interaction ให้รอ PATCH หลังส่ง ACK เพื่อไม่ให้ autoscale ยุติงานเบื้องหลังเร็วเกินไป
+- [x] เพิ่ม regression test ว่า handler await งาน PATCH และเก็บผลลัพธ์หลัง response ถูกส่งแล้ว
 - [x] ออกแบบข้อมูลและสิทธิ์ของรายงานผู้เล่น โดยรองรับชื่อ Discord/Minecraft และสถานะการเชื่อมบัญชี
 - [x] เพิ่ม backend สำหรับสร้างและบันทึกรายงานผู้เล่นอย่างปลอดภัย
 - [x] เพิ่ม flow ปุ่มเลือกผู้เล่น หมวดหมู่ และ modal รายละเอียดภาษาไทย

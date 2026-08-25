@@ -3,6 +3,7 @@ import {
   buildMinecraftPlayersMessage,
   buildOwnDiscordProfileMessage,
   deferredEphemeralResponse,
+  finishDeferredMinecraftPlayersInteraction,
   buildVerificationCodeMessage,
   identifyRitzSmpInteractionAction,
   isUsableDiscordApplicationPublicKey,
@@ -141,3 +142,54 @@ describe("Discord interaction endpoint helpers", () => {
     );
   });
 });
+
+  it("waits for the status lookup and original-response PATCH before resolving", async () => {
+    const events: string[] = [];
+    let releaseStatus!: () => void;
+    let releasePatch!: () => void;
+    const statusReady = new Promise<void>((resolve) => {
+      releaseStatus = resolve;
+    });
+    const patchReady = new Promise<void>((resolve) => {
+      releasePatch = resolve;
+    });
+
+    const completion = finishDeferredMinecraftPlayersInteraction(
+      { application_id: "app-1", token: "token-1" },
+      {
+        fetchStatus: async () => {
+          events.push("fetch-start");
+          await statusReady;
+          events.push("fetch-done");
+          return {
+            online: true,
+            players: 1,
+            maxPlayers: 20,
+            playerNames: [],
+            playerListKnown: false,
+            version: "1.21",
+            latency: 20,
+            motd: "RitzSMP",
+          };
+        },
+        editResponse: async ({ applicationId, interactionToken }) => {
+          expect(applicationId).toBe("app-1");
+          expect(interactionToken).toBe("token-1");
+          events.push("patch-start");
+          await patchReady;
+          events.push("patch-done");
+          return { ok: true };
+        },
+      },
+    );
+
+    await Promise.resolve();
+    expect(events).toEqual(["fetch-start"]);
+    releaseStatus();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(events).toEqual(["fetch-start", "fetch-done", "patch-start"]);
+    releasePatch();
+    await completion;
+    expect(events).toEqual(["fetch-start", "fetch-done", "patch-start", "patch-done"]);
+  });
