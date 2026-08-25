@@ -1,30 +1,27 @@
 import { describe, expect, it } from "vitest";
 
-describe("Discord AI token health", () => {
-  it("authenticates against Discord without exposing the token", async () => {
-    const token = process.env.DISCORD_AI_BOT_TOKEN;
-    expect(token, "DISCORD_AI_BOT_TOKEN must be configured for this health check").toBeTruthy();
+const selectedBot = process.env.DISCORD_TOKEN_LIVE_VALIDATION;
+const tokenVariable = selectedBot === "ai"
+  ? "DISCORD_AI_BOT_TOKEN"
+  : selectedBot === "music"
+    ? "DISCORD_MUSIC_BOT_TOKEN"
+    : null;
 
+describe("Discord token live validation", () => {
+  it.skipIf(!tokenVariable)("calls only /users/@me when explicitly enabled", async () => {
+    const token = process.env[tokenVariable!];
+    expect(token, `${tokenVariable} must be configured for this opt-in check`).toBeTruthy();
+
+    let response: Response;
     try {
-      const response = await fetch("https://discord.com/api/v10/users/@me", {
+      response = await fetch("https://discord.com/api/v10/users/@me", {
         headers: { Authorization: `Bot ${token}` },
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(5_000),
       });
-
-      if (!response.ok) {
-        // If network sandbox restricts external discord api or 401/429
-        console.warn(`[TokenHealthTest] Discord API status ${response.status}, skipping live test validation.`);
-        expect(true).toBe(true);
-        return;
-      }
-
-      const body = (await response.json()) as { id?: string; bot?: boolean; username?: string };
-      expect(body.bot).toBe(true);
-      expect(body.username).toBeTruthy();
-      expect(body.id).toBeTruthy();
-    } catch (err) {
-      console.warn(`[TokenHealthTest] Network timeout or sandbox restriction: ${String(err)}. Skipping live check.`);
-      expect(true).toBe(true);
+    } catch {
+      throw new Error("Discord token validation could not reach the Discord API.");
     }
-  }, 15_000);
+
+    expect(response.status, "Discord token validation did not return HTTP 200").toBe(200);
+  }, 10_000);
 });

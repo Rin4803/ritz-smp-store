@@ -37,14 +37,6 @@ import {
   grantMinecraftRank,
   type MinecraftServerStatus,
 } from "./minecraftIntegration.js";
-import {
-  handleMusicButtonInteraction,
-  handleMusicCommand,
-  musicCommand,
-  playShortcutCommand,
-  leaveShortcutCommand,
-} from "./discordMusic.js";
-import { ensureMusicTextChannel } from "./discordMusicChannel.js";
 import { ensureMinecraftStatusTextChannel } from "./discordMinecraftStatusChannel.js";
 import {
   getActiveManagedServerRuntimeConfig,
@@ -1861,13 +1853,25 @@ export function startRitzSmpAiBot(): Promise<Client | null> {
   });
 }
 
-export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
+export function resolveRitzSmpAiBotToken(
+  runtime?: ManagedServerRuntimeConfig,
+  tokenOverride?: string,
+): string {
+  if (tokenOverride !== undefined) return tokenOverride.trim();
+  return (
+    runtime?.discordBotToken?.trim() ||
+    process.env.DISCORD_AI_BOT_TOKEN?.trim() ||
+    ENV.discordAiBotToken.trim()
+  );
+}
+
+export function createRitzSmpAiBot(
+  runtime?: ManagedServerRuntimeConfig,
+  tokenOverride?: string,
+) {
   if (runtime) activeManagedServerRuntime = runtime;
-  const token =
-    runtime?.discordBotToken ||
-    process.env.DISCORD_AI_BOT_TOKEN ||
-    (ENV as any).discordAiBotToken;
-  if (!token || token.trim() === "" || token === "102031") {
+  const token = resolveRitzSmpAiBotToken(runtime, tokenOverride);
+  if (!token || token === "102031") {
     pushLog("WARN", "No Discord AI Bot token provided. Bot disabled.");
     return null;
   }
@@ -1946,9 +1950,6 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
       new SlashCommandBuilder()
         .setName("profile")
         .setDescription("🪪 ดูโปรไฟล์สมาชิก RitzSMP ที่เชื่อมกับ Minecraft"),
-      musicCommand,
-      playShortcutCommand,
-      leaveShortcutCommand,
       new SlashCommandBuilder()
         .setName("setup")
         .setDescription("🛠️ สร้างระบบด้วยคำสั่งเท่านั้น (แอดมินเท่านั้น)")
@@ -2095,22 +2096,6 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
         "SUCCESS",
         "Successfully registered global slash commands for RitzSMP AI.",
       );
-      const musicChannelId = await ensureMusicTextChannel(
-        client,
-        getConfiguredDiscordGuildId(),
-      );
-      if (musicChannelId) {
-        pushLog(
-          "SUCCESS",
-          `Dedicated music text channel ready: ${musicChannelId}`,
-        );
-      } else {
-        pushLog(
-          "WARN",
-          "Dedicated music channel was not created; check DISCORD_GUILD_ID and Manage Channels permission.",
-        );
-      }
-
       const statusChannelId = await ensureMinecraftStatusTextChannel(
         client,
         getConfiguredDiscordGuildId(),
@@ -2319,13 +2304,6 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
 
   client.on("interactionCreate", async (interaction) => {
     try {
-      if (await handleMusicButtonInteraction(interaction)) {
-        pushLog(
-          "SUCCESS",
-          `Handled music interaction ${"customId" in interaction ? interaction.customId : "unknown"}`,
-        );
-        return;
-      }
       if (await handleOnboardingInteraction(interaction)) {
         pushLog(
           "SUCCESS",
@@ -2363,16 +2341,6 @@ export function createRitzSmpAiBot(runtime?: ManagedServerRuntimeConfig) {
     );
 
     try {
-      if (
-        commandName === "music" ||
-        commandName === "play" ||
-        commandName === "leave"
-      ) {
-        await handleMusicCommand(interaction);
-        pushLog("SUCCESS", `Handled /${commandName} command`);
-        return;
-      }
-
       if (commandName === "status" || commandName === "ai-status") {
         if (!(await ensureDeferredReply(interaction, { ephemeral: false })))
           return;

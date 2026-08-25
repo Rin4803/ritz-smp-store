@@ -8,7 +8,6 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { startRitzSmpAiBot } from "../discordAiBot";
 import { handleMinecraftPresenceScheduled } from "../minecraftPresenceMonitor";
 import { redeemDiscordVerificationCode } from "../db";
 
@@ -97,14 +96,8 @@ async function startServer() {
     console.log(`Server running on http://localhost:${port}/`);
   });
 
-  // The Discord gateway is intentionally optional. It starts only after the bot token
-  // is configured, so local development and web-only deployments remain safe.
-  // Consolidated: RitzSMP AI is now the sole unified bot handling onboarding, music, store notifications, and status
-  try {
-    await startRitzSmpAiBot();
-  } catch (error) {
-    console.error("[RitzSmpAI] Failed to start:", error);
-  }
+  // Discord gateways run in their own long-lived services. The web process retains
+  // only server-to-server notification delivery using DISCORD_AI_BOT_TOKEN.
 }
 
 startServer().catch(console.error);

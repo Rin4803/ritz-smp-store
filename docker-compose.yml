@@ -19,8 +19,8 @@ services:
       retries: 12
       start_period: 20s
 
-  # The web store and RitzSMP AI Discord bot intentionally run in one process.
-  # server/_core/index.ts starts Express first and then starts the bot gateway.
+  # The web service never opens a Discord gateway. It only delivers store
+  # notifications through the AI application's server-side token.
   app:
     build:
       context: .
@@ -43,7 +43,6 @@ services:
       BUILT_IN_FORGE_API_KEY: ${BUILT_IN_FORGE_API_KEY:-}
       OAUTH_SERVER_URL: ${OAUTH_SERVER_URL:-}
       VITE_APP_ID: ${VITE_APP_ID:-}
-      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
       DISCORD_AI_BOT_TOKEN: ${DISCORD_AI_BOT_TOKEN}
       DISCORD_GUILD_ID: ${DISCORD_GUILD_ID}
       DISCORD_STORE_CHANNEL_ID: ${DISCORD_STORE_CHANNEL_ID:-}
@@ -56,22 +55,14 @@ services:
       DISCORD_VERIFICATION_CHANNEL_ID: ${DISCORD_VERIFICATION_CHANNEL_ID:-}
       DISCORD_VERIFIED_ROLE_ID: ${DISCORD_VERIFIED_ROLE_ID:-}
       DISCORD_WELCOME_CHANNEL_ID: ${DISCORD_WELCOME_CHANNEL_ID:-}
-      DISCORD_MUSIC_CHANNEL_ID: ${DISCORD_MUSIC_CHANNEL_ID:-}
       DISCORD_ONLINE_CHANNEL_ID: ${DISCORD_ONLINE_CHANNEL_ID:-}
       RCON_HOST: ${RCON_HOST}
       RCON_PORT: ${RCON_PORT:-25575}
       RCON_PASSWORD: ${RCON_PASSWORD}
       PUBLIC_STORE_URL: ${PUBLIC_STORE_URL:-}
       RITZ_ACTIVE_SERVER_ID: ${RITZ_ACTIVE_SERVER_ID:-}
-      # Override these only when the binary is installed outside PATH.
-      YTDLP_PATH: ${YTDLP_PATH:-yt-dlp}
-      FFMPEG_PATH: ${FFMPEG_PATH:-ffmpeg}
-      YTDLP_COOKIES_PATH: ${YTDLP_COOKIES_PATH:-/run/ritz-secrets/youtube-cookies.txt}
     volumes:
       - app_storage:/app/storage
-      # Optional Netscape cookies file for a VPS that still receives YouTube bot checks.
-      # Never commit this file. Create it on the VPS at ./secrets/youtube-cookies.txt.
-      - ./secrets:/run/ritz-secrets:ro
     networks:
       - ritz_net
     healthcheck:
@@ -86,6 +77,65 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+  ai-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ritz_ai_bot
+    command: ["node", "dist/discordAiBotRunner.js"]
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: mysql://${DB_USER:-ritz_user}:${DB_PASSWORD}@db:3306/${DB_NAME:-ritz_smp}
+      DISCORD_AI_BOT_TOKEN: ${DISCORD_AI_BOT_TOKEN}
+      DISCORD_GUILD_ID: ${DISCORD_GUILD_ID}
+      DISCORD_STORE_CHANNEL_ID: ${DISCORD_STORE_CHANNEL_ID:-}
+      DISCORD_ORDERS_CHANNEL_ID: ${DISCORD_ORDERS_CHANNEL_ID:-}
+      DISCORD_DONATE_LOG_CHANNEL_ID: ${DISCORD_DONATE_LOG_CHANNEL_ID:-}
+      DISCORD_SUPPORT_CHANNEL_ID: ${DISCORD_SUPPORT_CHANNEL_ID:-}
+      DISCORD_ADMIN_ROLE_ID: ${DISCORD_ADMIN_ROLE_ID:-}
+      DISCORD_MEMBER_ROLE_ID: ${DISCORD_MEMBER_ROLE_ID:-}
+      DISCORD_VERIFICATION_CHANNEL_ID: ${DISCORD_VERIFICATION_CHANNEL_ID:-}
+      DISCORD_VERIFIED_ROLE_ID: ${DISCORD_VERIFIED_ROLE_ID:-}
+      DISCORD_WELCOME_CHANNEL_ID: ${DISCORD_WELCOME_CHANNEL_ID:-}
+      DISCORD_ONLINE_CHANNEL_ID: ${DISCORD_ONLINE_CHANNEL_ID:-}
+      RCON_HOST: ${RCON_HOST:-}
+      RCON_PORT: ${RCON_PORT:-25575}
+      RCON_PASSWORD: ${RCON_PASSWORD:-}
+      PUBLIC_STORE_URL: ${PUBLIC_STORE_URL:-}
+      RITZ_ACTIVE_SERVER_ID: ${RITZ_ACTIVE_SERVER_ID:-}
+    networks:
+      - ritz_net
+
+  music-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ritz_music_bot
+    command: ["node", "dist/discordMusicBotRunner.js"]
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    environment:
+      NODE_ENV: production
+      DISCORD_MUSIC_BOT_TOKEN: ${DISCORD_MUSIC_BOT_TOKEN}
+      DISCORD_GUILD_ID: ${DISCORD_GUILD_ID}
+      DISCORD_MUSIC_CHANNEL_ID: ${DISCORD_MUSIC_CHANNEL_ID:-}
+      YTDLP_PATH: ${YTDLP_PATH:-yt-dlp}
+      FFMPEG_PATH: ${FFMPEG_PATH:-ffmpeg}
+      YTDLP_COOKIES_PATH: ${YTDLP_COOKIES_PATH:-/run/ritz-secrets/youtube-cookies.txt}
+    volumes:
+      # Optional Netscape cookies file for a VPS that still receives YouTube bot checks.
+      # Never commit this file. Create it on the VPS at ./secrets/youtube-cookies.txt.
+      - ./secrets:/run/ritz-secrets:ro
+    networks:
+      - ritz_net
 
 volumes:
   mariadb_data:

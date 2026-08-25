@@ -674,4 +674,15 @@
 - [x] เพิ่มหลักฐานสถานะ Voice connection, PCM readiness และ AudioPlayer output โดยไม่บันทึก URL หรือความลับเกินจำเป็น
 - [x] ปรับการเริ่มเล่นให้ตอบสำเร็จเมื่อ AudioPlayer เริ่ม output เท่านั้น หรือคืนข้อผิดพลาดที่ตรวจสอบได้
 - [x] เพิ่ม regression tests สำหรับ pipeline และรัน `pnpm check`, `pnpm test`, `pnpm build`
-- [ ] สร้าง checkpoint สำหรับนำไป rebuild บน VPS และรอผู้ฟังยืนยันเสียงจริง
+- [x] สร้าง checkpoint สำหรับนำไป rebuild บน VPS และรอผู้ฟังยืนยันเสียงจริง
+
+- [x] จัดทำคู่มือไฟล์และจุดตั้งค่า Discord สำหรับ AI bot, music bot และ DiscordSRV Bridge
+- [x] ระบุช่อง Discord ที่ต้องใช้กับแชท เกม และแจ้งเตือนธุรกรรมโดยไม่บันทึก token
+- [ ] ทดสอบ DiscordSRV ด้วยแชทและยศจากบัญชีควบคุมหลัง mapping ช่องครบ
+
+- [ ] ตรวจและแก้เฉพาะระบบ Discord: AI bot, music bot, DiscordSRV Bridge และแจ้งเตือนจากเว็บ
+- [x] แยกการเริ่มทำงานและการลงทะเบียนคำสั่งของ AI bot กับ music bot ให้ใช้ Discord application/token คนละตัว
+- [x] ทำให้เว็บส่งการแจ้งเตือนธุรกรรมผ่าน token ของ AI bot เท่านั้น พร้อมการทดสอบ token แบบ opt-in ที่ไม่เผย secret
+- [x] อัปเดต Docker Compose, template และคู่มือ VPS เพื่อรัน web/AI/music เป็นบริการแยกกัน
+- [x] จัดทำคู่มือภาษาไทยระบุไฟล์และจุดตั้งค่า DiscordSRV, role mapping, channel mapping และขั้นตอนทดสอบแบบปลอดภัย
+- [x] ตรวจ `pnpm check`, `pnpm test` และ `pnpm build` ก่อนบันทึกเวอร์ชัน Discord milestone

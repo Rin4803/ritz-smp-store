@@ -44,7 +44,7 @@ type OrderLike = {
 const DISCORD_API = "https://discord.com/api/v10";
 
 function getDiscordToken(): string {
-  return process.env.DISCORD_AI_BOT_TOKEN || process.env.DISCORD_BOT_TOKEN || ENV.discordBotToken || "";
+  return process.env.DISCORD_AI_BOT_TOKEN || ENV.discordAiBotToken || "";
 }
 
 function getSupportChannelId(): string {

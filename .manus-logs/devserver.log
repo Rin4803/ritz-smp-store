@@ -5374,3 +5374,18 @@
 [2026-08-22T15:56:50.916Z] [RitzSmpAI] [SUCCESS] Successfully registered global slash commands for RitzSMP AI.
 [2026-08-22T15:56:54.497Z] [RitzSmpAI] [SUCCESS] Dedicated music text channel ready: 1540380693690060820
 [2026-08-22T15:56:56.479Z] [RitzSmpAI] [SUCCESS] Dedicated Minecraft status channel ready: 1540059970781843566
+[2026-08-25T02:55:46.568Z] Starting dev server with command: pnpm run dev
+[2026-08-25T02:55:47.637Z] > ritz-smp-store@1.0.0 dev /home/ubuntu/ritz-smp-store
+[2026-08-25T02:55:47.637Z] > NODE_ENV=development tsx watch server/_core/index.ts
+[2026-08-25T02:55:48.593Z] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T02:55:48.922Z] Server running on http://localhost:3000/
+[2026-08-25T02:55:59.416Z] [RitzSmpAI] [ERROR] Discord login failed: Connect Timeout Error (attempted addresses: 162.159.138.232:443, timeout: 10000ms)
+[2026-08-25T03:04:48.575Z] 3:04:48 AM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-25T03:04:49.338Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T03:04:49.646Z] Server running on http://localhost:3000/
+[2026-08-25T03:05:45.826Z] 3:05:45 AM [tsx] change in ./server/discordNotifications.ts Restarting...
+[2026-08-25T03:05:46.754Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T03:05:47.046Z] Server running on http://localhost:3000/
+[2026-08-25T03:08:33.477Z] 3:08:33 AM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-25T03:08:34.403Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T03:08:34.698Z] Server running on http://localhost:3000/

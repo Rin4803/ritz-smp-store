@@ -1,189 +1,112 @@
-# คู่มือการติดตั้งและรัน RitzSMP บน VPS ด้วย Docker Compose
+# คู่มือรัน RitzSMP Discord System บน VPS
 
-เอกสารฉบับนี้จัดทำขึ้นเพื่อแนะนำขั้นตอนการติดตั้งและใช้งานระบบ **RitzSMP** (เว็บสโตร์, บอท Discord พร้อมระบบเพลงและ AI ภาษาไทย, และฐานข้อมูล MariaDB) บน VPS ของท่านด้วย **Docker Compose** อย่างสมบูรณ์และปลอดภัยในระดับ Production
+เอกสารนี้อธิบายการรัน **เว็บสโตร์**, **RitzSMP AI bot** และ **RitzSMP Music bot** เป็นบริการ Docker คนละตัว เพื่อป้องกันการเปิด Discord Gateway ด้วย token เดียวกันซ้ำซ้อน โดย DiscordSRV จะรันบนเครื่อง Minecraft แยกต่างหากเสมอ ไม่มี token หรือค่า ID จริงอยู่ในไฟล์ตัวอย่างนี้
 
----
+| บริการ | Container | Token ที่ใช้ | หน้าที่ |
+|---|---|---|---|
+| เว็บสโตร์ | `app` | ไม่เปิด Gateway | รับคำสั่งเว็บและส่งแจ้งเตือนธุรกรรมผ่าน API ของ Discord |
+| AI bot | `ai-bot` | `DISCORD_AI_BOT_TOKEN` | คำสั่ง AI/ผู้ดูแล และแจ้งเติมเงินหรือซื้อยศ |
+| Music bot | `music-bot` | `DISCORD_MUSIC_BOT_TOKEN` | `/music`, `/play`, `/leave`, queue และเสียงในห้อง Voice |
+| Minecraft Bridge | DiscordSRV บนเซิร์ฟเวอร์ Minecraft | token ของ `BOT CHAT` ใน `plugins/DiscordSRV/config.yml` | แชท Minecraft↔Discord, event และ role/group sync |
 
-## 1. ข้อกำหนดของระบบ (System Requirements)
+> **ห้ามใช้ token เดียวกันกับมากกว่าหนึ่ง Gateway process** และห้ามวาง token ใน Git, ช่อง Discord, ภาพหน้าจอ หรือ log. DiscordSRV เองระบุว่าไม่ควรใช้ token เดียวกันมากกว่าหนึ่ง Minecraft server [3]
 
-- **OS:** Ubuntu 22.04 LTS หรือ Linux แพลตฟอร์มอื่นๆ ที่รองรับ Docker
-- **RAM:** ขั้นต่ำ 1 GB (แนะนำ 2 GB ขึ้นไปหากรันบอทเพลงและผู้เล่นใช้งานพร้อมกันจำนวนมาก)
-- **CPU:** 1 vCore ขึ้นไป
-- **Software:** Docker (เวอร์ชัน 20.10+) และ Docker Compose (เวอร์ชัน 2.0+)
+## 1. เตรียม VPS
 
----
-
-## 2. ขั้นตอนการติดตั้งบน VPS
-
-### ขั้นตอนที่ 1: ติดตั้ง Docker และ Docker Compose บน VPS (ถ้ายังไม่ได้ติดตั้ง)
-
-รันคำสั่งต่อไปนี้ใน Terminal ของ VPS:
+ใช้ Linux ที่รัน Docker Engine และ Docker Compose v2 ได้ จากนั้นคัดลอกหรือ clone โปรเจกต์ไปยัง VPS ตัวอย่างเช่น `/opt/ritz-smp-store` แล้วสร้างไฟล์ตั้งค่าส่วนตัว
 
 ```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install curl git -y
-
-# ติดตั้ง Docker ทางการ
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-
-# ตรวจสอบการติดตั้ง
-docker --version
-docker compose version
-```
-
-### ขั้นตอนที่ 2: โคลนหรืออัปโหลดไฟล์โปรเจกต์ RitzSMP ไปยัง VPS
-
-นำไฟล์โปรเจกต์ทั้งหมด (รวมถึง `docker-compose.yml`, `Dockerfile`, และโฟลเดอร์แอปพลิเคชัน) ไปไว้บน VPS เช่นที่ `/home/ubuntu/ritz-smp-store`
-
-### ขั้นตอนที่ 3: สร้างและตั้งค่าไฟล์ `.env`
-
-คัดลอกไฟล์ `env.template` มาเป็น `.env` แล้วแก้ไขข้อมูลการเชื่อมต่อและความลับให้ถูกต้อง:
-
-```bash
+cd /opt/ritz-smp-store
 cp env.template .env
+chmod 600 .env
 nano .env
 ```
 
-ตารางอธิบายตัวแปรใน `.env`:
+กรอกเฉพาะตัวแปรที่ใช้จริงตามตารางด้านล่าง ค่าใน `env.template` เป็นคำแทนที่เท่านั้น ไม่ใช่ค่าใช้งานจริง
 
-| ตัวแปร              | คำอธิบาย                              | ตัวอย่างค่า                |
-| :------------------ | :------------------------------------ | :------------------------- |
-| `DB_ROOT_PASSWORD`  | รหัสผ่าน Root ของฐานข้อมูล MariaDB    | `SuperSecureRootPass2026!` |
-| `DB_NAME`           | ชื่อฐานข้อมูล                         | `ritz_smp`                 |
-| `DB_USER`           | ชื่อผู้ใช้ฐานข้อมูล                   | `ritz_user`                |
-| `DB_PASSWORD`       | รหัสผ่านผู้ใช้ฐานข้อมูล               | `DbUserPass2026!`          |
-| `PORT`              | พอร์ตสำหรับเข้าถึงเว็บสโตร์จากภายนอก  | `3000`                     |
-| `JWT_SECRET`        | คีย์เข้ารหัสเซสชันความปลอดภัย         | `RandomSecretStringHere`   |
-| `DISCORD_BOT_TOKEN` | Token ของบอท Discord                  | `MTUzOT...`                |
-| `DISCORD_GUILD_ID`  | ID ของดิสคอร์ดเซิร์ฟเวอร์             | `123456789012345678`       |
-| `RCON_HOST`         | ไอพีหรือโดเมนของเซิร์ฟเวอร์ Minecraft | `play.ritzsmp.me`          |
-| `RCON_PORT`         | พอร์ต RCON ของเซิร์ฟเวอร์ Minecraft   | `25575`                    |
-| `RCON_PASSWORD`     | รหัสผ่าน RCON                         | `YourRconPassword`         |
+| กลุ่ม | ตัวแปรสำคัญ | หลักการตั้งค่า |
+|---|---|---|
+| AI | `DISCORD_AI_BOT_TOKEN` | token ของ application **AI test** เท่านั้น |
+| Music | `DISCORD_MUSIC_BOT_TOKEN` | token ของ application **Music test** เท่านั้น |
+| Bridge | ไม่มีใน `.env` นี้ | owner วาง token **BOT CHAT** เองใน `plugins/DiscordSRV/config.yml` บน Minecraft host |
+| แจ้งเตือนเว็บ | `DISCORD_DONATE_LOG_CHANNEL_ID`, `DISCORD_ORDERS_CHANNEL_ID`, `DISCORD_SUPPORT_CHANNEL_ID` | ระบุ ID ห้องตามหน้าที่ที่ต้องการรับข้อความ |
+| เพลง | `DISCORD_MUSIC_CHANNEL_ID` | ระบุ ID ห้อง text สำหรับคำสั่งเพลง หากระบบมีสิทธิ์จัดการห้องจะเตรียมห้องให้ได้ |
 
----
+ตั้งให้ role ของ AI bot และ Music bot มองเห็น/ส่งข้อความในห้องที่เกี่ยวข้อง ส่วน Music bot ต้องมี `View Channel`, `Connect` และ `Speak` ในห้องเสียงด้วย การทำงานของ Discord permissions และ channel overwrite เป็นไปตาม role และสิทธิ์ระดับห้อง [1]
 
-## 3. การรันระบบด้วย Docker Compose
+## 2. Build และเริ่มบริการ
 
-เมื่อตั้งค่า `.env` เรียบร้อยแล้ว ให้รันคำสั่งเปิดใช้งานระบบในโหมด Background (Detached):
+ตรวจไฟล์ Compose โดยไม่แสดง token แล้วเริ่มบริการทั้งหมด
 
 ```bash
-docker compose up -d --build
-```
-
-ระบบจะทำการ:
-
-1. สร้างฐานข้อมูล MariaDB และรัน Health Check จนกว่าพร้อมใช้งาน
-2. Build Docker Image ของแอปพลิเคชัน RitzSMP (เว็บ + บอท Discord)
-3. เชื่อมต่อเครือข่ายภายใน (`ritz_net`) และผูกพอร์ต 3000 ออกสู่ภายนอก
-
-หากต้องการตรวจสอบสถานะการทำงานของคอนเทนเนอร์:
-
-```bash
-docker compose ps
-```
-
-หากต้องการดู Log แบบเรียลไทม์:
-
-```bash
-docker compose logs -f app
-```
-
----
-
-## 4. การสำรองข้อมูลฐานข้อมูลอัตโนมัติ (Backup)
-
-ในโปรเจกต์ได้เตรียมสคริปต์สำรองข้อมูล `backup.sh` ไว้ให้แล้ว ท่านสามารถตั้งค่า Cronjob บน VPS เพื่อให้ระบบแบ็คอัพฐานข้อมูลอัตโนมัติทุกวัน:
-
-1. เปิด Crontab:
-   ```bash
-   crontab -e
-   ```
-2. เพิ่มบรรทัดนี้เพื่อให้รันแบ็คอัพทุกวันเวลาตี 3:
-   ```bash
-   0 3 * * * /bin/bash /home/ubuntu/ritz-smp-store/backup.sh >/dev/null 2>&1
-   ```
-
----
-
-## 5. การอัปเดตระบบเมื่อมีเวอร์ชันใหม่
-
-เมื่อมีการแก้ไขโค้ดหรือต้องการอัปเดตเวอร์ชันบน VPS สามารถทำได้ง่ายๆ ด้วยคำสั่ง:
-
-```bash
-git pull origin main
-docker compose down
-docker compose up -d --build
-```
-
----
-
-## 6. การตั้งค่าระบบเพลงบน VPS
-
-อิมเมจ production ติดตั้ง **FFmpeg**, **Python 3**, และ **yt-dlp พร้อมชุด `yt-dlp-ejs`** ให้โดยอัตโนมัติ ระบบเพลงใช้เส้นทาง `yt-dlp -> FFmpeg -> PCM -> Discord` จึงไม่พึ่งการถอดรหัสเสียงของไลบรารีฝั่ง Node และไม่มี fallback ที่ส่งเสียงเงียบค้างไว้ หากดึงเสียงไม่ได้ บอทจะแจ้งข้อผิดพลาดและหยุดแทร็กนั้นแทน การทดสอบใน sandbox ยืนยันแล้วว่า FFmpeg แปลงสตรีมจำลองเป็น PCM ที่มีข้อมูลเสียงจริงได้ แต่ไม่สามารถยืนยันเสียงจาก YouTube หรือ Discord voice ใน sandbox แทน VPS ได้
-
-ก่อนเริ่มระบบ ให้ตรวจว่าไฟล์ Compose และตัวแปรสำคัญถูกอ่านได้ครบ:
-
-```bash
-cd /home/ubuntu/ritz-smp-store
-mkdir -p secrets
-chmod 700 secrets
 docker compose config >/tmp/ritz-compose-resolved.yml
-```
-
-หาก VPS ยังได้รับข้อความ YouTube ให้ลงชื่อเข้าใช้หรือยืนยันว่าไม่ใช่บอท ให้ส่งออก cookies จากเบราว์เซอร์เป็นไฟล์ Netscape format แล้วคัดลอกไว้ที่ `secrets/youtube-cookies.txt` บน VPS เท่านั้น จากนั้นตั้งค่าใน `.env` ดังนี้:
-
-```dotenv
-YTDLP_COOKIES_PATH=/run/ritz-secrets/youtube-cookies.txt
-```
-
-ห้าม commit หรือส่งไฟล์ cookies เข้า Git และห้ามโพสต์ไฟล์นี้ใน Discord เพราะมีข้อมูลเซสชันของบัญชี ควรใช้บัญชี YouTube แยกสำหรับบอทและจำกัดสิทธิ์ของไฟล์:
-
-```bash
-chmod 600 secrets/youtube-cookies.txt
-docker compose up -d --build
-```
-
-ตรวจสอบว่า dependency เสียงอยู่ในคอนเทนเนอร์จริง:
-
-```bash
-docker compose exec app ffmpeg -version
-docker compose exec app yt-dlp --version
-docker compose logs -f app
-```
-
-เมื่อต้องการทดสอบ ให้เข้าห้องเสียงเดียวกับบอทแล้วใช้ `/play query:<ลิงก์ YouTube>` จากนั้นตรวจ log ว่าพบข้อความ `AudioPlayer playing decoded PCM` และให้ผู้ฟังยืนยันว่าได้ยินเสียงจริง หากพบ `yt-dlp stream failed`, `FFmpeg stream failed`, `429` หรือ `Sign in to confirm` ให้แก้ที่ IP/คุกกี้/เครือข่ายของ VPS ก่อน ไม่ควรถือว่าระบบเล่นเพลงสำเร็จเพียงเพราะสถานะ Discord เปลี่ยนเป็น Playing
-
-ลำดับตรวจสอบที่แนะนำบน VPS:
-
-```bash
-# ตรวจ binary และเวอร์ชันใน container
-
-docker compose exec app sh -lc 'command -v ffmpeg && ffmpeg -version | head -1'
-docker compose exec app sh -lc 'command -v yt-dlp && yt-dlp --version'
-
-# ดูเฉพาะ log ที่เกี่ยวกับเสียงระหว่างการทดสอบ
-
-docker compose logs --since=2m -f app | grep -Ei 'Music|yt-dlp|FFmpeg|AudioPlayer|VoiceConnection'
-```
-
-เมื่อทดสอบสำเร็จควรเห็นทั้ง log `AudioPlayer playing decoded PCM` และมีผู้ฟังยืนยันว่าได้ยินเสียง หากยังเห็นเพียงสถานะ Playing แต่ไม่มีเสียง ให้ตรวจ outbound UDP ของ VPS, firewall/security group และ region/IP ที่ YouTube อนุญาต ก่อนเปลี่ยนโค้ดเพิ่ม
-
-> หมายเหตุ: การรันบน sandbox หรือ Autoscale อาจยังถูกจำกัดด้วย YouTube anti-bot และ UDP voice discovery ได้ การยืนยันเสียงจริงควรทำบน VPS ที่เปิด outbound UDP และมี IP ที่ YouTube ไม่บล็อก
-
-## 7. คำสั่งตรวจสอบและอัปเดตที่แนะนำ
-
-```bash
-# ดูสถานะและ health check
+docker compose up -d --build --remove-orphans
 docker compose ps
+```
 
-# ดูเฉพาะ log เพลง
-docker compose logs --since=10m app | grep -Ei 'Music|yt-dlp|FFmpeg|VoiceConnection|AudioPlayer'
+ถ้าต้องการอัปเดตโค้ด ให้ pull เวอร์ชันใหม่และ build service ใหม่ โดยไม่ต้องลบ volume ฐานข้อมูล
 
-# อัปเดต image หลังแก้โค้ด
+```bash
 git pull origin main
 docker compose up -d --build --remove-orphans
-
-# หยุดระบบโดยไม่ลบ volume ฐานข้อมูล
-docker compose down
 ```
+
+## 3. ตรวจการทำงานแยกตามบริการ
+
+คำสั่งต่อไปนี้ช่วยแยกปัญหาได้ว่าเกิดที่เว็บ, AI gateway หรือ music gateway โดยไม่มีคำสั่งใดแสดง secret
+
+```bash
+docker compose logs --since=10m app
+docker compose logs --since=10m ai-bot
+docker compose logs --since=10m music-bot
+docker compose exec music-bot sh -lc 'command -v ffmpeg && ffmpeg -version | head -1'
+docker compose exec music-bot sh -lc 'command -v yt-dlp && yt-dlp --version'
+```
+
+ผลที่ควรพบคือ AI bot ลงทะเบียนเฉพาะคำสั่ง AI, Music bot ลงทะเบียนเฉพาะ `/music`, `/play`, `/leave`, และเว็บไม่มีข้อความเริ่ม Discord Gateway การแจ้งเตือนซื้อยศ/เติมเงินจะใช้ **AI token เท่านั้น**; ระบบจะไม่ fallback ไปใช้ generic token หรือ token ของ Music bot
+
+## 4. ทดสอบเพลงบน VPS อย่างถูกต้อง
+
+Music bot ใช้ `yt-dlp → FFmpeg → PCM → Discord Voice` และต้องรันบน VPS ที่อนุญาต outbound UDP และเข้าถึง YouTube ได้ การที่ bot เข้า Voice หรือแสดง Playing **ไม่ยืนยันว่าได้ยินเสียงแล้ว** ให้เข้าห้องด้วยบัญชีทดสอบและใช้ `/play query:<ลิงก์ YouTube>` จากนั้นดู log ของ music service
+
+```bash
+docker compose logs --since=2m -f music-bot | grep -Ei 'Music|yt-dlp|FFmpeg|AudioPlayer|VoiceConnection|PCM'
+```
+
+ให้ยืนยันทั้งสองข้อก่อนปิดงานเพลง: log แสดงการส่ง decoded PCM และผู้ฟังจริงยืนยันว่าได้ยินเสียง หากมี `429`, `Sign in to confirm`, `yt-dlp stream failed` หรือสถานะ Playing แต่ไร้เสียง ให้ตรวจ firewall/security group, outbound UDP, IP ของ VPS และ cookies ของ YouTube ก่อนปรับโค้ดเพิ่ม
+
+หากต้องใช้ YouTube cookies ให้สร้างโฟลเดอร์ใน VPS เท่านั้น และอย่าส่งไฟล์ดังกล่าวผ่าน Discord หรือ commit ลง Git
+
+```bash
+mkdir -p secrets
+chmod 700 secrets
+chmod 600 secrets/youtube-cookies.txt
+docker compose up -d --build music-bot
+```
+
+## 5. ตรวจ token แบบ opt-in
+
+การทดสอบนี้เรียกเพียง `GET https://discord.com/api/v10/users/@me` ด้วย Authorization header และไม่พิมพ์ token, body หรือข้อมูลบัญชีลงผลลัพธ์ โดยปกติจะถูกข้ามเสมอ ใช้เฉพาะหลังใส่ secret แล้วและเมื่อ VPS ออก HTTPS ไป Discord ได้
+
+```bash
+DISCORD_TOKEN_LIVE_VALIDATION=ai pnpm exec vitest run server/discordTokenHealth.test.ts
+DISCORD_TOKEN_LIVE_VALIDATION=music pnpm exec vitest run server/discordTokenHealth.test.ts
+```
+
+หากได้ HTTP 401/403 ให้ reset แล้ววาง token ใหม่ผ่านช่องจัดการ secret ที่ปลอดภัย ห้ามส่ง token ให้ผู้ดูแลหรือวางลงใน issue/chat เพื่อแก้ปัญหา
+
+## 6. สิทธิ์และลำดับ role
+
+Discord กำหนดให้ bot จัดการได้เฉพาะ role ที่อยู่ต่ำกว่า role สูงสุดของ bot [2] ดังนั้นวาง role ของ `BOT CHAT` เหนือ role Discord ที่อนุญาตให้ DiscordSRV sync และอย่าเปิดการ sync owner/admin โดยปริยาย สำหรับ DiscordSRV สิทธิ์ `Manage Roles` ใช้เฉพาะกรณี role synchronization; `Manage Channels` ใช้เมื่อให้ plugin สร้าง/แก้ช่อง; ส่วน bridge chat ต้องมีสิทธิ์เห็นและส่งข้อความในห้องปลายทาง [3]
+
+| Bot | สิทธิ์หลักขั้นต่ำตามหน้าที่ | ไม่ควรให้โดยไม่จำเป็น |
+|---|---|---|
+| AI test | View Channel, Send Messages, Embed Links, Attach Files ในห้องแจ้งเตือน | Administrator |
+| Music test | View Channel, Send Messages, Connect, Speak, Use Application Commands | Administrator, Manage Roles |
+| BOT CHAT / DiscordSRV | View Channel, Send Messages, Embed Links; เพิ่ม Manage Roles เฉพาะ sync | Administrator, console command access สำหรับทุกคน |
+
+## 7. อ้างอิง
+
+[1] [Discord Developer Documentation — Permissions](https://docs.discord.com/developers/topics/permissions)  
+[2] [Discord Developer Documentation — Role hierarchy](https://docs.discord.com/developers/topics/permissions#role-hierarchy)  
+[3] [DiscordSRV Documentation — Home, bot permissions และ bridge](https://docs.discordsrv.com/)

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./_core/env", () => ({
   ENV: {
-    discordBotToken: "test-discord-token",
+    discordAiBotToken: "",
     discordSupportChannelId: "support-channel-123",
     discordDonateLogChannelId: "donate-log-channel-456",
     discordStoreChannelId: "store-channel-789",
@@ -18,8 +18,7 @@ vi.mock("./storage", () => ({
 import { notifyPurchaseCompleted, notifyTopupSubmitted } from "./discordNotifications";
 
 beforeEach(() => {
-  vi.stubEnv("DISCORD_AI_BOT_TOKEN", "");
-  vi.stubEnv("DISCORD_BOT_TOKEN", "");
+  vi.stubEnv("DISCORD_AI_BOT_TOKEN", "unit-test-ai-token");
   vi.stubEnv("DISCORD_SUPPORT_CHANNEL_ID", "");
   vi.stubEnv("DISCORD_DONATE_LOG_CHANNEL_ID", "");
   vi.stubEnv("DISCORD_STORE_CHANNEL_ID", "");
@@ -64,7 +63,7 @@ describe("Discord web-store notifications", () => {
 
     const requestInit = fetchMock.mock.calls[1]?.[1] as RequestInit;
     expect(requestInit.method).toBe("POST");
-    expect(requestInit.headers).toMatchObject({ Authorization: "Bot test-discord-token" });
+    expect(requestInit.headers).toMatchObject({ Authorization: "Bot unit-test-ai-token" });
     expect(requestInit.body).toBeInstanceOf(FormData);
 
     const form = requestInit.body as FormData;
@@ -99,5 +98,18 @@ describe("Discord web-store notifications", () => {
       expect.objectContaining({ name: "Minecraft IGN", value: "`RitzWarrior`" }),
       expect.objectContaining({ name: "การส่งยศเข้าเกม", value: "✅ RCON สำเร็จ" }),
     ]));
+  });
+
+  it("does not fall back to a generic or music bot token when the AI token is absent", async () => {
+    vi.stubEnv("DISCORD_AI_BOT_TOKEN", "");
+    vi.stubEnv("DISCORD_BOT_TOKEN", "generic-token-must-not-be-used");
+    vi.stubEnv("DISCORD_MUSIC_BOT_TOKEN", "music-token-must-not-be-used");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await notifyPurchaseCompleted({ order, userName: "Ritz Player" });
+
+    expect(result).toMatchObject({ sent: false, reason: "Discord bot token is not configured" });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
