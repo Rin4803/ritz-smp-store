@@ -43,6 +43,18 @@ import { fetchMinecraftServerStatus } from "./minecraftIntegration";
 const allowedSlipTypes = ["image/jpeg", "image/png", "image/webp"] as const;
 const orderStatus = z.enum(["รอตรวจสอบ", "สำเร็จ", "ยกเลิก"]);
 
+/** รายการสาธารณะหลักของ RitzSMP ใช้เฉพาะเมื่อ owner ยังไม่ได้สร้าง registry row */
+const PUBLIC_RITZSMP_DIRECTORY_ENTRY = {
+  id: 0,
+  slug: "ritzsmp",
+  displayName: "RitzSMP",
+  minecraftHost: "ritz.mcsv.me",
+  minecraftPort: 25565,
+  discordGuildId: null,
+  enabled: 1,
+  updatedAt: new Date(0),
+} as const;
+
 const sanitizeFileName = (value: string) => {
   const normalized = value.replace(/[^a-z0-9._-]/gi, "-").replace(/-+/g, "-");
   return normalized.slice(-80) || "payment-slip";
@@ -93,7 +105,8 @@ export const appRouter = router({
   servers: router({
     list: publicProcedure.query(async () => {
       const servers = await getEnabledManagedServers();
-      return servers.map(server => ({
+      const visibleServers = servers.length > 0 ? servers : [PUBLIC_RITZSMP_DIRECTORY_ENTRY];
+      return visibleServers.map(server => ({
         id: server.id,
         slug: server.slug,
         displayName: server.displayName,

@@ -152,6 +152,21 @@ describe("multi-server platform", () => {
     expect(result.some(server => server.slug === "closed-community")).toBe(false);
   });
 
+  it("shows the canonical RitzSMP directory entry when the public registry is empty", async () => {
+    dbMocks.getEnabledManagedServers.mockResolvedValueOnce([]);
+    const result = await appRouter.createCaller(contextFor("visitor", "user")).servers.list();
+    expect(result).toEqual([{
+      id: 0,
+      slug: "ritzsmp",
+      displayName: "RitzSMP",
+      minecraftHost: "ritz.mcsv.me",
+      minecraftPort: 25565,
+      discordGuildId: null,
+      enabled: true,
+      updatedAt: new Date(0),
+    }]);
+  });
+
   it("creates a presence Heartbeat using the decoded session cookie", async () => {
     const context = contextFor(OWNER_OPEN_ID, "admin");
     context.req.headers.cookie = "app_session_id=decoded-session-value";

@@ -864,3 +864,4 @@
 - [ ] ทดสอบ `/worth`, `/sell hand`, `/sellall` และ FoShop GUI ในเกมด้วย item เดียวกันเพื่อยืนยันหน่วยราคา
 - [ ] ตรวจและวางแผนอัปเดต Essentials ให้รองรับ server version จริง หลังทำ backup และทดสอบความเข้ากันได้
 - [x] ปรับสคริปต์ economy audit ให้รับผล `files_read_many` ผ่านอาร์กิวเมนต์ ไม่ผูกกับ path sandbox และยืนยันว่าไม่เขียนกลับ MCSV
+- [x] แก้ production mismatch หน้า `/servers`: หน้า Home มีสถานะ RitzSMP ออนไลน์ แต่หน้าเลือกเซิร์ฟเวอร์แสดงว่าไม่มีเซิร์ฟเวอร์ที่เปิดใช้งาน
