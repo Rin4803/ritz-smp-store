@@ -4368,7 +4368,7 @@ function memberDisplayName(member, index) {
   return escapeDiscordMarkdown(candidate) || `\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 ${index + 1}`;
 }
 function isVisibleMember(member) {
-  return isDiscordSnowflake(member.id) && member.user?.bot !== true;
+  return isDiscordSnowflake(member.user?.id ?? "") && member.user?.bot !== true;
 }
 function buildDiscordMembersMessage(members) {
   const visibleMembers = members.filter(isVisibleMember).slice(0, 25);
@@ -4401,7 +4401,7 @@ async function fetchDiscordGuildMembers(input) {
     const payload = await response.json();
     if (!Array.isArray(payload)) return { kind: "unavailable" };
     const members = payload.filter(
-      (member) => typeof member === "object" && member !== null && typeof member.id === "string"
+      (member) => typeof member === "object" && member !== null && typeof member.user?.id === "string"
     );
     return { kind: "ok", members };
   } catch {

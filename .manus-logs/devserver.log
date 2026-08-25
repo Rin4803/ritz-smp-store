@@ -6008,3 +6008,7 @@
 [2026-08-25T13:40:51.948Z] 1:40:51 PM [tsx] change in ./server/discordInteractions.ts Restarting...
 [2026-08-25T13:40:52.723Z] c[OAuth] Initialized with baseURL: https://api.manus.im
 [2026-08-25T13:40:53.009Z] Server running on http://localhost:3000/
+[2026-08-25T13:43:31.773Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-25T14:09:01.003Z] 2:09:01 PM [tsx] change in ./server/discordRest.ts Restarting...
+[2026-08-25T14:09:01.834Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T14:09:02.162Z] Server running on http://localhost:3000/

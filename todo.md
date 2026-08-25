@@ -716,8 +716,10 @@
 - [x] ยืนยันว่าปุ่มเชื่อมบัญชีใช้ HTTP interaction endpoint ที่ตรวจลายเซ็น จึงไม่ต้องเปิด AI gateway แบบต่อเนื่องบน autoscale สำหรับ flow นี้
 - [ ] ทดสอบปุ่มเชื่อมบัญชีจาก Discord แบบควบคุมและบันทึกเฉพาะผลลัพธ์ที่พิสูจน์ได้
 - [ ] ตรวจและแก้รายงานล่าสุดว่าระบบเชื่อมบัญชียังใช้งานไม่ได้ โดยยืนยันว่าเวอร์ชัน RCON ถึง production และเก็บข้อความผิดพลาดโดยไม่รับรหัสยืนยัน
-- [ ] ตรวจและย้ายปุ่มรายชื่อบัญชีที่ยังแจ้งว่าต้องใช้ AI bot runtime ต่อเนื่อง ไปยัง HTTP Interaction endpoint สำหรับข้อมูลที่ปลอดภัยต่อการอ่าน
+- [x] ตรวจและย้ายปุ่มรายชื่อบัญชีที่ยังแจ้งว่าต้องใช้ AI bot runtime ต่อเนื่อง ไปยัง HTTP Interaction endpoint สำหรับข้อมูลที่ปลอดภัยต่อการอ่าน
 - [x] รองรับ `ritz_profile_button`, `ritz_players_button` และ `ritz_discord_members_button` ผ่าน HTTP Interaction แบบ ephemeral โดยจำกัดข้อมูลเฉพาะที่ปลอดภัยและไม่พึ่ง Discord Gateway
+- [x] แก้เส้นทาง interaction ของปุ่มรายชื่อบัญชีที่ยังถูก AI Gateway เวอร์ชันเดิมตอบกลับ แม้ HTTP handler ของปุ่มจะเผยแพร่แล้ว
+- [ ] แก้ปุ่ม `ritz_discord_members_button` ที่ถึง HTTP endpoint แล้วแต่ Discord REST ส่งข้อมูลสมาชิกที่แสดงได้เป็น 0 คน
 - [x] ตรวจสาเหตุที่ `/verify <code>` ใน Minecraft ปฏิเสธรหัสที่ Discord Interaction เพิ่งสร้าง โดยเทียบการสร้าง การเก็บ และการตรวจรหัสอย่างปลอดภัย
 - [x] ตรวจพอร์ตและการเข้าถึง RCON ของ MCSV แล้วตั้งค่า secret สำหรับเชื่อมเว็บสโตร์กับคำสั่งสร้างรหัส Minecraft เดิมโดยไม่แก้ DiscordSRV หรือ Economy
 - [x] สร้าง Discord interaction endpoint ที่ตรวจลายเซ็นและรองรับปุ่มเชื่อมบัญชีเดิมบน autoscale

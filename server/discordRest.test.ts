@@ -8,12 +8,10 @@ describe("Discord REST member helper", () => {
   it("renders names only and filters bot accounts from the limited member list", () => {
     const message = buildDiscordMembersMessage([
       {
-        id: "1525527108854481007",
         nick: "Ritz Member",
         user: { id: "1525527108854481007", username: "ritz", bot: false },
       },
       {
-        id: "1525527108854481008",
         user: { id: "1525527108854481008", username: "ritz-bot", bot: true },
       },
     ]);
@@ -32,8 +30,12 @@ describe("Discord REST member helper", () => {
         new Response(
           JSON.stringify([
             {
-              id: "1525527108854481007",
-              user: { username: "ritz", bot: false },
+              nick: "Ritz Member",
+              user: {
+                id: "1525527108854481007",
+                username: "ritz",
+                bot: false,
+              },
             },
           ]),
           { status: 200 },
@@ -44,11 +46,31 @@ describe("Discord REST member helper", () => {
       kind: "ok",
       members: [
         {
-          id: "1525527108854481007",
-          user: { username: "ritz", bot: false },
+          nick: "Ritz Member",
+          user: {
+            id: "1525527108854481007",
+            username: "ritz",
+            bot: false,
+          },
         },
       ],
     });
+  });
+
+  it("accepts the Discord Guild Member payload which stores the member ID inside user", () => {
+    const message = buildDiscordMembersMessage([
+      {
+        nick: "สมาชิกจริง",
+        user: {
+          id: "1525527108854481009",
+          username: "member",
+          bot: false,
+        },
+      },
+    ]);
+
+    expect(message).toContain("สมาชิกจริง");
+    expect(message).toContain("สมาชิกที่แสดง 1 คน");
   });
 
   it("returns a privacy-safe unavailable result when Discord rejects the request", async () => {

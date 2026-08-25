@@ -1,5 +1,4 @@
 export type DiscordRestGuildMember = {
-  id: string;
   nick?: string | null;
   user?: {
     id?: string;
@@ -38,7 +37,7 @@ function memberDisplayName(member: DiscordRestGuildMember, index: number): strin
 
 function isVisibleMember(member: DiscordRestGuildMember): boolean {
   return (
-    isDiscordSnowflake(member.id) &&
+    isDiscordSnowflake(member.user?.id ?? "") &&
     member.user?.bot !== true
   );
 }
@@ -96,7 +95,7 @@ export async function fetchDiscordGuildMembers(input: {
       (member): member is DiscordRestGuildMember =>
         typeof member === "object" &&
         member !== null &&
-        typeof (member as { id?: unknown }).id === "string",
+        typeof (member as { user?: { id?: unknown } }).user?.id === "string",
     );
     return { kind: "ok", members };
   } catch {
