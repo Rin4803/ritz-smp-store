@@ -181,6 +181,7 @@ var ENV = {
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   discordBotToken: process.env.DISCORD_BOT_TOKEN ?? "",
   discordAiBotToken: process.env.DISCORD_AI_BOT_TOKEN ?? "",
+  discordAiPublicKey: process.env.DISCORD_AI_PUBLIC_KEY ?? "",
   discordGuildId: process.env.DISCORD_GUILD_ID ?? "",
   discordStoreChannelId: process.env.DISCORD_STORE_CHANNEL_ID ?? "",
   discordSupportChannelId: process.env.DISCORD_SUPPORT_CHANNEL_ID ?? "",
@@ -4309,6 +4310,169 @@ async function handleMinecraftPresenceScheduled(req, res) {
   }
 }
 
+// server/discordInteractions.ts
+import { createPublicKey, verify as verifySignature } from "node:crypto";
+var DISCORD_PUBLIC_KEY_DER_PREFIX = Buffer.from(
+  "302a300506032b6570032100",
+  "hex"
+);
+var DISCORD_INTERACTION_PING = 1;
+var DISCORD_INTERACTION_APPLICATION_COMMAND = 2;
+var DISCORD_RESPONSE_PONG = 1;
+var DISCORD_RESPONSE_CHANNEL_MESSAGE = 4;
+var EPHEMERAL_MESSAGE_FLAG = 1 << 6;
+function identifyRitzSmpInteractionAction(interaction) {
+  const customId = interaction.data?.custom_id;
+  const commandName = interaction.data?.name?.toLowerCase();
+  if (customId === "ritz_verify_button" || interaction.type === DISCORD_INTERACTION_APPLICATION_COMMAND && commandName === "verify") {
+    return "verification-code";
+  }
+  if (customId === "ritz_cancel_verify_button") return "cancel-code";
+  if (customId === "ritz_unlink_button") return "unlink";
+  return "unsupported";
+}
+function buildVerificationCodeMessage(code, expiresAt) {
+  const expiresAtText = new Date(expiresAt).toLocaleTimeString("th-TH");
+  return [
+    "## \u{1F517} \u0E23\u0E2B\u0E31\u0E2A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19 Minecraft",
+    `\u0E23\u0E2B\u0E31\u0E2A\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E04\u0E37\u0E2D: **\`${code}\`**`,
+    "",
+    "1. \u0E40\u0E02\u0E49\u0E32\u0E40\u0E01\u0E21 Minecraft \u0E17\u0E35\u0E48 `ritz.mcsv.me`",
+    `2. \u0E1E\u0E34\u0E21\u0E1E\u0E4C \`/verify ${code}\` \u0E43\u0E19\u0E41\u0E0A\u0E15\u0E40\u0E01\u0E21`,
+    "3. \u0E23\u0E30\u0E1A\u0E1A\u0E08\u0E30\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E17\u0E31\u0E19\u0E17\u0E35\u0E04\u0E48\u0E30",
+    "",
+    `\u0E23\u0E2B\u0E31\u0E2A\u0E2B\u0E21\u0E14\u0E2D\u0E32\u0E22\u0E38\u0E43\u0E19 10 \u0E19\u0E32\u0E17\u0E35 (${expiresAtText})`
+  ].join("\n");
+}
+function normalizeHex(value) {
+  const normalized = value?.trim().toLowerCase() ?? "";
+  return /^[0-9a-f]+$/.test(normalized) ? normalized : null;
+}
+function isUsableDiscordApplicationPublicKey(publicKey) {
+  const publicKeyHex = normalizeHex(publicKey);
+  if (!publicKeyHex || publicKeyHex.length !== 64) return false;
+  try {
+    createPublicKey({
+      key: Buffer.concat([
+        DISCORD_PUBLIC_KEY_DER_PREFIX,
+        Buffer.from(publicKeyHex, "hex")
+      ]),
+      format: "der",
+      type: "spki"
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+function verifyDiscordInteractionSignature(rawBody, signatureHeader, timestampHeader, publicKey) {
+  const signature = normalizeHex(signatureHeader);
+  const publicKeyHex = normalizeHex(publicKey);
+  if (!signature || !publicKeyHex || !isUsableDiscordApplicationPublicKey(publicKey) || !timestampHeader || signature.length !== 128 || publicKeyHex.length !== 64) {
+    return false;
+  }
+  try {
+    const key = createPublicKey({
+      key: Buffer.concat([
+        DISCORD_PUBLIC_KEY_DER_PREFIX,
+        Buffer.from(publicKeyHex, "hex")
+      ]),
+      format: "der",
+      type: "spki"
+    });
+    return verifySignature(
+      null,
+      Buffer.concat([Buffer.from(timestampHeader, "utf8"), rawBody]),
+      key,
+      Buffer.from(signature, "hex")
+    );
+  } catch {
+    return false;
+  }
+}
+function getDiscordUserId(interaction) {
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
+  return typeof userId === "string" && userId.trim() ? userId : null;
+}
+function ephemeralResponse(content) {
+  return {
+    type: DISCORD_RESPONSE_CHANNEL_MESSAGE,
+    data: {
+      content,
+      flags: EPHEMERAL_MESSAGE_FLAG
+    }
+  };
+}
+var handleRitzSmpDiscordInteraction = async (req, res) => {
+  const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(String(req.body ?? ""), "utf8");
+  const isValid = verifyDiscordInteractionSignature(
+    rawBody,
+    req.header("X-Signature-Ed25519") ?? void 0,
+    req.header("X-Signature-Timestamp") ?? void 0,
+    ENV.discordAiPublicKey
+  );
+  if (!isValid) {
+    return res.status(401).json({ error: "Invalid Discord request signature" });
+  }
+  let interaction;
+  try {
+    interaction = JSON.parse(rawBody.toString("utf8"));
+  } catch {
+    return res.status(400).json({ error: "Invalid interaction payload" });
+  }
+  if (interaction.type === DISCORD_INTERACTION_PING) {
+    return res.status(200).json({ type: DISCORD_RESPONSE_PONG });
+  }
+  const userId = getDiscordUserId(interaction);
+  if (!userId) {
+    return res.status(400).json({ error: "Interaction user is missing" });
+  }
+  try {
+    switch (identifyRitzSmpInteractionAction(interaction)) {
+      case "verification-code": {
+        const codeRow = await createDiscordVerificationCode(userId);
+        return res.status(200).json(
+          ephemeralResponse(
+            buildVerificationCodeMessage(codeRow.code, codeRow.expiresAt)
+          )
+        );
+      }
+      case "cancel-code": {
+        const cancelled = await cancelDiscordVerificationCode(userId);
+        return res.status(200).json(
+          ephemeralResponse(
+            cancelled ? "\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E23\u0E2B\u0E31\u0E2A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E17\u0E35\u0E48\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E43\u0E0A\u0E49\u0E40\u0E23\u0E35\u0E22\u0E1A\u0E23\u0E49\u0E2D\u0E22\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30 \u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E23\u0E2B\u0E31\u0E2A\u0E43\u0E2B\u0E21\u0E48\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22" : "\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E23\u0E2B\u0E31\u0E2A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E17\u0E35\u0E48\u0E01\u0E33\u0E25\u0E31\u0E07\u0E23\u0E2D\u0E43\u0E0A\u0E49\u0E2D\u0E22\u0E39\u0E48\u0E04\u0E48\u0E30"
+          )
+        );
+      }
+      case "unlink": {
+        const unlinked = await unlinkDiscordVerification(userId);
+        return res.status(200).json(
+          ephemeralResponse(
+            unlinked ? "\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E01\u0E32\u0E23\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E40\u0E23\u0E35\u0E22\u0E1A\u0E23\u0E49\u0E2D\u0E22\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30" : "\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Minecraft \u0E17\u0E35\u0E48\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E2D\u0E22\u0E39\u0E48\u0E04\u0E48\u0E30"
+          )
+        );
+      }
+      default:
+        return res.status(200).json(
+          ephemeralResponse(
+            "\u0E1B\u0E38\u0E48\u0E21\u0E19\u0E35\u0E49\u0E22\u0E31\u0E07\u0E15\u0E49\u0E2D\u0E07\u0E43\u0E0A\u0E49 AI bot \u0E1A\u0E19 runtime \u0E15\u0E48\u0E2D\u0E40\u0E19\u0E37\u0E48\u0E2D\u0E07\u0E04\u0E48\u0E30 \u0E2A\u0E48\u0E27\u0E19\u0E1B\u0E38\u0E48\u0E21\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E41\u0E25\u0E30\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E23\u0E2B\u0E31\u0E2A\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19\u0E44\u0E14\u0E49\u0E08\u0E32\u0E01\u0E2B\u0E19\u0E49\u0E32\u0E19\u0E35\u0E49\u0E41\u0E25\u0E49\u0E27"
+          )
+        );
+    }
+  } catch (error) {
+    console.error(
+      "[DiscordInteractions] Failed to process interaction:",
+      error instanceof Error ? error.message : String(error)
+    );
+    return res.status(200).json(
+      ephemeralResponse(
+        "\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E14\u0E33\u0E40\u0E19\u0E34\u0E19\u0E01\u0E32\u0E23\u0E44\u0E14\u0E49\u0E43\u0E19\u0E02\u0E13\u0E30\u0E19\u0E35\u0E49 \u0E01\u0E23\u0E38\u0E13\u0E32\u0E25\u0E2D\u0E07\u0E43\u0E2B\u0E21\u0E48\u0E2D\u0E35\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07\u0E04\u0E48\u0E30"
+      )
+    );
+  }
+};
+
 // server/discordRuntime.ts
 function shouldRunAiGateway(runtime = process.env.DISCORD_AI_GATEWAY_RUNTIME) {
   return runtime === "persistent";
@@ -4335,6 +4499,11 @@ async function findAvailablePort(startPort = 3e3) {
 async function startServer() {
   const app = express2();
   const server = createServer(app);
+  app.post(
+    "/api/discord/interactions",
+    express2.raw({ type: "application/json", limit: "1mb" }),
+    handleRitzSmpDiscordInteraction
+  );
   app.use(express2.json({ limit: "50mb" }));
   app.use(express2.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);

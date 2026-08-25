@@ -11,6 +11,7 @@ import { serveStatic, setupVite } from "./vite";
 import { handleMinecraftPresenceScheduled } from "../minecraftPresenceMonitor";
 import { redeemDiscordVerificationCode } from "../db";
 import { startRitzSmpAiBot } from "../discordAiBot";
+import { handleRitzSmpDiscordInteraction } from "../discordInteractions";
 import { shouldRunAiGateway } from "../discordRuntime";
 
 async function isPortAvailable(port: number): Promise<boolean> {
@@ -35,6 +36,13 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  // Discord signs the exact raw request body. This route must be registered
+  // before JSON parsing so account-link buttons can work on autoscale hosting.
+  app.post(
+    "/api/discord/interactions",
+    express.raw({ type: "application/json", limit: "1mb" }),
+    handleRitzSmpDiscordInteraction,
+  );
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));

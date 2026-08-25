@@ -711,3 +711,9 @@
 - [x] ยืนยัน mapping DiscordSRV เดิมและทดสอบ Minecraft↔Discord แบบควบคุมสำเร็จ จึงไม่สร้าง mapping ใหม่โดยไม่จำเป็น
 - [x] ปรับคู่มือภาษาไทยให้แยกการดูแลบอท การแก้ไฟล์ DiscordSRV และวิธีปรับหน้าซื้อยศ พร้อมสถานะ token และ bridge ล่าสุด
 - [x] รัน `pnpm check`, `pnpm test` และ `pnpm build` ก่อนบันทึกเวอร์ชันของการเริ่มระบบใหม่
+
+- [ ] ตรวจและแก้ปุ่มเชื่อมบัญชีของ AI bot ที่ขึ้นว่าแอปพลิเคชันไม่ตอบสนอง โดยคง DiscordSRV mapping และ BOT CHAT token เดิม
+- [ ] ยืนยันว่า AI gateway ทำงานบน runtime แบบต่อเนื่องก่อนทดสอบปุ่มเชื่อมบัญชีจริง
+- [ ] ทดสอบปุ่มเชื่อมบัญชีจาก Discord แบบควบคุมและบันทึกเฉพาะผลลัพธ์ที่พิสูจน์ได้
+- [x] สร้าง Discord interaction endpoint ที่ตรวจลายเซ็นและรองรับปุ่มเชื่อมบัญชีเดิมบน autoscale
+- [ ] ตั้งค่า `DISCORD_AI_PUBLIC_KEY` และ Interactions Endpoint URL ของ application AI เดิม แล้วตรวจ PING จาก Discord

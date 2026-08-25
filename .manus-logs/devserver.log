@@ -5957,3 +5957,24 @@
 [2026-08-25T04:50:17.537Z] > NODE_ENV=development tsx watch server/_core/index.ts
 [2026-08-25T04:50:18.339Z] [OAuth] Initialized with baseURL: https://api.manus.im
 [2026-08-25T04:50:18.627Z] Server running on http://localhost:3000/
+[2026-08-25T05:16:13.904Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-25T05:20:29.998Z] 5:20:29 AM [tsx] change in ./server/_core/index.ts Restarting...
+[2026-08-25T05:20:30.414Z] c5:20:30 AM [tsx] change in ./server/_core/env.ts Restarting...
+[2026-08-25T05:20:31.377Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T05:20:31.668Z] Server running on http://localhost:3000/
+[2026-08-25T05:20:43.050Z] 5:20:43 AM [tsx] change in ./server/discordInteractions.ts Restarting...
+[2026-08-25T05:20:43.864Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T05:20:44.188Z] Server running on http://localhost:3000/
+[2026-08-25T05:30:15.964Z] ELIFECYCLE  Command failed.
+[2026-08-25T05:30:16.003Z] Dev server exited with code -1
+[2026-08-25T05:30:17.069Z] Starting dev server with command: pnpm run dev
+[2026-08-25T05:30:17.381Z] > ritz-smp-store@1.0.0 dev /home/ubuntu/ritz-smp-store
+[2026-08-25T05:30:17.381Z] > NODE_ENV=development tsx watch server/_core/index.ts
+[2026-08-25T05:30:18.128Z] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T05:30:18.391Z] Server running on http://localhost:3000/
+[2026-08-25T05:30:35.486Z] 5:30:35 AM [tsx] change in ./server/discordInteractions.ts Restarting...
+[2026-08-25T05:30:36.397Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T05:30:36.709Z] Server running on http://localhost:3000/
+[2026-08-25T05:30:43.258Z] 5:30:43 AM [tsx] change in ./server/discordInteractions.ts Restarting...
+[2026-08-25T05:30:44.049Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T05:30:44.341Z] Server running on http://localhost:3000/

@@ -9,6 +9,7 @@ export const ENV = {
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   discordBotToken: process.env.DISCORD_BOT_TOKEN ?? "",
   discordAiBotToken: process.env.DISCORD_AI_BOT_TOKEN ?? "",
+  discordAiPublicKey: process.env.DISCORD_AI_PUBLIC_KEY ?? "",
   discordGuildId: process.env.DISCORD_GUILD_ID ?? "",
   discordStoreChannelId: process.env.DISCORD_STORE_CHANNEL_ID ?? "",
   discordSupportChannelId: process.env.DISCORD_SUPPORT_CHANNEL_ID ?? "",
