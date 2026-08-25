@@ -102,7 +102,7 @@ export default function BotDashboard() {
               <div className="text-3xl font-extrabold text-purple-400">
                 {botStatus?.totalInteractions ?? 0} <span className="text-xs text-slate-400 font-normal">ครั้ง</span>
               </div>
-              <p className="text-xs text-slate-500 mt-2">รองรับคำสั่ง /ask, /status, /store, /ranks, /topup, /embed</p>
+              <p className="text-xs text-slate-500 mt-2">รองรับคำสั่ง Ritz AI: /ask, /status, /profile, /help</p>
             </CardContent>
           </Card>
 
@@ -113,7 +113,7 @@ export default function BotDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-xl font-bold text-cyan-400">RitzSMP AI v2.5</div>
-              <p className="text-xs text-slate-500 mt-2">รองรับคำสั่ง /ask, /ai-status และ /embed พร้อมปุ่มกดร้านค้า</p>
+              <p className="text-xs text-slate-500 mt-2">Ritz AI ให้บริการเฉพาะ /ask, /status, /profile และ /help ส่วนร้านค้า เพลง และการตั้งค่าดูแลโดยโมดูลแยก</p>
             </CardContent>
           </Card>
         </div>

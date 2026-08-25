@@ -6149,3 +6149,9 @@
 [2026-08-25T16:07:03.425Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
 [2026-08-25T16:07:32.826Z] 4:07:32 PM [vite] (client) hmr update /src/index.css
 [2026-08-25T16:10:27.093Z] 4:10:27 PM [vite] (client) hmr update /src/index.css
+[2026-08-25T16:44:04.885Z] 4:44:04 PM [tsx] change in ./server/discordAiCommandRegistry.ts Restarting...
+[2026-08-25T16:44:05.845Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T16:44:06.222Z] Server running on http://localhost:3000/
+[2026-08-25T16:44:18.124Z] 4:44:18 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-25T16:44:18.917Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T16:44:19.190Z] Server running on http://localhost:3000/

@@ -5,22 +5,31 @@ import {
 } from "./discordAiCommandRegistry.js";
 
 describe("RitzSMP AI command registry", () => {
-  it("keeps one unique, explicit command list for the AI bot", () => {
+  it("keeps exactly the Ritz AI command surface", () => {
     const commandNames = buildRitzSmpAiCommands().map((command) => command.name);
 
+    expect(commandNames).toEqual(["ask", "status", "profile", "help"]);
     expect(commandNames).toEqual(RITZ_AI_COMMAND_CATALOG.map((command) => command.name));
     expect(new Set(commandNames).size).toBe(commandNames.length);
     expect(commandNames).not.toContain("ai-status");
-    expect(commandNames).not.toContain("play");
-    expect(commandNames).not.toContain("leave");
   });
 
-  it("limits configuration and announcement commands to administrators", () => {
-    const commands = buildRitzSmpAiCommands();
+  it("does not register commands owned by other bots or system modules", () => {
+    const commandNames = buildRitzSmpAiCommands().map((command) => command.name);
 
-    for (const name of ["setup", "embed"]) {
-      const command = commands.find((item) => item.name === name);
-      expect(command?.default_member_permissions).toBeDefined();
-    }
+    expect(commandNames).not.toEqual(expect.arrayContaining([
+      "play",
+      "leave",
+      "music",
+      "store",
+      "ranks",
+      "topup",
+      "verify",
+      "players",
+      "members",
+      "setup",
+      "embed",
+    ]));
+    expect(RITZ_AI_COMMAND_CATALOG.every((command) => command.audience === "member")).toBe(true);
   });
 });

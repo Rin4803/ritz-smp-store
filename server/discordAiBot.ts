@@ -2362,74 +2362,27 @@ export function createRitzSmpAiBot(
           .addFields(
             {
               name: "/ask <คำถาม>",
-              value: "พูดคุย ปรึกษา หรือสอบถามข้อมูลกับน้อง AI ผู้ช่วยสาวน้อย",
+              value: "พูดคุย ปรึกษา หรือสอบถามข้อมูลกับ RitzSMP AI",
               inline: false,
             },
             {
-              name: "/status (หรือ /ai-status)",
-              value: "ตรวจสอบสถานะบอทและเซิร์ฟเวอร์ Minecraft แบบเรียลไทม์",
-              inline: false,
-            },
-            {
-              name: "/store",
-              value: "เปิดลิงก์เว็บไซต์ร้านค้าหลักของ RitzSMP",
-              inline: false,
-            },
-            {
-              name: "/ranks",
-              value: "ดูรายละเอียดและสิทธิประโยชน์ของแต่ละยศ",
-              inline: false,
-            },
-            {
-              name: "/topup",
-              value: "ดูคู่มือขั้นตอนการเติมเงินและซื้อยศ",
+              name: "/status",
+              value: "ตรวจสอบสถานะ RitzSMP AI และเซิร์ฟเวอร์ Minecraft แบบเรียลไทม์",
               inline: false,
             },
             {
               name: "/profile",
-              value: "ดูโปรไฟล์สมาชิกและแก้ไขคำแนะนำตัว/สไตล์การเล่น",
+              value: "ดูโปรไฟล์สมาชิกและบริบทส่วนตัวที่เชื่อมไว้",
               inline: false,
             },
             {
-              name: "/music play <url>",
-              value:
-                "เล่นเพลงจาก YouTube/SoundCloud; ใช้ /music queue, /music skip, /music stop และ /music leave ควบคุมคิวค่ะ (โหมดฟรีอาจหยุดเมื่อระบบพักเครื่อง)",
-              inline: false,
-            },
-            {
-              name: "/setup panel",
-              value: "สร้างแผงเชื่อมบัญชีและรับยศด้วยคำสั่งแอดมินเท่านั้น",
-              inline: false,
-            },
-            {
-              name: "/setup welcome / /setup leave",
-              value:
-                "สร้างข้อความต้อนรับหรือแจ้งสมาชิกออกเองครั้งเดียว ระบบไม่โพสต์ซ้ำตอนรีสตาร์ต",
-              inline: false,
-            },
-            {
-              name: "/embed default",
-              value: "ส่งประกาศร้านค้าสำเร็จรูปพร้อมปุ่มลิงก์",
-              inline: false,
-            },
-            {
-              name: "/embed create",
-              value: "สร้างประกาศ Embed แบบกำหนดเอง",
-              inline: false,
-            },
-            {
-              name: "/embed edit <message_id>",
-              value: "แก้ไข Embed ที่ RitzSMP AI สร้างในช่องปัจจุบัน",
-              inline: false,
-            },
-            {
-              name: "/embed delete <message_id>",
-              value: "ลบ Embed ที่ RitzSMP AI สร้างในช่องปัจจุบัน",
+              name: "/help",
+              value: "แสดงคู่มือคำสั่งที่ RitzSMP AI ให้บริการ",
               inline: false,
             },
           )
           .setTimestamp()
-          .setFooter({ text: "RitzSMP AI Bot • พัฒนาด้วยความรักค่ะ 💖" });
+          .setFooter({ text: "RitzSMP AI Bot • คำสั่งเฉพาะของ RitzSMP AI" });
 
         await safeReply(interaction, { embeds: [helpEmbed], ephemeral: false });
         pushLog("SUCCESS", "Executed /help successfully");
