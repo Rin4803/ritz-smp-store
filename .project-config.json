@@ -7,8 +7,8 @@
   ],
   "dev_command": "pnpm run dev",
   "env_vars": {
-    "DATABASE_URL": "mysql://2uSV7niPQQmkeZG.root:vd8uEN7eHzz7p6h3xb2Y@gateway03.us-east-1.prod.aws.tidbcloud.com:4000/94JhSFkXJqP4gFDWbmkP7v?ssl={\"rejectUnauthorized\":true}",
-    "DRIZZLE_DATABASE_URL": "mysql://2uSV7niPQQmkeZG.root:vd8uEN7eHzz7p6h3xb2Y@gateway03.us-east-1.prod.aws.tidbcloud.com:4000/94JhSFkXJqP4gFDWbmkP7v?ssl={\"rejectUnauthorized\":true}",
+    "DATABASE_URL": "mysql://TdWhXZjXsyaPZDw.root:vkf5dJ78rRAFTI5da5d0@gateway03.us-east-1.prod.aws.tidbcloud.com:4000/94JhSFkXJqP4gFDWbmkP7v?ssl={\"rejectUnauthorized\":true}",
+    "DRIZZLE_DATABASE_URL": "mysql://TdWhXZjXsyaPZDw.root:vkf5dJ78rRAFTI5da5d0@gateway03.us-east-1.prod.aws.tidbcloud.com:4000/94JhSFkXJqP4gFDWbmkP7v?ssl={\"rejectUnauthorized\":true}",
     "MANUS_WEBDEV_PROJECT_ID": "94JhSFkXJqP4gFDWbmkP7v"
   },
   "experiments": [
@@ -27,11 +27,11 @@
     "BUILT_IN_FORGE_API_KEY": "GjUY4PPc5DxsRdPLan2oDp",
     "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
     "DISCORD_ADMIN_ROLE_ID": "12345678",
-    "DISCORD_AI_BOT_TOKEN": "MTUzOTkxMTM4MTA2OTg2NDk4MA.Geh6sv.NvmVMFd_5e2RcXPcq1fkF5rkL1uWdyEcsaAIUY",
+    "DISCORD_AI_BOT_TOKEN": "MTUzOTkxMTM4MTA2OTg2NDk4MA.GZkQ4Z.jeoVStL3hWMlz8jBYZYD_PoE_OuwepYZfysJ5I",
     "DISCORD_BOT_TOKEN": "102031",
     "DISCORD_DONATE_LOG_CHANNEL_ID": "1530662780846215218",
     "DISCORD_GUILD_ID": "1525527108854481007",
-    "DISCORD_MUSIC_BOT_TOKEN": "MTU0MDc1NzI5MTkwNzY3ODMxOQ.GRVsXH.nBc4l3S89ZyUOClWahRdo5ct6oTp-BBeV8yF2A",
+    "DISCORD_MUSIC_BOT_TOKEN": "MTU0MDc1NzI5MTkwNzY3ODMxOQ.G1dsun.3lOzq_P0onyg2cbI_miSUBXNz0TiEPGKJtq4cI",
     "DISCORD_ORDERS_CHANNEL_ID": "1234567",
     "DISCORD_STORE_CHANNEL_ID": "123456",
     "DISCORD_SUPPORT_CHANNEL_ID": "1539284635689820160",

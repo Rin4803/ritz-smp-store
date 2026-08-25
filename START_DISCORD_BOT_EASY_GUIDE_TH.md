@@ -57,6 +57,8 @@ token ไม่ได้ใส่ใน Discord chat และไม่ต้อ
 
 สำหรับ RitzSMP ไฟล์ตัวอย่างของตัวแปรอยู่ที่ `env.template` และคู่มือ runtime อยู่ที่ `VPS_DEPLOYMENT.md` แต่ไฟล์ตัวอย่างไม่มี token จริง หากเปิดดูแล้วเห็น `replace_with_...` แปลว่าเป็นเพียงช่องให้เจ้าของกรอกในเครื่องของตนเอง
 
+> **สถานะ RitzSMP ปัจจุบัน:** เจ้าของได้หมุน token ของ AI test และ Music test ผ่านช่องลับแล้ว และการตรวจสอบตัวตนของบอทกับ Discord สำเร็จทั้งสองตัว โดยไม่ต้องส่ง token ในแชต ส่วน token ของ BOT CHAT ยังคงอยู่เฉพาะใน `config.yml` บน MCSV
+
 ## 5. ทำไมปุ่มเชื่อมบัญชีจึงขึ้นว่า “แอปพลิเคชันไม่ตอบสนอง”
 
 ปุ่ม Discord ต้องมีโปรแกรม bot ที่กำลังเชื่อมต่อกับ Discord อยู่ในขณะกดปุ่มเสมอ หากเว็บอยู่บน hosting แบบ autoscale process อาจพักหรือถูกสร้างใหม่ จึงไม่เหมาะสำหรับ Discord Gateway ที่ต้องเชื่อมต่อยาวตลอด 24 ชั่วโมง ผลคือ Discord จะรอคำตอบจากปุ่มแล้วแจ้งว่าแอปพลิเคชันไม่ตอบสนอง
@@ -95,7 +97,7 @@ BOT CHAT รันเป็น DiscordSRV plugin บน Minecraft host/MCSV ไ�
 | `/plugins/DiscordSRV/synchronization.yml` | mapping ยศ Minecraft กับ Discord role |
 | `/plugins/DiscordSRV/alerts.yml` | event เสริมที่ต้องแจ้ง Discord |
 
-ให้ตั้ง main mapping ไปที่ห้อง **แชทเกม** หนึ่งห้อง ไม่ใช่ห้องระบบเชื่อมบัญชี และกำหนด logical channel แยกสำหรับ `join-leave`, `deaths`, `advancements` เมื่อแก้ไฟล์แล้วให้สำรองไฟล์ก่อน และ restart Minecraft server เฉพาะเวลาผู้เล่นออนไลน์เป็น `0` หลีกเลี่ยง `/reload` รวมของ Paper/Bukkit เพราะอาจทำให้ plugin มีสถานะผิดปกติ [5]
+main mapping ของห้อง **แชทเกม** เดิมผ่านการทดสอบแล้วว่าแชต Minecraft↔Discord ใช้ได้ทั้งสองทิศทาง จึงไม่ต้องแก้ไฟล์นี้เพื่อซ่อมแชตหลัก ให้ตรวจหรือแก้เฉพาะ logical channel `join-leave`, `deaths`, `advancements` เมื่อมีผลทดสอบว่าข้อความ event ไม่แสดงเท่านั้น ทุกครั้งที่จำเป็นต้องแก้ไฟล์ ให้สำรองก่อน และ restart Minecraft server เฉพาะเวลาผู้เล่นออนไลน์เป็น `0` หลีกเลี่ยง `/reload` รวมของ Paper/Bukkit เพราะอาจทำให้ plugin มีสถานะผิดปกติ [5]
 
 ## 7. วิธีทดสอบที่ถูกต้องทีละข้อ
 
@@ -104,8 +106,8 @@ BOT CHAT รันเป็น DiscordSRV plugin บน Minecraft host/MCSV ไ�
 | ลำดับ | ทดสอบจากไหน | ผลที่ถูกต้อง | ถ้าไม่ผ่านให้ดูอะไร |
 |---:|---|---|---|
 | 1 | กดปุ่มในห้องระบบเชื่อมบัญชี | AI bot ตอบภายในไม่กี่วินาที | AI service log และ runtime แบบ persistent |
-| 2 | ส่งข้อความจาก Minecraft ใน main chat | ข้อความไปห้องแชทเกมบน Discord พร้อมยศ Minecraft | `config.yml`, `messages.yml`, DiscordSRV log |
-| 3 | ส่งข้อความจากห้องแชทเกมบน Discord | ข้อความเข้าหน้า chat Minecraft พร้อม role format | channel mapping, bot permissions, client chat filter |
+| 2 | ส่งข้อความจาก Minecraft ใน main chat | **ยืนยันแล้ว** ว่าข้อความไปห้องแชทเกมบน Discord; เหลือบันทึกยศ Minecraft ที่แสดง | หากยศไม่ขึ้น ให้ตรวจ `messages.yml` และ Placeholder hook โดยไม่เปลี่ยน mapping หลัก |
+| 3 | ส่งข้อความจากห้องแชทเกมบน Discord | **ยืนยันแล้ว** ว่าข้อความเข้าหน้า chat Minecraft; เหลือบันทึก role format ที่แสดง | หาก role ไม่ขึ้น ให้ตรวจ format/role alias โดยไม่เปลี่ยน mapping หลัก |
 | 4 | เข้า/ออกด้วยบัญชีทดสอบ | event ไปห้อง `join-leave` | logical channel mapping |
 | 5 | เปลี่ยนยศเฉพาะบัญชีทดสอบ | Discord role sync เฉพาะ role ที่ตั้งใจ | `synchronization.yml`, role hierarchy |
 | 6 | ใช้ `/play` ในห้องเสียง | bot เข้า, log PCM และผู้ฟังได้ยิน | music service log, FFmpeg, yt-dlp, network UDP |
@@ -138,7 +140,7 @@ BOT CHAT รันเป็น DiscordSRV plugin บน Minecraft host/MCSV ไ�
 
 ## 10. สรุปขั้นตอนสำหรับ RitzSMP ตอนนี้
 
-ตอนนี้ BOT CHAT/DiscordSRV เชื่อม Discord สำเร็จแล้ว แต่ยังต้องทดสอบ main chat mapping ด้วยผู้เล่นจริงอีกครั้ง ส่วน AI test มีข้อความและปุ่มอยู่แล้ว แต่ปุ่มไม่ตอบเพราะยังไม่มี runtime แบบ persistent จึงต้องเปิด Reserved/Always On Hosting หรือมีเครื่องรัน AI bot ตลอดเวลา Music test ต้องรันบน runtime ที่รองรับ Voice/FFmpeg/yt-dlp และต้องยืนยันเสียงโดยผู้ฟังจริงก่อนประกาศว่าใช้งานได้
+ตอนนี้ BOT CHAT/DiscordSRV เชื่อม Discord สำเร็จและผู้ดูแลยืนยันแล้วว่า main chat ของห้องเดิมส่งข้อความได้ทั้ง Minecraft→Discord และ Discord→Minecraft จึงคง mapping เดิมไว้ งานที่เหลือคือทดสอบ prefix/ยศ, role sync และ event messages จากบัญชีควบคุม ส่วน AI test มีข้อความและปุ่มอยู่แล้ว แต่ปุ่มจะตอบได้ก็ต่อเมื่อมี runtime แบบ persistent ที่รัน AI gateway ตลอดเวลา Music test ต้องรันบน runtime ที่รองรับ Discord Voice, FFmpeg และ yt-dlp แล้วให้ผู้ฟังจริงยืนยันเสียงก่อนประกาศว่าใช้งานได้
 
 ## เอกสารอ้างอิง
 

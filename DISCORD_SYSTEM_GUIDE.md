@@ -45,14 +45,14 @@ Music bot ยังต้องใช้ Discord Voice, FFmpeg, yt-dlp และ
 
 ## การตั้งค่า DiscordSRV ที่ต้องมี
 
-ใน `config.yml` ให้มี **main chat mapping** หนึ่งรายการสำหรับแชทสองทาง และ mapping แยกสำหรับ logical channel `join-leave`, `deaths`, `advancements` ไปยังห้อง Discord ที่เจ้าของเลือก อย่าเดา ID หรือคัดลอก token จาก bot อื่น ส่วน console channel หากยังไม่มีห้องที่ได้รับสิทธิ์เหมาะสม ให้ตั้งค่าเป็นว่าง/ปิดตาม schema ของเวอร์ชัน plugin แทนการใส่ ID ที่ไม่ถูกต้อง เพราะ log ล่าสุดเคยแจ้งว่า console channel ID ไม่ถูกต้อง
+`config.yml` ปัจจุบันมี **main chat mapping** ของห้องเดิมที่ผ่าน controlled test แล้วว่าแชต Minecraft↔Discord ทำงานทั้งสองทิศทาง จึงไม่ต้องแก้ mapping หรือ token ของ BOT CHAT เพื่อซ่อมแชตหลัก ส่วน logical channel `join-leave`, `deaths`, `advancements` จะตรวจเฉพาะเมื่อมีผลทดสอบ event ที่ไม่แสดง และต้องใช้ห้องเดิมที่เจ้าของยืนยันเท่านั้น ห้ามเดา ID หรือคัดลอก token จาก bot อื่น ส่วน console channel หากยังไม่มีห้องที่ได้รับสิทธิ์เหมาะสม ให้ปิด/เว้นค่าว่างตาม schema ของ plugin แทนการใส่ ID ที่ไม่ถูกต้อง
 
 ใน `messages.yml` ให้คงแนวคิดต่อไปนี้: ข้อความ Minecraft→Discord มี `%primarygroup%` หรือ prefix จาก LuckPerms/PlaceholderAPI; ข้อความ Discord→Minecraft แสดง role alias ที่ตั้งใจให้เห็นเท่านั้น เช่น `%toprolealias%`. DiscordSRV รองรับ bridge chat และ plugin hook กับ LuckPerms/PlaceholderAPI [1]
 
 | ความต้องการ | ไฟล์ | หลักการตรวจ |
 |---|---|---|
-| เกมพิมพ์แล้วไป Discord | `config.yml`, `messages.yml` | message ปรากฏใน main chat พร้อมยศ Minecraft |
-| Discord พิมพ์แล้วไปเกม | `config.yml`, `messages.yml` | message ปรากฏในเกมพร้อม alias ของ Discord role ที่อนุญาต |
+| เกมพิมพ์แล้วไป Discord | `config.yml`, `messages.yml` | **ยืนยันแล้ว** ว่าข้อความปรากฏใน main chat; เหลือตรวจ prefix/group |
+| Discord พิมพ์แล้วไปเกม | `config.yml`, `messages.yml` | **ยืนยันแล้ว** ว่าข้อความปรากฏในเกม; เหลือตรวจ alias ของ Discord role |
 | เข้า/ออก | `config.yml`, `messages.yml` | event ไป logical channel `join-leave` |
 | ตาย | `config.yml`, `messages.yml` | event ไป logical channel `deaths` |
 | Advancement | `config.yml`, `messages.yml` | event ไป logical channel `advancements` |
@@ -71,14 +71,14 @@ Music bot ยังต้องใช้ Discord Voice, FFmpeg, yt-dlp และ
 | ลำดับ | การทดสอบควบคุม | หลักฐานที่ต้องได้ | หากไม่ผ่าน |
 |---:|---|---|---|
 | 1 | เปิด Minecraft แล้วดู `latest.log` | DiscordSRV login สำเร็จ, WebSocket connected, finished loading | ตรวจ token ของ BOT CHAT โดย owner และสิทธิ์ bot |
-| 2 | ส่งข้อความด้วย Minecraft test account | ข้อความถึง main Discord channel พร้อม prefix/group | ตรวจ main mapping และ placeholder hook |
-| 3 | ส่งข้อความจาก Discord test account | ข้อความถึง Minecraft พร้อม role format | ตรวจสิทธิ์ Send Messages และ message format |
+| 2 | ส่งข้อความด้วย Minecraft test account | **ยืนยันแล้ว** ว่าข้อความถึง main Discord channel; ให้บันทึก prefix/group ที่แสดง | หาก prefix ไม่ขึ้น ให้ตรวจ `messages.yml` และ placeholder hook โดยไม่แตะ main mapping |
+| 3 | ส่งข้อความจาก Discord test account | **ยืนยันแล้ว** ว่าข้อความถึง Minecraft; ให้บันทึก role format ที่แสดง | หาก role ไม่ขึ้น ให้ตรวจ message format และ role alias โดยไม่แตะ main mapping |
 | 4 | เข้า/ออกด้วย test account | event ไป `join-leave` | ตรวจ channel ID / logical channel mapping |
 | 5 | เปลี่ยนเฉพาะยศ test | sync ถูกทิศทางและไม่กระทบ admin | ตรวจ mapping และลำดับ role |
 | 6 | ลอง `/play` จาก Music bot ใน voice | มี decoded PCM log **และ** ผู้ฟังได้ยิน | ตรวจ `music-bot` logs, outbound UDP, YouTube access |
 | 7 | ทำธุรกรรม test แบบไม่บันทึกจริง | AI bot ส่ง embed ไปห้องถูกต้อง | ตรวจ channel ID และ AI bot logs |
 
-สถานะปัจจุบันที่ต้องทราบคือมีหลักฐานเดิมว่า DiscordSRV login และ WebSocket สำเร็จ แต่การเข้าถึงตัวจัดการไฟล์ MCSV ของ automation ยังถูกปฏิเสธสิทธิ์ จึงยังไม่ควรอ้างว่าการ map chat/role ครบถ้วน จนกว่าจะทำ control-account test ตามตารางนี้
+สถานะปัจจุบันคือ DiscordSRV login, WebSocket และ main chat bridge ของห้องเดิมผ่านการยืนยันแล้วทั้งสองทิศทาง จึงไม่ควรแก้ `config.yml` เพื่อแก้แชตหลักอีก งานที่ยังต้องทำ control-account test คือ prefix/ยศ, role sync และ event messages เท่านั้น
 
 ## ตรวจ token โดยไม่รั่ว
 

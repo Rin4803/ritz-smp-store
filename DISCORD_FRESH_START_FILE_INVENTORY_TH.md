@@ -92,6 +92,10 @@ Music bot ใช้ทะเบียนที่ `server/discordMusicCommandReg
 
 > การตรวจโค้ดและ PCM ในชุดทดสอบยืนยันได้เพียงตรรกะการทำงานภายในเท่านั้น การยืนยันว่าเพลงออกจาก Discord Voice ต้องรัน music bot บน runtime ต่อเนื่องที่มี Voice UDP, FFmpeg และ yt-dlp พร้อมผู้ฟังจริงในห้องเสียง
 
+### สถานะ token ที่ยืนยันแล้ว
+
+ผู้ดูแลเปลี่ยน token ของ **AI bot** และ **Music bot** ผ่านหน้าตั้งค่าความลับที่ปลอดภัยแล้ว และการตรวจสอบตัวตนของบอทกับ Discord สำเร็จทั้งสองบัญชี โดยไม่มีการแสดงหรือบันทึกค่า token ลงในโค้ด เอกสาร หรือแชต ส่วน token ของ **BOT CHAT (DiscordSRV)** ยังคงอยู่เฉพาะใน `config.yml` บนโฮสต์ Minecraft และไม่ได้ถูกย้ายไปยังโครงการเว็บ
+
 ## สิ่งที่ยังทำไม่ได้บน runtime ปัจจุบัน
 
 เว็บโครงการกำลังทำงานแบบ autoscale จึงไม่เหมาะกับการคง Discord Gateway ไว้ตลอดเวลา การเปิด AI bot หรือ music bot จริงต้องมี runtime ต่อเนื่องที่ผู้ใช้จัดเตรียมและเปิดใช้งานก่อน ส่วน DiscordSRV อยู่บนโฮสต์ Minecraft แล้ว จึงสามารถตรวจและปรับ mapping แบบปลอดภัยได้โดยไม่ต้องรอ runtime ของเว็บ
@@ -104,3 +108,11 @@ Music bot ใช้ทะเบียนที่ `server/discordMusicCommandReg
 4. แก้ครั้งละหนึ่งหน้าที่แล้วทำ controlled test
 5. รีสตาร์ต Minecraft เฉพาะเมื่อยืนยันว่าผู้เล่นออนไลน์เป็นศูนย์
 6. บันทึกผลทดสอบและวิธีย้อนกลับในคู่มือก่อนเปิดใช้จริง
+
+## หลักฐานสถานะ DiscordSRV ล่าสุด
+
+จาก `logs/latest.log` ที่ตรวจเมื่อ 25 สิงหาคม 2026 พบว่า DiscordSRV 1.30.5 เริ่มทำงานและเชื่อมต่อ Discord สำเร็จ โดยมีข้อความ `Login Successful`, `Connected to WebSocket` และ `Finished Loading` นอกจากนี้ปลั๊กอินได้เปิดใช้ hook ของ Essentials, LuckPerms, Multiverse-Core, PlaceholderAPI และ InteractiveChat แล้ว
+
+มีหลักฐานจาก log ว่า Discord → Minecraft เดินทางถึงฝั่งเซิร์ฟเวอร์: log เวลา 10:44:15 บันทึกเหตุการณ์ `DiscordSRV Chat: [Discord | Owner] ... > Yoo` ต่อมาผู้ดูแลทำ controlled test ด้วยห้องแชตเดิมและยืนยันว่า **Minecraft → Discord และ Discord → Minecraft แสดงข้อความได้ทั้งคู่** ดังนั้น bridge แชตหลักของห้องเดิมใช้งานได้แล้ว และไม่ควรเปลี่ยน `config.yml`, channel mapping หรือ token ของ BOT CHAT เพื่อแก้ปัญหานี้
+
+สิ่งที่ยังต้องทดสอบแยกต่างหากคือการแสดง prefix/ยศทั้งสองฝั่ง, การ sync role และข้อความ event เช่น เข้า–ออก, ตาย และ achievement ส่วนคำเตือน `Console channel ID was invalid, not forwarding console output` กระทบเฉพาะการส่ง console ไป Discord ไม่ใช่ bridge แชตหลัก จึงจะไม่แก้หรือเดา channel ID จนกว่าผู้ดูแลจะขอเปิด console forwarding โดยระบุห้องเดิมที่ต้องการใช้
