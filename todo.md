@@ -681,6 +681,13 @@
 - [ ] ทดสอบ DiscordSRV ด้วยแชทและยศจากบัญชีควบคุมหลัง mapping ช่องครบ
 
 - [ ] ตรวจและแก้เฉพาะระบบ Discord: AI bot, music bot, DiscordSRV Bridge และแจ้งเตือนจากเว็บ
+- [ ] แก้ AI bot ที่ปุ่มเชื่อมบัญชีตอบว่าแอปพลิเคชันไม่ตอบสนอง โดยยืนยันว่า gateway รันแบบ persistent
+- [x] เตรียม feature flag เพื่อเปิด AI gateway เฉพาะบนบริการถาวรและปิดโดยค่าเริ่มต้นบน autoscale
+- [ ] ระบุและทดสอบห้อง Discord สำหรับ bridge chat แยกจากห้องระบบเชื่อมบัญชี
+- [ ] ตรวจ DiscordSRV channel mapping และ controlled flow Minecraft↔Discord หลังแก้ AI bot
+- [x] ประเมินทางเลือกรัน AI bot แบบถาวรโดยไม่ให้ผู้ใช้จัดหา VPS เอง และระบุข้อจำกัด music bot ให้ชัดเจน
+- [x] ตรวจ feature flag, TypeScript, Vitest ทั้งชุด และ production build สำหรับ AI gateway แบบ persistent
+- [ ] เปิด Reserved Hosting และกำหนด secret สำหรับ AI gateway แบบ persistent เพื่อทดสอบปุ่มเชื่อมบัญชีจริง
 - [x] แยกการเริ่มทำงานและการลงทะเบียนคำสั่งของ AI bot กับ music bot ให้ใช้ Discord application/token คนละตัว
 - [x] ทำให้เว็บส่งการแจ้งเตือนธุรกรรมผ่าน token ของ AI bot เท่านั้น พร้อมการทดสอบ token แบบ opt-in ที่ไม่เผย secret
 - [x] อัปเดต Docker Compose, template และคู่มือ VPS เพื่อรัน web/AI/music เป็นบริการแยกกัน

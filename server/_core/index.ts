@@ -10,6 +10,8 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { handleMinecraftPresenceScheduled } from "../minecraftPresenceMonitor";
 import { redeemDiscordVerificationCode } from "../db";
+import { startRitzSmpAiBot } from "../discordAiBot";
+import { shouldRunAiGateway } from "../discordRuntime";
 
 async function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -96,8 +98,13 @@ async function startServer() {
     console.log(`Server running on http://localhost:${port}/`);
   });
 
-  // Discord gateways run in their own long-lived services. The web process retains
-  // only server-to-server notification delivery using DISCORD_AI_BOT_TOKEN.
+  // Autoscale must not open a long-lived Discord Gateway. Reserved Hosting (or a
+  // self-managed runtime) turns this on explicitly with DISCORD_AI_GATEWAY_RUNTIME=persistent.
+  if (shouldRunAiGateway()) {
+    void startRitzSmpAiBot().catch((error: unknown) => {
+      console.error("[RitzSmpAI] Persistent gateway startup failed:", error instanceof Error ? error.message : String(error));
+    });
+  }
 }
 
 startServer().catch(console.error);

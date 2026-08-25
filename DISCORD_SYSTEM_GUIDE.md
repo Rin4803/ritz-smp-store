@@ -37,6 +37,12 @@ docker compose logs --since=10m ai-bot
 docker compose logs --since=10m music-bot
 ```
 
+## หากไม่มี VPS
+
+AI bot ต้องมี Gateway ที่เชื่อม Discord ตลอดเวลา จึงไม่ทำงานบน web hosting แบบ autoscale ซึ่งพัก process ได้ การใช้ **Reserved Hosting** ของโปรเจกต์บน Manus เป็นทางเลือกที่ไม่ต้องจัดหา VPS เองสำหรับ AI bot: เปิดบริการถาวร แล้วตั้ง secret server-side `DISCORD_AI_GATEWAY_RUNTIME=persistent` ร่วมกับ `DISCORD_AI_BOT_TOKEN` ระบบจะเปิด AI gateway หนึ่งตัวและทำให้ปุ่ม `เชื่อมบัญชี` ตอบสนองได้
+
+Music bot ยังต้องใช้ Discord Voice, FFmpeg, yt-dlp และการเชื่อมต่อ UDP ออกสู่ Discord จึงไม่ควรอ้างว่าใช้ได้จริงบน Reserved Hosting จนกว่าจะทดสอบ `/play` และมีผู้ฟังยืนยันเสียง หากต้องการความเสถียรของเพลงระดับ production ให้ใช้ runtime ที่ควบคุม OS/network ได้ เช่น VPS หรือ Cloud Computer แยกต่างหาก ขณะที่ DiscordSRV ยังคงทำงานบน Minecraft host ตามเดิม
+
 ## การตั้งค่า DiscordSRV ที่ต้องมี
 
 ใน `config.yml` ให้มี **main chat mapping** หนึ่งรายการสำหรับแชทสองทาง และ mapping แยกสำหรับ logical channel `join-leave`, `deaths`, `advancements` ไปยังห้อง Discord ที่เจ้าของเลือก อย่าเดา ID หรือคัดลอก token จาก bot อื่น ส่วน console channel หากยังไม่มีห้องที่ได้รับสิทธิ์เหมาะสม ให้ตั้งค่าเป็นว่าง/ปิดตาม schema ของเวอร์ชัน plugin แทนการใส่ ID ที่ไม่ถูกต้อง เพราะ log ล่าสุดเคยแจ้งว่า console channel ID ไม่ถูกต้อง
