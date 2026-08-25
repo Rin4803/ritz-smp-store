@@ -802,3 +802,13 @@
 - [x] เพิ่ม regression tests สำหรับรายการคำสั่งที่คงไว้และคำสั่งที่ถูกตัดออก
 - [x] รัน TypeScript, Vitest และ production build หลังปรับคำสั่ง Ritz AI
 - [x] บันทึก checkpoint และส่งมอบสรุปเปอร์เซ็นต์งานฉบับตรวจสอบแล้ว
+
+## Server data export
+- [x] กำหนดขอบเขตไฟล์ที่จะส่งออกจากโปรเจกต์เว็บและเซิร์ฟเวอร์ Minecraft โดยแยกไฟล์ลับออก
+- [x] รวบรวมไฟล์ข้อมูลเซิร์ฟเวอร์ Minecraft ที่เข้าถึงได้ผ่านระบบเชื่อมต่อ
+- [x] สร้างรายการไฟล์และ manifest พร้อมคัดกรอง token, password, key, certificate และ environment values
+- [x] สร้าง archive รวมข้อมูลเซิร์ฟเวอร์ที่ปลอดภัยและตรวจสอบความสมบูรณ์ของไฟล์
+- [x] ส่งมอบ archive และ manifest ให้ผู้ใช้ดาวน์โหลด
+
+## GitHub export follow-up
+- [ ] ตรวจสอบ repository URL จริงจากผู้ใช้ก่อนซิงก์ เนื่องจากบัญชี Rin4803 ยังมองไม่เห็น repository เป้าหมาย
