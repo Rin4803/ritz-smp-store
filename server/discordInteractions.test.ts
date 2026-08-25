@@ -3,10 +3,17 @@ import {
   buildVerificationCodeMessage,
   identifyRitzSmpInteractionAction,
   isUsableDiscordApplicationPublicKey,
+  RITZSMP_DISCORD_INTERACTION_ENDPOINT_PATH,
   verifyDiscordInteractionSignature,
 } from "./discordInteractions.js";
 
 describe("Discord interaction endpoint helpers", () => {
+  it("uses the API prefix that the production deployment forwards to Express", () => {
+    expect(RITZSMP_DISCORD_INTERACTION_ENDPOINT_PATH).toBe(
+      "/api/trpc/discord.interactions",
+    );
+  });
+
   it("routes the existing account-link controls without changing their custom IDs", () => {
     expect(
       identifyRitzSmpInteractionAction({

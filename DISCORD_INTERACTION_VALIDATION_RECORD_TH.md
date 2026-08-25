@@ -9,7 +9,7 @@
 | Application ที่เลือก | `AI test` (RitzSMP AI) |
 | Application ID | `1539911381069864980` |
 | Interactions Endpoint ก่อนแก้ | `https://nice-example.local/api/interactions` |
-| Endpoint ที่ต้องตั้ง | `https://ritzsmpstore-94jhsfkx.manus.space/api/discord/interactions` |
+| Endpoint ที่ต้องตั้ง | `https://ritzsmpstore-94jhsfkx.manus.space/api/trpc/discord.interactions` |
 | การยืนยันลายเซ็น | เว็บตรวจ Ed25519 ด้วย `DISCORD_AI_PUBLIC_KEY` ที่เก็บในช่องลับ |
 
 ## ขอบเขตความปลอดภัย
@@ -22,4 +22,4 @@ Discord ต้องส่ง PING ถึง endpoint และยอมรั�
 
 ## ผลการตั้งค่าเมื่อ 25 สิงหาคม 2026
 
-Discord Developer Portal ปฏิเสธการบันทึก endpoint พร้อมข้อความว่า `interactions_endpoint_url: The specified interactions endpoint url could not be verified.` ดังนั้นการตั้งค่ายัง **ไม่ถูกบันทึก** และยังไม่มีการส่ง interaction ของผู้เล่นมายังเว็บ ต้องแก้ endpoint ให้ตอบ PING ตามรูปแบบของ Discord ก่อนลองบันทึกใหม่
+Discord Developer Portal ปฏิเสธการบันทึก endpoint เดิมพร้อมข้อความว่า `interactions_endpoint_url: The specified interactions endpoint url could not be verified.` การตรวจ production พบว่าเส้นทางเดิมถูกส่งกลับเป็นหน้าเว็บ จึงย้าย endpoint ไปยัง prefix API ที่ production ส่งถึง Express ได้ การตั้งค่ายัง **ไม่ถูกบันทึก** จนกว่า Discord จะตรวจ PING ของ URL ใหม่ผ่าน

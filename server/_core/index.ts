@@ -11,7 +11,10 @@ import { serveStatic, setupVite } from "./vite";
 import { handleMinecraftPresenceScheduled } from "../minecraftPresenceMonitor";
 import { redeemDiscordVerificationCode } from "../db";
 import { startRitzSmpAiBot } from "../discordAiBot";
-import { handleRitzSmpDiscordInteraction } from "../discordInteractions";
+import {
+  handleRitzSmpDiscordInteraction,
+  RITZSMP_DISCORD_INTERACTION_ENDPOINT_PATH,
+} from "../discordInteractions";
 import { shouldRunAiGateway } from "../discordRuntime";
 
 async function isPortAvailable(port: number): Promise<boolean> {
@@ -37,9 +40,10 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   // Discord signs the exact raw request body. This route must be registered
-  // before JSON parsing so account-link buttons can work on autoscale hosting.
+  // before JSON parsing and before tRPC itself so account-link buttons can
+  // work on autoscale hosting.
   app.post(
-    "/api/discord/interactions",
+    RITZSMP_DISCORD_INTERACTION_ENDPOINT_PATH,
     express.raw({ type: "application/json", limit: "1mb" }),
     handleRitzSmpDiscordInteraction,
   );

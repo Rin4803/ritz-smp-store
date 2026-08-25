@@ -4321,6 +4321,7 @@ var DISCORD_INTERACTION_APPLICATION_COMMAND = 2;
 var DISCORD_RESPONSE_PONG = 1;
 var DISCORD_RESPONSE_CHANNEL_MESSAGE = 4;
 var EPHEMERAL_MESSAGE_FLAG = 1 << 6;
+var RITZSMP_DISCORD_INTERACTION_ENDPOINT_PATH = "/api/trpc/discord.interactions";
 function identifyRitzSmpInteractionAction(interaction) {
   const customId = interaction.data?.custom_id;
   const commandName = interaction.data?.name?.toLowerCase();
@@ -4500,7 +4501,7 @@ async function startServer() {
   const app = express2();
   const server = createServer(app);
   app.post(
-    "/api/discord/interactions",
+    RITZSMP_DISCORD_INTERACTION_ENDPOINT_PATH,
     express2.raw({ type: "application/json", limit: "1mb" }),
     handleRitzSmpDiscordInteraction
   );

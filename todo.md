@@ -717,4 +717,5 @@
 - [ ] ทดสอบปุ่มเชื่อมบัญชีจาก Discord แบบควบคุมและบันทึกเฉพาะผลลัพธ์ที่พิสูจน์ได้
 - [x] สร้าง Discord interaction endpoint ที่ตรวจลายเซ็นและรองรับปุ่มเชื่อมบัญชีเดิมบน autoscale
 - [x] แก้ production build ให้สร้าง `dist/index.js` ที่คำสั่ง start และ Dockerfile ใช้งานจริง เพื่อเผยแพร่ route interaction ล่าสุด
+- [x] ย้าย interaction endpoint ไปที่ prefix `/api/trpc` ซึ่ง production ส่งต่อถึง Express ได้ แทนเส้นทางเดิมที่ถูกส่งกลับเป็นหน้าเว็บ
 - [ ] ตั้งค่า `DISCORD_AI_PUBLIC_KEY` และ Interactions Endpoint URL ของ application AI เดิม แล้วตรวจ PING จาก Discord

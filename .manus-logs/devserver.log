@@ -5981,3 +5981,6 @@
 [2026-08-25T05:32:00.696Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
 [2026-08-25T05:32:12.252Z] [Auth] Missing session cookie
 [2026-08-25T05:45:13.830Z] 5:45:13 AM [vite] (client) hmr update /src/index.css
+[2026-08-25T05:48:55.145Z] 5:48:55 AM [tsx] change in ./server/_core/index.ts Restarting...
+[2026-08-25T05:48:56.055Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T05:48:56.341Z] Server running on http://localhost:3000/

@@ -19,6 +19,11 @@ const DISCORD_RESPONSE_PONG = 1;
 const DISCORD_RESPONSE_CHANNEL_MESSAGE = 4;
 const EPHEMERAL_MESSAGE_FLAG = 1 << 6;
 
+// Manus production forwards the established tRPC prefix to Express. Register
+// this handler before tRPC itself so Discord keeps its required raw body.
+export const RITZSMP_DISCORD_INTERACTION_ENDPOINT_PATH =
+  "/api/trpc/discord.interactions";
+
 type DiscordInteractionPayload = {
   type?: number;
   data?: {

@@ -4,11 +4,11 @@
 
 ## สถานะโค้ด
 
-โครงการมี endpoint ที่ `POST /api/discord/interactions` แล้ว โดยตรวจลายเซ็น Ed25519 ของ Discord ก่อนอ่านข้อความทุกครั้ง และตอบ `PING` ตามข้อกำหนดของ Discord การกดปุ่มเชื่อมบัญชีจะสร้างรหัส `/verify` จากระบบเดิมโดยไม่แตะ Economy, ห้อง Discord หรือการตั้งค่า DiscordSRV
+โครงการมี endpoint ที่ `POST /api/trpc/discord.interactions` แล้ว โดยตรวจลายเซ็น Ed25519 ของ Discord ก่อนอ่านข้อความทุกครั้ง และตอบ `PING` ตามข้อกำหนดของ Discord เส้นทางนี้อยู่ใต้ prefix API ที่ deployment ส่งถึง Express ได้จริง การกดปุ่มเชื่อมบัญชีจะสร้างรหัส `/verify` จากระบบเดิมโดยไม่แตะ Economy, ห้อง Discord หรือการตั้งค่า DiscordSRV
 
 | รายการ | ค่า/สถานะ |
 |---|---|
-| URL ที่ต้องนำไปตั้งค่า | `https://ritzsmpstore-94jhsfkx.manus.space/api/discord/interactions` |
+| URL ที่ต้องนำไปตั้งค่า | `https://ritzsmpstore-94jhsfkx.manus.space/api/trpc/discord.interactions` |
 | ตัวแปรที่ต้องมี | `DISCORD_AI_PUBLIC_KEY` |
 | ตำแหน่ง public key | Discord Developer Portal → application ของ RitzSMP AI → **General Information** |
 | การรับ interaction | HTTP endpoint แทนการใช้ Gateway สำหรับ application เดียวกัน |
