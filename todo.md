@@ -811,4 +811,10 @@
 - [x] ส่งมอบ archive และ manifest ให้ผู้ใช้ดาวน์โหลด
 
 ## GitHub export follow-up
-- [ ] ตรวจสอบ repository URL จริงจากผู้ใช้ก่อนซิงก์ เนื่องจากบัญชี Rin4803 ยังมองไม่เห็น repository เป้าหมาย
+- [x] ตรวจสอบ repository URL จริงจากผู้ใช้ก่อนซิงก์ เนื่องจากบัญชี Rin4803 ยังมองไม่เห็น repository เป้าหมาย
+
+## Public GitHub export request
+- [x] ยืนยัน repository URL แบบ Public ที่ผู้ใช้ต้องการใช้ และตรวจ owner/สิทธิ์การ push
+- [x] ตรวจ source export ซ้ำและยืนยันว่าไม่มี `.env`, token, password, private key, log หรือ full server backup
+- [x] ซิงก์ source ที่ปลอดภัยไปยัง repository ที่ผู้ใช้สร้าง และตรวจสถานะไฟล์บน remote
+- [x] ส่งมอบลิงก์ repository พร้อมคำเตือนว่าไม่ควร commit secret ในอนาคต
