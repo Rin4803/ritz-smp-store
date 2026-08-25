@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildMinecraftPlayersMessage,
   buildOwnDiscordProfileMessage,
+  deferredEphemeralResponse,
   buildVerificationCodeMessage,
   identifyRitzSmpInteractionAction,
   isUsableDiscordApplicationPublicKey,
@@ -82,6 +83,13 @@ describe("Discord interaction endpoint helpers", () => {
     expect(message).toContain("เฉพาะผู้กดปุ่ม");
     expect(message).toContain("ไม่แสดง UUID");
     expect(message).not.toContain("123e4567");
+  });
+
+  it("returns Discord's deferred ephemeral ACK shape for slow player status lookups", () => {
+    expect(deferredEphemeralResponse()).toEqual({
+      type: 5,
+      data: { flags: 64 },
+    });
   });
 
   it("reports zero players when Minecraft status is offline", () => {

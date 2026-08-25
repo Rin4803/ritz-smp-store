@@ -739,3 +739,5 @@
 - [x] แก้ `ritz_players_button` ที่ผู้ใช้ยืนยันว่าไม่ตอบสนอง โดยตรวจ route HTTP, Minecraft status helper และ timeout/error handling
 - [ ] ทดสอบปุ่มผู้เล่น Minecraft บน production และยืนยันข้อความสถานะกับผู้ใช้
 - [x] ป้องกัน `ritz_players_button` หมดเวลาตอบกลับภายในกรอบ Discord ด้วย timeout ที่จำกัดเฉพาะ interaction และตอบสถานะที่ตรวจสอบได้อย่างปลอดภัย
+- [x] เพิ่ม deferred acknowledgement สำหรับ ritz_players_button และแก้ข้อความผลลัพธ์ผ่าน interaction webhook เพื่อไม่ให้ Discord หมดเวลา
+- [x] เพิ่ม regression tests สำหรับ deferred response และการแก้ข้อความผลลัพธ์ของปุ่มผู้เล่น

@@ -72,6 +72,36 @@ export function buildDiscordMembersMessage(
   ].join("\n");
 }
 
+export async function editDiscordOriginalInteractionResponse(input: {
+  applicationId: string;
+  interactionToken: string;
+  content: string;
+  fetchImpl?: FetchLike;
+}): Promise<boolean> {
+  if (
+    !isDiscordSnowflake(input.applicationId) ||
+    !input.interactionToken.trim()
+  ) {
+    return false;
+  }
+
+  try {
+    const response = await (input.fetchImpl ?? fetch)(
+      `https://discord.com/api/v10/webhooks/${input.applicationId}/${encodeURIComponent(input.interactionToken)}/messages/@original`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: input.content }),
+        signal: AbortSignal.timeout(4_000),
+      },
+    );
+    return response.ok;
+  } catch {
+    // Never log the interaction token or response body: either may be private.
+    return false;
+  }
+}
+
 export async function fetchDiscordGuildMembers(input: {
   guildId: string;
   botToken: string;

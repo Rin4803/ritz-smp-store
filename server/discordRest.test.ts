@@ -1,8 +1,51 @@
 import { describe, expect, it } from "vitest";
 import {
   buildDiscordMembersMessage,
+  editDiscordOriginalInteractionResponse,
   fetchDiscordGuildMembers,
 } from "./discordRest.js";
+
+describe("Discord REST interaction helper", () => {
+  it("PATCHes the original response using the interaction token without logging or bot auth", async () => {
+    let requestUrl = "";
+    let requestInit: RequestInit | undefined;
+    const result = await editDiscordOriginalInteractionResponse({
+      applicationId: "1525527108854481007",
+      interactionToken: "opaque-interaction-token",
+      content: "สถานะ Minecraft",
+      fetchImpl: (async (input, init) => {
+        requestUrl = String(input);
+        requestInit = init;
+        return new Response(null, { status: 200 });
+      }) as typeof fetch,
+    });
+
+    expect(result).toBe(true);
+    expect(requestUrl).toBe(
+      "https://discord.com/api/v10/webhooks/1525527108854481007/opaque-interaction-token/messages/@original",
+    );
+    expect(requestInit?.method).toBe("PATCH");
+    expect(requestInit?.headers).toEqual({ "Content-Type": "application/json" });
+    expect(requestInit?.body).toBe(JSON.stringify({ content: "สถานะ Minecraft" }));
+    expect(requestInit?.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("rejects malformed webhook identifiers before making a request", async () => {
+    let called = false;
+    const result = await editDiscordOriginalInteractionResponse({
+      applicationId: "not-a-snowflake",
+      interactionToken: "token",
+      content: "ไม่ควรส่ง",
+      fetchImpl: (async () => {
+        called = true;
+        return new Response(null, { status: 200 });
+      }) as typeof fetch,
+    });
+
+    expect(result).toBe(false);
+    expect(called).toBe(false);
+  });
+});
 
 describe("Discord REST member helper", () => {
   it("renders names only and filters bot accounts from the limited member list", () => {

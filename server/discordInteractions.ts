@@ -13,6 +13,7 @@ import {
 } from "./minecraftIntegration.js";
 import {
   buildDiscordMembersMessage,
+  editDiscordOriginalInteractionResponse,
   fetchDiscordGuildMembers,
 } from "./discordRest.js";
 
@@ -25,6 +26,7 @@ const DISCORD_INTERACTION_PING = 1;
 const DISCORD_INTERACTION_APPLICATION_COMMAND = 2;
 const DISCORD_RESPONSE_PONG = 1;
 const DISCORD_RESPONSE_CHANNEL_MESSAGE = 4;
+const DISCORD_RESPONSE_DEFERRED_CHANNEL_MESSAGE = 5;
 const EPHEMERAL_MESSAGE_FLAG = 1 << 6;
 
 // Production forwards direct API routes to Express. Keep this separate from
@@ -34,6 +36,8 @@ export const RITZSMP_DISCORD_INTERACTION_ENDPOINT_PATH =
 
 type DiscordInteractionPayload = {
   type?: number;
+  application_id?: string;
+  token?: string;
   guild_id?: string;
   data?: {
     name?: string;
@@ -260,6 +264,30 @@ function ephemeralResponse(content: string) {
   };
 }
 
+export function deferredEphemeralResponse() {
+  return {
+    type: DISCORD_RESPONSE_DEFERRED_CHANNEL_MESSAGE,
+    data: {
+      flags: EPHEMERAL_MESSAGE_FLAG,
+    },
+  };
+}
+
+async function finishDeferredMinecraftPlayersInteraction(
+  interaction: DiscordInteractionPayload,
+): Promise<void> {
+  const applicationId = interaction.application_id;
+  const interactionToken = interaction.token;
+  if (!applicationId || !interactionToken) return;
+
+  const status = await fetchMinecraftServerStatus({ timeoutMs: 2_200 });
+  await editDiscordOriginalInteractionResponse({
+    applicationId,
+    interactionToken,
+    content: buildMinecraftPlayersMessage(status),
+  });
+}
+
 export const handleRitzSmpDiscordInteraction: RequestHandler = async (
   req,
   res,
@@ -341,13 +369,24 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
         );
       }
       case "minecraft-players": {
-        // Discord requires the initial interaction response within ~3 seconds.
-        // Bound the external status lookup so a slow API becomes a truthful
-        // offline/unknown response instead of an interaction timeout.
-        const status = await fetchMinecraftServerStatus({ timeoutMs: 2_200 });
-        return res.status(200).json(
-          ephemeralResponse(buildMinecraftPlayersMessage(status)),
-        );
+        // A deferred response acknowledges the button immediately. The status
+        // lookup and webhook edit happen after Discord has accepted the ACK.
+        if (!interaction.application_id || !interaction.token) {
+          return res.status(200).json(
+            ephemeralResponse(
+              "ไม่สามารถรีเฟรชสถานะ Minecraft ได้ในขณะนี้ กรุณาลองใหม่อีกครั้งค่ะ",
+            ),
+          );
+        }
+
+        res.status(200).json(deferredEphemeralResponse());
+        void finishDeferredMinecraftPlayersInteraction(interaction).catch(() => {
+          // Keep interaction tokens and upstream error details out of logs.
+          console.error(
+            "[DiscordInteractions] Minecraft players response could not be completed",
+          );
+        });
+        return;
       }
       case "discord-members": {
         if (!isConfiguredGuildInteraction(interaction)) {

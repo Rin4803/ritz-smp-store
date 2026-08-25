@@ -4384,6 +4384,25 @@ function buildDiscordMembersMessage(members) {
     visibleMembers.length >= 25 ? "\u0E41\u0E2A\u0E14\u0E07 25 \u0E04\u0E19\u0E41\u0E23\u0E01 \u2022 \u0E14\u0E39\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E40\u0E15\u0E47\u0E21\u0E44\u0E14\u0E49\u0E08\u0E32\u0E01\u0E41\u0E16\u0E1A\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E02\u0E2D\u0E07 Discord" : `\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E17\u0E35\u0E48\u0E41\u0E2A\u0E14\u0E07 ${visibleMembers.length} \u0E04\u0E19`
   ].join("\n");
 }
+async function editDiscordOriginalInteractionResponse(input) {
+  if (!isDiscordSnowflake(input.applicationId) || !input.interactionToken.trim()) {
+    return false;
+  }
+  try {
+    const response = await (input.fetchImpl ?? fetch)(
+      `https://discord.com/api/v10/webhooks/${input.applicationId}/${encodeURIComponent(input.interactionToken)}/messages/@original`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: input.content }),
+        signal: AbortSignal.timeout(4e3)
+      }
+    );
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
 async function fetchDiscordGuildMembers(input) {
   if (!isDiscordSnowflake(input.guildId) || !input.botToken.trim()) {
     return { kind: "unavailable" };
@@ -4419,6 +4438,7 @@ var DISCORD_INTERACTION_PING = 1;
 var DISCORD_INTERACTION_APPLICATION_COMMAND = 2;
 var DISCORD_RESPONSE_PONG = 1;
 var DISCORD_RESPONSE_CHANNEL_MESSAGE = 4;
+var DISCORD_RESPONSE_DEFERRED_CHANNEL_MESSAGE = 5;
 var EPHEMERAL_MESSAGE_FLAG = 1 << 6;
 var RITZSMP_DISCORD_INTERACTION_ENDPOINT_PATH = "/api/discord/interactions";
 function identifyRitzSmpInteractionAction(interaction) {
@@ -4549,6 +4569,25 @@ function ephemeralResponse(content) {
     }
   };
 }
+function deferredEphemeralResponse() {
+  return {
+    type: DISCORD_RESPONSE_DEFERRED_CHANNEL_MESSAGE,
+    data: {
+      flags: EPHEMERAL_MESSAGE_FLAG
+    }
+  };
+}
+async function finishDeferredMinecraftPlayersInteraction(interaction) {
+  const applicationId = interaction.application_id;
+  const interactionToken = interaction.token;
+  if (!applicationId || !interactionToken) return;
+  const status = await fetchMinecraftServerStatus({ timeoutMs: 2200 });
+  await editDiscordOriginalInteractionResponse({
+    applicationId,
+    interactionToken,
+    content: buildMinecraftPlayersMessage(status)
+  });
+}
 var handleRitzSmpDiscordInteraction = async (req, res) => {
   const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(String(req.body ?? ""), "utf8");
   const isValid = verifyDiscordInteractionSignature(
@@ -4616,10 +4655,20 @@ var handleRitzSmpDiscordInteraction = async (req, res) => {
         );
       }
       case "minecraft-players": {
-        const status = await fetchMinecraftServerStatus({ timeoutMs: 2200 });
-        return res.status(200).json(
-          ephemeralResponse(buildMinecraftPlayersMessage(status))
-        );
+        if (!interaction.application_id || !interaction.token) {
+          return res.status(200).json(
+            ephemeralResponse(
+              "\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E2A\u0E16\u0E32\u0E19\u0E30 Minecraft \u0E44\u0E14\u0E49\u0E43\u0E19\u0E02\u0E13\u0E30\u0E19\u0E35\u0E49 \u0E01\u0E23\u0E38\u0E13\u0E32\u0E25\u0E2D\u0E07\u0E43\u0E2B\u0E21\u0E48\u0E2D\u0E35\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07\u0E04\u0E48\u0E30"
+            )
+          );
+        }
+        res.status(200).json(deferredEphemeralResponse());
+        void finishDeferredMinecraftPlayersInteraction(interaction).catch(() => {
+          console.error(
+            "[DiscordInteractions] Minecraft players response could not be completed"
+          );
+        });
+        return;
       }
       case "discord-members": {
         if (!isConfiguredGuildInteraction(interaction)) {
