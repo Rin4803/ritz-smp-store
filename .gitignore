@@ -1,0 +1,23 @@
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*-secrets*
+secrets/
+
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+.cache/
+
+# Runtime and local tooling
+.manus-logs/
+.DS_Store
+*.log
+
+# Local project metadata
+.project-config.json
