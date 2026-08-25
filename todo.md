@@ -825,7 +825,7 @@
 - [x] Audit พบสาเหตุความไม่ตรงกัน: FoShop shop `sell-price` ถูกกำหนดเป็นราคารวมต่อแพ็ก ขณะที่ global-sell-prices/Essentials worth เป็นราคาต่อชิ้น; พบ enabled shop unit-sell ต่างจาก global 66 รายการ และต่างจาก Essentials worth 54 รายการ
 - [ ] เลือกแหล่งราคาหลักและปรับ FoShop shop sell-price/global-sell-prices/Essentials worth ให้เป็นหน่วยเดียวกัน หลังยืนยันนโยบายราคาและสร้าง rollback ที่อ่านได้จาก MCSV
 - [ ] ทดสอบ `/sell`, `/sellall`, `/worth` และการจ่ายเงินด้วยบัญชีควบคุมบน production หลังแก้ราคา
-- [ ] ตัดไฟล์วิเคราะห์ MCSV ชั่วคราวออกจาก source export ก่อน checkpoint ส่งมอบ หากไม่ต้องการเก็บเป็นหลักฐาน
+- [x] นำ snapshot/config ดิบ, ผลลัพธ์ และสคริปต์ audit MCSV/Discord ชั่วคราวออกจาก source index ก่อน checkpoint; คงเอกสารสรุปที่จำเป็นไว้เป็นหลักฐาน
 - [x] MCSV tool connection retry และดำเนินการอ่าน/เขียน `worth.yml` เมื่อระบบเชื่อมต่อพร้อม; การทดสอบคำสั่งในเกมจริงยังค้าง
 
 - [x] ผู้ใช้ยืนยันให้ดำเนินการแก้ความไม่สอดคล้องของ Economy ต่อ และสร้าง full backup MCSV ก่อนเขียน config จริง
@@ -838,5 +838,6 @@
 - [ ] ตรวจทะเบียนคำสั่ง Ritz AI, Music และ Store ให้แยกหมวดและไม่มีคำสั่งซ้ำหรือคำสั่งตกหล่น
 - [ ] ตรวจการส่งข้อความระหว่าง Minecraft กับ Discord พร้อมยศ/ชื่อที่ตรงกัน โดยไม่เปิดเผย token หรือข้อมูลลับใน log
 - [ ] ตรวจระบบ Discord production ด้วยบัญชีจริงและบันทึกผล click-through แยกจากผล unit test
-- [ ] ตรวจและปรับ Embed Template `/embed list`, `/embed save`, `/embed use` หากยังไม่มี implementation ครบ
+- [x] ตรวจและปรับ Embed Template `/embed list`, `/embed save`, `/embed use` ให้ครบ และแก้ regression test ของ footer ให้ตรงกับ schema/implementation จริง
 - [x] ตรวจและปรับ Health Snapshot สำหรับ RCON และ transaction failure alerts ให้มีหลักฐานสถานะล่าสุดและข้อความแจ้งเตือนที่ปลอดภัยใน `system.botStatus` และ Bot Dashboard
+- [x] ป้องกัน `.project-config.json` ซึ่งมีค่า environment/secret จากการถูก track หรือส่งออกใน source repository; ตรวจ GitHub แล้วไม่พบไฟล์นี้

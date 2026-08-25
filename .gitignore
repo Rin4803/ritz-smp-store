@@ -21,3 +21,12 @@ coverage/
 
 # Local project metadata
 .project-config.json
+
+# Temporary MCSV audit snapshots and one-off scripts
+.mcsv-live-read/
+mcsv-*-readonly.txt
+mcsv-*-results.txt
+scripts/audit_*.py
+scripts/debug_mcsv_parse.py
+scripts/extract_mcsv_live_read.py
+scripts/discord_channel_audit.mjs

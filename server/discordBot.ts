@@ -24,6 +24,10 @@ import {
   getRanks,
   getUserById,
   updateOrder,
+  listDiscordEmbedTemplates,
+  getDiscordEmbedTemplate,
+  createDiscordEmbedTemplate,
+  updateDiscordEmbedTemplate,
 } from "./db";
 import { ENV } from "./_core/env";
 import { storageGetSignedUrl, storagePut } from "./storage";
@@ -182,8 +186,98 @@ async function registerGuildCommands(client: Client): Promise<void> {
         name: "setup-store",
         description: "โพสต์หรืออัปเดตแผงเลือกยศ RitzSMP ในช่องร้านค้า",
       },
+      {
+        name: "embed",
+        description: "จัดการ Embed Template ของเซิร์ฟเวอร์",
+        options: [
+          { type: 1, name: "list", description: "แสดงรายการ template ที่บันทึกไว้" },
+          {
+            type: 1,
+            name: "save",
+            description: "บันทึกหรืออัปเดต template",
+            options: [
+              { type: 3, name: "name", description: "ชื่อ template", required: true, max_length: 80 },
+              { type: 3, name: "title", description: "หัวข้อ Embed", required: true, max_length: 256 },
+              { type: 3, name: "description", description: "รายละเอียด Embed", required: true, max_length: 4000 },
+              { type: 3, name: "color", description: "สี HEX เช่น EC4899", required: false, max_length: 6 },
+              { type: 3, name: "image", description: "URL รูปภาพ", required: false, max_length: 1024 },
+              { type: 3, name: "footer", description: "Footer", required: false, max_length: 2048 },
+              { type: 3, name: "channel", description: "Channel ID สำหรับใช้เป็นค่าเริ่มต้น", required: false, max_length: 64 },
+            ],
+          },
+          {
+            type: 1,
+            name: "use",
+            description: "โพสต์ template ไปยังห้องที่เลือก",
+            options: [
+              { type: 3, name: "name", description: "ชื่อ template", required: true, max_length: 80 },
+              { type: 7, name: "channel", description: "ห้องปลายทาง", required: false },
+            ],
+          },
+        ],
+      },
     ],
   });
+}
+
+export function buildStoredEmbed(template: Awaited<ReturnType<typeof getDiscordEmbedTemplate>>): EmbedBuilder {
+  if (!template) throw new Error("ไม่พบ Embed Template");
+  const color = /^([0-9a-f]{6})$/i.test(template.color) ? parseInt(template.color, 16) : 0xec4899;
+  const embed = new EmbedBuilder().setTitle(template.title).setDescription(template.description).setColor(color);
+  if (template.imageUrl) embed.setImage(template.imageUrl);
+  if (template.footer) embed.setFooter({ text: template.footer });
+  return embed;
+}
+
+async function handleEmbedCommand(interaction: any): Promise<void> {
+  if (!isStaff(interaction)) {
+    await interaction.reply({ content: "❌ เฉพาะแอดมินเท่านั้นที่ใช้คำสั่งนี้ได้", ephemeral: true });
+    return;
+  }
+  const subcommand = interaction.options.getSubcommand();
+  const guildId = interaction.guildId as string;
+  if (subcommand === "list") {
+    const templates = await listDiscordEmbedTemplates(guildId);
+    await interaction.reply({ content: templates.length ? templates.map(template => `• **${template.name}** — ${template.title}`).join("\\n") : "ยังไม่มี Embed Template ที่บันทึกไว้", ephemeral: true });
+    return;
+  }
+  if (subcommand === "save") {
+    const name = interaction.options.getString("name", true).trim();
+    const title = interaction.options.getString("title", true).trim();
+    const description = interaction.options.getString("description", true).trim();
+    const color = (interaction.options.getString("color") ?? "EC4899").replace(/^#/, "").toUpperCase();
+    if (!/^[0-9A-F]{6}$/.test(color)) {
+      await interaction.reply({ content: "❌ สีต้องเป็น HEX 6 หลัก เช่น `EC4899`", ephemeral: true });
+      return;
+    }
+    const payload = {
+      guildId, name, title, description, color,
+      imageUrl: interaction.options.getString("image")?.trim() || null,
+      footer: interaction.options.getString("footer")?.trim() || null,
+      defaultChannelId: interaction.options.getString("channel")?.trim() || null,
+      updatedBy: interaction.user.id,
+    };
+    const existing = await getDiscordEmbedTemplate(guildId, name);
+    if (existing) await updateDiscordEmbedTemplate(guildId, name, payload);
+    else await createDiscordEmbedTemplate({ ...payload, createdBy: interaction.user.id });
+    await interaction.reply({ content: `✅ บันทึก Embed Template **${name}** แล้ว`, ephemeral: true });
+    return;
+  }
+  const name = interaction.options.getString("name", true).trim();
+  const template = await getDiscordEmbedTemplate(guildId, name);
+  if (!template) {
+    await interaction.reply({ content: `❌ ไม่พบ Embed Template **${name}**`, ephemeral: true });
+    return;
+  }
+  const requestedChannel = interaction.options.getChannel("channel");
+  const channelId = requestedChannel?.id ?? template.defaultChannelId;
+  const channel = channelId ? await interaction.client.channels.fetch(channelId).catch(() => null) : interaction.channel;
+  if (!channel?.isTextBased() || !("send" in channel)) {
+    await interaction.reply({ content: "❌ ไม่พบห้องข้อความปลายทาง หรือห้องนี้ไม่รองรับการส่งข้อความ", ephemeral: true });
+    return;
+  }
+  await channel.send({ embeds: [buildStoredEmbed(template)] });
+  await interaction.reply({ content: `✅ ใช้ Embed Template **${name}** แล้ว`, ephemeral: true });
 }
 
 async function sendSlipInstructions(user: { send: (payload: any) => Promise<any> }, rank: any) {
@@ -410,6 +504,10 @@ export function createDiscordStoreBot(token: string): Client {
   client.on("messageCreate", message => handleSlipMessage(client, message).catch(error => console.error("[DiscordBot] Slip handling failed", error)));
   client.on("interactionCreate", async interaction => {
     try {
+      if (interaction.isChatInputCommand() && interaction.commandName === "embed") {
+        await handleEmbedCommand(interaction);
+        return;
+      }
       if (interaction.isChatInputCommand() && interaction.commandName === "setup-store") {
         if (!isStaff(interaction)) {
           await interaction.reply({ content: "❌ เฉพาะแอดมินร้านค้าเท่านั้นที่ใช้คำสั่งนี้ได้", ephemeral: true });
