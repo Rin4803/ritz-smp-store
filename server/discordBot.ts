@@ -74,6 +74,11 @@ export function getPublicStoreUrl(): string | null {
   return normalizePublicStoreUrl(ENV.publicStoreUrl);
 }
 
+/** An order may be marked successful only after the rank command was executed by RCON. */
+export function shouldMarkOrderSuccessful(fulfillment: { executed: boolean }): boolean {
+  return fulfillment.executed === true;
+}
+
 export function buildStorePanel(ranks: Awaited<ReturnType<typeof getRanks>>) {
   const publicStoreUrl = getPublicStoreUrl();
   const embed = new EmbedBuilder()
@@ -361,10 +366,27 @@ async function handleAdminButton(interaction: ButtonInteraction): Promise<void> 
     await interaction.reply({ content: "❌ ไม่พบยศของออเดอร์นี้", ephemeral: true });
     return;
   }
-  const fulfillment = await executeRconRank(order, rank);
+  let fulfillment: Awaited<ReturnType<typeof executeRconRank>>;
+  try {
+    fulfillment = await executeRconRank(order, rank);
+  } catch (error) {
+    console.error(`[DiscordBot] RCON fulfillment failed for order #${orderId}`, error);
+    await interaction.reply({
+      content: `⚠️ ยังอนุมัติออเดอร์ #${orderId} ไม่ได้ เพราะเชื่อมต่อเซิร์ฟเวอร์ Minecraft ไม่สำเร็จ ออเดอร์ยังคงสถานะรอตรวจสอบ กรุณาตรวจ RCON แล้วลองใหม่`,
+      ephemeral: true,
+    });
+    return;
+  }
+  if (!shouldMarkOrderSuccessful(fulfillment)) {
+    await interaction.reply({
+      content: `⚠️ ยังอนุมัติออเดอร์ #${orderId} ไม่ได้ เพราะยังไม่ได้เติมยศจริง (${fulfillment.detail}) ออเดอร์ยังคงสถานะรอตรวจสอบ คำสั่งที่ต้องใช้: \`${fulfillment.command}\``,
+      ephemeral: true,
+    });
+    return;
+  }
   const updated = await updateOrder(orderId, "สำเร็จ", `อนุมัติผ่าน Discord โดย ${interaction.user.tag}; ${fulfillment.detail}`);
   await interaction.update({
-    content: `✅ ออเดอร์ #${orderId} อนุมัติแล้วโดย ${interaction.user.tag}\n${fulfillment.executed ? "RCON มอบยศให้แล้ว" : "ต้องใช้คำสั่งใน Console ด้วยตนเอง"}\nคำสั่ง: \`${fulfillment.command}\``,
+    content: `✅ ออเดอร์ #${orderId} อนุมัติแล้วโดย ${interaction.user.tag}\nRCON มอบยศให้แล้ว\nคำสั่ง: \`${fulfillment.command}\``,
     embeds: updated ? [] : undefined,
     components: [],
   });

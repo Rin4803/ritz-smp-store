@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createDiscordStoreBot, normalizePublicStoreUrl } from "./discordBot";
+import { createDiscordStoreBot, normalizePublicStoreUrl, shouldMarkOrderSuccessful } from "./discordBot";
 
 describe("Discord store bot configuration", () => {
   it("accepts a valid public store URL and removes only a trailing slash", () => {
@@ -32,6 +32,11 @@ describe("Discord store bot configuration", () => {
       // network timeout or unreachable in sandbox is expected for external API
       expect(true).toBe(true);
     }
+  });
+
+  it("marks an order successful only after RCON execution succeeds", () => {
+    expect(shouldMarkOrderSuccessful({ executed: true })).toBe(true);
+    expect(shouldMarkOrderSuccessful({ executed: false })).toBe(false);
   });
 
   it("creates a gateway client without logging in or making network calls", () => {

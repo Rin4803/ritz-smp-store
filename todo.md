@@ -818,3 +818,5 @@
 - [x] ตรวจ source export ซ้ำและยืนยันว่าไม่มี `.env`, token, password, private key, log หรือ full server backup
 - [x] ซิงก์ source ที่ปลอดภัยไปยัง repository ที่ผู้ใช้สร้าง และตรวจสถานะไฟล์บน remote
 - [x] ส่งมอบลิงก์ repository พร้อมคำเตือนว่าไม่ควร commit secret ในอนาคต
+
+- [x] แก้ transaction fulfillment ไม่ให้บันทึกออเดอร์เป็นสำเร็จเมื่อ RCON เชื่อมต่อไม่ได้หรือส่งคำสั่งไม่สำเร็จ และเพิ่ม regression test (ตรวจแล้ว TypeScript, Vitest 157 tests และ production build ผ่าน)
