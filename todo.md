@@ -718,4 +718,12 @@
 - [x] สร้าง Discord interaction endpoint ที่ตรวจลายเซ็นและรองรับปุ่มเชื่อมบัญชีเดิมบน autoscale
 - [x] แก้ production build ให้สร้าง `dist/index.js` ที่คำสั่ง start และ Dockerfile ใช้งานจริง เพื่อเผยแพร่ route interaction ล่าสุด
 - [x] ตรวจพบว่า prefix `/api/trpc` ถูก tRPC รับก่อนและไม่เหมาะกับ raw Discord interaction จึงแก้กลับเป็น API route ตรง `/api/discord/interactions` ที่ production ส่งถึง Express ได้
-- [ ] ตั้งค่า `DISCORD_AI_PUBLIC_KEY` และ Interactions Endpoint URL ของ application AI เดิม แล้วตรวจ PING จาก Discord
+- [x] ตั้งค่า `DISCORD_AI_PUBLIC_KEY` และ Interactions Endpoint URL ของ application AI เดิม แล้วตรวจ PING จาก Discord
+
+- [x] ตรวจโครงสร้างหมวดหมู่ ห้อง ชื่อ และข้อความต้อนรับของ Discord เดิม โดยไม่สร้าง ย้าย หรือลบทรัพยากร
+- [ ] เสนอแผนจัดหน้าตา Discord ให้สอดคล้องกับ AI bot, Music bot, Minecraft bridge และร้านค้า โดยคงห้องเดิม
+- [ ] ปรับเฉพาะองค์ประกอบ Discord ที่ผู้ใช้ยืนยันหลังตรวจสอบแผนแล้ว
+
+- [ ] ใช้ Chrome ของผู้ใช้ตรวจ session Discord และโพสต์คู่มือส่วนที่เหลือในห้องเดิมเมื่อ browser sandbox เชื่อมต่อไม่ได้
+
+- [ ] เปิดและตรวจสิทธิ์การเข้าถึงห้อง Discord `1540380693690060820` และหน้า Bot ของ application AI `1539911381069864980` ผ่าน Chrome ของผู้ใช้
