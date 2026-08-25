@@ -115,6 +115,7 @@ export default function Home() {
   const createTopup = trpc.store.createTopup.useMutation({
     onSuccess: result => {
       setTopupResult(result.order.id);
+      setTopupDiscordSent(result.discordNotification?.sent === true);
       setIsTopupOpen(false);
       setTopupAmount("");
       setSlipData("");
@@ -126,7 +127,12 @@ export default function Home() {
 
   const purchaseRank = trpc.store.purchaseRank.useMutation({
     onSuccess: result => {
-      setPurchaseResult({ id: result.order.id, rankName: selectedRank?.displayName ?? "ยศ", amount: selectedRank?.price ?? "0" });
+      setPurchaseResult({
+        id: result.order.id,
+        rankName: selectedRank?.displayName ?? "ยศ",
+        amount: selectedRank?.price ?? "0",
+        rconExecuted: result.rconExecuted === true,
+      });
       setSelectedRank(null);
       setIgn("");
       playCelebrationFanfare();
@@ -144,7 +150,8 @@ export default function Home() {
   const [slipName, setSlipName] = useState("");
   const [slipType, setSlipType] = useState<"image/jpeg" | "image/png" | "image/webp">("image/png");
   const [topupResult, setTopupResult] = useState<number | null>(null);
-  const [purchaseResult, setPurchaseResult] = useState<{ id: number; rankName: string; amount: string } | null>(null);
+  const [topupDiscordSent, setTopupDiscordSent] = useState<boolean | null>(null);
+  const [purchaseResult, setPurchaseResult] = useState<{ id: number; rankName: string; amount: string; rconExecuted: boolean } | null>(null);
   const [toastMessage, setToastMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [priceFilter, setPriceFilter] = useState<"all" | "budget" | "mid" | "prestige">("all");
@@ -821,11 +828,17 @@ export default function Home() {
           <div className="modal" role="dialog" aria-modal="true">
             <div className="form-success" style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <CheckCircle2 size={20} className="gold-text" />
-              <strong>แจ้งเติมเงินออเดอร์ #${topupResult} สำเร็จแล้ว</strong>
+              <strong>แจ้งเติมเงินออเดอร์ #{topupResult} สำเร็จแล้ว</strong>
             </div>
-            <div className="success-status-line"><CheckCircle2 size={13} /> บันทึกคำขอแล้ว <span>•</span> ขั้นถัดไป: แอดมินตรวจสลิป</div>
+            <div className={topupDiscordSent ? "success-status-line" : "form-error"}>
+              {topupDiscordSent ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
+              {topupDiscordSent ? "แจ้งแอดมินใน Discord แล้ว" : "บันทึกคำขอแล้ว แต่แจ้งเตือน Discord ไม่สำเร็จ"}
+              <span>•</span> ขั้นถัดไป: แอดมินตรวจสลิป
+            </div>
             <p className="subtle" style={{ margin: "14px 0", lineHeight: 1.8, fontSize: 13 }}>
-              ระบบได้ส่งสลิปและบันทึกคำขอเติมเงินของคุณไปยังแอดมินเรียบร้อยแล้ว เมื่อแอดมินตรวจสอบการโอนเงินเรียบร้อย ยอดเงินจะเข้าสู่กระเป๋าของคุณทันที
+              {topupDiscordSent
+                ? "ระบบได้ส่งสลิปและบันทึกคำขอเติมเงินของคุณไปยังแอดมินเรียบร้อยแล้ว เมื่อแอดมินตรวจสอบการโอนเงินเรียบร้อย ยอดเงินจะเข้าสู่กระเป๋าของคุณทันที"
+                : "ระบบบันทึกคำขอเติมเงินแล้ว แต่ไม่สามารถแจ้งเตือน Discord อัตโนมัติได้ กรุณาแจ้งทีมงานพร้อมเลขออเดอร์นี้เพื่อให้ตรวจสอบจากหน้าแอดมิน เมื่อยืนยันการโอนเงินแล้ว ยอดเงินจะเข้าสู่กระเป๋าของคุณทันที"}
             </p>
             <div className="modal-actions">
               <button className="primary-btn compact-btn" onClick={() => setTopupResult(null)}>
@@ -894,16 +907,19 @@ export default function Home() {
                 <span style={{ color: "#94a3b8" }}>ยอดเงินหักจากกระเป๋า:</span>
                 <strong style={{ color: "#f87171" }}>-{formatPrice(purchaseResult.amount)} ฿</strong>
               </div>
-              <div style={{ display: "flex", justifyContent: "between", fontSize: "13px" }}>
+                <div style={{ display: "flex", justifyContent: "between", fontSize: "13px" }}>
                 <span style={{ color: "#94a3b8" }}>สถานะการส่งยศเข้าเซิร์ฟเวอร์:</span>
-                <strong style={{ color: "#4ade80", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                  <CheckCircle2 size={13} /> สำเร็จอัตโนมัติผ่าน RCON
+                <strong style={{ color: purchaseResult.rconExecuted ? "#4ade80" : "#fbbf24", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                  {purchaseResult.rconExecuted ? <CheckCircle2 size={13} /> : <Clock3 size={13} />}
+                  {purchaseResult.rconExecuted ? "สำเร็จอัตโนมัติผ่าน RCON" : "รอดำเนินการตรวจสอบ/ส่งคำสั่งซ้ำ"}
                 </strong>
               </div>
             </div>
 
             <p className="subtle" style={{ margin: "0 0 24px", lineHeight: "1.7", fontSize: "13px", textAlign: "center" }}>
-              ระบบได้ส่งคำสั่งอัปเกรดตัวละครของคุณในเกม RitzSMP เรียบร้อยแล้ว สามารถเข้าเกมและตรวจสอบยศใหม่ของคุณได้ทันที! ✨
+              {purchaseResult.rconExecuted
+                ? "ระบบได้ส่งคำสั่งอัปเกรดตัวละครของคุณในเกม RitzSMP เรียบร้อยแล้ว สามารถเข้าเกมและตรวจสอบยศใหม่ของคุณได้ทันที"
+                : "ระบบบันทึกรายการซื้อแล้ว แต่ยังส่งคำสั่งอัปเกรดเข้าเกมไม่สำเร็จ ทีมงานจะตรวจสอบและดำเนินการให้จากหน้าแอดมิน"}
             </p>
 
             <div className="modal-actions" style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
