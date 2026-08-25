@@ -720,6 +720,7 @@
 - [x] รองรับ `ritz_profile_button`, `ritz_players_button` และ `ritz_discord_members_button` ผ่าน HTTP Interaction แบบ ephemeral โดยจำกัดข้อมูลเฉพาะที่ปลอดภัยและไม่พึ่ง Discord Gateway
 - [x] แก้เส้นทาง interaction ของปุ่มรายชื่อบัญชีที่ยังถูก AI Gateway เวอร์ชันเดิมตอบกลับ แม้ HTTP handler ของปุ่มจะเผยแพร่แล้ว
 - [ ] แก้ปุ่ม `ritz_discord_members_button` ที่ถึง HTTP endpoint แล้วแต่ Discord REST ส่งข้อมูลสมาชิกที่แสดงได้เป็น 0 คน
+- [x] ตรวจและแก้ data flow หลัง Discord REST ของปุ่มสมาชิก เพราะผล production ยังแสดง 0 คนหลังแก้ parser ชั้นแรก
 - [x] ตรวจสาเหตุที่ `/verify <code>` ใน Minecraft ปฏิเสธรหัสที่ Discord Interaction เพิ่งสร้าง โดยเทียบการสร้าง การเก็บ และการตรวจรหัสอย่างปลอดภัย
 - [x] ตรวจพอร์ตและการเข้าถึง RCON ของ MCSV แล้วตั้งค่า secret สำหรับเชื่อมเว็บสโตร์กับคำสั่งสร้างรหัส Minecraft เดิมโดยไม่แก้ DiscordSRV หรือ Economy
 - [x] สร้าง Discord interaction endpoint ที่ตรวจลายเซ็นและรองรับปุ่มเชื่อมบัญชีเดิมบน autoscale

@@ -36,9 +36,14 @@ function memberDisplayName(member: DiscordRestGuildMember, index: number): strin
 }
 
 function isVisibleMember(member: DiscordRestGuildMember): boolean {
+  // `fetchDiscordGuildMembers` already verifies a string `user.id` from the
+  // authenticated Discord response. Do not apply a narrower second ID format
+  // rule here: the Gateway reference filters only bots, and this display path
+  // never exposes the ID itself.
   return (
-    isDiscordSnowflake(member.user?.id ?? "") &&
-    member.user?.bot !== true
+    typeof member.user?.id === "string" &&
+    member.user.id.trim().length > 0 &&
+    member.user.bot !== true
   );
 }
 

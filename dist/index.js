@@ -4368,7 +4368,7 @@ function memberDisplayName(member, index) {
   return escapeDiscordMarkdown(candidate) || `\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 ${index + 1}`;
 }
 function isVisibleMember(member) {
-  return isDiscordSnowflake(member.user?.id ?? "") && member.user?.bot !== true;
+  return typeof member.user?.id === "string" && member.user.id.trim().length > 0 && member.user.bot !== true;
 }
 function buildDiscordMembersMessage(members) {
   const visibleMembers = members.filter(isVisibleMember).slice(0, 25);

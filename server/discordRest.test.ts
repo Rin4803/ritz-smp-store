@@ -73,6 +73,23 @@ describe("Discord REST member helper", () => {
     expect(message).toContain("สมาชิกที่แสดง 1 คน");
   });
 
+  it("does not discard an authenticated REST member with a second UI-only ID format check", () => {
+    const message = buildDiscordMembersMessage([
+      {
+        nick: "สมาชิกจาก REST",
+        user: {
+          id: "verified-by-rest-helper",
+          username: "member",
+          bot: false,
+        },
+      },
+    ]);
+
+    expect(message).toContain("สมาชิกจาก REST");
+    expect(message).toContain("สมาชิกที่แสดง 1 คน");
+    expect(message).not.toContain("verified-by-rest-helper");
+  });
+
   it("returns a privacy-safe unavailable result when Discord rejects the request", async () => {
     const result = await fetchDiscordGuildMembers({
       guildId: "1525527108854481007",
