@@ -3,6 +3,7 @@ import { startLogin } from "@/const";
 import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { getRankPresentation } from "@/lib/rankPresentation";
 import confetti from "canvas-confetti";
 import {
   ArrowRight,
@@ -146,6 +147,13 @@ export default function Home() {
 
   const ranks = ranksQuery.data ?? [];
   const rankNotice = useMemo(() => ranks.some(rank => Number(rank.price) <= 0), [ranks]);
+  const featuredRankId = useMemo(() => {
+    const purchasableRanks = ranks.filter(rank => Number(rank.price) > 0);
+    return purchasableRanks.reduce<(typeof ranks)[number] | null>(
+      (highest, rank) => !highest || Number(rank.price) > Number(highest.price) ? rank : highest,
+      null,
+    )?.id ?? null;
+  }, [ranks]);
   const walletBalance = Number(walletQuery.data?.balance ?? 0);
 
   const copyAccount = async (value: string) => {
@@ -332,6 +340,11 @@ export default function Home() {
               <div className="hero-note">
                 <Sparkles size={14} className="gold-text" /> เติมเงินแนบสลิปครั้งเดียว ซื้อยศหักกระเป๋าออโต้ส่งเข้าเซิร์ฟเวอร์ทันที
               </div>
+              <ol className="realm-journey" aria-label="ขั้นตอนการซื้อยศ">
+                <li><span>01</span><div><strong>เติม Wallet</strong><small>แนบสลิปเพียงครั้งเดียว</small></div></li>
+                <li><span>02</span><div><strong>เลือกยศ</strong><small>ดูสิทธิประโยชน์ก่อนตัดสินใจ</small></div></li>
+                <li><span>03</span><div><strong>รับสถานะ</strong><small>ติดตามคำสั่งซื้อได้ในบัญชี</small></div></li>
+              </ol>
             </div>
             <div className="hero-art" aria-hidden="true">
               <div className="float-badge one"><CheckCircle2 size={15} className="gold-text" /> ระบบ Wallet สะดวก</div>
@@ -350,6 +363,20 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="journey-band" aria-labelledby="journey-title">
+          <div className="container journey-band-grid">
+            <div>
+              <div className="eyebrow">The RitzSMP Journey</div>
+              <h2 id="journey-title">เลือกยศอย่างมั่นใจ<br /><span>รู้ทุกขั้นตอนก่อนเริ่ม</span></h2>
+            </div>
+            <div className="journey-checkpoints">
+              <div className="checkpoint"><span className="checkpoint-index">1</span><div><strong>เติมเครดิต</strong><small>แจ้งยอดและแนบสลิปผ่านบัญชีของคุณ</small></div></div>
+              <div className="checkpoint"><span className="checkpoint-index">2</span><div><strong>เลือกสิทธิ์</strong><small>เทียบราคา ระยะเวลา และสิทธิพิเศษของแต่ละยศ</small></div></div>
+              <div className="checkpoint"><span className="checkpoint-index">3</span><div><strong>ติดตามผล</strong><small>ตรวจสอบสถานะคำสั่งซื้อได้จากประวัติของคุณ</small></div></div>
+            </div>
+          </div>
+        </section>
+
         <section className="section" id="ranks">
           <div className="container">
             <div className="section-head">
@@ -360,9 +387,9 @@ export default function Home() {
               <p className="section-description">เลือกยศที่คุณต้องการเพื่อสนับสนุนการพัฒนาเซิร์ฟเวอร์ RitzSMP ระบบจะหักยอดเงินจากกระเป๋าของคุณอัตโนมัติทันที</p>
             </div>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginBottom: "24px", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ position: "relative", flex: "1 1 260px", maxWidth: "400px" }}>
-                <span style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", display: "flex" }}>
+            <div className="catalog-toolbar">
+              <div className="rank-search">
+                <span className="rank-search-icon">
                   <Search size={16} />
                 </span>
                 <input
@@ -370,58 +397,45 @@ export default function Home() {
                   placeholder="ค้นหายศ, สิทธิพิเศษ หรือคำอธิบาย..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  style={{
-                    width: "100%",
-                    background: "rgba(20, 20, 32, 0.7)",
-                    border: "1px solid rgba(212, 175, 55, 0.25)",
-                    borderRadius: "10px",
-                    padding: "10px 14px 10px 42px",
-                    color: "#f8fafc",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                  }}
+                  className="rank-search-input"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
-                    style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}
+                    className="rank-search-clear"
+                    aria-label="ล้างคำค้นหา"
                   >
                     <X size={14} />
                   </button>
                 )}
               </div>
 
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              <div className="rank-filters" aria-label="ตัวกรองช่วงราคา">
                 <button
                   type="button"
                   className={`ghost-btn compact-btn ${priceFilter === "all" ? "active-filter" : ""}`}
-                  style={{ borderColor: priceFilter === "all" ? "#d4af37" : "rgba(255,255,255,0.15)", background: priceFilter === "all" ? "rgba(212,175,55,0.15)" : "transparent" }}
                   onClick={() => setPriceFilter("all")}
                 >
                   ทั้งหมด
                 </button>
                 <button
                   type="button"
-                  className={`ghost-btn compact-btn`}
-                  style={{ borderColor: priceFilter === "budget" ? "#d4af37" : "rgba(255,255,255,0.15)", background: priceFilter === "budget" ? "rgba(212,175,55,0.15)" : "transparent" }}
+                  className={`ghost-btn compact-btn ${priceFilter === "budget" ? "active-filter" : ""}`}
                   onClick={() => setPriceFilter("budget")}
                 >
                   &le; 500 ฿
                 </button>
                 <button
                   type="button"
-                  className={`ghost-btn compact-btn`}
-                  style={{ borderColor: priceFilter === "mid" ? "#d4af37" : "rgba(255,255,255,0.15)", background: priceFilter === "mid" ? "rgba(212,175,55,0.15)" : "transparent" }}
+                  className={`ghost-btn compact-btn ${priceFilter === "mid" ? "active-filter" : ""}`}
                   onClick={() => setPriceFilter("mid")}
                 >
                   501 - 1,500 ฿
                 </button>
                 <button
                   type="button"
-                  className={`ghost-btn compact-btn`}
-                  style={{ borderColor: priceFilter === "prestige" ? "#d4af37" : "rgba(255,255,255,0.15)", background: priceFilter === "prestige" ? "rgba(212,175,55,0.15)" : "transparent" }}
+                  className={`ghost-btn compact-btn ${priceFilter === "prestige" ? "active-filter" : ""}`}
                   onClick={() => setPriceFilter("prestige")}
                 >
                   &gt; 1,500 ฿
@@ -470,14 +484,26 @@ export default function Home() {
               }
 
               return (
-                <div className="rank-grid">
-                  {filteredRanks.map((rank, index) => {
+                <>
+                  <div className="catalog-result" aria-live="polite">
+                    <span><Sparkles size={14} /> พบ <strong>{filteredRanks.length}</strong> ยศที่เลือกได้</span>
+                    <span>เลือกระดับที่เหมาะกับการผจญภัยของคุณ</span>
+                  </div>
+                  <div className="rank-grid">
+                  {filteredRanks.map(rank => {
                     const features = parseFeatures(rank.features);
                     const isFreeTemplate = Number(rank.price) <= 0;
+                    const presentation = getRankPresentation(rank.price);
+                    const isFeatured = rank.id === featuredRankId && !searchQuery && priceFilter === "all";
                     return (
-                      <article key={rank.id} className={`rank-card ${rank.color} ${index === 1 && !searchQuery ? "featured" : ""}`}>
-                        <span className="rank-ribbon">{rank.badge}</span>
+                      <article key={rank.id} className={`rank-card ${rank.color} tier-${presentation.tier} ${isFeatured ? "featured" : ""}`}>
+                        <div className="rank-card-topline">
+                          <span className="rank-tier-label">{presentation.label}</span>
+                          <span className="rank-level">LEVEL {presentation.level || "—"}</span>
+                        </div>
+                        <span className="rank-ribbon">{rank.badge || "Ritz Rank"}</span>
                         <div className="rank-icon"><Crown size={23} strokeWidth={1.7} /></div>
+                        <div className="rank-tier-copy">{presentation.subtitle}</div>
                         <div className="rank-name">{rank.displayName}</div>
                         <p className="rank-description">{rank.description}</p>
                         <ul className="feature-list">
@@ -495,13 +521,14 @@ export default function Home() {
                             onClick={() => openOrder(rank)}
                             disabled={isFreeTemplate}
                           >
-                            {!isFreeTemplate ? "ซื้อยศ" : "Template"} <ArrowRight size={14} />
+                            {!isFreeTemplate ? "ปลดล็อกยศ" : "รอเปิดใช้งาน"} <ArrowRight size={14} />
                           </button>
                         </div>
                       </article>
                     );
                   })}
-                </div>
+                  </div>
+                </>
               );
             })()}
 
@@ -628,6 +655,11 @@ export default function Home() {
               </button>
             </div>
             <form className="form-grid" onSubmit={submitTopup}>
+              <div className="checkout-steps" aria-label="ขั้นตอนเติมเงิน">
+                <span className="checkout-step is-active"><b>1</b> โอนเงิน</span>
+                <span className="checkout-step"><b>2</b> แนบสลิป</span>
+                <span className="checkout-step"><b>3</b> รอตรวจสอบ</span>
+              </div>
               <label className="form-label">
                 จำนวนเงินที่ต้องการเติม (บาท)
                 <input
@@ -715,6 +747,11 @@ export default function Home() {
               </button>
             </div>
             <form className="form-grid" onSubmit={submitPurchase}>
+              <div className="checkout-steps" aria-label="ขั้นตอนซื้อยศ">
+                <span className="checkout-step is-active"><b>1</b> ระบุชื่อในเกม</span>
+                <span className="checkout-step is-active"><b>2</b> ยืนยันยอด</span>
+                <span className="checkout-step"><b>3</b> ส่งคำขอยศ</span>
+              </div>
               <label className="form-label">
                 ชื่อในเกม (Minecraft IGN)
                 <input
@@ -773,6 +810,7 @@ export default function Home() {
               <CheckCircle2 size={20} className="gold-text" />
               <strong>แจ้งเติมเงินออเดอร์ #${topupResult} สำเร็จแล้ว</strong>
             </div>
+            <div className="success-status-line"><CheckCircle2 size={13} /> บันทึกคำขอแล้ว <span>•</span> ขั้นถัดไป: แอดมินตรวจสลิป</div>
             <p className="subtle" style={{ margin: "14px 0", lineHeight: 1.8, fontSize: 13 }}>
               ระบบได้ส่งสลิปและบันทึกคำขอเติมเงินของคุณไปยังแอดมินเรียบร้อยแล้ว เมื่อแอดมินตรวจสอบการโอนเงินเรียบร้อย ยอดเงินจะเข้าสู่กระเป๋าของคุณทันที
             </p>
