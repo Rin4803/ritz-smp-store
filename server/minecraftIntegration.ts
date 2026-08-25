@@ -103,11 +103,16 @@ function getMotd(data: any): string {
   return "RitzSMP Minecraft Server";
 }
 
-export async function fetchMinecraftServerStatus(): Promise<MinecraftServerStatus> {
+export async function fetchMinecraftServerStatus(
+  options: { timeoutMs?: number } = {},
+): Promise<MinecraftServerStatus> {
   const startedAt = Date.now();
+  const timeoutMs = Number.isFinite(options.timeoutMs)
+    ? Math.min(4_000, Math.max(500, Math.floor(options.timeoutMs!)))
+    : 4_000;
   try {
     const response = await fetch("https://api.mcsrvstat.us/2/ritz.mcsv.me", {
-      signal: AbortSignal.timeout(4000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
     if (!response.ok) throw new Error(`Minecraft status API returned ${response.status}`);
 

@@ -1505,11 +1505,12 @@ function getMotd(data) {
   if (typeof clean === "string") return clean;
   return "RitzSMP Minecraft Server";
 }
-async function fetchMinecraftServerStatus() {
+async function fetchMinecraftServerStatus(options = {}) {
   const startedAt = Date.now();
+  const timeoutMs = Number.isFinite(options.timeoutMs) ? Math.min(4e3, Math.max(500, Math.floor(options.timeoutMs))) : 4e3;
   try {
     const response = await fetch("https://api.mcsrvstat.us/2/ritz.mcsv.me", {
-      signal: AbortSignal.timeout(4e3)
+      signal: AbortSignal.timeout(timeoutMs)
     });
     if (!response.ok) throw new Error(`Minecraft status API returned ${response.status}`);
     const data = await response.json();
@@ -4615,7 +4616,7 @@ var handleRitzSmpDiscordInteraction = async (req, res) => {
         );
       }
       case "minecraft-players": {
-        const status = await fetchMinecraftServerStatus();
+        const status = await fetchMinecraftServerStatus({ timeoutMs: 2200 });
         return res.status(200).json(
           ephemeralResponse(buildMinecraftPlayersMessage(status))
         );

@@ -735,3 +735,7 @@
 - [ ] ใช้ Chrome ของผู้ใช้ตรวจ session Discord และโพสต์คู่มือส่วนที่เหลือในห้องเดิมเมื่อ browser sandbox เชื่อมต่อไม่ได้
 
 - [ ] เปิดและตรวจสิทธิ์การเข้าถึงห้อง Discord `1540380693690060820` และหน้า Bot ของ application AI `1539911381069864980` ผ่าน Chrome ของผู้ใช้
+
+- [x] แก้ `ritz_players_button` ที่ผู้ใช้ยืนยันว่าไม่ตอบสนอง โดยตรวจ route HTTP, Minecraft status helper และ timeout/error handling
+- [ ] ทดสอบปุ่มผู้เล่น Minecraft บน production และยืนยันข้อความสถานะกับผู้ใช้
+- [x] ป้องกัน `ritz_players_button` หมดเวลาตอบกลับภายในกรอบ Discord ด้วย timeout ที่จำกัดเฉพาะ interaction และตอบสถานะที่ตรวจสอบได้อย่างปลอดภัย

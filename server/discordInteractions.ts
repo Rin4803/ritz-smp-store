@@ -341,7 +341,10 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
         );
       }
       case "minecraft-players": {
-        const status = await fetchMinecraftServerStatus();
+        // Discord requires the initial interaction response within ~3 seconds.
+        // Bound the external status lookup so a slow API becomes a truthful
+        // offline/unknown response instead of an interaction timeout.
+        const status = await fetchMinecraftServerStatus({ timeoutMs: 2_200 });
         return res.status(200).json(
           ephemeralResponse(buildMinecraftPlayersMessage(status)),
         );
