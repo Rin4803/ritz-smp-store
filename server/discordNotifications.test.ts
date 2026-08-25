@@ -16,6 +16,7 @@ vi.mock("./storage", () => ({
 }));
 
 import { notifyMinecraftPresence, notifyPurchaseCompleted, notifyTopupSubmitted } from "./discordNotifications";
+import { storageGetSignedUrl } from "./storage";
 
 beforeEach(() => {
   vi.stubEnv("DISCORD_AI_BOT_TOKEN", "unit-test-ai-token");
@@ -75,6 +76,51 @@ describe("Discord web-store notifications", () => {
     ]));
     expect(payload.embeds[0].image.url).toBe("attachment://42-slip.png");
     expect(form.get("files[0]")).toBeInstanceOf(File);
+  });
+
+  it("falls back to a text-only embed when the uploaded slip cannot be downloaded", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response("unavailable", { status: 404 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: "fallback-message-42" }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await notifyTopupSubmitted({ order, userName: "Ritz Player", slipType: "image/png" });
+
+    expect(result).toMatchObject({ sent: true, channelId: "donate-log-channel-456", messageId: "fallback-message-42" });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const requestInit = fetchMock.mock.calls[1]?.[1] as RequestInit;
+    expect(requestInit.method).toBe("POST");
+    const payload = JSON.parse(String(requestInit.body));
+    expect(payload.embeds[0].image).toBeUndefined();
+    expect(payload.embeds[0].description).toContain("ไม่สามารถแนบรูปสลิปอัตโนมัติได้");
+  });
+
+  it("returns an unsuccessful result when Discord rejects the slip notification", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(Buffer.from("fake-slip"), { status: 200 }))
+      .mockResolvedValueOnce(new Response("forbidden", { status: 403, statusText: "Forbidden" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await notifyTopupSubmitted({ order, userName: "Ritz Player", slipType: "image/png" });
+
+    expect(result).toMatchObject({ sent: false, channelId: "donate-log-channel-456" });
+    expect(result.reason).toContain("Discord message failed (403)");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("falls back when the slip signed URL cannot be prepared", async () => {
+    vi.mocked(storageGetSignedUrl).mockRejectedValueOnce(new Error("storage unavailable"));
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({ id: "storage-fallback-42" }), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await notifyTopupSubmitted({ order, userName: "Ritz Player", slipType: "image/png" });
+
+    expect(result).toMatchObject({ sent: true, channelId: "donate-log-channel-456", messageId: "storage-fallback-42" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(String((fetchMock.mock.calls[0]?.[1] as RequestInit).body)).embeds[0].description)
+      .toContain("ไม่สามารถแนบรูปสลิปอัตโนมัติได้");
   });
 
   it("posts a supporter announcement to the configurable support channel", async () => {

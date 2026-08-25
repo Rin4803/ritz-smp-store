@@ -43,3 +43,7 @@
 5. ทดสอบ item ที่อยู่ใน 46 รายการซึ่งไม่มีใน FoShop และ item ที่ FoShop ปิด `enabled: false`
 
 จนกว่าจะมีผลทดสอบข้อ 1–4 และผู้ดูแลเลือกนโยบายราคา จะยังไม่ถือว่า economy “ตรงกันสมบูรณ์”
+
+## Startup evidence รอบล่าสุด
+
+จาก startup log ล่าสุดของ MCSV พบว่า **DiscordSRV 1.30.5**, **FoShop 1.6** และ **LuckPerms 5.5.0** ถูกโหลดสำเร็จ ส่วน **Essentials 2.22.0** ถูกโหลดแต่มี error line ว่า `You are running an unsupported server version!` จึงยังไม่ควรอัปเดต Essentials หรือเปลี่ยนโครงสร้างราคาเพิ่มเติมจนกว่าจะยืนยัน server version และทดสอบ compatibility บน backup/staging ก่อน การตรวจรอบนี้เป็น read-only และไม่ได้เปลี่ยนข้อมูลผู้เล่นหรือไฟล์เซิร์ฟเวอร์

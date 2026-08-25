@@ -350,7 +350,7 @@ export const appRouter = router({
         const coinAmount = coinRewards[Math.min(Math.max(rankIndex - 1, 0), coinRewards.length - 1)] ?? 100;
         const pointsCmd = `points give ${input.minecraftIGN} ${coinAmount}`;
 
-        let rconDetail = "ไม่ต้องใช้ RCON";
+        let rconDetail = "ยังไม่ได้ตั้งค่า RCON จึงรอตรวจสอบการเติมยศ";
         let rconExecuted = false;
 
         if (ENV.rconHost && ENV.rconPort && ENV.rconPassword) {
@@ -363,7 +363,7 @@ export const appRouter = router({
             rconDetail = `${res1 || "มอบยศสำเร็จ"} | ${res2 || `เพิ่มเหรียญ ${coinAmount} แต้มสำเร็จ`}`;
           } catch (err: any) {
             console.error("[RCON] Purchase rank/points auto-fulfillment error:", err);
-            rconDetail = `RCON ไม่สำเร็จ (${err?.message ?? String(err)} แต่หักเงินและบันทึกออเดอร์แล้ว)`;
+            rconDetail = `RCON ไม่สำเร็จ (${err?.message ?? String(err)}) หักเงินแล้วและสร้างออเดอร์เป็นรอตรวจสอบเพื่อให้แอดมินดำเนินการต่อ`;
           } finally {
             await rcon?.end().catch(() => undefined);
           }
@@ -378,18 +378,19 @@ export const appRouter = router({
           paymentMethod: "กระเป๋าเงิน (Wallet)",
           slipUrl: "https://ritzsmp.me/wallet-paid",
           slipKey: "wallet-paid",
-          status: "สำเร็จ",
+          status: rconExecuted ? "สำเร็จ" : "รอตรวจสอบ",
           adminNotes: `หักเงินจากกระเป๋าอัตโนมัติ [${rconDetail}]`,
         });
 
         await notifyOwner({
-          title: `RitzSMP: ซื้อยศสำเร็จ #${order.id} (${rank.displayName})`,
+          title: `RitzSMP: ซื้อยศ${rconExecuted ? "สำเร็จ" : "รอตรวจสอบ"} #${order.id} (${rank.displayName})`,
           content: [
             `IGN: ${input.minecraftIGN}`,
             `ผู้ซื้อ: ${ctx.user.name ?? "ไม่ระบุชื่อ"}`,
             `ยศ: ${rank.displayName}`,
             `ราคา: ${rank.price} บาท`,
-            `RCON: ${rconExecuted ? "สำเร็จ" : "รอดำเนินการ"}`,
+            `สถานะออเดอร์: ${order.status}`,
+            `RCON: ${rconExecuted ? "สำเร็จ" : "รอตรวจสอบ/ต้องดำเนินการต่อ"}`,
           ].join("\n"),
         }).catch(() => {});
         const discordNotification = await notifyPurchaseCompleted({

@@ -41,6 +41,13 @@ type OrderLike = {
   createdAt?: Date | string | number;
 };
 
+class DiscordAttachmentPreparationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DiscordAttachmentPreparationError";
+  }
+}
+
 const DISCORD_API = "https://discord.com/api/v10";
 
 function getDiscordToken(): string {
@@ -98,11 +105,18 @@ async function postDiscordMessage(
   try {
     let response: Response;
     if (attachment) {
-      const fileResponse = await fetch(attachment.url, { signal: AbortSignal.timeout(8000) });
-      if (!fileResponse.ok) {
-        throw new Error(`slip download failed (${fileResponse.status})`);
+      let bytes: ArrayBuffer;
+      try {
+        const fileResponse = await fetch(attachment.url, { signal: AbortSignal.timeout(8000) });
+        if (!fileResponse.ok) {
+          throw new Error(`slip download failed (${fileResponse.status})`);
+        }
+        bytes = await fileResponse.arrayBuffer();
+      } catch (error) {
+        throw new DiscordAttachmentPreparationError(
+          error instanceof Error ? error.message : "slip download failed",
+        );
       }
-      const bytes = await fileResponse.arrayBuffer();
       const form = new FormData();
       const embed = payload.embeds[0];
       const embedWithAttachment = embed
@@ -135,6 +149,9 @@ async function postDiscordMessage(
     const result = (await response.json().catch(() => ({}))) as { id?: string };
     return { sent: true, channelId, messageId: result.id };
   } catch (error) {
+    if (error instanceof DiscordAttachmentPreparationError) {
+      throw error;
+    }
     console.error("[DiscordNotifications] Failed to post message:", error);
     return { sent: false, channelId, reason: error instanceof Error ? error.message : String(error) };
   }
@@ -167,11 +184,23 @@ export async function notifyTopupSubmitted(input: {
 
   try {
     const signedUrl = await storageGetSignedUrl(order.slipKey);
-    return await postDiscordMessage(channelId, { embeds: [embed] }, {
-      url: signedUrl,
-      fileName: getSlipFileName(order.slipKey),
-      contentType: slipType,
-    });
+    try {
+      return await postDiscordMessage(channelId, { embeds: [embed] }, {
+        url: signedUrl,
+        fileName: getSlipFileName(order.slipKey),
+        contentType: slipType,
+      });
+    } catch (error) {
+      if (!(error instanceof DiscordAttachmentPreparationError)) {
+        throw error;
+      }
+      console.error("[DiscordNotifications] Could not download top-up slip attachment:", error);
+      const fallbackEmbed: DiscordEmbed = {
+        ...embed,
+        description: `${embed.description}\n\nไม่สามารถแนบรูปสลิปอัตโนมัติได้ กรุณาเปิดรายการในหน้าแอดมินเพื่อตรวจสอบไฟล์`,
+      };
+      return postDiscordMessage(channelId, { embeds: [fallbackEmbed] });
+    }
   } catch (error) {
     console.error("[DiscordNotifications] Could not prepare top-up slip attachment:", error);
     const fallbackEmbed: DiscordEmbed = {

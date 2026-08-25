@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { appRouter } from "./routers";
+import { Rcon } from "rcon-client";
 import type { TrpcContext } from "./_core/context";
 
 type User = NonNullable<TrpcContext["user"]>;
@@ -144,6 +145,18 @@ describe("RitzSMP Order Success Path & Admin Workflow", () => {
     const caller = appRouter.createCaller(createTestContext("user"));
     const result = await caller.store.purchaseRank({ rankId: 999, minecraftIGN: "RitzWarrior" });
     expect(result.order.status).toBe("สำเร็จ");
+    expect(result.discordNotification).toMatchObject({ sent: true, channelId: "support" });
+  });
+
+  it("keeps a wallet purchase pending when RCON fulfillment fails", async () => {
+    vi.mocked(Rcon.connect).mockRejectedValueOnce(new Error("เชื่อมต่อ RCON ไม่ได้"));
+    const caller = appRouter.createCaller(createTestContext("user"));
+
+    const result = await caller.store.purchaseRank({ rankId: 999, minecraftIGN: "RitzWarrior" });
+
+    expect(result.rconExecuted).toBe(false);
+    expect(result.order.status).toBe("รอตรวจสอบ");
+    expect(result.order.adminNotes).toContain("RCON ไม่สำเร็จ");
     expect(result.discordNotification).toMatchObject({ sent: true, channelId: "support" });
   });
 

@@ -867,3 +867,6 @@
 - [x] แก้ production mismatch หน้า `/servers`: หน้า Home มีสถานะ RitzSMP ออนไลน์ แต่หน้าเลือกเซิร์ฟเวอร์แสดงว่าไม่มีเซิร์ฟเวอร์ที่เปิดใช้งาน
 - [x] แก้ข้อความ modal เติมเงินให้แสดงเลขออเดอร์เป็น `#123` ไม่ใช่ `#$123`
 - [x] ผูกผล `rconExecuted` กับ purchase success modal เพื่อไม่แสดงว่าส่งยศสำเร็จเมื่อ RCON ยังไม่สำเร็จ
+- [x] ปรับ Discord slip flow ให้ fallback เป็น embed ภาษาไทยเมื่อเตรียมไฟล์สลิปล้มเหลว และคืน `sent:false` เมื่อ Discord ปฏิเสธการโพสต์ พร้อม regression coverage
+- [x] แก้สถานะออเดอร์ซื้อยศจาก `สำเร็จ` เป็น `รอตรวจสอบ` เมื่อ RCON เติมยศหรือเหรียญไม่สำเร็จ และเพิ่ม regression test กันการแสดงผลคลาดเคลื่อน; Vitest รวมผ่าน 171 tests, TypeScript check และ production build ผ่าน
+- [x] ตรวจ schema/database แล้วพบว่าสถานะ `รอตรวจสอบ` มีอยู่เดิม จึงไม่ต้องทำ migration เพิ่ม; ให้ purchaseRank ใช้สถานะนี้เมื่อ RCON ไม่พร้อมหรือล้มเหลว พร้อม regression test
