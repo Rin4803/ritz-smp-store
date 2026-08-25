@@ -5984,3 +5984,9 @@
 [2026-08-25T05:48:55.145Z] 5:48:55 AM [tsx] change in ./server/_core/index.ts Restarting...
 [2026-08-25T05:48:56.055Z] c[OAuth] Initialized with baseURL: https://api.manus.im
 [2026-08-25T05:48:56.341Z] Server running on http://localhost:3000/
+[2026-08-25T05:50:25.965Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-25T05:52:53.991Z] 5:52:53 AM [tsx] change in ./server/discordInteractions.ts Restarting...
+[2026-08-25T05:52:54.940Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T05:52:55.234Z] Server running on http://localhost:3000/
+[2026-08-25T05:52:57.404Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-25T05:53:58.340Z] 5:53:58 AM [vite] (client) hmr update /src/index.css

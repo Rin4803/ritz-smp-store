@@ -4321,7 +4321,7 @@ var DISCORD_INTERACTION_APPLICATION_COMMAND = 2;
 var DISCORD_RESPONSE_PONG = 1;
 var DISCORD_RESPONSE_CHANNEL_MESSAGE = 4;
 var EPHEMERAL_MESSAGE_FLAG = 1 << 6;
-var RITZSMP_DISCORD_INTERACTION_ENDPOINT_PATH = "/api/trpc/discord.interactions";
+var RITZSMP_DISCORD_INTERACTION_ENDPOINT_PATH = "/api/discord/interactions";
 function identifyRitzSmpInteractionAction(interaction) {
   const customId = interaction.data?.custom_id;
   const commandName = interaction.data?.name?.toLowerCase();

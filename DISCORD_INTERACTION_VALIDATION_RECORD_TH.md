@@ -22,4 +22,8 @@ Discord ต้องส่ง PING ถึง endpoint และยอมรั�
 
 ## ผลการตั้งค่าเมื่อ 25 สิงหาคม 2026
 
-Discord Developer Portal ปฏิเสธการบันทึก endpoint เดิมพร้อมข้อความว่า `interactions_endpoint_url: The specified interactions endpoint url could not be verified.` การตรวจ production พบว่าเส้นทางเดิมถูกส่งกลับเป็นหน้าเว็บ จึงย้าย endpoint ไปยัง prefix API ที่ production ส่งถึง Express ได้ การตั้งค่ายัง **ไม่ถูกบันทึก** จนกว่า Discord จะตรวจ PING ของ URL ใหม่ผ่าน
+Discord Developer Portal ปฏิเสธการบันทึก endpoint เดิมพร้อมข้อความว่า `interactions_endpoint_url: The specified interactions endpoint url could not be verified.` การตรวจ production พบว่าเส้นทางเดิมถูกส่งกลับเป็นหน้าเว็บ จึงย้าย endpoint ไปยัง prefix API ที่ production ส่งถึง Express ได้
+
+หลังตั้ง URL ใหม่ `https://ritzsmpstore-94jhsfkx.manus.space/api/trpc/discord.interactions` แล้ว Discord ยังคงปฏิเสธด้วยข้อความเดิม การตรวจ production พบว่า tRPC รับเส้นทางดังกล่าวก่อน handler เฉพาะ จึงเปลี่ยนเป็น URL ตรง `https://ritzsmpstore-94jhsfkx.manus.space/api/discord/interactions` ที่ production ส่งถึง Express ได้แล้ว
+
+การตั้งค่ายัง **ไม่ถูกบันทึก** และห้ามอ้างว่าปุ่มเชื่อมบัญชีใช้งานได้จนกว่า Discord จะตรวจ PING ของ URL ตรงใหม่นี้สำเร็จ

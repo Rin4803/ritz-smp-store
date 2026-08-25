@@ -8,9 +8,9 @@ import {
 } from "./discordInteractions.js";
 
 describe("Discord interaction endpoint helpers", () => {
-  it("uses the API prefix that the production deployment forwards to Express", () => {
+  it("uses the direct API route that the production deployment forwards to Express", () => {
     expect(RITZSMP_DISCORD_INTERACTION_ENDPOINT_PATH).toBe(
-      "/api/trpc/discord.interactions",
+      "/api/discord/interactions",
     );
   });
 
