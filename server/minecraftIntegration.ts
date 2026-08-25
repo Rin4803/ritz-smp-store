@@ -23,12 +23,77 @@ export interface RconRankResult {
   detail: string;
 }
 
+export interface RconConnectionProbe {
+  connected: boolean;
+  detail: string;
+}
+
+export type MinecraftDiscordCodeResult =
+  | { kind: "new" | "pending"; code: string }
+  | { kind: "linked" }
+  | { kind: "unknown" };
+
 export function isValidMinecraftIgn(value: string): boolean {
   return /^[A-Za-z0-9_]{3,16}$/.test(value);
 }
 
 export function isValidLuckPermsGroup(value: string): boolean {
   return /^[A-Za-z0-9_-]{1,32}$/.test(value);
+}
+
+export function parseMinecraftDiscordCodeResponse(response: string): MinecraftDiscordCodeResult {
+  const codeMatch = response.match(/STATUS:(NEW|PENDING):(\d{4})/);
+  if (codeMatch) {
+    return {
+      kind: codeMatch[1].toLowerCase() as "new" | "pending",
+      code: codeMatch[2],
+    };
+  }
+  if (response.includes("STATUS:LINKED")) return { kind: "linked" };
+  return { kind: "unknown" };
+}
+
+function hasUsableRconConfiguration(): boolean {
+  return Boolean(
+    ENV.rconHost &&
+      Number.isInteger(ENV.rconPort) &&
+      ENV.rconPort > 0 &&
+      ENV.rconPassword,
+  );
+}
+
+async function sendRconCommand(command: string): Promise<string> {
+  if (!hasUsableRconConfiguration()) {
+    throw new Error("RCON configuration is incomplete");
+  }
+
+  const rcon = await Rcon.connect({
+    host: ENV.rconHost,
+    port: ENV.rconPort,
+    password: ENV.rconPassword,
+    timeout: 2_000,
+  });
+  try {
+    return await rcon.send(command);
+  } finally {
+    await rcon.end();
+  }
+}
+
+/** ขอรหัสจาก Skript Minecraft ซึ่งเป็นแหล่งเดียวกับที่ `/verify` ตรวจสอบ */
+export async function getMinecraftDiscordVerificationCode(
+  discordUserId: string,
+): Promise<Exclude<MinecraftDiscordCodeResult, { kind: "unknown" }>> {
+  if (!/^\d{17,20}$/.test(discordUserId)) {
+    throw new Error("Discord user ID is invalid");
+  }
+
+  const response = await sendRconCommand(`getcode ${discordUserId}`);
+  const result = parseMinecraftDiscordCodeResponse(response);
+  if (result.kind === "unknown") {
+    throw new Error("Minecraft did not return a verification code status");
+  }
+  return result;
 }
 
 function getMotd(data: any): string {
@@ -116,5 +181,31 @@ export async function grantMinecraftRank(minecraftIGN: string, groupName: string
     return { executed: true, command, detail: response || "LuckPerms ดำเนินการแล้ว" };
   } finally {
     await rcon.end();
+  }
+}
+
+/**
+ * ตรวจสอบ RCON ด้วยคำสั่ง `list` ที่อ่านอย่างเดียวเท่านั้น
+ * ห้ามใช้ฟังก์ชันนี้สร้าง แก้ไข หรือลบข้อมูลใน Minecraft
+ */
+export async function probeMinecraftRconConnection(): Promise<RconConnectionProbe> {
+  if (!hasUsableRconConfiguration()) {
+    return {
+      connected: false,
+      detail: "ข้อมูล RCON ยังไม่ครบ",
+    };
+  }
+
+  try {
+    await sendRconCommand("list");
+    return {
+      connected: true,
+      detail: "เชื่อมต่อ RCON และเรียกคำสั่งอ่านสถานะสำเร็จ",
+    };
+  } catch {
+    return {
+      connected: false,
+      detail: "เชื่อมต่อ RCON ไม่สำเร็จ โปรดตรวจ host, port, password และการเปิดใช้งาน RCON",
+    };
   }
 }

@@ -1456,6 +1456,49 @@ function isValidMinecraftIgn(value) {
 function isValidLuckPermsGroup(value) {
   return /^[A-Za-z0-9_-]{1,32}$/.test(value);
 }
+function parseMinecraftDiscordCodeResponse(response) {
+  const codeMatch = response.match(/STATUS:(NEW|PENDING):(\d{4})/);
+  if (codeMatch) {
+    return {
+      kind: codeMatch[1].toLowerCase(),
+      code: codeMatch[2]
+    };
+  }
+  if (response.includes("STATUS:LINKED")) return { kind: "linked" };
+  return { kind: "unknown" };
+}
+function hasUsableRconConfiguration() {
+  return Boolean(
+    ENV.rconHost && Number.isInteger(ENV.rconPort) && ENV.rconPort > 0 && ENV.rconPassword
+  );
+}
+async function sendRconCommand(command) {
+  if (!hasUsableRconConfiguration()) {
+    throw new Error("RCON configuration is incomplete");
+  }
+  const rcon = await Rcon.connect({
+    host: ENV.rconHost,
+    port: ENV.rconPort,
+    password: ENV.rconPassword,
+    timeout: 2e3
+  });
+  try {
+    return await rcon.send(command);
+  } finally {
+    await rcon.end();
+  }
+}
+async function getMinecraftDiscordVerificationCode(discordUserId) {
+  if (!/^\d{17,20}$/.test(discordUserId)) {
+    throw new Error("Discord user ID is invalid");
+  }
+  const response = await sendRconCommand(`getcode ${discordUserId}`);
+  const result = parseMinecraftDiscordCodeResponse(response);
+  if (result.kind === "unknown") {
+    throw new Error("Minecraft did not return a verification code status");
+  }
+  return result;
+}
 function getMotd(data) {
   const clean = data?.motd?.clean;
   if (Array.isArray(clean)) return clean.join(" ").trim() || "RitzSMP Minecraft Server";
@@ -4332,8 +4375,7 @@ function identifyRitzSmpInteractionAction(interaction) {
   if (customId === "ritz_unlink_button") return "unlink";
   return "unsupported";
 }
-function buildVerificationCodeMessage(code, expiresAt) {
-  const expiresAtText = new Date(expiresAt).toLocaleTimeString("th-TH");
+function buildVerificationCodeMessage(code, isExisting) {
   return [
     "## \u{1F517} \u0E23\u0E2B\u0E31\u0E2A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19 Minecraft",
     `\u0E23\u0E2B\u0E31\u0E2A\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E04\u0E37\u0E2D: **\`${code}\`**`,
@@ -4342,7 +4384,8 @@ function buildVerificationCodeMessage(code, expiresAt) {
     `2. \u0E1E\u0E34\u0E21\u0E1E\u0E4C \`/verify ${code}\` \u0E43\u0E19\u0E41\u0E0A\u0E15\u0E40\u0E01\u0E21`,
     "3. \u0E23\u0E30\u0E1A\u0E1A\u0E08\u0E30\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E17\u0E31\u0E19\u0E17\u0E35\u0E04\u0E48\u0E30",
     "",
-    `\u0E23\u0E2B\u0E31\u0E2A\u0E2B\u0E21\u0E14\u0E2D\u0E32\u0E22\u0E38\u0E43\u0E19 10 \u0E19\u0E32\u0E17\u0E35 (${expiresAtText})`
+    isExisting ? "\u0E19\u0E35\u0E48\u0E04\u0E37\u0E2D\u0E23\u0E2B\u0E31\u0E2A\u0E17\u0E35\u0E48\u0E23\u0E2D\u0E01\u0E32\u0E23\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E2D\u0E22\u0E39\u0E48\u0E40\u0E14\u0E34\u0E21 \u0E43\u0E0A\u0E49\u0E23\u0E2B\u0E31\u0E2A\u0E19\u0E35\u0E49\u0E43\u0E19\u0E40\u0E01\u0E21\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22" : "\u0E23\u0E2B\u0E31\u0E2A\u0E19\u0E35\u0E49\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E08\u0E32\u0E01 Minecraft \u0E42\u0E14\u0E22\u0E15\u0E23\u0E07 \u0E41\u0E25\u0E30\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E08\u0E19\u0E01\u0E27\u0E48\u0E32\u0E08\u0E30\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08",
+    "\u0E2B\u0E49\u0E32\u0E21\u0E41\u0E0A\u0E23\u0E4C\u0E23\u0E2B\u0E31\u0E2A\u0E19\u0E35\u0E49\u0E01\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E2D\u0E37\u0E48\u0E19"
   ].join("\n");
 }
 function normalizeHex(value) {
@@ -4431,10 +4474,20 @@ var handleRitzSmpDiscordInteraction = async (req, res) => {
   try {
     switch (identifyRitzSmpInteractionAction(interaction)) {
       case "verification-code": {
-        const codeRow = await createDiscordVerificationCode(userId);
+        const codeResult = await getMinecraftDiscordVerificationCode(userId);
+        if (codeResult.kind === "linked") {
+          return res.status(200).json(
+            ephemeralResponse(
+              "\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Discord \u0E19\u0E35\u0E49\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E01\u0E31\u0E1A Minecraft \u0E2D\u0E22\u0E39\u0E48\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30 \u0E2B\u0E32\u0E01\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E01\u0E32\u0E23\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D \u0E42\u0E1B\u0E23\u0E14\u0E43\u0E0A\u0E49\u0E1B\u0E38\u0E48\u0E21\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E01\u0E32\u0E23\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D"
+            )
+          );
+        }
         return res.status(200).json(
           ephemeralResponse(
-            buildVerificationCodeMessage(codeRow.code, codeRow.expiresAt)
+            buildVerificationCodeMessage(
+              codeResult.code,
+              codeResult.kind === "pending"
+            )
           )
         );
       }

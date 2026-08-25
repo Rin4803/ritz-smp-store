@@ -3,9 +3,9 @@ import type { RequestHandler } from "express";
 import { ENV } from "./_core/env.js";
 import {
   cancelDiscordVerificationCode,
-  createDiscordVerificationCode,
   unlinkDiscordVerification,
 } from "./db.js";
+import { getMinecraftDiscordVerificationCode } from "./minecraftIntegration.js";
 
 const DISCORD_PUBLIC_KEY_DER_PREFIX = Buffer.from(
   "302a300506032b6570032100",
@@ -68,9 +68,8 @@ export function identifyRitzSmpInteractionAction(
 
 export function buildVerificationCodeMessage(
   code: string,
-  expiresAt: Date | number,
+  isExisting: boolean,
 ): string {
-  const expiresAtText = new Date(expiresAt).toLocaleTimeString("th-TH");
   return [
     "## 🔗 รหัสยืนยันตัวตน Minecraft",
     `รหัสของคุณคือ: **\`${code}\`**`,
@@ -79,7 +78,10 @@ export function buildVerificationCodeMessage(
     `2. พิมพ์ \`/verify ${code}\` ในแชตเกม`,
     "3. ระบบจะเชื่อมบัญชีทันทีค่ะ",
     "",
-    `รหัสหมดอายุใน 10 นาที (${expiresAtText})`,
+    isExisting
+      ? "นี่คือรหัสที่รอการยืนยันอยู่เดิม ใช้รหัสนี้ในเกมได้เลย"
+      : "รหัสนี้สร้างจาก Minecraft โดยตรง และใช้ได้จนกว่าจะยืนยันสำเร็จ",
+    "ห้ามแชร์รหัสนี้กับผู้อื่น",
   ].join("\n");
 }
 
@@ -199,10 +201,20 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
   try {
     switch (identifyRitzSmpInteractionAction(interaction)) {
       case "verification-code": {
-        const codeRow = await createDiscordVerificationCode(userId);
+        const codeResult = await getMinecraftDiscordVerificationCode(userId);
+        if (codeResult.kind === "linked") {
+          return res.status(200).json(
+            ephemeralResponse(
+              "บัญชี Discord นี้เชื่อมกับ Minecraft อยู่แล้วค่ะ หากต้องการยกเลิกการเชื่อมต่อ โปรดใช้ปุ่มยกเลิกการเชื่อมต่อ",
+            ),
+          );
+        }
         return res.status(200).json(
           ephemeralResponse(
-            buildVerificationCodeMessage(codeRow.code, codeRow.expiresAt),
+            buildVerificationCodeMessage(
+              codeResult.code,
+              codeResult.kind === "pending",
+            ),
           ),
         );
       }

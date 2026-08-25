@@ -45,10 +45,11 @@ describe("Discord interaction endpoint helpers", () => {
   });
 
   it("formats a non-secret verification response for the player", () => {
-    const message = buildVerificationCodeMessage("1234", 0);
+    const message = buildVerificationCodeMessage("1234", false);
     expect(message).toContain("`1234`");
     expect(message).toContain("/verify 1234");
     expect(message).toContain("ritz.mcsv.me");
+    expect(message).not.toContain("10 นาที");
   });
 
   it("rejects malformed signatures before parsing an interaction", () => {

@@ -5991,3 +5991,16 @@
 [2026-08-25T05:52:57.404Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
 [2026-08-25T05:53:58.340Z] 5:53:58 AM [vite] (client) hmr update /src/index.css
 [2026-08-25T06:24:38.631Z] 6:24:38 AM [vite] (client) hmr update /src/index.css
+[2026-08-25T13:00:37.771Z] ELIFECYCLE  Command failed.
+[2026-08-25T13:00:37.809Z] Dev server exited with code -1
+[2026-08-25T13:00:38.878Z] Starting dev server with command: pnpm run dev
+[2026-08-25T13:00:39.292Z] > ritz-smp-store@1.0.0 dev /home/ubuntu/ritz-smp-store
+[2026-08-25T13:00:39.292Z] > NODE_ENV=development tsx watch server/_core/index.ts
+[2026-08-25T13:00:40.175Z] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T13:00:40.505Z] Server running on http://localhost:3000/
+[2026-08-25T13:01:19.214Z] 1:01:19 PM [tsx] change in ./server/minecraftIntegration.ts Restarting...
+[2026-08-25T13:01:20.119Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T13:01:20.457Z] Server running on http://localhost:3000/
+[2026-08-25T13:02:45.046Z] 1:02:45 PM [tsx] change in ./server/discordInteractions.ts Restarting...
+[2026-08-25T13:02:45.981Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T13:02:46.284Z] Server running on http://localhost:3000/

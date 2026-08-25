@@ -712,9 +712,12 @@
 - [x] ปรับคู่มือภาษาไทยให้แยกการดูแลบอท การแก้ไฟล์ DiscordSRV และวิธีปรับหน้าซื้อยศ พร้อมสถานะ token และ bridge ล่าสุด
 - [x] รัน `pnpm check`, `pnpm test` และ `pnpm build` ก่อนบันทึกเวอร์ชันของการเริ่มระบบใหม่
 
-- [ ] ตรวจและแก้ปุ่มเชื่อมบัญชีของ AI bot ที่ขึ้นว่าแอปพลิเคชันไม่ตอบสนอง โดยคง DiscordSRV mapping และ BOT CHAT token เดิม
-- [ ] ยืนยันว่า AI gateway ทำงานบน runtime แบบต่อเนื่องก่อนทดสอบปุ่มเชื่อมบัญชีจริง
+- [x] ตรวจและแก้ปุ่มเชื่อมบัญชีของ AI bot ที่ขึ้นว่าแอปพลิเคชันไม่ตอบสนอง โดยคง DiscordSRV mapping และ BOT CHAT token เดิม
+- [x] ยืนยันว่าปุ่มเชื่อมบัญชีใช้ HTTP interaction endpoint ที่ตรวจลายเซ็น จึงไม่ต้องเปิด AI gateway แบบต่อเนื่องบน autoscale สำหรับ flow นี้
 - [ ] ทดสอบปุ่มเชื่อมบัญชีจาก Discord แบบควบคุมและบันทึกเฉพาะผลลัพธ์ที่พิสูจน์ได้
+- [ ] ตรวจและแก้รายงานล่าสุดว่าระบบเชื่อมบัญชียังใช้งานไม่ได้ โดยยืนยันว่าเวอร์ชัน RCON ถึง production และเก็บข้อความผิดพลาดโดยไม่รับรหัสยืนยัน
+- [x] ตรวจสาเหตุที่ `/verify <code>` ใน Minecraft ปฏิเสธรหัสที่ Discord Interaction เพิ่งสร้าง โดยเทียบการสร้าง การเก็บ และการตรวจรหัสอย่างปลอดภัย
+- [x] ตรวจพอร์ตและการเข้าถึง RCON ของ MCSV แล้วตั้งค่า secret สำหรับเชื่อมเว็บสโตร์กับคำสั่งสร้างรหัส Minecraft เดิมโดยไม่แก้ DiscordSRV หรือ Economy
 - [x] สร้าง Discord interaction endpoint ที่ตรวจลายเซ็นและรองรับปุ่มเชื่อมบัญชีเดิมบน autoscale
 - [x] แก้ production build ให้สร้าง `dist/index.js` ที่คำสั่ง start และ Dockerfile ใช้งานจริง เพื่อเผยแพร่ route interaction ล่าสุด
 - [x] ตรวจพบว่า prefix `/api/trpc` ถูก tRPC รับก่อนและไม่เหมาะกับ raw Discord interaction จึงแก้กลับเป็น API route ตรง `/api/discord/interactions` ที่ production ส่งถึง Express ได้
