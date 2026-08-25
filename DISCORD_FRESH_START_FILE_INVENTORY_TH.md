@@ -20,8 +20,10 @@
 | `server/discordAiCommandRegistry.ts` | ทะเบียนคำสั่งใหม่เพียงจุดเดียวสำหรับ AI bot | ใช้งานแล้ว; มีเฉพาะคำสั่ง AI/onboarding และไม่มีคำสั่ง music หรือ alias เก่า |
 | `server/discordAiCommandRegistry.test.ts` | ชุดทดสอบทะเบียนคำสั่งใหม่ | ใช้งานแล้ว; ตรวจชื่อคำสั่งไม่ซ้ำและสิทธิ์ผู้ดูแลของคำสั่งตั้งค่า |
 | `server/discordAiBotRunner.ts` | ตัวสั่งรัน AI gateway แยก process | เก็บไว้; ใช้ได้เฉพาะ runtime ที่รันต่อเนื่อง |
-| `server/discordMusic.ts` | คิวเพลง, ดึงเสียง และควบคุมการเล่น | เก็บไว้เป็นต้นแบบ; ห้ามยืนยันว่าเสียงใช้ได้จนกว่าจะมีการฟังจริง |
-| `server/discordMusicBot.ts` | bootstrap และคำสั่งของ music bot | เก็บไว้; จะแยกคำสั่ง/สิทธิ์จาก AI bot ชัดเจน |
+| `server/discordMusic.ts` | คิวเพลง, ดึงเสียง และควบคุมการเล่น | ใช้ต่อโดยแยกทะเบียนคำสั่งออกแล้ว; ห้ามยืนยันว่าเสียงใช้ได้จนกว่าจะมีการฟังจริง |
+| `server/discordMusicCommandRegistry.ts` | ทะเบียนคำสั่งใหม่เพียงจุดเดียวของ music bot | ใช้งานแล้ว; มีเฉพาะ `/music`, `/play` และ `/leave` เพื่อไม่ให้ชนกับ AI bot |
+| `server/discordMusicCommandRegistry.test.ts` | ชุดทดสอบทะเบียนคำสั่ง music bot | ใช้งานแล้ว; ตรวจรายการคำสั่งและ subcommand ที่ต้องลงทะเบียน |
+| `server/discordMusicBot.ts` | bootstrap ของ music bot และการลงทะเบียนคำสั่ง | ใช้ต่อ; รับ payload จากทะเบียนใหม่และใช้ token ของ music bot เท่านั้น |
 | `server/discordMusicBotRunner.ts` | ตัวสั่งรัน music gateway แยก process | เก็บไว้; ต้องใช้ runtime ต่อเนื่องและตรวจ voice networking |
 | `server/discordRuntime.ts` | ป้องกัน AI gateway เปิดบน autoscale โดยไม่ตั้งใจ | เก็บไว้เป็นมาตรการความปลอดภัย |
 | `server/discordNotifications.ts` | ส่งแจ้งเตือนธุรกรรมจากเว็บไป Discord | เก็บไว้; จะตรวจให้ใช้ AI bot token เท่านั้น |
@@ -83,6 +85,12 @@
 AI bot เริ่มย้ายจุดตั้งค่าคำสั่งไปที่ `server/discordAiCommandRegistry.ts` แล้ว โดยคำสั่งที่ลงทะเบียนมีเพียง `/ask`, `/status`, `/store`, `/ranks`, `/topup`, `/verify`, `/players`, `/members`, `/profile`, `/help`, `/setup` และ `/embed` เท่านั้น คำสั่ง `/ai-status` ถูกยกเลิกจากทะเบียนใหม่เพื่อลดคำสั่งซ้ำซ้อน ส่วน `/play` และ `/leave` เป็นของ music bot เท่านั้น
 
 > การเปลี่ยนทะเบียนคำสั่งจะมีผลใน Discord ก็ต่อเมื่อมีการรัน AI gateway บน runtime ต่อเนื่องที่แยกจากเว็บ autoscale แล้วเท่านั้น จึงยังไม่มีการเปิด bot หรือใช้ token ในขั้นตอนนี้
+
+### สถานะการเริ่มใหม่ของ music bot
+
+Music bot ใช้ทะเบียนที่ `server/discordMusicCommandRegistry.ts` แล้ว โดยลงทะเบียนเฉพาะ `/music`, `/play` และ `/leave` เท่านั้น คำสั่ง `/music` มีคำสั่งย่อย `play`, `queue`, `skip`, `stop` และ `leave` เพื่อให้ควบคุมคิวได้จากที่เดียว ขณะที่ `/play` และ `/leave` เป็นทางลัดสำหรับผู้เล่น
+
+> การตรวจโค้ดและ PCM ในชุดทดสอบยืนยันได้เพียงตรรกะการทำงานภายในเท่านั้น การยืนยันว่าเพลงออกจาก Discord Voice ต้องรัน music bot บน runtime ต่อเนื่องที่มี Voice UDP, FFmpeg และ yt-dlp พร้อมผู้ฟังจริงในห้องเสียง
 
 ## สิ่งที่ยังทำไม่ได้บน runtime ปัจจุบัน
 

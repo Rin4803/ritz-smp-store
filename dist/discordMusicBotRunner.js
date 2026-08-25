@@ -16,12 +16,40 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { Transform } from "node:stream";
 import {
-  SlashCommandBuilder,
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle
 } from "discord.js";
+
+// server/discordMusicCommandRegistry.ts
+import {
+  SlashCommandBuilder
+} from "discord.js";
+var musicCommand = new SlashCommandBuilder().setName("music").setDescription(
+  "\u{1F3B5} \u0E40\u0E1B\u0E34\u0E14\u0E40\u0E1E\u0E25\u0E07\u0E43\u0E19\u0E2B\u0E49\u0E2D\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E41\u0E1A\u0E1A\u0E1F\u0E23\u0E35 (\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E17\u0E38\u0E01\u0E2B\u0E49\u0E2D\u0E07\u0E43\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E17\u0E38\u0E01\u0E04\u0E19)"
+).addSubcommand(
+  (sub) => sub.setName("play").setDescription("\u0E40\u0E25\u0E48\u0E19\u0E40\u0E1E\u0E25\u0E07\u0E08\u0E32\u0E01\u0E0A\u0E37\u0E48\u0E2D (Query) \u0E2B\u0E23\u0E37\u0E2D\u0E25\u0E34\u0E07\u0E01\u0E4C YouTube / SoundCloud").addStringOption(
+    (option) => option.setName("query").setDescription("\u0E0A\u0E37\u0E48\u0E2D\u0E40\u0E1E\u0E25\u0E07 \u0E2B\u0E23\u0E37\u0E2D\u0E25\u0E34\u0E07\u0E01\u0E4C YouTube / SoundCloud").setRequired(true)
+  )
+).addSubcommand((sub) => sub.setName("queue").setDescription("\u0E14\u0E39\u0E04\u0E34\u0E27\u0E40\u0E1E\u0E25\u0E07")).addSubcommand((sub) => sub.setName("skip").setDescription("\u0E02\u0E49\u0E32\u0E21\u0E40\u0E1E\u0E25\u0E07\u0E1B\u0E31\u0E08\u0E08\u0E38\u0E1A\u0E31\u0E19")).addSubcommand(
+  (sub) => sub.setName("stop").setDescription("\u0E2B\u0E22\u0E38\u0E14\u0E40\u0E1E\u0E25\u0E07\u0E41\u0E25\u0E30\u0E25\u0E49\u0E32\u0E07\u0E04\u0E34\u0E27")
+).addSubcommand(
+  (sub) => sub.setName("leave").setDescription("\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E2B\u0E49\u0E2D\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E41\u0E25\u0E30\u0E25\u0E49\u0E32\u0E07\u0E04\u0E34\u0E27")
+);
+var playShortcutCommand = new SlashCommandBuilder().setName("play").setDescription(
+  "\u{1F3B5} \u0E40\u0E25\u0E48\u0E19\u0E40\u0E1E\u0E25\u0E07\u0E17\u0E31\u0E19\u0E17\u0E35\u0E08\u0E32\u0E01\u0E0A\u0E37\u0E48\u0E2D\u0E2B\u0E23\u0E37\u0E2D\u0E25\u0E34\u0E07\u0E01\u0E4C YouTube / SoundCloud (\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E17\u0E38\u0E01\u0E0A\u0E48\u0E2D\u0E07\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E17\u0E38\u0E01\u0E04\u0E19)"
+).addStringOption(
+  (option) => option.setName("query").setDescription("\u0E0A\u0E37\u0E48\u0E2D\u0E40\u0E1E\u0E25\u0E07 \u0E2B\u0E23\u0E37\u0E2D\u0E25\u0E34\u0E07\u0E01\u0E4C YouTube / SoundCloud").setRequired(true)
+);
+var leaveShortcutCommand = new SlashCommandBuilder().setName("leave").setDescription("\u{1F6AA} \u0E43\u0E2B\u0E49\u0E19\u0E49\u0E2D\u0E07\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E2B\u0E49\u0E2D\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E41\u0E25\u0E30\u0E25\u0E49\u0E32\u0E07\u0E04\u0E34\u0E27\u0E17\u0E31\u0E19\u0E17\u0E35 (\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E17\u0E38\u0E01\u0E04\u0E19)");
+function buildRitzSmpMusicCommands() {
+  return [musicCommand, playShortcutCommand, leaveShortcutCommand].map(
+    (command) => command.toJSON()
+  );
+}
+
+// server/discordMusic.ts
 var MUSIC_IDLE_TIMEOUT_MS = 15 * 60 * 1e3;
 var MUSIC_RESOLVE_TIMEOUT_MS = positiveEnvMs("MUSIC_RESOLVE_TIMEOUT_MS", 2e4);
 var MUSIC_AUDIO_START_TIMEOUT_MS = positiveEnvMs(
@@ -37,27 +65,6 @@ function positiveEnvMs(name, fallback) {
   const parsed = Number.parseInt(process.env[name] ?? "", 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
-var musicCommand = new SlashCommandBuilder().setName("music").setDescription(
-  "\u{1F3B5} \u0E40\u0E1B\u0E34\u0E14\u0E40\u0E1E\u0E25\u0E07\u0E43\u0E19\u0E2B\u0E49\u0E2D\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E41\u0E1A\u0E1A\u0E1F\u0E23\u0E35 (\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E17\u0E38\u0E01\u0E2B\u0E49\u0E2D\u0E07\u0E43\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E17\u0E38\u0E01\u0E04\u0E19)"
-).addSubcommand(
-  (sub) => sub.setName("play").setDescription("\u0E40\u0E25\u0E48\u0E19\u0E40\u0E1E\u0E25\u0E07\u0E08\u0E32\u0E01\u0E0A\u0E37\u0E48\u0E2D (Query) \u0E2B\u0E23\u0E37\u0E2D\u0E25\u0E34\u0E07\u0E01\u0E4C YouTube / SoundCloud").addStringOption(
-    (option) => option.setName("query").setDescription("\u0E0A\u0E37\u0E48\u0E2D\u0E40\u0E1E\u0E25\u0E07 \u0E2B\u0E23\u0E37\u0E2D\u0E25\u0E34\u0E07\u0E01\u0E4C YouTube / SoundCloud").setRequired(true)
-  )
-).addSubcommand(
-  (sub) => sub.setName("queue").setDescription("\u0E14\u0E39\u0E04\u0E34\u0E27\u0E40\u0E1E\u0E25\u0E07\u0E1B\u0E31\u0E08\u0E08\u0E38\u0E1A\u0E31\u0E19")
-).addSubcommand(
-  (sub) => sub.setName("skip").setDescription("\u0E02\u0E49\u0E32\u0E21\u0E40\u0E1E\u0E25\u0E07\u0E1B\u0E31\u0E08\u0E08\u0E38\u0E1A\u0E31\u0E19")
-).addSubcommand(
-  (sub) => sub.setName("stop").setDescription("\u0E2B\u0E22\u0E38\u0E14\u0E40\u0E1E\u0E25\u0E07\u0E41\u0E25\u0E30\u0E25\u0E49\u0E32\u0E07\u0E04\u0E34\u0E27")
-).addSubcommand(
-  (sub) => sub.setName("leave").setDescription("\u0E43\u0E2B\u0E49\u0E19\u0E49\u0E2D\u0E07\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E2B\u0E49\u0E2D\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07")
-);
-var playShortcutCommand = new SlashCommandBuilder().setName("play").setDescription(
-  "\u{1F3B5} \u0E40\u0E25\u0E48\u0E19\u0E40\u0E1E\u0E25\u0E07\u0E17\u0E31\u0E19\u0E17\u0E35\u0E08\u0E32\u0E01\u0E0A\u0E37\u0E48\u0E2D\u0E2B\u0E23\u0E37\u0E2D\u0E25\u0E34\u0E07\u0E01\u0E4C YouTube / SoundCloud (\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E17\u0E38\u0E01\u0E0A\u0E48\u0E2D\u0E07\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E17\u0E38\u0E01\u0E04\u0E19)"
-).addStringOption(
-  (option) => option.setName("query").setDescription("\u0E0A\u0E37\u0E48\u0E2D\u0E40\u0E1E\u0E25\u0E07 \u0E2B\u0E23\u0E37\u0E2D\u0E25\u0E34\u0E07\u0E01\u0E4C YouTube / SoundCloud").setRequired(true)
-);
-var leaveShortcutCommand = new SlashCommandBuilder().setName("leave").setDescription("\u{1F6AA} \u0E43\u0E2B\u0E49\u0E19\u0E49\u0E2D\u0E07\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E2B\u0E49\u0E2D\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E41\u0E25\u0E30\u0E25\u0E49\u0E32\u0E07\u0E04\u0E34\u0E27\u0E17\u0E31\u0E19\u0E17\u0E35 (\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E17\u0E38\u0E01\u0E04\u0E19)");
 function resolveMusicQuery(value) {
   if (typeof value !== "string" || value.trim().length === 0) {
     return { ok: false, reason: MUSIC_QUERY_MESSAGE };
@@ -813,14 +820,13 @@ async function ensureMusicTextChannel(client, guildId) {
 }
 
 // server/discordMusicBot.ts
-var MUSIC_COMMANDS = [musicCommand, playShortcutCommand, leaveShortcutCommand];
 var musicClient = null;
 var musicStartup = null;
 function log(level, message) {
   console.log(`[RitzSmpMusic] [${level}] ${message}`);
 }
 function getMusicCommandPayload() {
-  return MUSIC_COMMANDS.map((command) => command.toJSON());
+  return buildRitzSmpMusicCommands();
 }
 function createRitzSmpMusicBot(token = process.env.DISCORD_MUSIC_BOT_TOKEN) {
   if (!token?.trim()) {

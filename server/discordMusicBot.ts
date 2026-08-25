@@ -2,13 +2,10 @@ import { Client, GatewayIntentBits, REST, Routes } from "discord.js";
 import {
   handleMusicButtonInteraction,
   handleMusicCommand,
-  leaveShortcutCommand,
-  musicCommand,
-  playShortcutCommand,
 } from "./discordMusic.js";
+import { buildRitzSmpMusicCommands } from "./discordMusicCommandRegistry.js";
 import { ensureMusicTextChannel } from "./discordMusicChannel.js";
 
-const MUSIC_COMMANDS = [musicCommand, playShortcutCommand, leaveShortcutCommand];
 let musicClient: Client | null = null;
 let musicStartup: Promise<Client | null> | null = null;
 
@@ -17,7 +14,7 @@ function log(level: "INFO" | "SUCCESS" | "WARN" | "ERROR", message: string): voi
 }
 
 export function getMusicCommandPayload() {
-  return MUSIC_COMMANDS.map(command => command.toJSON());
+  return buildRitzSmpMusicCommands();
 }
 
 export function getMusicBotStatus() {

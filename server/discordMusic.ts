@@ -14,7 +14,6 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { Transform, type Readable } from "node:stream";
 import {
-  SlashCommandBuilder,
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
@@ -59,50 +58,11 @@ function positiveEnvMs(name: string, fallback: number): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-export const musicCommand = new SlashCommandBuilder()
-  .setName("music")
-  .setDescription(
-    "🎵 เปิดเพลงในห้องเสียงแบบฟรี (ใช้ได้ทุกห้องในเซิร์ฟเวอร์สำหรับทุกคน)",
-  )
-  .addSubcommand((sub) =>
-    sub
-      .setName("play")
-      .setDescription("เล่นเพลงจากชื่อ (Query) หรือลิงก์ YouTube / SoundCloud")
-      .addStringOption((option) =>
-        option
-          .setName("query")
-          .setDescription("ชื่อเพลง หรือลิงก์ YouTube / SoundCloud")
-          .setRequired(true),
-      ),
-  )
-  .addSubcommand((sub) =>
-    sub.setName("queue").setDescription("ดูคิวเพลงปัจจุบัน"),
-  )
-  .addSubcommand((sub) =>
-    sub.setName("skip").setDescription("ข้ามเพลงปัจจุบัน"),
-  )
-  .addSubcommand((sub) =>
-    sub.setName("stop").setDescription("หยุดเพลงและล้างคิว"),
-  )
-  .addSubcommand((sub) =>
-    sub.setName("leave").setDescription("ให้น้องออกจากห้องเสียง"),
-  );
-
-export const playShortcutCommand = new SlashCommandBuilder()
-  .setName("play")
-  .setDescription(
-    "🎵 เล่นเพลงทันทีจากชื่อหรือลิงก์ YouTube / SoundCloud (ใช้ได้ทุกช่องสำหรับทุกคน)",
-  )
-  .addStringOption((option) =>
-    option
-      .setName("query")
-      .setDescription("ชื่อเพลง หรือลิงก์ YouTube / SoundCloud")
-      .setRequired(true),
-  );
-
-export const leaveShortcutCommand = new SlashCommandBuilder()
-  .setName("leave")
-  .setDescription("🚪 ให้น้องออกจากห้องเสียงและล้างคิวทันที (ใช้ได้ทุกคน)");
+export {
+  leaveShortcutCommand,
+  musicCommand,
+  playShortcutCommand,
+} from "./discordMusicCommandRegistry.js";
 
 export function resetMusicSessionsForTests(): void {
   for (const session of Array.from(sessions.values())) {
