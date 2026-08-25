@@ -180,6 +180,8 @@ var ENV = {
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   discordBotToken: process.env.DISCORD_BOT_TOKEN ?? "",
+  discordAiBotToken: process.env.DISCORD_AI_BOT_TOKEN ?? "",
+  discordAiPublicKey: process.env.DISCORD_AI_PUBLIC_KEY ?? "",
   discordGuildId: process.env.DISCORD_GUILD_ID ?? "",
   discordStoreChannelId: process.env.DISCORD_STORE_CHANNEL_ID ?? "",
   discordSupportChannelId: process.env.DISCORD_SUPPORT_CHANNEL_ID ?? "",
@@ -1214,13 +1216,12 @@ import {
   GatewayIntentBits,
   REST,
   Routes,
-  SlashCommandBuilder as SlashCommandBuilder2,
-  EmbedBuilder as EmbedBuilder2,
-  ActionRowBuilder as ActionRowBuilder2,
-  ButtonBuilder as ButtonBuilder2,
-  ButtonStyle as ButtonStyle2,
-  PermissionsBitField,
-  ChannelType as ChannelType3,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  PermissionsBitField as PermissionsBitField2,
+  ChannelType as ChannelType2,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle
@@ -1534,819 +1535,8 @@ async function grantMinecraftRank(minecraftIGN, groupName) {
   }
 }
 
-// server/discordMusic.ts
-import {
-  AudioPlayerStatus,
-  NoSubscriberBehavior,
-  StreamType,
-  VoiceConnectionStatus,
-  createAudioPlayer,
-  createAudioResource,
-  entersState,
-  joinVoiceChannel
-} from "@discordjs/voice";
-import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
-import { Transform } from "node:stream";
-import {
-  SlashCommandBuilder,
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle
-} from "discord.js";
-var MUSIC_IDLE_TIMEOUT_MS = 15 * 60 * 1e3;
-var MUSIC_RESOLVE_TIMEOUT_MS = positiveEnvMs("MUSIC_RESOLVE_TIMEOUT_MS", 2e4);
-var MUSIC_AUDIO_START_TIMEOUT_MS = positiveEnvMs(
-  "MUSIC_AUDIO_START_TIMEOUT_MS",
-  15e3
-);
-var YTDLP_BIN = process.env.YTDLP_PATH || "yt-dlp";
-var FFMPEG_BIN = process.env.FFMPEG_PATH || "ffmpeg";
-var YTDLP_COOKIES_PATH = process.env.YTDLP_COOKIES_PATH || "";
-var MUSIC_QUERY_MESSAGE = "\u0E01\u0E23\u0E38\u0E13\u0E32\u0E23\u0E30\u0E1A\u0E38\u0E0A\u0E37\u0E48\u0E2D\u0E40\u0E1E\u0E25\u0E07\u0E2B\u0E23\u0E37\u0E2D\u0E25\u0E34\u0E07\u0E01\u0E4C YouTube/SoundCloud \u0E17\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E40\u0E1B\u0E34\u0E14\u0E19\u0E30\u0E04\u0E30";
-var sessions = /* @__PURE__ */ new Map();
-function positiveEnvMs(name, fallback) {
-  const parsed = Number.parseInt(process.env[name] ?? "", 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-}
-var musicCommand = new SlashCommandBuilder().setName("music").setDescription(
-  "\u{1F3B5} \u0E40\u0E1B\u0E34\u0E14\u0E40\u0E1E\u0E25\u0E07\u0E43\u0E19\u0E2B\u0E49\u0E2D\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E41\u0E1A\u0E1A\u0E1F\u0E23\u0E35 (\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E17\u0E38\u0E01\u0E2B\u0E49\u0E2D\u0E07\u0E43\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E17\u0E38\u0E01\u0E04\u0E19)"
-).addSubcommand(
-  (sub) => sub.setName("play").setDescription("\u0E40\u0E25\u0E48\u0E19\u0E40\u0E1E\u0E25\u0E07\u0E08\u0E32\u0E01\u0E0A\u0E37\u0E48\u0E2D (Query) \u0E2B\u0E23\u0E37\u0E2D\u0E25\u0E34\u0E07\u0E01\u0E4C YouTube / SoundCloud").addStringOption(
-    (option) => option.setName("query").setDescription("\u0E0A\u0E37\u0E48\u0E2D\u0E40\u0E1E\u0E25\u0E07 \u0E2B\u0E23\u0E37\u0E2D\u0E25\u0E34\u0E07\u0E01\u0E4C YouTube / SoundCloud").setRequired(true)
-  )
-).addSubcommand(
-  (sub) => sub.setName("queue").setDescription("\u0E14\u0E39\u0E04\u0E34\u0E27\u0E40\u0E1E\u0E25\u0E07\u0E1B\u0E31\u0E08\u0E08\u0E38\u0E1A\u0E31\u0E19")
-).addSubcommand(
-  (sub) => sub.setName("skip").setDescription("\u0E02\u0E49\u0E32\u0E21\u0E40\u0E1E\u0E25\u0E07\u0E1B\u0E31\u0E08\u0E08\u0E38\u0E1A\u0E31\u0E19")
-).addSubcommand(
-  (sub) => sub.setName("stop").setDescription("\u0E2B\u0E22\u0E38\u0E14\u0E40\u0E1E\u0E25\u0E07\u0E41\u0E25\u0E30\u0E25\u0E49\u0E32\u0E07\u0E04\u0E34\u0E27")
-).addSubcommand(
-  (sub) => sub.setName("leave").setDescription("\u0E43\u0E2B\u0E49\u0E19\u0E49\u0E2D\u0E07\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E2B\u0E49\u0E2D\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07")
-);
-var playShortcutCommand = new SlashCommandBuilder().setName("play").setDescription(
-  "\u{1F3B5} \u0E40\u0E25\u0E48\u0E19\u0E40\u0E1E\u0E25\u0E07\u0E17\u0E31\u0E19\u0E17\u0E35\u0E08\u0E32\u0E01\u0E0A\u0E37\u0E48\u0E2D\u0E2B\u0E23\u0E37\u0E2D\u0E25\u0E34\u0E07\u0E01\u0E4C YouTube / SoundCloud (\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E17\u0E38\u0E01\u0E0A\u0E48\u0E2D\u0E07\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E17\u0E38\u0E01\u0E04\u0E19)"
-).addStringOption(
-  (option) => option.setName("query").setDescription("\u0E0A\u0E37\u0E48\u0E2D\u0E40\u0E1E\u0E25\u0E07 \u0E2B\u0E23\u0E37\u0E2D\u0E25\u0E34\u0E07\u0E01\u0E4C YouTube / SoundCloud").setRequired(true)
-);
-var leaveShortcutCommand = new SlashCommandBuilder().setName("leave").setDescription("\u{1F6AA} \u0E43\u0E2B\u0E49\u0E19\u0E49\u0E2D\u0E07\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E2B\u0E49\u0E2D\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E41\u0E25\u0E30\u0E25\u0E49\u0E32\u0E07\u0E04\u0E34\u0E27\u0E17\u0E31\u0E19\u0E17\u0E35 (\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E17\u0E38\u0E01\u0E04\u0E19)");
-function resolveMusicQuery(value) {
-  if (typeof value !== "string" || value.trim().length === 0) {
-    return { ok: false, reason: MUSIC_QUERY_MESSAGE };
-  }
-  const trimmed = value.trim();
-  try {
-    const url = new URL(trimmed);
-    if (url.protocol === "https:" && [
-      "youtube.com",
-      "www.youtube.com",
-      "youtu.be",
-      "soundcloud.com",
-      "www.soundcloud.com"
-    ].includes(url.hostname.toLowerCase())) {
-      return { ok: true, query: url.toString(), isUrl: true };
-    }
-  } catch {
-  }
-  return { ok: true, query: trimmed, isUrl: false };
-}
-async function interactionReply(interaction, payload) {
-  try {
-    if (interaction.deferred || interaction.replied) {
-      if (typeof payload === "string") {
-        return await interaction.editReply({
-          content: payload,
-          embeds: [],
-          components: []
-        });
-      }
-      return await interaction.editReply(payload);
-    }
-    if (typeof payload === "string") {
-      return await interaction.reply({ content: payload, ephemeral: false });
-    }
-    return await interaction.reply({ ...payload, ephemeral: false });
-  } catch {
-    try {
-      if (typeof payload === "string") {
-        return await interaction.followUp({
-          content: payload,
-          ephemeral: false
-        });
-      }
-      return await interaction.followUp({ ...payload, ephemeral: false });
-    } catch {
-    }
-  }
-}
-function getVoiceChannel(interaction) {
-  const userId = interaction.user?.id;
-  if (userId && interaction.guild?.voiceStates?.cache) {
-    const voiceState = interaction.guild.voiceStates.cache.get(userId);
-    if (voiceState?.channel) {
-      return voiceState.channel;
-    }
-  }
-  if (interaction.member?.voice?.channel) {
-    return interaction.member.voice.channel;
-  }
-  if (userId && interaction.guild?.members?.cache) {
-    const member = interaction.guild.members.cache.get(userId);
-    if (member?.voice?.channel) {
-      return member.voice.channel;
-    }
-  }
-  return null;
-}
-function stopActiveAudio(session) {
-  const stop = session.activeStop;
-  session.activeStop = void 0;
-  stop?.();
-}
-function scheduleIdleCleanup(session) {
-  if (session.idleTimer) clearTimeout(session.idleTimer);
-  session.idleTimer = setTimeout(() => {
-    if (!session.current && session.queue.length === 0) {
-      stopActiveAudio(session);
-      session.player.stop(true);
-      session.connection.destroy();
-      sessions.delete(session.guildId);
-    }
-  }, MUSIC_IDLE_TIMEOUT_MS);
-}
-async function getOrCreateSession(interaction, voiceChannel) {
-  const existing = sessions.get(interaction.guildId);
-  if (existing) {
-    if (existing.connection.joinConfig.channelId !== voiceChannel.id) {
-      existing.connection.rejoin({
-        channelId: voiceChannel.id,
-        selfDeaf: true,
-        selfMute: false
-      });
-    }
-    await entersState(existing.connection, VoiceConnectionStatus.Ready, 1e4);
-    return existing;
-  }
-  const connection = joinVoiceChannel({
-    channelId: voiceChannel.id,
-    guildId: voiceChannel.guild.id,
-    adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-    selfDeaf: true,
-    selfMute: false
-  });
-  try {
-    await entersState(connection, VoiceConnectionStatus.Ready, 1e4);
-  } catch {
-    connection.destroy();
-    throw new Error("\u0E1A\u0E2D\u0E17\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E2B\u0E49\u0E2D\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08\u0E20\u0E32\u0E22\u0E43\u0E19\u0E40\u0E27\u0E25\u0E32\u0E17\u0E35\u0E48\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E04\u0E48\u0E30");
-  }
-  const player = createAudioPlayer({
-    behaviors: {
-      noSubscriber: NoSubscriberBehavior.Play
-    }
-  });
-  connection.subscribe(player);
-  console.log("[Music] Voice connection ready and subscribed to AudioPlayer");
-  const session = {
-    guildId: interaction.guildId,
-    connection,
-    player,
-    queue: [],
-    starting: false,
-    started: false
-  };
-  sessions.set(interaction.guildId, session);
-  player.on(AudioPlayerStatus.Idle, () => {
-    console.log("[Music] AudioPlayer entered Idle state");
-    session.activeStop = void 0;
-    session.current = void 0;
-    void playNext(session);
-  });
-  player.on(AudioPlayerStatus.Playing, () => {
-    console.log("[Music] AudioPlayer is now PLAYING audio output!");
-  });
-  player.on("error", (error) => {
-    console.error("[Music Error] AudioPlayer encountered error:", error);
-    stopActiveAudio(session);
-    session.current = void 0;
-    void playNext(session);
-  });
-  connection.on("error", (error) => {
-    console.error("[Music Error] VoiceConnection encountered error:", error);
-    try {
-      if (error?.message?.includes("IP discovery") || error?.message?.includes("socket closed")) {
-        console.warn(
-          "[Music] Attempting to recover voice connection due to socket/IP error..."
-        );
-        setTimeout(() => {
-          try {
-            connection.rejoin({
-              channelId: voiceChannel.id,
-              selfDeaf: true,
-              selfMute: false
-            });
-          } catch (rejoinErr) {
-            console.error("[Music Error] Rejoin failed:", rejoinErr);
-          }
-        }, 2e3);
-      }
-    } catch (rcErr) {
-      console.error("[Music] Error in recovery handler:", rcErr);
-    }
-  });
-  connection.on(VoiceConnectionStatus.Disconnected, async () => {
-    try {
-      await Promise.race([
-        entersState(connection, VoiceConnectionStatus.Signalling, 5e3),
-        entersState(connection, VoiceConnectionStatus.Connecting, 5e3)
-      ]);
-    } catch {
-      stopActiveAudio(session);
-      sessions.delete(session.guildId);
-      connection.destroy();
-    }
-  });
-  scheduleIdleCleanup(session);
-  return session;
-}
-function ytDlpCookieArgs() {
-  return YTDLP_COOKIES_PATH && existsSync(YTDLP_COOKIES_PATH) ? ["--cookies", YTDLP_COOKIES_PATH] : [];
-}
-function buildYtDlpArgs(trackUrl) {
-  return [
-    "--quiet",
-    "--no-warnings",
-    "--no-playlist",
-    "--force-ipv4",
-    "--js-runtimes",
-    "node",
-    "--format",
-    "bestaudio/best",
-    "--output",
-    "-",
-    "--no-part",
-    "--retries",
-    "2",
-    "--fragment-retries",
-    "2",
-    "--socket-timeout",
-    "10",
-    ...ytDlpCookieArgs(),
-    trackUrl
-  ];
-}
-function buildYtDlpMetadataArgs(query, isUrl) {
-  return [
-    "--dump-single-json",
-    "--no-warnings",
-    "--skip-download",
-    "--no-playlist",
-    "--force-ipv4",
-    "--js-runtimes",
-    "node",
-    ...ytDlpCookieArgs(),
-    isUrl ? query : `ytsearch1:${query}`
-  ];
-}
-function lastNonEmptyLine(text2) {
-  return text2.trim().split(/\r?\n/).filter(Boolean).slice(-1)[0] ?? "";
-}
-function runYtDlp(args, timeoutMs = MUSIC_RESOLVE_TIMEOUT_MS) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(YTDLP_BIN, args, {
-      stdio: ["ignore", "pipe", "pipe"],
-      env: { ...process.env, PYTHONUNBUFFERED: "1" }
-    });
-    let stdout = "";
-    let stderr = "";
-    let settled = false;
-    const timer = setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      child.kill("SIGKILL");
-      const detail = lastNonEmptyLine(stderr);
-      const isBotCheck = /sign in to confirm|not a bot|cookies?/i.test(detail);
-      reject(
-        new Error(
-          isBotCheck ? `YouTube \u0E1B\u0E0F\u0E34\u0E40\u0E2A\u0E18\u0E01\u0E32\u0E23\u0E14\u0E36\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07: ${detail}` : `\u0E01\u0E32\u0E23\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E40\u0E1E\u0E25\u0E07\u0E43\u0E0A\u0E49\u0E40\u0E27\u0E25\u0E32\u0E19\u0E32\u0E19\u0E40\u0E01\u0E34\u0E19\u0E44\u0E1B (Timeout): ${detail || "\u0E44\u0E21\u0E48\u0E21\u0E35\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14\u0E08\u0E32\u0E01 yt-dlp"}`
-        )
-      );
-    }, timeoutMs);
-    child.stdout.setEncoding("utf8");
-    child.stderr.setEncoding("utf8");
-    child.stdout.on("data", (chunk) => {
-      stdout += chunk;
-    });
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk;
-    });
-    child.once("error", (error) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      reject(new Error(`\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E42\u0E1B\u0E23\u0E41\u0E01\u0E23\u0E21 yt-dlp (${error.message})`));
-    });
-    child.once("close", (code) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      if (code === 0) {
-        resolve({ stdout, stderr });
-      } else {
-        const detail = lastNonEmptyLine(stderr) || `exit code ${code}`;
-        reject(new Error(`\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E40\u0E1E\u0E25\u0E07\u0E44\u0E21\u0E48\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19: ${detail.slice(0, 220)}`));
-      }
-    });
-  });
-}
-function parseYtDlpMetadata(stdout) {
-  const lines = stdout.trim().split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  for (let index = lines.length - 1; index >= 0; index -= 1) {
-    try {
-      const raw = JSON.parse(lines[index]);
-      const entry = raw?.entries?.[0] ?? raw;
-      const url = entry?.webpage_url || entry?.original_url || entry?.url;
-      if (typeof url === "string" && url.startsWith("http")) {
-        return {
-          url,
-          title: typeof entry?.title === "string" && entry.title.trim() ? entry.title.trim() : "RitzSMP Music Track"
-        };
-      }
-    } catch {
-    }
-  }
-  throw new Error("yt-dlp \u0E44\u0E21\u0E48\u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E40\u0E1E\u0E25\u0E07\u0E01\u0E25\u0E31\u0E1A\u0E21\u0E32");
-}
-async function resolveTrackFromQuery(resolvedQuery, requestedBy) {
-  if (resolvedQuery.isUrl) {
-    return {
-      url: resolvedQuery.query,
-      title: "YouTube Music Track",
-      requestedBy
-    };
-  }
-  const metadata = await runYtDlp(
-    buildYtDlpMetadataArgs(resolvedQuery.query, resolvedQuery.isUrl)
-  );
-  const parsed = parseYtDlpMetadata(metadata.stdout);
-  return {
-    url: parsed.url,
-    title: parsed.title.slice(0, 180),
-    requestedBy
-  };
-}
-function waitForPlayerPlaying(player, timeoutMs = MUSIC_AUDIO_START_TIMEOUT_MS) {
-  if (player.state.status === AudioPlayerStatus.Playing)
-    return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const onPlaying = () => {
-      clearTimeout(timer);
-      resolve();
-    };
-    const timer = setTimeout(() => {
-      player.off(AudioPlayerStatus.Playing, onPlaying);
-      reject(new Error("\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E40\u0E23\u0E34\u0E48\u0E21\u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E20\u0E32\u0E22\u0E43\u0E19\u0E40\u0E27\u0E25\u0E32\u0E17\u0E35\u0E48\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E04\u0E48\u0E30"));
-    }, timeoutMs);
-    player.once(AudioPlayerStatus.Playing, onPlaying);
-  });
-}
-function createYtDlpAudioStream(trackUrl, options = {}) {
-  const extractor = spawn(
-    options.ytDlpPath ?? YTDLP_BIN,
-    buildYtDlpArgs(trackUrl),
-    {
-      stdio: ["ignore", "pipe", "pipe"],
-      env: { ...process.env, PYTHONUNBUFFERED: "1" }
-    }
-  );
-  const transcoder = spawn(
-    options.ffmpegPath ?? FFMPEG_BIN,
-    [
-      "-hide_banner",
-      "-loglevel",
-      "error",
-      "-i",
-      "pipe:0",
-      "-vn",
-      "-ac",
-      "2",
-      "-ar",
-      "48000",
-      "-f",
-      "s16le",
-      "pipe:1"
-    ],
-    {
-      stdio: ["pipe", "pipe", "pipe"]
-    }
-  );
-  let resolveFirstAudioData;
-  let rejectFirstAudioData;
-  let audiblePcmSeen = false;
-  const firstAudioData = new Promise(
-    (resolve, reject) => {
-      resolveFirstAudioData = resolve;
-      rejectFirstAudioData = reject;
-    }
-  );
-  const output = new Transform({
-    transform(chunk, _encoding, callback) {
-      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-      if (!audiblePcmSeen && buffer.some((byte) => byte !== 0)) {
-        audiblePcmSeen = true;
-        console.log(
-          `[Music] FFmpeg produced audible PCM (${buffer.length} bytes in first audible chunk)`
-        );
-        resolveFirstAudioData({ firstAudibleChunkBytes: buffer.length });
-      }
-      callback(null, buffer);
-    },
-    flush(callback) {
-      if (!audiblePcmSeen) {
-        rejectFirstAudioData(
-          new Error("FFmpeg \u0E2A\u0E48\u0E07 PCM \u0E17\u0E35\u0E48\u0E40\u0E07\u0E35\u0E22\u0E1A\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14\u0E01\u0E48\u0E2D\u0E19\u0E40\u0E1E\u0E25\u0E07\u0E08\u0E1A\u0E04\u0E48\u0E30")
-        );
-      }
-      callback();
-    }
-  });
-  let stopped = false;
-  let extractorError = "";
-  let transcoderError = "";
-  extractor.stderr.setEncoding("utf8");
-  transcoder.stderr.setEncoding("utf8");
-  extractor.stderr.on("data", (chunk) => {
-    extractorError += chunk;
-  });
-  transcoder.stderr.on("data", (chunk) => {
-    transcoderError += chunk;
-  });
-  extractor.stdout.pipe(transcoder.stdin);
-  transcoder.stdout.pipe(output);
-  const fail = (prefix, detail) => {
-    if (stopped || output.destroyed) return;
-    const message = `${prefix}: ${(detail.trim() || "\u0E44\u0E21\u0E48\u0E21\u0E35\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14").split(/\r?\n/).slice(-1)[0].slice(0, 240)}`;
-    console.error(`[Music Error] ${message}`);
-    rejectFirstAudioData(new Error(message));
-    output.destroy(new Error(message));
-  };
-  extractor.stdout.once(
-    "error",
-    (error) => fail("yt-dlp output failed", error.message)
-  );
-  transcoder.stdin.once(
-    "error",
-    (error) => fail("FFmpeg input failed", error.message)
-  );
-  extractor.once(
-    "error",
-    (error) => fail("yt-dlp process failed", error.message)
-  );
-  transcoder.once(
-    "error",
-    (error) => fail("FFmpeg process failed", error.message)
-  );
-  extractor.once("close", (code) => {
-    if (!stopped && code !== 0)
-      fail("yt-dlp stream failed", extractorError || `exit code ${code}`);
-  });
-  transcoder.once("close", (code) => {
-    if (!stopped && code !== 0)
-      fail("FFmpeg stream failed", transcoderError || `exit code ${code}`);
-  });
-  const stop = () => {
-    if (stopped) return;
-    stopped = true;
-    rejectFirstAudioData(new Error("\u0E2B\u0E22\u0E38\u0E14 pipeline \u0E40\u0E2A\u0E35\u0E22\u0E07\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30"));
-    extractor.stdout.unpipe(transcoder.stdin);
-    transcoder.stdin.destroy();
-    extractor.kill("SIGKILL");
-    transcoder.kill("SIGKILL");
-  };
-  output.once("close", stop);
-  return { stream: output, stop, firstAudioData };
-}
-function formatMusicPlaybackError(error) {
-  const message = error instanceof Error ? error.message : "\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E40\u0E1E\u0E25\u0E07\u0E44\u0E21\u0E48\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19";
-  if (/sign in to confirm|not a bot|cookies?/i.test(message)) {
-    return "YouTube \u0E1B\u0E0F\u0E34\u0E40\u0E2A\u0E18\u0E01\u0E32\u0E23\u0E14\u0E36\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E08\u0E32\u0E01 IP \u0E19\u0E35\u0E49\u0E04\u0E48\u0E30 \u0E43\u0E2B\u0E49\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E44\u0E1F\u0E25\u0E4C cookies \u0E1A\u0E19 VPS \u0E41\u0E25\u0E49\u0E27\u0E01\u0E33\u0E2B\u0E19\u0E14 YTDLP_COOKIES_PATH \u0E2B\u0E23\u0E37\u0E2D\u0E43\u0E0A\u0E49\u0E25\u0E34\u0E07\u0E01\u0E4C SoundCloud \u0E41\u0E17\u0E19\u0E04\u0E48\u0E30";
-  }
-  if (/ENOENT|ไม่พบโปรแกรม yt-dlp|ไม่พบโปรแกรม ffmpeg/i.test(message)) {
-    return "\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35 yt-dlp \u0E2B\u0E23\u0E37\u0E2D FFmpeg \u0E04\u0E23\u0E1A\u0E04\u0E48\u0E30 \u0E43\u0E2B\u0E49\u0E23\u0E31\u0E19\u0E02\u0E31\u0E49\u0E19\u0E15\u0E2D\u0E19\u0E15\u0E34\u0E14\u0E15\u0E31\u0E49\u0E07\u0E08\u0E32\u0E01 VPS_DEPLOYMENT.md \u0E41\u0E25\u0E49\u0E27\u0E23\u0E35\u0E2A\u0E15\u0E32\u0E23\u0E4C\u0E15\u0E1A\u0E2D\u0E17\u0E04\u0E48\u0E30";
-  }
-  if (/Timeout|หมดเวลา|ใช้เวลานานเกินไป/i.test(message)) {
-    return "\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E40\u0E1E\u0E25\u0E07\u0E44\u0E21\u0E48\u0E17\u0E31\u0E19\u0E40\u0E27\u0E25\u0E32\u0E04\u0E48\u0E30 \u0E2B\u0E32\u0E01\u0E40\u0E1B\u0E47\u0E19\u0E25\u0E34\u0E07\u0E01\u0E4C YouTube \u0E43\u0E2B\u0E49\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32 YTDLP_COOKIES_PATH \u0E1A\u0E19 VPS \u0E41\u0E25\u0E30\u0E15\u0E23\u0E27\u0E08\u0E27\u0E48\u0E32 VPS \u0E2D\u0E2D\u0E01\u0E2D\u0E34\u0E19\u0E40\u0E17\u0E2D\u0E23\u0E4C\u0E40\u0E19\u0E47\u0E15\u0E44\u0E14\u0E49 \u0E08\u0E32\u0E01\u0E19\u0E31\u0E49\u0E19\u0E25\u0E2D\u0E07 /play \u0E43\u0E2B\u0E21\u0E48\u0E04\u0E48\u0E30";
-  }
-  return message;
-}
-async function playNext(session) {
-  if (session.starting) return;
-  session.starting = true;
-  try {
-    while (true) {
-      const next = session.queue.shift();
-      if (!next) {
-        session.current = void 0;
-        scheduleIdleCleanup(session);
-        return;
-      }
-      session.current = next;
-      session.lastError = void 0;
-      session.started = true;
-      try {
-        console.log(
-          `[Music] Starting yt-dlp -> FFmpeg -> PCM pipeline for track: ${next.title}`
-        );
-        const audio = createYtDlpAudioStream(next.url);
-        session.activeStop = audio.stop;
-        audio.stream.once("error", (streamErr) => {
-          console.error(
-            `[Music Error] Audio pipeline failed: ${streamErr?.message ?? "unknown error"}`
-          );
-        });
-        const resource = createAudioResource(audio.stream, {
-          inputType: StreamType.Raw,
-          inlineVolume: true
-        });
-        resource.volume?.setVolume(1);
-        session.player.play(resource);
-        const [, pcmEvidence] = await Promise.all([
-          waitForPlayerPlaying(session.player),
-          audio.firstAudioData
-        ]);
-        console.log(
-          `[Music] AudioPlayer output started after audible PCM (${pcmEvidence.firstAudibleChunkBytes} bytes) for track: ${next.title}`
-        );
-        return;
-      } catch (err) {
-        const normalizedError = err instanceof Error ? err : new Error(String(err));
-        console.error(
-          `[Music Error] Failed to start track "${next.title}": ${normalizedError.message}`
-        );
-        session.lastError = normalizedError;
-        stopActiveAudio(session);
-        session.current = void 0;
-      }
-    }
-  } finally {
-    session.starting = false;
-  }
-}
-function buildMusicEmbed(session) {
-  const embed = new EmbedBuilder().setTitle("\u{1F3B5} RitzSMP Music Player & Queue").setColor(15485081).setTimestamp();
-  if (session.current) {
-    embed.addFields({
-      name: "\u25B6\uFE0F \u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E25\u0E48\u0E19\u0E2D\u0E22\u0E39\u0E48\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49",
-      value: `**[${session.current.title}](${session.current.url})**
-\u{1F464} \u0E02\u0E2D\u0E42\u0E14\u0E22: \`${session.current.requestedBy}\``,
-      inline: false
-    });
-  } else {
-    embed.addFields({
-      name: "\u25B6\uFE0F \u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E25\u0E48\u0E19\u0E2D\u0E22\u0E39\u0E48\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49",
-      value: "*\u0E44\u0E21\u0E48\u0E21\u0E35\u0E40\u0E1E\u0E25\u0E07\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E25\u0E48\u0E19 (\u0E1A\u0E2D\u0E17\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E23\u0E31\u0E1A\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07\u0E40\u0E1B\u0E34\u0E14\u0E40\u0E1E\u0E25\u0E07)*",
-      inline: false
-    });
-  }
-  const queueList = session.queue.length > 0 ? session.queue.slice(0, 8).map(
-    (t2, i) => `\`${i + 1}.\` [${t2.title}](${t2.url}) (\u0E02\u0E2D\u0E42\u0E14\u0E22: ${t2.requestedBy})`
-  ).join("\n") : "*\u0E04\u0E34\u0E27\u0E40\u0E1E\u0E25\u0E07\u0E27\u0E48\u0E32\u0E07\u0E40\u0E1B\u0E25\u0E48\u0E32*";
-  embed.addFields({
-    name: `\u{1F3B6} \u0E04\u0E34\u0E27\u0E40\u0E1E\u0E25\u0E07\u0E16\u0E31\u0E14\u0E44\u0E1B (${session.queue.length} \u0E40\u0E1E\u0E25\u0E07)`,
-    value: queueList,
-    inline: false
-  });
-  embed.setFooter({
-    text: "RitzSMP AI \u2022 \u0E04\u0E27\u0E1A\u0E04\u0E38\u0E21\u0E40\u0E1E\u0E25\u0E07\u0E1C\u0E48\u0E32\u0E19\u0E1B\u0E38\u0E48\u0E21\u0E14\u0E49\u0E32\u0E19\u0E25\u0E48\u0E32\u0E07\u0E2B\u0E23\u0E37\u0E2D\u0E43\u0E0A\u0E49\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07 /music"
-  });
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId("music_pause_resume").setLabel("\u23F8\uFE0F \u0E40\u0E25\u0E48\u0E19/\u0E2B\u0E22\u0E38\u0E14\u0E0A\u0E31\u0E48\u0E27\u0E04\u0E23\u0E32\u0E27").setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId("music_skip").setLabel("\u23ED\uFE0F \u0E02\u0E49\u0E32\u0E21\u0E40\u0E1E\u0E25\u0E07").setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId("music_stop").setLabel("\u23F9\uFE0F \u0E2B\u0E22\u0E38\u0E14\u0E41\u0E25\u0E30\u0E25\u0E49\u0E32\u0E07\u0E04\u0E34\u0E27").setStyle(ButtonStyle.Danger),
-    new ButtonBuilder().setCustomId("music_queue").setLabel("\u{1F4DC} \u0E14\u0E39\u0E04\u0E34\u0E27\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14").setStyle(ButtonStyle.Success)
-  );
-  return { embeds: [embed], components: [row] };
-}
-async function handleMusicCommand(interaction) {
-  if (!interaction.guildId) {
-    await interactionReply(
-      interaction,
-      "\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07\u0E40\u0E1E\u0E25\u0E07\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E43\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C Discord \u0E40\u0E17\u0E48\u0E32\u0E19\u0E31\u0E49\u0E19\u0E04\u0E48\u0E30"
-    );
-    return true;
-  }
-  const isStandalonePlay = interaction.commandName === "play";
-  const isStandaloneLeave = interaction.commandName === "leave";
-  const subcommand = isStandalonePlay ? "play" : isStandaloneLeave ? "leave" : interaction.options?.getSubcommand?.() ?? "";
-  const existing = sessions.get(interaction.guildId);
-  if (subcommand === "queue") {
-    await interactionReply(
-      interaction,
-      buildMusicEmbed(existing ?? { queue: [] })
-    );
-    return true;
-  }
-  if (subcommand === "leave") {
-    if (existing) {
-      existing.idleTimer && clearTimeout(existing.idleTimer);
-      stopActiveAudio(existing);
-      existing.player.stop(true);
-      existing.connection.destroy();
-      sessions.delete(existing.guildId);
-    }
-    await interactionReply(
-      interaction,
-      "\u0E19\u0E49\u0E2D\u0E07\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E2B\u0E49\u0E2D\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E41\u0E25\u0E30\u0E25\u0E49\u0E32\u0E07\u0E04\u0E34\u0E27\u0E43\u0E2B\u0E49\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30 \u{1F3B5}"
-    );
-    return true;
-  }
-  if (subcommand === "stop") {
-    if (existing) {
-      existing.queue.length = 0;
-      existing.current = void 0;
-      stopActiveAudio(existing);
-      existing.player.stop(true);
-      scheduleIdleCleanup(existing);
-    }
-    await interactionReply(interaction, "\u0E2B\u0E22\u0E38\u0E14\u0E40\u0E1E\u0E25\u0E07\u0E41\u0E25\u0E30\u0E25\u0E49\u0E32\u0E07\u0E04\u0E34\u0E27\u0E43\u0E2B\u0E49\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30 \u23F9\uFE0F");
-    return true;
-  }
-  const voiceChannel = getVoiceChannel(interaction);
-  if (!voiceChannel) {
-    await interactionReply(
-      interaction,
-      "\u0E1E\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E40\u0E02\u0E49\u0E32\u0E2B\u0E49\u0E2D\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E01\u0E48\u0E2D\u0E19 \u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E2D\u0E22\u0E43\u0E0A\u0E49\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07\u0E40\u0E1E\u0E25\u0E07\u0E19\u0E30\u0E04\u0E30 \u{1F496}"
-    );
-    return true;
-  }
-  if (subcommand === "skip") {
-    if (!existing?.current) {
-      await interactionReply(
-        interaction,
-        "\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E40\u0E1E\u0E25\u0E07\u0E17\u0E35\u0E48\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E25\u0E48\u0E19\u0E2D\u0E22\u0E39\u0E48\u0E04\u0E48\u0E30"
-      );
-      return true;
-    }
-    stopActiveAudio(existing);
-    existing.player.stop();
-    await interactionReply(interaction, "\u0E02\u0E49\u0E32\u0E21\u0E40\u0E1E\u0E25\u0E07\u0E43\u0E2B\u0E49\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30 \u{1F3B6}");
-    return true;
-  }
-  if (subcommand === "play") {
-    const rawQuery = isStandalonePlay ? interaction.options.getString("query", true) : interaction.options.getString("query", false) || interaction.options.getString("url", false);
-    const resolved = resolveMusicQuery(rawQuery);
-    if (!resolved.ok) {
-      await interactionReply(interaction, resolved.reason);
-      return true;
-    }
-    try {
-      if (typeof interaction.deferReply === "function" && !interaction.deferred && !interaction.replied) {
-        await interaction.deferReply({ ephemeral: false }).catch(() => {
-        });
-      }
-      console.log(
-        `[Music] Resolving ${resolved.isUrl ? "direct URL" : "search query"} before playback`
-      );
-      const track = await resolveTrackFromQuery(
-        resolved,
-        interaction.user?.tag ?? "\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 RitzSMP"
-      );
-      const session = await getOrCreateSession(interaction, voiceChannel);
-      session.queue.push(track);
-      if (!session.current) await playNext(session);
-      if (!session.current) {
-        throw session.lastError ?? new Error(
-          "\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E40\u0E1E\u0E25\u0E07\u0E2A\u0E48\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E2D\u0E2D\u0E01\u0E21\u0E32\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E04\u0E48\u0E30 \u0E01\u0E23\u0E38\u0E13\u0E32\u0E25\u0E2D\u0E07\u0E25\u0E34\u0E07\u0E01\u0E4C\u0E2D\u0E37\u0E48\u0E19\u0E2B\u0E23\u0E37\u0E2D\u0E25\u0E2D\u0E07\u0E43\u0E2B\u0E21\u0E48\u0E2D\u0E35\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07"
-        );
-      }
-      await interactionReply(interaction, buildMusicEmbed(session));
-    } catch (error) {
-      await interactionReply(
-        interaction,
-        `\u0E40\u0E1B\u0E34\u0E14\u0E40\u0E1E\u0E25\u0E07\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08\u0E04\u0E48\u0E30: ${formatMusicPlaybackError(error)}`
-      );
-    }
-    return true;
-  }
-  await interactionReply(
-    interaction,
-    "\u0E43\u0E0A\u0E49 /play query:... \u0E2B\u0E23\u0E37\u0E2D /music play, /music queue, /music skip, /music stop \u0E2B\u0E23\u0E37\u0E2D /music leave \u0E44\u0E14\u0E49\u0E40\u0E25\u0E22\u0E04\u0E48\u0E30"
-  );
-  return true;
-}
-async function handleMusicButtonInteraction(interaction) {
-  if (!interaction?.isButton?.() || typeof interaction.customId !== "string" || !interaction.customId.startsWith("music_")) {
-    return false;
-  }
-  if (!interaction.guildId) {
-    await interactionReply(
-      interaction,
-      "\u0E1B\u0E38\u0E48\u0E21\u0E04\u0E27\u0E1A\u0E04\u0E38\u0E21\u0E40\u0E1E\u0E25\u0E07\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E43\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C Discord \u0E40\u0E17\u0E48\u0E32\u0E19\u0E31\u0E49\u0E19\u0E04\u0E48\u0E30"
-    );
-    return true;
-  }
-  const session = sessions.get(interaction.guildId);
-  if (interaction.customId === "music_queue") {
-    await interactionReply(
-      interaction,
-      buildMusicEmbed(session ?? { queue: [] })
-    );
-    return true;
-  }
-  if (!session) {
-    await interactionReply(
-      interaction,
-      "\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35 session \u0E40\u0E1E\u0E25\u0E07\u0E17\u0E35\u0E48\u0E01\u0E33\u0E25\u0E31\u0E07\u0E17\u0E33\u0E07\u0E32\u0E19\u0E2D\u0E22\u0E39\u0E48\u0E04\u0E48\u0E30"
-    );
-    return true;
-  }
-  if (interaction.customId === "music_pause_resume") {
-    if (!session.current) {
-      await interactionReply(
-        interaction,
-        "\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E40\u0E1E\u0E25\u0E07\u0E17\u0E35\u0E48\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E25\u0E48\u0E19\u0E2D\u0E22\u0E39\u0E48\u0E04\u0E48\u0E30"
-      );
-      return true;
-    }
-    if (session.player.state.status === AudioPlayerStatus.Paused) {
-      session.player.unpause();
-      await interactionReply(interaction, "\u0E40\u0E25\u0E48\u0E19\u0E40\u0E1E\u0E25\u0E07\u0E15\u0E48\u0E2D\u0E43\u0E2B\u0E49\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30 \u25B6\uFE0F");
-    } else if (session.player.state.status === AudioPlayerStatus.Playing) {
-      session.player.pause(true);
-      await interactionReply(interaction, "\u0E1E\u0E31\u0E01\u0E40\u0E1E\u0E25\u0E07\u0E44\u0E27\u0E49\u0E0A\u0E31\u0E48\u0E27\u0E04\u0E23\u0E32\u0E27\u0E43\u0E2B\u0E49\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30 \u23F8\uFE0F");
-    } else {
-      await interactionReply(
-        interaction,
-        "\u0E40\u0E1E\u0E25\u0E07\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E2B\u0E23\u0E37\u0E2D\u0E22\u0E31\u0E07\u0E40\u0E23\u0E34\u0E48\u0E21\u0E2A\u0E48\u0E07\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08\u0E04\u0E48\u0E30"
-      );
-    }
-    return true;
-  }
-  if (interaction.customId === "music_skip") {
-    if (!session.current) {
-      await interactionReply(
-        interaction,
-        "\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E40\u0E1E\u0E25\u0E07\u0E17\u0E35\u0E48\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E25\u0E48\u0E19\u0E2D\u0E22\u0E39\u0E48\u0E04\u0E48\u0E30"
-      );
-      return true;
-    }
-    stopActiveAudio(session);
-    session.player.stop();
-    await interactionReply(interaction, "\u0E02\u0E49\u0E32\u0E21\u0E40\u0E1E\u0E25\u0E07\u0E43\u0E2B\u0E49\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30 \u{1F3B6}");
-    return true;
-  }
-  if (interaction.customId === "music_stop") {
-    session.queue.length = 0;
-    session.current = void 0;
-    stopActiveAudio(session);
-    session.player.stop(true);
-    scheduleIdleCleanup(session);
-    await interactionReply(interaction, "\u0E2B\u0E22\u0E38\u0E14\u0E40\u0E1E\u0E25\u0E07\u0E41\u0E25\u0E30\u0E25\u0E49\u0E32\u0E07\u0E04\u0E34\u0E27\u0E43\u0E2B\u0E49\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30 \u23F9\uFE0F");
-    return true;
-  }
-  await interactionReply(interaction, "\u0E44\u0E21\u0E48\u0E23\u0E39\u0E49\u0E08\u0E31\u0E01\u0E1B\u0E38\u0E48\u0E21\u0E04\u0E27\u0E1A\u0E04\u0E38\u0E21\u0E40\u0E1E\u0E25\u0E07\u0E19\u0E35\u0E49\u0E04\u0E48\u0E30");
-  return true;
-}
-
-// server/discordMusicChannel.ts
-import { ChannelType, PermissionFlagsBits } from "discord.js";
-var MUSIC_CHANNEL_NAME = "\u{1F3B5}\u2502\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E1E\u0E25\u0E07";
-var LEGACY_MUSIC_CHANNEL_NAMES = ["\u{1F3B5}\u2502\u0E2B\u0E49\u0E2D\u0E07\u0E40\u0E1E\u0E25\u0E07"];
-var configuredMusicChannelId = process.env.DISCORD_MUSIC_CHANNEL_ID?.trim() || "";
-async function ensureMusicTextChannel(client, guildId) {
-  if (configuredMusicChannelId) return configuredMusicChannelId;
-  const guild = await client.guilds.fetch(guildId).catch(() => null);
-  if (!guild) return null;
-  const channels = await guild.channels.fetch().catch(() => null);
-  const existing = channels?.find(
-    (channel) => channel?.type === ChannelType.GuildText && (channel.name === MUSIC_CHANNEL_NAME || LEGACY_MUSIC_CHANNEL_NAMES.includes(channel.name))
-  );
-  if (existing) {
-    if (existing.name !== MUSIC_CHANNEL_NAME && "setName" in existing) {
-      await existing.setName(MUSIC_CHANNEL_NAME, "Standardize RitzSMP music channel name").catch(() => void 0);
-    }
-    if ("setTopic" in existing) {
-      await existing.setTopic("\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E1E\u0E25\u0E07 RitzSMP AI \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E40\u0E25\u0E48\u0E19\u0E41\u0E25\u0E30\u0E04\u0E27\u0E1A\u0E04\u0E38\u0E21\u0E40\u0E1E\u0E25\u0E07\u0E40\u0E17\u0E48\u0E32\u0E19\u0E31\u0E49\u0E19").catch(() => void 0);
-    }
-    configuredMusicChannelId = existing.id;
-    return existing.id;
-  }
-  const botMember = await guild.members.fetch(client.user?.id ?? "").catch(() => null);
-  if (!botMember?.permissions.has(PermissionFlagsBits.ManageChannels)) return null;
-  const created = await guild.channels.create({
-    name: MUSIC_CHANNEL_NAME,
-    type: ChannelType.GuildText,
-    topic: "\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E1E\u0E25\u0E07 RitzSMP AI \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E40\u0E25\u0E48\u0E19\u0E41\u0E25\u0E30\u0E04\u0E27\u0E1A\u0E04\u0E38\u0E21\u0E40\u0E1E\u0E25\u0E07\u0E40\u0E17\u0E48\u0E32\u0E19\u0E31\u0E49\u0E19",
-    reason: "\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E0A\u0E48\u0E2D\u0E07\u0E41\u0E22\u0E01\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E1E\u0E25\u0E07 \u0E44\u0E21\u0E48\u0E23\u0E1A\u0E01\u0E27\u0E19\u0E0A\u0E48\u0E2D\u0E07\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32\u0E41\u0E25\u0E30\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E1C\u0E39\u0E49\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28"
-  }).catch(() => null);
-  if (!created) return null;
-  configuredMusicChannelId = created.id;
-  return created.id;
-}
-
 // server/discordMinecraftStatusChannel.ts
-import { ChannelType as ChannelType2, PermissionFlagsBits as PermissionFlagsBits2 } from "discord.js";
+import { ChannelType, PermissionFlagsBits } from "discord.js";
 var MINECRAFT_STATUS_CHANNEL_NAME = "\u{1F4E1}\u2502\u0E23\u0E30\u0E1A\u0E1A\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C";
 var LEGACY_MINECRAFT_STATUS_CHANNEL_NAMES = ["\u{1F4E1}\u2502\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C"];
 var configuredMinecraftStatusChannelId = process.env.DISCORD_ONLINE_CHANNEL_ID?.trim() || "";
@@ -2359,7 +1549,7 @@ async function ensureMinecraftStatusTextChannel(client, guildId) {
   if (!guild) return null;
   const channels = await guild.channels.fetch().catch(() => null);
   const existing = channels?.find(
-    (channel) => channel?.type === ChannelType2.GuildText && (channel.name === MINECRAFT_STATUS_CHANNEL_NAME || LEGACY_MINECRAFT_STATUS_CHANNEL_NAMES.includes(channel.name))
+    (channel) => channel?.type === ChannelType.GuildText && (channel.name === MINECRAFT_STATUS_CHANNEL_NAME || LEGACY_MINECRAFT_STATUS_CHANNEL_NAMES.includes(channel.name))
   );
   if (existing) {
     if (existing.name !== MINECRAFT_STATUS_CHANNEL_NAME && "setName" in existing) {
@@ -2372,10 +1562,10 @@ async function ensureMinecraftStatusTextChannel(client, guildId) {
     return existing.id;
   }
   const botMember = await guild.members.fetch(client.user?.id ?? "").catch(() => null);
-  if (!botMember?.permissions.has(PermissionFlagsBits2.ManageChannels)) return null;
+  if (!botMember?.permissions.has(PermissionFlagsBits.ManageChannels)) return null;
   const created = await guild.channels.create({
     name: MINECRAFT_STATUS_CHANNEL_NAME,
-    type: ChannelType2.GuildText,
+    type: ChannelType.GuildText,
     topic: "\u0E23\u0E30\u0E1A\u0E1A\u0E41\u0E2A\u0E14\u0E07\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C Minecraft \u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C \u0E41\u0E25\u0E30\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E40\u0E02\u0E49\u0E32-\u0E2D\u0E2D\u0E01",
     reason: "\u0E41\u0E22\u0E01\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28\u0E2A\u0E16\u0E32\u0E19\u0E30 Minecraft \u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E0A\u0E48\u0E2D\u0E07\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28\u0E41\u0E25\u0E30\u0E0A\u0E48\u0E2D\u0E07\u0E40\u0E1E\u0E25\u0E07"
   }).catch(() => null);
@@ -2455,6 +1645,72 @@ function runtimeConfigForClient(config) {
     hasDiscordToken: Boolean(config.discordBotToken),
     hasRconPassword: Boolean(config.rconPassword)
   };
+}
+
+// server/discordAiCommandRegistry.ts
+import {
+  PermissionsBitField,
+  SlashCommandBuilder
+} from "discord.js";
+function buildRitzSmpAiCommands() {
+  return [
+    new SlashCommandBuilder().setName("ask").setDescription("\u0E16\u0E32\u0E21\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E01\u0E31\u0E1A RitzSMP AI").addStringOption(
+      (option) => option.setName("question").setDescription("\u0E04\u0E33\u0E16\u0E32\u0E21\u0E17\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E16\u0E32\u0E21 AI").setRequired(true)
+    ),
+    new SlashCommandBuilder().setName("status").setDescription("\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1A\u0E2D\u0E17\u0E41\u0E25\u0E30\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C Minecraft"),
+    new SlashCommandBuilder().setName("store").setDescription("\u0E40\u0E1B\u0E34\u0E14\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 RitzSMP"),
+    new SlashCommandBuilder().setName("ranks").setDescription("\u0E14\u0E39\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E22\u0E28\u0E41\u0E25\u0E30\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E1B\u0E23\u0E30\u0E42\u0E22\u0E0A\u0E19\u0E4C"),
+    new SlashCommandBuilder().setName("topup").setDescription("\u0E14\u0E39\u0E27\u0E34\u0E18\u0E35\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19\u0E41\u0E25\u0E30\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28"),
+    new SlashCommandBuilder().setName("verify").setDescription("\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Discord \u0E01\u0E31\u0E1A Minecraft"),
+    new SlashCommandBuilder().setName("players").setDescription("\u0E41\u0E2A\u0E14\u0E07\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C"),
+    new SlashCommandBuilder().setName("members").setDescription("\u0E41\u0E2A\u0E14\u0E07\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 Discord"),
+    new SlashCommandBuilder().setName("profile").setDescription("\u0E14\u0E39\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C RitzSMP \u0E17\u0E35\u0E48\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E44\u0E27\u0E49"),
+    new SlashCommandBuilder().setName("help").setDescription("\u0E14\u0E39\u0E04\u0E39\u0E48\u0E21\u0E37\u0E2D\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07 RitzSMP AI"),
+    new SlashCommandBuilder().setName("setup").setDescription("\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E41\u0E1C\u0E07\u0E23\u0E30\u0E1A\u0E1A\u0E14\u0E49\u0E27\u0E22\u0E15\u0E19\u0E40\u0E2D\u0E07").setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator).addSubcommand(
+      (sub) => sub.setName("panel").setDescription("\u0E2A\u0E48\u0E07\u0E41\u0E1C\u0E07\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E41\u0E25\u0E30\u0E23\u0E31\u0E1A\u0E22\u0E28\u0E25\u0E07\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49")
+    ).addSubcommand(
+      (sub) => sub.setName("welcome").setDescription("\u0E2A\u0E23\u0E49\u0E32\u0E07 Embed \u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A\u0E25\u0E07\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49")
+    ).addSubcommand(
+      (sub) => sub.setName("leave").setDescription("\u0E2A\u0E23\u0E49\u0E32\u0E07 Embed \u0E41\u0E08\u0E49\u0E07\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E2D\u0E2D\u0E01\u0E25\u0E07\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49")
+    ),
+    new SlashCommandBuilder().setName("embed").setDescription("\u0E08\u0E31\u0E14\u0E01\u0E32\u0E23\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28 Embed").setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator).addSubcommand(
+      (sub) => sub.setName("default").setDescription("\u0E2A\u0E48\u0E07\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08\u0E23\u0E39\u0E1B")
+    ).addSubcommand(
+      (sub) => sub.setName("create").setDescription("\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28 Embed \u0E41\u0E1A\u0E1A\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E40\u0E2D\u0E07").addStringOption(
+        (o) => o.setName("title").setDescription("\u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28").setRequired(true)
+      ).addStringOption(
+        (o) => o.setName("description").setDescription("\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28").setRequired(true)
+      ).addStringOption(
+        (o) => o.setName("color").setDescription("\u0E2A\u0E35 \u0E40\u0E0A\u0E48\u0E19 #ff69b4").setRequired(false)
+      ).addStringOption(
+        (o) => o.setName("image_url").setDescription("\u0E25\u0E34\u0E07\u0E01\u0E4C\u0E23\u0E39\u0E1B\u0E20\u0E32\u0E1E\u0E1B\u0E23\u0E30\u0E01\u0E2D\u0E1A").setRequired(false)
+      ).addStringOption(
+        (o) => o.setName("button_label").setDescription("\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E1A\u0E19\u0E1B\u0E38\u0E48\u0E21\u0E25\u0E34\u0E07\u0E01\u0E4C").setRequired(false)
+      ).addStringOption(
+        (o) => o.setName("button_url").setDescription("\u0E25\u0E34\u0E07\u0E01\u0E4C\u0E1B\u0E25\u0E32\u0E22\u0E17\u0E32\u0E07\u0E02\u0E2D\u0E07\u0E1B\u0E38\u0E48\u0E21").setRequired(false)
+      )
+    ).addSubcommand(
+      (sub) => sub.setName("edit").setDescription("\u0E41\u0E01\u0E49\u0E44\u0E02 Embed \u0E15\u0E32\u0E21 Message ID").addStringOption(
+        (o) => o.setName("message_id").setDescription("Message ID \u0E02\u0E2D\u0E07 Embed").setRequired(true)
+      ).addStringOption(
+        (o) => o.setName("title").setDescription("\u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D\u0E43\u0E2B\u0E21\u0E48").setRequired(false)
+      ).addStringOption(
+        (o) => o.setName("description").setDescription("\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32\u0E43\u0E2B\u0E21\u0E48").setRequired(false)
+      ).addStringOption(
+        (o) => o.setName("color").setDescription("\u0E2A\u0E35\u0E43\u0E2B\u0E21\u0E48").setRequired(false)
+      ).addStringOption(
+        (o) => o.setName("image_url").setDescription("URL \u0E23\u0E39\u0E1B\u0E43\u0E2B\u0E21\u0E48").setRequired(false)
+      ).addStringOption(
+        (o) => o.setName("button_label").setDescription("\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E1B\u0E38\u0E48\u0E21\u0E43\u0E2B\u0E21\u0E48").setRequired(false)
+      ).addStringOption(
+        (o) => o.setName("button_url").setDescription("URL \u0E1B\u0E38\u0E48\u0E21\u0E43\u0E2B\u0E21\u0E48").setRequired(false)
+      )
+    ).addSubcommand(
+      (sub) => sub.setName("delete").setDescription("\u0E25\u0E1A Embed \u0E15\u0E32\u0E21 Message ID").addStringOption(
+        (o) => o.setName("message_id").setDescription("Message ID \u0E02\u0E2D\u0E07 Embed").setRequired(true)
+      )
+    )
+  ].map((command) => command.toJSON());
 }
 
 // server/discordAiBot.ts
@@ -2617,21 +1873,21 @@ async function safeReply(interaction, options) {
 var RITZ_WELCOME_COVER_IMAGE_URL = "https://ritzsmpstore-94jhsfkx.manus.space/manus-storage/welcome-cover_ec173e6c.png";
 var RITZ_RANK_CLAIM_IMAGE_URL = "https://ritzsmpstore-94jhsfkx.manus.space/manus-storage/rank-claim_2909f231.png";
 function buildOnboardingComponents() {
-  const actionRow = new ActionRowBuilder2().addComponents(
-    new ButtonBuilder2().setCustomId("ritz_verify_button").setLabel("\u{1F517} \u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35").setStyle(ButtonStyle2.Success),
-    new ButtonBuilder2().setCustomId("ritz_cancel_verify_button").setLabel("\u274C \u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E23\u0E2B\u0E31\u0E2A / \u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E1A\u0E31\u0E0D\u0E0A\u0E35").setStyle(ButtonStyle2.Secondary),
-    new ButtonBuilder2().setCustomId("ritz_unlink_button").setLabel("\u{1F513} \u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E01\u0E32\u0E23\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14").setStyle(ButtonStyle2.Danger)
+  const actionRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId("ritz_verify_button").setLabel("\u{1F517} \u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35").setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId("ritz_cancel_verify_button").setLabel("\u274C \u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E23\u0E2B\u0E31\u0E2A / \u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E1A\u0E31\u0E0D\u0E0A\u0E35").setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId("ritz_unlink_button").setLabel("\u{1F513} \u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E01\u0E32\u0E23\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14").setStyle(ButtonStyle.Danger)
   );
   return [actionRow];
 }
 function buildRankClaimComponents() {
-  const actionRow = new ActionRowBuilder2().addComponents(
-    new ButtonBuilder2().setCustomId("ritz_claim_rank_button").setLabel("\u2705 \u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19").setStyle(ButtonStyle2.Success)
+  const actionRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId("ritz_claim_rank_button").setLabel("\u2705 \u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19").setStyle(ButtonStyle.Success)
   );
   return [actionRow];
 }
 function buildRankClaimEmbed() {
-  return new EmbedBuilder2().setTitle("\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19\u0E01\u0E31\u0E19\u0E14\u0E49\u0E27\u0E22\u0E19\u0E49\u0E32\u2728").setDescription(
+  return new EmbedBuilder().setTitle("\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19\u0E01\u0E31\u0E19\u0E14\u0E49\u0E27\u0E22\u0E19\u0E49\u0E32\u2728").setDescription(
     "\u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21\u0E14\u0E49\u0E32\u0E19\u0E25\u0E48\u0E32\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19\u0E41\u0E25\u0E30\u0E23\u0E31\u0E1A\u0E22\u0E28\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 RitzSMP \u0E19\u0E30\u0E04\u0E30 \u{1F496}\\n\\n\u0E2B\u0E32\u0E01\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Minecraft \u0E23\u0E30\u0E1A\u0E1A\u0E08\u0E30\u0E43\u0E2B\u0E49\u0E01\u0E23\u0E2D\u0E01\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E14\u0E33\u0E40\u0E19\u0E34\u0E19\u0E01\u0E32\u0E23\u0E15\u0E48\u0E2D\u0E04\u0E48\u0E30"
   ).setColor(16730972).setImage(RITZ_RANK_CLAIM_IMAGE_URL).setFooter({ text: "RitzSMP AI \u2022 \u0E23\u0E30\u0E1A\u0E1A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19\u0E41\u0E25\u0E30\u0E23\u0E31\u0E1A\u0E22\u0E28\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34" }).setTimestamp();
 }
@@ -2653,7 +1909,7 @@ function isHttpUrl(value) {
   }
 }
 function buildManualEmbedPayload(options) {
-  const embed = new EmbedBuilder2().setTitle(options.title.trim().slice(0, 256)).setDescription(options.description.trim().slice(0, 4096)).setColor(parseEmbedColor(options.color)).setTimestamp().setFooter({
+  const embed = new EmbedBuilder().setTitle(options.title.trim().slice(0, 256)).setDescription(options.description.trim().slice(0, 4096)).setColor(parseEmbedColor(options.color)).setTimestamp().setFooter({
     text: (options.footerText || "\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28\u0E42\u0E14\u0E22\u0E41\u0E2D\u0E14\u0E21\u0E34\u0E19 \u2022 RitzSMP AI").slice(
       0,
       2048
@@ -2663,8 +1919,8 @@ function buildManualEmbedPayload(options) {
   const components = [];
   if (options.buttonLabel?.trim() && isHttpUrl(options.buttonUrl)) {
     components.push(
-      new ActionRowBuilder2().addComponents(
-        new ButtonBuilder2().setLabel(options.buttonLabel.trim().slice(0, 80)).setStyle(ButtonStyle2.Link).setURL(options.buttonUrl)
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setLabel(options.buttonLabel.trim().slice(0, 80)).setStyle(ButtonStyle.Link).setURL(options.buttonUrl)
       )
     );
   }
@@ -2690,7 +1946,7 @@ function isDiscordAdministrator(interaction) {
   if (!interaction?.guild) return false;
   const permissions = interaction.memberPermissions ?? interaction.member?.permissions;
   if (permissions?.has)
-    return permissions.has(PermissionsBitField.Flags.Administrator);
+    return permissions.has(PermissionsBitField2.Flags.Administrator);
   return false;
 }
 function getEmbedData(message) {
@@ -2766,7 +2022,7 @@ var RITZ_SYSTEM_CHANNEL_TARGETS = [
   {
     name: "\u{1F517}\u2502\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35",
     legacyNames: ["\u2705\u2502\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E14\u0E34\u0E2A\u0E04\u0E2D\u0E23\u0E4C\u0E14", "\u{1F517}\u2502\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35-Minecraft"],
-    type: ChannelType3.GuildText,
+    type: ChannelType2.GuildText,
     topic: "\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Discord \u0E01\u0E31\u0E1A Minecraft \u0E41\u0E25\u0E30\u0E23\u0E31\u0E1A\u0E23\u0E2B\u0E31\u0E2A /verify 4 \u0E2B\u0E25\u0E31\u0E01"
   },
   {
@@ -2776,13 +2032,13 @@ var RITZ_SYSTEM_CHANNEL_TARGETS = [
       "\u{1F4CB}\uFE31\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E1A\u0E31\u0E0D\u0E0A\u0E35",
       "\u{1F4CB}\u2502\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D-\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19"
     ],
-    type: ChannelType3.GuildText,
+    type: ChannelType2.GuildText,
     topic: "\u0E23\u0E30\u0E1A\u0E1A\u0E41\u0E2A\u0E14\u0E07\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E41\u0E25\u0E30\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Minecraft \u0E17\u0E35\u0E48\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E41\u0E25\u0E49\u0E27"
   },
   {
     name: "\u{1F396}\uFE0F\u2502\u0E23\u0E30\u0E1A\u0E1A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E23\u0E31\u0E1A\u0E22\u0E28",
     legacyNames: ["\u{1FAAA}\u2502\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19\u0E41\u0E21\u0E30", "\u{1F396}\uFE0F\u2502\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19-\u0E23\u0E31\u0E1A\u0E22\u0E28"],
-    type: ChannelType3.GuildText,
+    type: ChannelType2.GuildText,
     topic: "\u0E23\u0E30\u0E1A\u0E1A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19\u0E41\u0E25\u0E30\u0E01\u0E14\u0E23\u0E31\u0E1A\u0E22\u0E28\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 RitzSMP AI"
   },
   {
@@ -2793,19 +2049,19 @@ var RITZ_SYSTEM_CHANNEL_TARGETS = [
       "\u{1F44B}\u2502\u0E23\u0E30\u0E1A\u0E1A\u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A-\u0E40\u0E02\u0E49\u0E32\u0E2D\u0E2D\u0E01",
       "\u{1F91E}\u{1F3FB}\u2502leave"
     ],
-    type: ChannelType3.GuildText,
+    type: ChannelType2.GuildText,
     topic: "\u0E23\u0E30\u0E1A\u0E1A\u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E43\u0E2B\u0E21\u0E48\u0E41\u0E25\u0E30\u0E41\u0E08\u0E49\u0E07\u0E40\u0E15\u0E37\u0E2D\u0E19\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E40\u0E02\u0E49\u0E32\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C"
   },
   {
     name: "\u{1F44B}\u2502\u0E23\u0E30\u0E1A\u0E1A\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E2D\u0E2D\u0E01",
     legacyNames: ["\u{1F44B}\u2502leave", "\u{1F44B}\u2502\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E2D\u0E2D\u0E01", "\u{1F44B}\u2502\u0E23\u0E30\u0E1A\u0E1A\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C"],
-    type: ChannelType3.GuildText,
+    type: ChannelType2.GuildText,
     topic: "\u0E23\u0E30\u0E1A\u0E1A\u0E41\u0E08\u0E49\u0E07\u0E40\u0E15\u0E37\u0E2D\u0E19\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C"
   }
 ];
 function planManagedSystemChannelCleanup(channels, target) {
   const candidates = Array.from(channels).filter(
-    (channel) => (channel.type === void 0 || channel.type === ChannelType3.GuildText) && (channel.name === target.name || target.legacyNames.includes(channel.name))
+    (channel) => (channel.type === void 0 || channel.type === ChannelType2.GuildText) && (channel.name === target.name || target.legacyNames.includes(channel.name))
   ).sort(
     (a, b) => (a.position ?? 0) - (b.position ?? 0) || a.id.localeCompare(b.id)
   );
@@ -2838,14 +2094,14 @@ function planAccountListPanelCleanup(messages, botUserId) {
   };
 }
 function buildAccountListPanelPayload() {
-  const embed = new EmbedBuilder2().setTitle("\u{1F4CB} \u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E41\u0E25\u0E30\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E17\u0E35\u0E48\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19").setDescription(
+  const embed = new EmbedBuilder().setTitle("\u{1F4CB} \u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E41\u0E25\u0E30\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E17\u0E35\u0E48\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19").setDescription(
     "\u0E23\u0E30\u0E1A\u0E1A\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19 RitzSMP \u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14\u0E42\u0E14\u0E22\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34 \u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21\u0E14\u0E49\u0E32\u0E19\u0E25\u0E48\u0E32\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22\u0E04\u0E48\u0E30 \u2728"
   ).setColor(3900150).setFooter({ text: ACCOUNT_LIST_PANEL_MARKER }).setTimestamp();
-  const profileRow = new ActionRowBuilder2().addComponents(
-    new ButtonBuilder2().setCustomId("ritz_profile_button").setLabel("\u{1FAAA} \u0E14\u0E39\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E02\u0E2D\u0E07\u0E09\u0E31\u0E19").setStyle(ButtonStyle2.Primary),
-    new ButtonBuilder2().setCustomId("ritz_discord_members_button").setLabel("\u{1F465} \u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 Discord").setStyle(ButtonStyle2.Secondary),
-    new ButtonBuilder2().setCustomId("ritz_players_button").setLabel("\u26CF\uFE0F \u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19 Minecraft \u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C").setStyle(ButtonStyle2.Secondary),
-    new ButtonBuilder2().setCustomId("ritz_unlink_button").setLabel("\u{1F513} \u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35").setStyle(ButtonStyle2.Danger)
+  const profileRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId("ritz_profile_button").setLabel("\u{1FAAA} \u0E14\u0E39\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E02\u0E2D\u0E07\u0E09\u0E31\u0E19").setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId("ritz_discord_members_button").setLabel("\u{1F465} \u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 Discord").setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId("ritz_players_button").setLabel("\u26CF\uFE0F \u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19 Minecraft \u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C").setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId("ritz_unlink_button").setLabel("\u{1F513} \u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35").setStyle(ButtonStyle.Danger)
   );
   return { embeds: [embed], components: [profileRow] };
 }
@@ -3103,7 +2359,7 @@ function buildDiscordMembersEmbed(members) {
     const displayName = member.displayName || member.user?.globalName || member.user?.username || `\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 ${index + 1}`;
     return `**${index + 1}.** ${displayName} (<@${member.id}>)`;
   }).join("\n") : "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 Discord \u0E17\u0E35\u0E48\u0E41\u0E2A\u0E14\u0E07\u0E44\u0E14\u0E49\u0E43\u0E19\u0E02\u0E13\u0E30\u0E19\u0E35\u0E49\u0E04\u0E48\u0E30";
-  return new EmbedBuilder2().setTitle("\u{1F465} \u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 Discord RitzSMP").setDescription(description).addFields({
+  return new EmbedBuilder().setTitle("\u{1F465} \u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 Discord RitzSMP").setDescription(description).addFields({
     name: "\u{1F512} \u0E04\u0E27\u0E32\u0E21\u0E40\u0E1B\u0E47\u0E19\u0E2A\u0E48\u0E27\u0E19\u0E15\u0E31\u0E27",
     value: "\u0E41\u0E2A\u0E14\u0E07\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E0A\u0E37\u0E48\u0E2D Discord \u0E41\u0E25\u0E30\u0E01\u0E32\u0E23 mention \u0E02\u0E2D\u0E07\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E43\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C \u0E44\u0E21\u0E48\u0E41\u0E2A\u0E14\u0E07\u0E2D\u0E35\u0E40\u0E21\u0E25\u0E2B\u0E23\u0E37\u0E2D\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E2A\u0E48\u0E27\u0E19\u0E15\u0E31\u0E27\u0E04\u0E48\u0E30"
   }).setColor(9133302).setFooter({
@@ -3141,7 +2397,7 @@ function buildMinecraftPlayersEmbed(status) {
   const maxPlayers = Number.isFinite(status.maxPlayers) ? Math.max(0, status.maxPlayers) : 0;
   const description = status.online ? playerCount === 0 ? "\u{1F7E2} \u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C\u0E04\u0E48\u0E30 \u0E41\u0E15\u0E48\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E2D\u0E22\u0E39\u0E48\u0E43\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C" : status.playerNames.length > 0 ? status.playerNames.map((name) => `\u2022 ${name}`).join("\n") : "\u{1F7E2} \u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C \u0E41\u0E15\u0E48 API \u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E40\u0E1B\u0E34\u0E14\u0E40\u0E1C\u0E22\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E43\u0E19\u0E02\u0E13\u0E30\u0E19\u0E35\u0E49\u0E04\u0E48\u0E30" : "\u{1F534} \u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08\u0E2B\u0E23\u0E37\u0E2D\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E2D\u0E2D\u0E1F\u0E44\u0E25\u0E19\u0E4C\u0E04\u0E48\u0E30 \u0E41\u0E2A\u0E14\u0E07\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19 0 \u0E04\u0E19\u0E0A\u0E31\u0E48\u0E27\u0E04\u0E23\u0E32\u0E27";
   const statusValue = status.online ? `\u{1F7E2} \u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C ${playerCount}/${maxPlayers} \u0E04\u0E19` : "\u{1F534} \u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49 \u2022 \u0E41\u0E2A\u0E14\u0E07 0 \u0E04\u0E19\u0E0A\u0E31\u0E48\u0E27\u0E04\u0E23\u0E32\u0E27";
-  return new EmbedBuilder2().setTitle("\u{1F465} \u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E43\u0E19 RitzSMP").setDescription(description).addFields({ name: "\u0E2A\u0E16\u0E32\u0E19\u0E30", value: statusValue, inline: true }).setColor(status.online ? 2278750 : 15680580).setTimestamp().setFooter({
+  return new EmbedBuilder().setTitle("\u{1F465} \u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E43\u0E19 RitzSMP").setDescription(description).addFields({ name: "\u0E2A\u0E16\u0E32\u0E19\u0E30", value: statusValue, inline: true }).setColor(status.online ? 2278750 : 15680580).setTimestamp().setFooter({
     text: "\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E08\u0E32\u0E01 Minecraft status API \u2022 \u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21\u0E2D\u0E35\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A"
   });
 }
@@ -3165,7 +2421,7 @@ async function replyWithVerificationCode(interaction) {
   if (!await ensureDeferredReply(interaction, { ephemeral: true })) return;
   try {
     const codeRow = await createDiscordVerificationCode(interaction.user.id);
-    const embed = new EmbedBuilder2().setTitle("\u{1F517} \u0E23\u0E2B\u0E31\u0E2A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19 Minecraft").setDescription(
+    const embed = new EmbedBuilder().setTitle("\u{1F517} \u0E23\u0E2B\u0E31\u0E2A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19 Minecraft").setDescription(
       `\u0E19\u0E35\u0E48\u0E04\u0E37\u0E2D\u0E23\u0E2B\u0E31\u0E2A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E04\u0E48\u0E30:
 
 # \`${codeRow.code}\`
@@ -3196,7 +2452,7 @@ async function showMinecraftModal(interaction, customId, title) {
     "\u0E0A\u0E37\u0E48\u0E2D Minecraft (\u0E2B\u0E23\u0E37\u0E2D\u0E1E\u0E34\u0E21\u0E1E\u0E4C 'none' \u0E2B\u0E32\u0E01\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E1C\u0E48\u0E32\u0E19 Discord \u0E2D\u0E22\u0E48\u0E32\u0E07\u0E40\u0E14\u0E35\u0E22\u0E27)"
   ).setPlaceholder("\u0E0A\u0E37\u0E48\u0E2D\u0E43\u0E19\u0E40\u0E01\u0E21 \u0E2B\u0E23\u0E37\u0E2D\u0E40\u0E27\u0E49\u0E19\u0E27\u0E48\u0E32\u0E07\u0E44\u0E14\u0E49\u0E08\u0E49\u0E32").setStyle(TextInputStyle.Short).setMinLength(0).setMaxLength(32).setRequired(false);
   modal.addComponents(
-    new ActionRowBuilder2().addComponents(input)
+    new ActionRowBuilder().addComponents(input)
   );
   await interaction.showModal(modal);
 }
@@ -3211,7 +2467,7 @@ function buildProfileEmbed(interaction, verification) {
     throw new Error("\u0E44\u0E21\u0E48\u0E2D\u0E19\u0E38\u0E0D\u0E32\u0E15\u0E43\u0E2B\u0E49\u0E40\u0E1B\u0E34\u0E14\u0E40\u0E1C\u0E22\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E02\u0E2D\u0E07\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E04\u0E19\u0E2D\u0E37\u0E48\u0E19");
   }
   const skinUrl = `https://mc-heads.net/avatar/${encodeURIComponent(verification.minecraftIGN)}/128`;
-  return new EmbedBuilder2().setTitle(`\u{1FAAA} \u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 ${interaction.user.username}`).setDescription(
+  return new EmbedBuilder().setTitle(`\u{1FAAA} \u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 ${interaction.user.username}`).setDescription(
     verification.bio || "\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E04\u0E19\u0E19\u0E35\u0E49\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E40\u0E02\u0E35\u0E22\u0E19\u0E04\u0E33\u0E41\u0E19\u0E30\u0E19\u0E33\u0E15\u0E31\u0E27\u0E04\u0E48\u0E30"
   ).setColor(15485081).setThumbnail(skinUrl).addFields(
     {
@@ -3289,8 +2545,8 @@ async function showProfileModal(interaction) {
   const bioInput = new TextInputBuilder().setCustomId("profile_bio").setLabel("\u0E41\u0E19\u0E30\u0E19\u0E33\u0E15\u0E31\u0E27\u0E2A\u0E31\u0E49\u0E19 \u0E46").setPlaceholder("\u0E40\u0E0A\u0E48\u0E19 \u0E0A\u0E2D\u0E1A\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E1A\u0E49\u0E32\u0E19\u0E41\u0E25\u0E30\u0E40\u0E25\u0E48\u0E19\u0E01\u0E31\u0E1A\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19 \u0E46").setStyle(TextInputStyle.Paragraph).setMaxLength(300).setRequired(false).setValue(verification.bio || "");
   const styleInput = new TextInputBuilder().setCustomId("profile_play_style").setLabel("\u0E2A\u0E44\u0E15\u0E25\u0E4C\u0E01\u0E32\u0E23\u0E40\u0E25\u0E48\u0E19").setPlaceholder("\u0E40\u0E0A\u0E48\u0E19 \u0E2A\u0E32\u0E22\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E1A\u0E49\u0E32\u0E19 / \u0E2A\u0E32\u0E22\u0E1C\u0E08\u0E0D\u0E20\u0E31\u0E22").setStyle(TextInputStyle.Short).setMaxLength(128).setRequired(false).setValue(verification.playStyle || "");
   modal.addComponents(
-    new ActionRowBuilder2().addComponents(bioInput),
-    new ActionRowBuilder2().addComponents(styleInput)
+    new ActionRowBuilder().addComponents(bioInput),
+    new ActionRowBuilder().addComponents(styleInput)
   );
   await interaction.showModal(modal);
 }
@@ -3345,13 +2601,13 @@ function isLeaveSystemPanelMessage(message) {
   return footers.some((footer) => footer.includes("\u0E23\u0E30\u0E1A\u0E1A\u0E41\u0E08\u0E49\u0E07\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E2D\u0E2D\u0E01"));
 }
 function buildWelcomeSystemPanelPayload() {
-  const embed = new EmbedBuilder2().setTitle("\u{1F44B} \u0E23\u0E30\u0E1A\u0E1A\u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E43\u0E2B\u0E21\u0E48 RitzSMP").setDescription(
+  const embed = new EmbedBuilder().setTitle("\u{1F44B} \u0E23\u0E30\u0E1A\u0E1A\u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E43\u0E2B\u0E21\u0E48 RitzSMP").setDescription(
     "\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49\u0E43\u0E0A\u0E49\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E43\u0E2B\u0E21\u0E48\u0E17\u0E35\u0E48\u0E40\u0E02\u0E49\u0E32\u0E23\u0E48\u0E27\u0E21\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E04\u0E48\u0E30 \u{1F496}"
   ).setColor(15485081).setImage(RITZ_WELCOME_COVER_IMAGE_URL).setTimestamp().setFooter({ text: "RitzSMP AI \u2022 \u0E23\u0E30\u0E1A\u0E1A\u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E43\u0E2B\u0E21\u0E48" });
   return { embeds: [embed] };
 }
 function buildLeaveSystemPanelPayload() {
-  const embed = new EmbedBuilder2().setTitle("\u0E44\u0E27\u0E49\u0E40\u0E08\u0E2D\u0E01\u0E31\u0E19\u0E43\u0E2B\u0E21\u0E48\u0E19\u0E30\u0E04\u0E30 \u{1F44B}").setDescription(
+  const embed = new EmbedBuilder().setTitle("\u0E44\u0E27\u0E49\u0E40\u0E08\u0E2D\u0E01\u0E31\u0E19\u0E43\u0E2B\u0E21\u0E48\u0E19\u0E30\u0E04\u0E30 \u{1F44B}").setDescription(
     "\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49\u0E43\u0E0A\u0E49\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E41\u0E08\u0E49\u0E07\u0E40\u0E15\u0E37\u0E2D\u0E19\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C RitzSMP \u0E04\u0E48\u0E30"
   ).setColor(16020150).setImage(RITZ_WELCOME_COVER_IMAGE_URL).setTimestamp().setFooter({ text: "RitzSMP AI \u2022 \u0E23\u0E30\u0E1A\u0E1A\u0E41\u0E08\u0E49\u0E07\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E2D\u0E2D\u0E01" });
   return { embeds: [embed] };
@@ -3536,10 +2792,14 @@ function startRitzSmpAiBot() {
     return createRitzSmpAiBot(activeManagedServerRuntime ?? void 0);
   });
 }
-function createRitzSmpAiBot(runtime) {
+function resolveRitzSmpAiBotToken(runtime, tokenOverride) {
+  if (tokenOverride !== void 0) return tokenOverride.trim();
+  return runtime?.discordBotToken?.trim() || process.env.DISCORD_AI_BOT_TOKEN?.trim() || ENV.discordAiBotToken.trim();
+}
+function createRitzSmpAiBot(runtime, tokenOverride) {
   if (runtime) activeManagedServerRuntime = runtime;
-  const token = runtime?.discordBotToken || process.env.DISCORD_AI_BOT_TOKEN || ENV.discordAiBotToken;
-  if (!token || token.trim() === "" || token === "102031") {
+  const token = resolveRitzSmpAiBotToken(runtime, tokenOverride);
+  if (!token || token === "102031") {
     pushLog("WARN", "No Discord AI Bot token provided. Bot disabled.");
     return null;
   }
@@ -3566,80 +2826,7 @@ function createRitzSmpAiBot(runtime) {
     botStartTime = Date.now();
     pushLog("SUCCESS", `RitzSMP AI bot logged in as ${client.user?.tag}`);
     const storeUrl = ENV.publicStoreUrl || "https://ritz.mcsv.me";
-    const commands = [
-      new SlashCommandBuilder2().setName("ask").setDescription(
-        "\u{1F4AC} \u0E1E\u0E39\u0E14\u0E04\u0E38\u0E22\u0E41\u0E25\u0E30\u0E2A\u0E2D\u0E1A\u0E16\u0E32\u0E21\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E01\u0E31\u0E1A RitzSMP AI \u0E2A\u0E32\u0E27\u0E19\u0E49\u0E2D\u0E22\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22\u0E2A\u0E38\u0E14\u0E19\u0E48\u0E32\u0E23\u0E31\u0E01"
-      ).addStringOption(
-        (option) => option.setName("question").setDescription("\u0E04\u0E33\u0E16\u0E32\u0E21\u0E17\u0E35\u0E48\u0E04\u0E38\u0E13\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E16\u0E32\u0E21\u0E19\u0E49\u0E2D\u0E07 AI").setRequired(true)
-      ),
-      new SlashCommandBuilder2().setName("status").setDescription(
-        "\u{1F4CA} \u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1A\u0E2D\u0E17\u0E41\u0E25\u0E30\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C Minecraft RitzSMP \u0E41\u0E1A\u0E1A\u0E40\u0E23\u0E35\u0E22\u0E25\u0E44\u0E17\u0E21\u0E4C"
-      ),
-      new SlashCommandBuilder2().setName("ai-status").setDescription(
-        "\u{1F4CA} [Legacy Alias] \u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1A\u0E2D\u0E17\u0E41\u0E25\u0E30\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C Minecraft RitzSMP"
-      ),
-      new SlashCommandBuilder2().setName("store").setDescription("\u{1F6D2} \u0E41\u0E2A\u0E14\u0E07\u0E25\u0E34\u0E07\u0E01\u0E4C\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32\u0E2B\u0E25\u0E31\u0E01\u0E02\u0E2D\u0E07 RitzSMP Store"),
-      new SlashCommandBuilder2().setName("ranks").setDescription(
-        "\u{1F451} \u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E22\u0E28\u0E1E\u0E34\u0E40\u0E28\u0E29\u0E41\u0E25\u0E30\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E1B\u0E23\u0E30\u0E42\u0E22\u0E0A\u0E19\u0E4C\u0E20\u0E32\u0E22\u0E43\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C"
-      ),
-      new SlashCommandBuilder2().setName("topup").setDescription(
-        "\u{1F4B3} \u0E14\u0E39\u0E27\u0E34\u0E18\u0E35\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19\u0E1C\u0E48\u0E32\u0E19\u0E2A\u0E25\u0E34\u0E1B\u0E42\u0E2D\u0E19\u0E40\u0E07\u0E34\u0E19\u0E41\u0E25\u0E30\u0E01\u0E32\u0E23\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28\u0E1C\u0E48\u0E32\u0E19\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32"
-      ),
-      new SlashCommandBuilder2().setName("verify").setDescription("\u2705 \u0E40\u0E1B\u0E34\u0E14\u0E41\u0E1C\u0E07\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19\u0E41\u0E25\u0E30\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E0A\u0E37\u0E48\u0E2D Minecraft"),
-      new SlashCommandBuilder2().setName("players").setDescription("\u26CF\uFE0F \u0E41\u0E2A\u0E14\u0E07\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C\u0E43\u0E19 RitzSMP"),
-      new SlashCommandBuilder2().setName("members").setDescription("\u{1F465} \u0E41\u0E2A\u0E14\u0E07\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 Discord \u0E43\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C"),
-      new SlashCommandBuilder2().setName("profile").setDescription("\u{1FAAA} \u0E14\u0E39\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 RitzSMP \u0E17\u0E35\u0E48\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E01\u0E31\u0E1A Minecraft"),
-      musicCommand,
-      playShortcutCommand,
-      leaveShortcutCommand,
-      new SlashCommandBuilder2().setName("setup").setDescription("\u{1F6E0}\uFE0F \u0E2A\u0E23\u0E49\u0E32\u0E07\u0E23\u0E30\u0E1A\u0E1A\u0E14\u0E49\u0E27\u0E22\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07\u0E40\u0E17\u0E48\u0E32\u0E19\u0E31\u0E49\u0E19 (\u0E41\u0E2D\u0E14\u0E21\u0E34\u0E19\u0E40\u0E17\u0E48\u0E32\u0E19\u0E31\u0E49\u0E19)").setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator).addSubcommand(
-        (sub) => sub.setName("panel").setDescription("\u0E2A\u0E48\u0E07\u0E41\u0E1C\u0E07\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E41\u0E25\u0E30\u0E23\u0E31\u0E1A\u0E22\u0E28\u0E25\u0E07\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49")
-      ).addSubcommand(
-        (sub) => sub.setName("welcome").setDescription("\u0E2A\u0E23\u0E49\u0E32\u0E07 Embed \u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A\u0E25\u0E07\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49\u0E14\u0E49\u0E27\u0E22\u0E15\u0E19\u0E40\u0E2D\u0E07")
-      ).addSubcommand(
-        (sub) => sub.setName("leave").setDescription("\u0E2A\u0E23\u0E49\u0E32\u0E07 Embed \u0E41\u0E08\u0E49\u0E07\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E2D\u0E2D\u0E01\u0E25\u0E07\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49\u0E14\u0E49\u0E27\u0E22\u0E15\u0E19\u0E40\u0E2D\u0E07")
-      ),
-      new SlashCommandBuilder2().setName("help").setDescription("\u{1F4D6} \u0E41\u0E2A\u0E14\u0E07\u0E04\u0E39\u0E48\u0E21\u0E37\u0E2D\u0E41\u0E25\u0E30\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14\u0E02\u0E2D\u0E07 RitzSMP AI"),
-      new SlashCommandBuilder2().setName("embed").setDescription(
-        "\u{1F4E2} \u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28 Embed \u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E1B\u0E38\u0E48\u0E21\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32\u0E41\u0E1A\u0E1A\u0E2A\u0E32\u0E18\u0E32\u0E23\u0E13\u0E30\u0E17\u0E31\u0E19\u0E17\u0E35 (\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08\u0E23\u0E39\u0E1B)"
-      ).setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator).addSubcommand(
-        (sub) => sub.setName("default").setDescription("\u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21 Embed \u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08\u0E23\u0E39\u0E1B\u0E17\u0E31\u0E19\u0E17\u0E35")
-      ).addSubcommand(
-        (sub) => sub.setName("create").setDescription("\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28 Embed \u0E41\u0E1A\u0E1A\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E40\u0E2D\u0E07").addStringOption(
-          (o) => o.setName("title").setDescription("\u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28").setRequired(true)
-        ).addStringOption(
-          (o) => o.setName("description").setDescription("\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28").setRequired(true)
-        ).addStringOption(
-          (o) => o.setName("color").setDescription("\u0E2A\u0E35 \u0E40\u0E0A\u0E48\u0E19 #ff69b4 \u0E2B\u0E23\u0E37\u0E2D #00ffcc").setRequired(false)
-        ).addStringOption(
-          (o) => o.setName("image_url").setDescription("\u0E25\u0E34\u0E07\u0E01\u0E4C\u0E23\u0E39\u0E1B\u0E20\u0E32\u0E1E\u0E1B\u0E23\u0E30\u0E01\u0E2D\u0E1A").setRequired(false)
-        ).addStringOption(
-          (o) => o.setName("button_label").setDescription("\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E1A\u0E19\u0E1B\u0E38\u0E48\u0E21\u0E25\u0E34\u0E07\u0E01\u0E4C").setRequired(false)
-        ).addStringOption(
-          (o) => o.setName("button_url").setDescription("\u0E25\u0E34\u0E07\u0E01\u0E4C\u0E1B\u0E25\u0E32\u0E22\u0E17\u0E32\u0E07\u0E02\u0E2D\u0E07\u0E1B\u0E38\u0E48\u0E21").setRequired(false)
-        )
-      ).addSubcommand(
-        (sub) => sub.setName("edit").setDescription("\u0E41\u0E01\u0E49\u0E44\u0E02 Embed \u0E02\u0E2D\u0E07 RitzSMP AI \u0E15\u0E32\u0E21 Message ID").addStringOption(
-          (o) => o.setName("message_id").setDescription("Message ID \u0E02\u0E2D\u0E07 Embed \u0E17\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E41\u0E01\u0E49").setRequired(true)
-        ).addStringOption(
-          (o) => o.setName("title").setDescription("\u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D\u0E43\u0E2B\u0E21\u0E48 (\u0E44\u0E21\u0E48\u0E1A\u0E31\u0E07\u0E04\u0E31\u0E1A)").setRequired(false)
-        ).addStringOption(
-          (o) => o.setName("description").setDescription("\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32\u0E43\u0E2B\u0E21\u0E48 (\u0E44\u0E21\u0E48\u0E1A\u0E31\u0E07\u0E04\u0E31\u0E1A)").setRequired(false)
-        ).addStringOption(
-          (o) => o.setName("color").setDescription("\u0E2A\u0E35\u0E43\u0E2B\u0E21\u0E48 \u0E40\u0E0A\u0E48\u0E19 #ff69b4 (\u0E44\u0E21\u0E48\u0E1A\u0E31\u0E07\u0E04\u0E31\u0E1A)").setRequired(false)
-        ).addStringOption(
-          (o) => o.setName("image_url").setDescription("URL \u0E23\u0E39\u0E1B\u0E43\u0E2B\u0E21\u0E48 (\u0E44\u0E21\u0E48\u0E1A\u0E31\u0E07\u0E04\u0E31\u0E1A)").setRequired(false)
-        ).addStringOption(
-          (o) => o.setName("button_label").setDescription("\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E1B\u0E38\u0E48\u0E21\u0E43\u0E2B\u0E21\u0E48 (\u0E44\u0E21\u0E48\u0E1A\u0E31\u0E07\u0E04\u0E31\u0E1A)").setRequired(false)
-        ).addStringOption(
-          (o) => o.setName("button_url").setDescription("URL \u0E1B\u0E38\u0E48\u0E21\u0E43\u0E2B\u0E21\u0E48 (\u0E44\u0E21\u0E48\u0E1A\u0E31\u0E07\u0E04\u0E31\u0E1A)").setRequired(false)
-        )
-      ).addSubcommand(
-        (sub) => sub.setName("delete").setDescription("\u0E25\u0E1A Embed \u0E02\u0E2D\u0E07 RitzSMP AI \u0E15\u0E32\u0E21 Message ID").addStringOption(
-          (o) => o.setName("message_id").setDescription("Message ID \u0E02\u0E2D\u0E07 Embed \u0E17\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E25\u0E1A").setRequired(true)
-        )
-      )
-    ].map((cmd) => cmd.toJSON());
+    const commands = buildRitzSmpAiCommands();
     const rest = new REST({ version: "10" }).setToken(token);
     const clientId = client.user?.id;
     if (!clientId) return;
@@ -3650,21 +2837,6 @@ function createRitzSmpAiBot(runtime) {
         "SUCCESS",
         "Successfully registered global slash commands for RitzSMP AI."
       );
-      const musicChannelId = await ensureMusicTextChannel(
-        client,
-        getConfiguredDiscordGuildId()
-      );
-      if (musicChannelId) {
-        pushLog(
-          "SUCCESS",
-          `Dedicated music text channel ready: ${musicChannelId}`
-        );
-      } else {
-        pushLog(
-          "WARN",
-          "Dedicated music channel was not created; check DISCORD_GUILD_ID and Manage Channels permission."
-        );
-      }
       const statusChannelId = await ensureMinecraftStatusTextChannel(
         client,
         getConfiguredDiscordGuildId()
@@ -3729,7 +2901,7 @@ function createRitzSmpAiBot(runtime) {
                   );
                 }
               }
-              if (channel && channel.type === ChannelType3.GuildText && "setTopic" in channel) {
+              if (channel && channel.type === ChannelType2.GuildText && "setTopic" in channel) {
                 await channel.setTopic(target.topic).catch((topicErr) => {
                   pushLog(
                     "WARN",
@@ -3779,7 +2951,7 @@ function createRitzSmpAiBot(runtime) {
                     );
                     if (!existingBotMsg) {
                       if (target.name === "\u{1F517}\u2502\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35") {
-                        const embed = new EmbedBuilder2().setTitle("\u2728 \u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Minecraft RitzSMP").setDescription(
+                        const embed = new EmbedBuilder().setTitle("\u2728 \u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Minecraft RitzSMP").setDescription(
                           "\u0E22\u0E34\u0E19\u0E14\u0E35\u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A\u0E2A\u0E39\u0E48 RitzSMP! \u{1F338}\n\n\u{1F4CC} **\u0E02\u0E31\u0E49\u0E19\u0E15\u0E2D\u0E19\u0E01\u0E32\u0E23\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35:**\n1. \u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21 **\u{1F517} \u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35** \u0E14\u0E49\u0E32\u0E19\u0E25\u0E48\u0E32\u0E07\u0E19\u0E35\u0E49\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E23\u0E31\u0E1A\u0E23\u0E2B\u0E31\u0E2A 4 \u0E2B\u0E25\u0E31\u0E01\n2. \u0E40\u0E02\u0E49\u0E32\u0E40\u0E01\u0E21 Minecraft \u0E1E\u0E34\u0E21\u0E1E\u0E4C\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07 `/verify <\u0E23\u0E2B\u0E31\u0E2A 4 \u0E2B\u0E25\u0E31\u0E01>` \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E1C\u0E39\u0E01\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E17\u0E31\u0E19\u0E17\u0E35\u0E04\u0E48\u0E30! \u{1F495}"
                         ).setColor(15485081).setImage(RITZ_WELCOME_COVER_IMAGE_URL).setTimestamp().setFooter({
                           text: "RitzSMP AI \u2022 \u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34 24 \u0E0A\u0E21."
@@ -3837,13 +3009,6 @@ function createRitzSmpAiBot(runtime) {
   );
   client.on("interactionCreate", async (interaction) => {
     try {
-      if (await handleMusicButtonInteraction(interaction)) {
-        pushLog(
-          "SUCCESS",
-          `Handled music interaction ${"customId" in interaction ? interaction.customId : "unknown"}`
-        );
-        return;
-      }
       if (await handleOnboardingInteraction(interaction)) {
         pushLog(
           "SUCCESS",
@@ -3877,17 +3042,12 @@ function createRitzSmpAiBot(runtime) {
       `Received command /${commandName} from ${interaction.user.tag}`
     );
     try {
-      if (commandName === "music" || commandName === "play" || commandName === "leave") {
-        await handleMusicCommand(interaction);
-        pushLog("SUCCESS", `Handled /${commandName} command`);
-        return;
-      }
       if (commandName === "status" || commandName === "ai-status") {
         if (!await ensureDeferredReply(interaction, { ephemeral: false }))
           return;
         const mc = await checkMinecraftServerStatus();
         const uptimeMin = botStartTime ? Math.floor((Date.now() - botStartTime) / 6e4) : 0;
-        const statusEmbed = new EmbedBuilder2().setTitle("\u{1F4CA} RitzSMP System & Server Status").setDescription(
+        const statusEmbed = new EmbedBuilder().setTitle("\u{1F4CA} RitzSMP System & Server Status").setDescription(
           "\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1A\u0E2D\u0E17\u0E41\u0E25\u0E30\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C Minecraft RitzSMP \u0E41\u0E1A\u0E1A\u0E40\u0E23\u0E35\u0E22\u0E25\u0E44\u0E17\u0E21\u0E4C \u2728"
         ).setColor(mc.online ? 2278750 : 15680580).addFields(
           {
@@ -3931,11 +3091,11 @@ function createRitzSmpAiBot(runtime) {
         return;
       }
       if (commandName === "store") {
-        const storeEmbed = new EmbedBuilder2().setTitle("\u{1F6D2} \u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 RitzSMP Store").setDescription(
+        const storeEmbed = new EmbedBuilder().setTitle("\u{1F6D2} \u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 RitzSMP Store").setDescription(
           "\u0E22\u0E34\u0E19\u0E14\u0E35\u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A\u0E2A\u0E39\u0E48\u0E40\u0E27\u0E47\u0E1A\u0E2A\u0E42\u0E15\u0E23\u0E4C\u0E2D\u0E22\u0E48\u0E32\u0E07\u0E40\u0E1B\u0E47\u0E19\u0E17\u0E32\u0E07\u0E01\u0E32\u0E23\u0E02\u0E2D\u0E07 RitzSMP!\n\n\u2022 \u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19\u0E1C\u0E48\u0E32\u0E19\u0E2A\u0E25\u0E34\u0E1B\u0E42\u0E2D\u0E19\u0E40\u0E07\u0E34\u0E19 (PromptPay / TrueMoney Wallet)\n\u2022 \u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28\u0E1E\u0E34\u0E40\u0E28\u0E29\u0E2A\u0E38\u0E14\u0E04\u0E38\u0E49\u0E21 (\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E15\u0E34\u0E21\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34\u0E40\u0E02\u0E49\u0E32\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E17\u0E31\u0E19\u0E17\u0E35\u0E1C\u0E48\u0E32\u0E19 RCON)\n\u2022 \u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E22\u0E2D\u0E14\u0E40\u0E07\u0E34\u0E19\u0E04\u0E07\u0E40\u0E2B\u0E25\u0E37\u0E2D\u0E41\u0E25\u0E30\u0E1B\u0E23\u0E30\u0E27\u0E31\u0E15\u0E34\u0E01\u0E32\u0E23\u0E2A\u0E31\u0E48\u0E07\u0E0B\u0E37\u0E49\u0E2D\u0E44\u0E14\u0E49\u0E15\u0E25\u0E2D\u0E14 24 \u0E0A\u0E31\u0E48\u0E27\u0E42\u0E21\u0E07"
         ).setColor(49151).setFooter({ text: "RitzSMP Store \u2022 \u0E2A\u0E30\u0E14\u0E27\u0E01 \u0E1B\u0E25\u0E2D\u0E14\u0E20\u0E31\u0E22 \u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34 100%" });
-        const row = new ActionRowBuilder2().addComponents(
-          new ButtonBuilder2().setLabel("\u{1F310} \u0E40\u0E1B\u0E34\u0E14\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 RitzSMP").setStyle(ButtonStyle2.Link).setURL(storeUrl)
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setLabel("\u{1F310} \u0E40\u0E1B\u0E34\u0E14\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 RitzSMP").setStyle(ButtonStyle.Link).setURL(storeUrl)
         );
         await safeReply(interaction, {
           embeds: [storeEmbed],
@@ -3946,11 +3106,11 @@ function createRitzSmpAiBot(runtime) {
         return;
       }
       if (commandName === "ranks") {
-        const ranksEmbed = new EmbedBuilder2().setTitle("\u{1F451} \u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E22\u0E28\u0E41\u0E25\u0E30\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E1B\u0E23\u0E30\u0E42\u0E22\u0E0A\u0E19\u0E4C\u0E1E\u0E34\u0E40\u0E28\u0E29\u0E43\u0E19 RitzSMP").setDescription(
+        const ranksEmbed = new EmbedBuilder().setTitle("\u{1F451} \u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E22\u0E28\u0E41\u0E25\u0E30\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E1B\u0E23\u0E30\u0E42\u0E22\u0E0A\u0E19\u0E4C\u0E1E\u0E34\u0E40\u0E28\u0E29\u0E43\u0E19 RitzSMP").setDescription(
           "\u0E22\u0E01\u0E23\u0E30\u0E14\u0E31\u0E1A\u0E01\u0E32\u0E23\u0E40\u0E25\u0E48\u0E19\u0E40\u0E01\u0E21\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E43\u0E19\u0E2D\u0E32\u0E13\u0E32\u0E08\u0E31\u0E01\u0E23 RitzSMP \u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E23\u0E31\u0E1A\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E1B\u0E23\u0E30\u0E42\u0E22\u0E0A\u0E19\u0E4C\u0E2A\u0E38\u0E14\u0E04\u0E38\u0E49\u0E21\u0E04\u0E48\u0E32:\n\n\u{1F48E} **VIP Tier:** \u0E44\u0E14\u0E49\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E4C\u0E43\u0E0A\u0E49 `/fly`, `/nv`, `/craft`, \u0E41\u0E25\u0E30 `/hat` \u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E4C\u0E15\u0E31\u0E49\u0E07\u0E1A\u0E49\u0E32\u0E19\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E02\u0E36\u0E49\u0E19\n\u{1F451} **Royal Tier:** \u0E22\u0E28\u0E23\u0E30\u0E14\u0E31\u0E1A\u0E2A\u0E39\u0E07 \u0E2A\u0E34\u0E17\u0E18\u0E34\u0E1E\u0E34\u0E40\u0E28\u0E29\u0E40\u0E15\u0E47\u0E21\u0E1E\u0E34\u0E01\u0E31\u0E14 \u0E1A\u0E34\u0E19\u0E44\u0E14\u0E49 \u0E21\u0E2D\u0E07\u0E43\u0E19\u0E17\u0E35\u0E48\u0E21\u0E37\u0E14 \u0E41\u0E25\u0E30\u0E40\u0E0B\u0E47\u0E15\u0E1A\u0E49\u0E32\u0E19\u0E44\u0E14\u0E49\u0E08\u0E38\u0E43\u0E08\n\n\u0E0B\u0E37\u0E49\u0E2D\u0E44\u0E14\u0E49\u0E07\u0E48\u0E32\u0E22\u0E46 \u0E1C\u0E48\u0E32\u0E19\u0E40\u0E27\u0E47\u0E1A\u0E2A\u0E42\u0E15\u0E23\u0E4C \u0E23\u0E30\u0E1A\u0E1A\u0E15\u0E31\u0E14\u0E40\u0E07\u0E34\u0E19\u0E08\u0E32\u0E01\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E41\u0E25\u0E30\u0E40\u0E15\u0E34\u0E21\u0E22\u0E28\u0E40\u0E02\u0E49\u0E32\u0E40\u0E01\u0E21\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34\u0E1C\u0E48\u0E32\u0E19 RCON \u0E17\u0E31\u0E19\u0E17\u0E35\u0E04\u0E48\u0E30!"
         ).setColor(16766720).setFooter({ text: "RitzSMP \u2022 \u0E23\u0E30\u0E1A\u0E1A\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34 24 \u0E0A\u0E31\u0E48\u0E27\u0E42\u0E21\u0E07" });
-        const row = new ActionRowBuilder2().addComponents(
-          new ButtonBuilder2().setLabel("\u{1F6D2} \u0E40\u0E25\u0E37\u0E2D\u0E01\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28\u0E43\u0E19\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C").setStyle(ButtonStyle2.Link).setURL(storeUrl)
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setLabel("\u{1F6D2} \u0E40\u0E25\u0E37\u0E2D\u0E01\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28\u0E43\u0E19\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C").setStyle(ButtonStyle.Link).setURL(storeUrl)
         );
         await safeReply(interaction, {
           embeds: [ranksEmbed],
@@ -3961,11 +3121,11 @@ function createRitzSmpAiBot(runtime) {
         return;
       }
       if (commandName === "topup") {
-        const topupEmbed = new EmbedBuilder2().setTitle("\u{1F4B3} \u0E04\u0E39\u0E48\u0E21\u0E37\u0E2D\u0E01\u0E32\u0E23\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19\u0E41\u0E25\u0E30\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28 RitzSMP Store").setDescription(
+        const topupEmbed = new EmbedBuilder().setTitle("\u{1F4B3} \u0E04\u0E39\u0E48\u0E21\u0E37\u0E2D\u0E01\u0E32\u0E23\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19\u0E41\u0E25\u0E30\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28 RitzSMP Store").setDescription(
           "\u0E02\u0E31\u0E49\u0E19\u0E15\u0E2D\u0E19\u0E01\u0E32\u0E23\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19\u0E41\u0E25\u0E30\u0E2A\u0E19\u0E31\u0E1A\u0E2A\u0E19\u0E38\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C:\n\n1\uFE0F\u20E3 **\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19\u0E40\u0E02\u0E49\u0E32\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32 (\u0E15\u0E49\u0E2D\u0E07\u0E41\u0E19\u0E1A\u0E2A\u0E25\u0E34\u0E1B):**\n\u2022 \u0E42\u0E2D\u0E19\u0E40\u0E07\u0E34\u0E19\u0E1C\u0E48\u0E32\u0E19 PromptPay / TrueMoney Wallet: `0930286252`\n\u2022 \u0E44\u0E1B\u0E17\u0E35\u0E48\u0E2B\u0E19\u0E49\u0E32\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C \u0E40\u0E25\u0E37\u0E2D\u0E01\u0E40\u0E21\u0E19\u0E39\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19 \u0E01\u0E23\u0E2D\u0E01\u0E08\u0E33\u0E19\u0E27\u0E19\u0E40\u0E07\u0E34\u0E19 \u0E41\u0E25\u0E30\u0E41\u0E19\u0E1A\u0E23\u0E39\u0E1B\u0E20\u0E32\u0E1E\u0E2A\u0E25\u0E34\u0E1B\n\u2022 \u0E23\u0E2D\u0E41\u0E2D\u0E14\u0E21\u0E34\u0E19\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E22\u0E2D\u0E14\u0E40\u0E07\u0E34\u0E19\u0E40\u0E02\u0E49\u0E32\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\n\n2\uFE0F\u20E3 **\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28 (\u0E43\u0E0A\u0E49\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E40\u0E07\u0E34\u0E19 \u0E44\u0E21\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E41\u0E19\u0E1A\u0E2A\u0E25\u0E34\u0E1B):**\n\u2022 \u0E40\u0E25\u0E37\u0E2D\u0E01\u0E22\u0E28\u0E17\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23 \u0E01\u0E23\u0E2D\u0E01\u0E0A\u0E37\u0E48\u0E2D\u0E43\u0E19\u0E40\u0E01\u0E21 (Minecraft IGN)\n\u2022 \u0E01\u0E14\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19 \u0E23\u0E30\u0E1A\u0E1A\u0E08\u0E30\u0E2B\u0E31\u0E01\u0E40\u0E07\u0E34\u0E19\u0E43\u0E19\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E41\u0E25\u0E30\u0E40\u0E15\u0E34\u0E21\u0E22\u0E28\u0E43\u0E2B\u0E49\u0E17\u0E31\u0E19\u0E17\u0E35\u0E04\u0E48\u0E30!"
         ).setColor(65484).setFooter({ text: "RitzSMP Store \u2022 \u0E2A\u0E30\u0E14\u0E27\u0E01 \u0E1B\u0E25\u0E2D\u0E14\u0E20\u0E31\u0E22 \u0E23\u0E27\u0E14\u0E40\u0E23\u0E47\u0E27\u0E17\u0E31\u0E19\u0E43\u0E08" });
-        const row = new ActionRowBuilder2().addComponents(
-          new ButtonBuilder2().setLabel("\u{1F4B3} \u0E44\u0E1B\u0E17\u0E35\u0E48\u0E2B\u0E19\u0E49\u0E32\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19 / \u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28").setStyle(ButtonStyle2.Link).setURL(storeUrl)
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setLabel("\u{1F4B3} \u0E44\u0E1B\u0E17\u0E35\u0E48\u0E2B\u0E19\u0E49\u0E32\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19 / \u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28").setStyle(ButtonStyle.Link).setURL(storeUrl)
         );
         await safeReply(interaction, {
           embeds: [topupEmbed],
@@ -3976,7 +3136,7 @@ function createRitzSmpAiBot(runtime) {
         return;
       }
       if (commandName === "help") {
-        const helpEmbed = new EmbedBuilder2().setTitle("\u{1F4D6} \u0E04\u0E39\u0E48\u0E21\u0E37\u0E2D\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07\u0E1A\u0E2D\u0E17 RitzSMP AI").setDescription(
+        const helpEmbed = new EmbedBuilder().setTitle("\u{1F4D6} \u0E04\u0E39\u0E48\u0E21\u0E37\u0E2D\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07\u0E1A\u0E2D\u0E17 RitzSMP AI").setDescription(
           "\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14\u0E17\u0E35\u0E48\u0E04\u0E38\u0E13\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19\u0E23\u0E48\u0E27\u0E21\u0E01\u0E31\u0E1A\u0E19\u0E49\u0E2D\u0E07 RitzSMP AI \u0E44\u0E14\u0E49\u0E04\u0E48\u0E30:"
         ).setColor(11032055).addFields(
           {
@@ -4063,7 +3223,7 @@ function createRitzSmpAiBot(runtime) {
         if (!await ensureDeferredReply(interaction, { ephemeral: true }))
           return;
         if (subcommand === "panel") {
-          const onboardingEmbed = new EmbedBuilder2().setTitle("\u2728 \u0E23\u0E30\u0E1A\u0E1A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19\u0E41\u0E25\u0E30\u0E08\u0E31\u0E14\u0E01\u0E32\u0E23\u0E1A\u0E31\u0E0D\u0E0A\u0E35 RitzSMP").setDescription(
+          const onboardingEmbed = new EmbedBuilder().setTitle("\u2728 \u0E23\u0E30\u0E1A\u0E1A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19\u0E41\u0E25\u0E30\u0E08\u0E31\u0E14\u0E01\u0E32\u0E23\u0E1A\u0E31\u0E0D\u0E0A\u0E35 RitzSMP").setDescription(
             "\u0E22\u0E34\u0E19\u0E14\u0E35\u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A\u0E2A\u0E39\u0E48\u0E04\u0E2D\u0E21\u0E21\u0E39\u0E19\u0E34\u0E15\u0E35\u0E49 RitzSMP \u0E04\u0E48\u0E30! \u{1F338}\n\n\u2022 **\u2705 \u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19:** \u0E1C\u0E39\u0E01\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Discord \u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E01\u0E31\u0E1A\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E23\u0E31\u0E1A\u0E22\u0E28 Verified \u0E41\u0E25\u0E30\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E4C\u0E1E\u0E34\u0E40\u0E28\u0E29\n\u2022 **\u{1F396}\uFE0F \u0E23\u0E31\u0E1A\u0E22\u0E28\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19:** \u0E01\u0E14\u0E23\u0E31\u0E1A\u0E01\u0E25\u0E38\u0E48\u0E21 LuckPerms \u0E43\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C Minecraft \u0E41\u0E25\u0E30\u0E22\u0E28\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E43\u0E19\u0E14\u0E34\u0E2A\u0E04\u0E2D\u0E23\u0E4C\u0E14\n\u2022 **\u{1F465} \u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E43\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F:** \u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C\u0E2D\u0E22\u0E39\u0E48\u0E41\u0E1A\u0E1A\u0E40\u0E23\u0E35\u0E22\u0E25\u0E44\u0E17\u0E21\u0E4C\n\u2022 **\u{1FAAA} \u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E02\u0E2D\u0E07\u0E09\u0E31\u0E19:** \u0E14\u0E39\u0E41\u0E25\u0E30\u0E41\u0E01\u0E49\u0E44\u0E02\u0E04\u0E33\u0E41\u0E19\u0E30\u0E19\u0E33\u0E15\u0E31\u0E27\u0E2B\u0E23\u0E37\u0E2D\u0E2A\u0E44\u0E15\u0E25\u0E4C\u0E01\u0E32\u0E23\u0E40\u0E25\u0E48\u0E19\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\n\n\u0E01\u0E23\u0E38\u0E13\u0E32\u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21\u0E14\u0E49\u0E32\u0E19\u0E25\u0E48\u0E32\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E23\u0E34\u0E48\u0E21\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22\u0E19\u0E30\u0E04\u0E30! \u{1F495}"
           ).setColor(15485081).setTimestamp().setFooter({ text: "RitzSMP AI \u2022 \u0E2A\u0E23\u0E49\u0E32\u0E07\u0E14\u0E49\u0E27\u0E22\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07\u0E41\u0E2D\u0E14\u0E21\u0E34\u0E19" });
           await channel.send({
@@ -4096,7 +3256,7 @@ function createRitzSmpAiBot(runtime) {
         const subcommand = interaction.options.getSubcommand();
         const channel = getInteractionTextChannel(interaction);
         if (subcommand === "default") {
-          const embed = new EmbedBuilder2().setTitle("\u{1F31F} \u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28\u0E2A\u0E33\u0E04\u0E31\u0E0D\u0E08\u0E32\u0E01\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C RitzSMP").setDescription(
+          const embed = new EmbedBuilder().setTitle("\u{1F31F} \u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28\u0E2A\u0E33\u0E04\u0E31\u0E0D\u0E08\u0E32\u0E01\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C RitzSMP").setDescription(
             "\u0E22\u0E34\u0E19\u0E14\u0E35\u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E38\u0E01\u0E17\u0E48\u0E32\u0E19\u0E2A\u0E39\u0E48 RitzSMP \u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C Survival \u0E41\u0E25\u0E30 Economy \u0E2A\u0E38\u0E14\u0E21\u0E31\u0E19\u0E2A\u0E4C!\n\n\u{1F6D2} **\u0E2A\u0E19\u0E43\u0E08\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28\u0E2B\u0E23\u0E37\u0E2D\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19:** \u0E04\u0E25\u0E34\u0E01\u0E1B\u0E38\u0E48\u0E21\u0E14\u0E49\u0E32\u0E19\u0E25\u0E48\u0E32\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32\u0E02\u0E2D\u0E07\u0E40\u0E23\u0E32\u0E44\u0E14\u0E49\u0E17\u0E31\u0E19\u0E17\u0E35\u0E04\u0E48\u0E30!"
           ).setColor(15485081).addFields(
             { name: "\u{1F310} \u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E2B\u0E25\u0E31\u0E01", value: storeUrl, inline: true },
@@ -4106,9 +3266,9 @@ function createRitzSmpAiBot(runtime) {
               inline: true
             }
           ).setTimestamp().setFooter({ text: "RitzSMP Official Announcement" });
-          const row = new ActionRowBuilder2().addComponents(
-            new ButtonBuilder2().setLabel("\u{1F310} \u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 RitzSMP").setStyle(ButtonStyle2.Link).setURL(storeUrl),
-            new ButtonBuilder2().setLabel("\u{1F4B3} \u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19 / \u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28").setStyle(ButtonStyle2.Link).setURL(storeUrl)
+          const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setLabel("\u{1F310} \u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 RitzSMP").setStyle(ButtonStyle.Link).setURL(storeUrl),
+            new ButtonBuilder().setLabel("\u{1F4B3} \u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19 / \u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28").setStyle(ButtonStyle.Link).setURL(storeUrl)
           );
           await safeReply(interaction, {
             embeds: [embed],
@@ -4292,7 +3452,7 @@ function createRitzSmpAiBot(runtime) {
 // server/discordNotifications.ts
 var DISCORD_API = "https://discord.com/api/v10";
 function getDiscordToken() {
-  return process.env.DISCORD_AI_BOT_TOKEN || process.env.DISCORD_BOT_TOKEN || ENV.discordBotToken || "";
+  return process.env.DISCORD_AI_BOT_TOKEN || ENV.discordAiBotToken || "";
 }
 function getSupportChannelId() {
   return process.env.DISCORD_SUPPORT_CHANNEL_ID || ENV.discordSupportChannelId || process.env.DISCORD_STORE_CHANNEL_ID || ENV.discordStoreChannelId || process.env.DISCORD_DONATE_CHANNEL_ID || ENV.discordDonateChannelId || "";
@@ -5150,6 +4310,174 @@ async function handleMinecraftPresenceScheduled(req, res) {
   }
 }
 
+// server/discordInteractions.ts
+import { createPublicKey, verify as verifySignature } from "node:crypto";
+var DISCORD_PUBLIC_KEY_DER_PREFIX = Buffer.from(
+  "302a300506032b6570032100",
+  "hex"
+);
+var DISCORD_INTERACTION_PING = 1;
+var DISCORD_INTERACTION_APPLICATION_COMMAND = 2;
+var DISCORD_RESPONSE_PONG = 1;
+var DISCORD_RESPONSE_CHANNEL_MESSAGE = 4;
+var EPHEMERAL_MESSAGE_FLAG = 1 << 6;
+function identifyRitzSmpInteractionAction(interaction) {
+  const customId = interaction.data?.custom_id;
+  const commandName = interaction.data?.name?.toLowerCase();
+  if (customId === "ritz_verify_button" || interaction.type === DISCORD_INTERACTION_APPLICATION_COMMAND && commandName === "verify") {
+    return "verification-code";
+  }
+  if (customId === "ritz_cancel_verify_button") return "cancel-code";
+  if (customId === "ritz_unlink_button") return "unlink";
+  return "unsupported";
+}
+function buildVerificationCodeMessage(code, expiresAt) {
+  const expiresAtText = new Date(expiresAt).toLocaleTimeString("th-TH");
+  return [
+    "## \u{1F517} \u0E23\u0E2B\u0E31\u0E2A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19 Minecraft",
+    `\u0E23\u0E2B\u0E31\u0E2A\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E04\u0E37\u0E2D: **\`${code}\`**`,
+    "",
+    "1. \u0E40\u0E02\u0E49\u0E32\u0E40\u0E01\u0E21 Minecraft \u0E17\u0E35\u0E48 `ritz.mcsv.me`",
+    `2. \u0E1E\u0E34\u0E21\u0E1E\u0E4C \`/verify ${code}\` \u0E43\u0E19\u0E41\u0E0A\u0E15\u0E40\u0E01\u0E21`,
+    "3. \u0E23\u0E30\u0E1A\u0E1A\u0E08\u0E30\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E17\u0E31\u0E19\u0E17\u0E35\u0E04\u0E48\u0E30",
+    "",
+    `\u0E23\u0E2B\u0E31\u0E2A\u0E2B\u0E21\u0E14\u0E2D\u0E32\u0E22\u0E38\u0E43\u0E19 10 \u0E19\u0E32\u0E17\u0E35 (${expiresAtText})`
+  ].join("\n");
+}
+function normalizeHex(value) {
+  const normalized = value?.trim().toLowerCase() ?? "";
+  return /^[0-9a-f]+$/.test(normalized) ? normalized : null;
+}
+function isUsableDiscordApplicationPublicKey(publicKey) {
+  const publicKeyHex = normalizeHex(publicKey);
+  if (!publicKeyHex || publicKeyHex.length !== 64) return false;
+  try {
+    createPublicKey({
+      key: Buffer.concat([
+        DISCORD_PUBLIC_KEY_DER_PREFIX,
+        Buffer.from(publicKeyHex, "hex")
+      ]),
+      format: "der",
+      type: "spki"
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+function verifyDiscordInteractionSignature(rawBody, signatureHeader, timestampHeader, publicKey) {
+  const signature = normalizeHex(signatureHeader);
+  const publicKeyHex = normalizeHex(publicKey);
+  if (!signature || !publicKeyHex || !isUsableDiscordApplicationPublicKey(publicKey) || !timestampHeader || signature.length !== 128 || publicKeyHex.length !== 64) {
+    return false;
+  }
+  try {
+    const key = createPublicKey({
+      key: Buffer.concat([
+        DISCORD_PUBLIC_KEY_DER_PREFIX,
+        Buffer.from(publicKeyHex, "hex")
+      ]),
+      format: "der",
+      type: "spki"
+    });
+    return verifySignature(
+      null,
+      Buffer.concat([Buffer.from(timestampHeader, "utf8"), rawBody]),
+      key,
+      Buffer.from(signature, "hex")
+    );
+  } catch {
+    return false;
+  }
+}
+function getDiscordUserId(interaction) {
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
+  return typeof userId === "string" && userId.trim() ? userId : null;
+}
+function ephemeralResponse(content) {
+  return {
+    type: DISCORD_RESPONSE_CHANNEL_MESSAGE,
+    data: {
+      content,
+      flags: EPHEMERAL_MESSAGE_FLAG
+    }
+  };
+}
+var handleRitzSmpDiscordInteraction = async (req, res) => {
+  const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(String(req.body ?? ""), "utf8");
+  const isValid = verifyDiscordInteractionSignature(
+    rawBody,
+    req.header("X-Signature-Ed25519") ?? void 0,
+    req.header("X-Signature-Timestamp") ?? void 0,
+    ENV.discordAiPublicKey
+  );
+  if (!isValid) {
+    return res.status(401).json({ error: "Invalid Discord request signature" });
+  }
+  let interaction;
+  try {
+    interaction = JSON.parse(rawBody.toString("utf8"));
+  } catch {
+    return res.status(400).json({ error: "Invalid interaction payload" });
+  }
+  if (interaction.type === DISCORD_INTERACTION_PING) {
+    return res.status(200).json({ type: DISCORD_RESPONSE_PONG });
+  }
+  const userId = getDiscordUserId(interaction);
+  if (!userId) {
+    return res.status(400).json({ error: "Interaction user is missing" });
+  }
+  try {
+    switch (identifyRitzSmpInteractionAction(interaction)) {
+      case "verification-code": {
+        const codeRow = await createDiscordVerificationCode(userId);
+        return res.status(200).json(
+          ephemeralResponse(
+            buildVerificationCodeMessage(codeRow.code, codeRow.expiresAt)
+          )
+        );
+      }
+      case "cancel-code": {
+        const cancelled = await cancelDiscordVerificationCode(userId);
+        return res.status(200).json(
+          ephemeralResponse(
+            cancelled ? "\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E23\u0E2B\u0E31\u0E2A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E17\u0E35\u0E48\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E43\u0E0A\u0E49\u0E40\u0E23\u0E35\u0E22\u0E1A\u0E23\u0E49\u0E2D\u0E22\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30 \u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E23\u0E2B\u0E31\u0E2A\u0E43\u0E2B\u0E21\u0E48\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22" : "\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E23\u0E2B\u0E31\u0E2A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E17\u0E35\u0E48\u0E01\u0E33\u0E25\u0E31\u0E07\u0E23\u0E2D\u0E43\u0E0A\u0E49\u0E2D\u0E22\u0E39\u0E48\u0E04\u0E48\u0E30"
+          )
+        );
+      }
+      case "unlink": {
+        const unlinked = await unlinkDiscordVerification(userId);
+        return res.status(200).json(
+          ephemeralResponse(
+            unlinked ? "\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E01\u0E32\u0E23\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E40\u0E23\u0E35\u0E22\u0E1A\u0E23\u0E49\u0E2D\u0E22\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30" : "\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Minecraft \u0E17\u0E35\u0E48\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D\u0E2D\u0E22\u0E39\u0E48\u0E04\u0E48\u0E30"
+          )
+        );
+      }
+      default:
+        return res.status(200).json(
+          ephemeralResponse(
+            "\u0E1B\u0E38\u0E48\u0E21\u0E19\u0E35\u0E49\u0E22\u0E31\u0E07\u0E15\u0E49\u0E2D\u0E07\u0E43\u0E0A\u0E49 AI bot \u0E1A\u0E19 runtime \u0E15\u0E48\u0E2D\u0E40\u0E19\u0E37\u0E48\u0E2D\u0E07\u0E04\u0E48\u0E30 \u0E2A\u0E48\u0E27\u0E19\u0E1B\u0E38\u0E48\u0E21\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E41\u0E25\u0E30\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E23\u0E2B\u0E31\u0E2A\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19\u0E44\u0E14\u0E49\u0E08\u0E32\u0E01\u0E2B\u0E19\u0E49\u0E32\u0E19\u0E35\u0E49\u0E41\u0E25\u0E49\u0E27"
+          )
+        );
+    }
+  } catch (error) {
+    console.error(
+      "[DiscordInteractions] Failed to process interaction:",
+      error instanceof Error ? error.message : String(error)
+    );
+    return res.status(200).json(
+      ephemeralResponse(
+        "\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E14\u0E33\u0E40\u0E19\u0E34\u0E19\u0E01\u0E32\u0E23\u0E44\u0E14\u0E49\u0E43\u0E19\u0E02\u0E13\u0E30\u0E19\u0E35\u0E49 \u0E01\u0E23\u0E38\u0E13\u0E32\u0E25\u0E2D\u0E07\u0E43\u0E2B\u0E21\u0E48\u0E2D\u0E35\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07\u0E04\u0E48\u0E30"
+      )
+    );
+  }
+};
+
+// server/discordRuntime.ts
+function shouldRunAiGateway(runtime = process.env.DISCORD_AI_GATEWAY_RUNTIME) {
+  return runtime === "persistent";
+}
+
 // server/_core/index.ts
 async function isPortAvailable(port) {
   return new Promise((resolve) => {
@@ -5171,6 +4499,11 @@ async function findAvailablePort(startPort = 3e3) {
 async function startServer() {
   const app = express2();
   const server = createServer(app);
+  app.post(
+    "/api/discord/interactions",
+    express2.raw({ type: "application/json", limit: "1mb" }),
+    handleRitzSmpDiscordInteraction
+  );
   app.use(express2.json({ limit: "50mb" }));
   app.use(express2.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
@@ -5218,10 +4551,10 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });
-  try {
-    await startRitzSmpAiBot();
-  } catch (error) {
-    console.error("[RitzSmpAI] Failed to start:", error);
+  if (shouldRunAiGateway()) {
+    void startRitzSmpAiBot().catch((error) => {
+      console.error("[RitzSmpAI] Persistent gateway startup failed:", error instanceof Error ? error.message : String(error));
+    });
   }
 }
 startServer().catch(console.error);
