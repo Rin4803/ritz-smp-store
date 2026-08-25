@@ -185,6 +185,8 @@ export async function notifyTopupSubmitted(input: {
 export async function notifyMinecraftPresence(input: {
   kind: "join" | "leave";
   playerNames: string[];
+  currentPlayers?: number | null;
+  serverOnline?: boolean;
 }): Promise<DiscordNotificationResult> {
   const channelId = getMinecraftStatusChannelId() || process.env.DISCORD_ONLINE_CHANNEL_ID || ENV.discordOnlineChannelId || "";
   const names = input.playerNames.length ? input.playerNames.map(name => `\`${name}\``).join(", ") : "ไม่ระบุชื่อผู้เล่น";
@@ -197,6 +199,8 @@ export async function notifyMinecraftPresence(input: {
     color: isJoin ? 0x22c55e : 0xef4444,
     fields: [
       { name: "จำนวนเหตุการณ์", value: `${input.playerNames.length} คน`, inline: true },
+      { name: "ผู้เล่นออนไลน์ปัจจุบัน", value: typeof input.currentPlayers === "number" ? `${input.currentPlayers} คน` : "ไม่ทราบจาก API", inline: true },
+      { name: "สถานะเซิร์ฟเวอร์", value: input.serverOnline === false ? "ออฟไลน์" : "ออนไลน์", inline: true },
       { name: "แหล่งข้อมูล", value: "Minecraft status API • ระบบ Heartbeat", inline: true },
     ],
     footer: { text: "RitzSMP • แจ้งเตือนสถานะผู้เล่นอัตโนมัติ" },

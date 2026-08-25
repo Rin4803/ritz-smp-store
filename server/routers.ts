@@ -5,6 +5,8 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { notifyOwner } from "./_core/notification";
 import { adminProcedure, ownerProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { COOKIE_NAME } from "@shared/const";
+import { parse as parseCookieHeader } from "cookie";
+import { createHeartbeatJob, updateHeartbeatJob } from "./_core/heartbeat";
 import {
   createOrder,
   getAllOrders,
@@ -26,6 +28,8 @@ import {
   createManagedServer,
   updateManagedServer,
   getRecentHealthEvents,
+  getMinecraftPresenceState,
+  setMinecraftPresenceScheduleTaskUid,
 } from "./db";
 import { ENV } from "./_core/env";
 import { Rcon } from "rcon-client";
@@ -34,6 +38,7 @@ import type { Order } from "../drizzle/schema";
 import { getRitzSmpAiBotStatus } from "./discordAiBot";
 import { getManagedServerRuntimeConfig, runtimeConfigForClient } from "./multiserverRuntime";
 import { notifyPurchaseCompleted, notifyTopupSubmitted } from "./discordNotifications";
+import { fetchMinecraftServerStatus } from "./minecraftIntegration";
 
 const allowedSlipTypes = ["image/jpeg", "image/png", "image/webp"] as const;
 const orderStatus = z.enum(["รอตรวจสอบ", "สำเร็จ", "ยกเลิก"]);
@@ -99,6 +104,20 @@ export const appRouter = router({
         updatedAt: server.updatedAt,
       }));
     }),
+    status: publicProcedure.query(async () => {
+      const status = await fetchMinecraftServerStatus({ timeoutMs: 2500 });
+      return {
+        online: status.online,
+        players: status.players,
+        maxPlayers: status.maxPlayers,
+        playerNames: status.playerNames,
+        playerListKnown: status.playerListKnown,
+        version: status.version,
+        latency: status.latency,
+        motd: status.motd,
+        checkedAt: new Date().toISOString(),
+      };
+    }),
     adminList: ownerProcedure.query(async () => {
       const servers = await getManagedServers();
       return Promise.all(servers.map(async server => {
@@ -136,6 +155,51 @@ export const appRouter = router({
         ...input,
         config: { ...input.config, channelConfig: JSON.stringify(input.config.channelConfig) },
       })),
+    presenceSchedule: ownerProcedure
+      .input(z.object({ action: z.enum(["create", "pause", "resume"]) }))
+      .mutation(async ({ ctx, input }) => {
+        const cookies = parseCookieHeader(ctx.req.headers.cookie ?? "");
+        const userSession = cookies[COOKIE_NAME] ?? "";
+        const state = await getMinecraftPresenceState();
+        if (input.action === "create") {
+          if (state?.scheduleCronTaskUid) {
+            throw new TRPCError({ code: "CONFLICT", message: "ระบบตรวจสถานะเซิร์ฟเวอร์มี schedule อยู่แล้ว" });
+          }
+          const created = await createHeartbeatJob({
+            name: "ritz-smp-minecraft-presence",
+            cron: "0 * * * * *",
+            path: "/api/scheduled/minecraft-presence",
+            method: "POST",
+            description: "ตรวจสถานะและผู้เล่น Minecraft RitzSMP ทุก 1 นาที",
+          }, userSession);
+          await setMinecraftPresenceScheduleTaskUid(created.taskUid);
+          return { action: input.action, taskUid: created.taskUid, nextExecutionAt: created.nextExecutionAt ?? null };
+        }
+        if (!state?.scheduleCronTaskUid) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "ยังไม่มี schedule ระบบตรวจสถานะเซิร์ฟเวอร์" });
+        }
+        const updated = await updateHeartbeatJob(state.scheduleCronTaskUid, { enable: input.action === "resume" }, userSession);
+        return { action: input.action, taskUid: state.scheduleCronTaskUid, nextExecutionAt: updated.nextExecutionAt ?? null };
+      }),
+    presenceScheduleStatus: ownerProcedure.query(async () => {
+      const state = await getMinecraftPresenceState();
+      let playerCount = 0;
+      if (state?.lastPlayerNames) {
+        try {
+          const parsed = JSON.parse(state.lastPlayerNames);
+          playerCount = Array.isArray(parsed) ? parsed.filter((name): name is string => typeof name === "string").length : 0;
+        } catch {
+          playerCount = 0;
+        }
+      }
+      return {
+        configured: Boolean(state?.scheduleCronTaskUid),
+        lastOnline: Boolean(state?.lastOnline),
+        playerListKnown: Boolean(state?.playerListKnown),
+        lastPlayerCount: playerCount,
+        lastCheckedAt: state?.lastCheckedAt ?? null,
+      };
+    }),
     runtime: ownerProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .query(async ({ input }) => {

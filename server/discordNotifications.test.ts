@@ -15,7 +15,7 @@ vi.mock("./storage", () => ({
   storageGetSignedUrl: vi.fn(async () => "https://storage.example.test/signed-slip.png"),
 }));
 
-import { notifyPurchaseCompleted, notifyTopupSubmitted } from "./discordNotifications";
+import { notifyMinecraftPresence, notifyPurchaseCompleted, notifyTopupSubmitted } from "./discordNotifications";
 
 beforeEach(() => {
   vi.stubEnv("DISCORD_AI_BOT_TOKEN", "unit-test-ai-token");
@@ -97,6 +97,26 @@ describe("Discord web-store notifications", () => {
     expect(payload.embeds[0].fields).toEqual(expect.arrayContaining([
       expect.objectContaining({ name: "Minecraft IGN", value: "`RitzWarrior`" }),
       expect.objectContaining({ name: "การส่งยศเข้าเกม", value: "✅ RCON สำเร็จ" }),
+    ]));
+  });
+
+  it("posts presence updates with current player count and server status", async () => {
+    vi.stubEnv("DISCORD_ONLINE_CHANNEL_ID", "presence-channel-123");
+    const fetchMock = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ id: "presence-message-1" }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await notifyMinecraftPresence({
+      kind: "join",
+      playerNames: ["RitzWarrior"],
+      currentPlayers: 3,
+      serverOnline: true,
+    });
+
+    expect(result).toMatchObject({ sent: true, channelId: "presence-channel-123", messageId: "presence-message-1" });
+    const payload = JSON.parse(String((fetchMock.mock.calls[0]?.[1] as RequestInit).body));
+    expect(payload.embeds[0].fields).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "ผู้เล่นออนไลน์ปัจจุบัน", value: "3 คน" }),
+      expect.objectContaining({ name: "สถานะเซิร์ฟเวอร์", value: "ออนไลน์" }),
     ]));
   });
 

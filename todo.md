@@ -841,3 +841,20 @@
 - [x] ตรวจและปรับ Embed Template `/embed list`, `/embed save`, `/embed use` ให้ครบ และแก้ regression test ของ footer ให้ตรงกับ schema/implementation จริง
 - [x] ตรวจและปรับ Health Snapshot สำหรับ RCON และ transaction failure alerts ให้มีหลักฐานสถานะล่าสุดและข้อความแจ้งเตือนที่ปลอดภัยใน `system.botStatus` และ Bot Dashboard
 - [x] ป้องกัน `.project-config.json` ซึ่งมีค่า environment/secret จากการถูก track หรือส่งออกใน source repository; ตรวจ GitHub แล้วไม่พบไฟล์นี้
+
+# งานต่อเนื่องตามคำขอรอบล่าสุด
+
+- [ ] ตรวจและปิดช่องว่างของเว็บสโตร์, wallet, การซื้อยศ และ RCON fulfillment ที่ยังทำได้ใน source
+- [ ] ตรวจและปิดช่องว่างระบบ Discord interactions, player report, Embed Template และการแจ้งเตือนธุรกรรม
+- [ ] ตรวจและปิดช่องว่าง server-realtime, server-chat, online count และ role/prefix display
+- [ ] ตรวจทะเบียนคำสั่ง Ritz AI ให้เหลือเฉพาะคำสั่งหลักที่กำหนด และทดสอบข้อความภาษาไทย
+- [ ] ประเมินระบบ Music bot และบันทึกข้อจำกัด/สิ่งที่ต้องรันบนโฮสต์ภายนอกหรือบริการที่รองรับเสียงจริง
+- [ ] รัน regression tests, typecheck และ production build หลังทำงานต่อทั้งหมด
+- [ ] ตรวจ source export, GitHub sync และไฟล์ความลับ/ไฟล์ชั่วคราวอีกครั้งก่อน checkpoint
+- [ ] ทดสอบ production flows ที่ได้รับอนุญาตและบันทึกผลแยกจาก unit tests
+- [x] เพิ่ม `servers.status` แบบ read-only และการ์ดสถานะบนหน้า Home แสดง online/offline, จำนวนผู้เล่น, เวอร์ชัน และ latency พร้อม refresh ทุก 30 วินาที; `pnpm check` ผ่าน
+- [x] เพิ่ม regression test สำหรับ `servers.status` ใน `multiserver.test.ts` โดย mock Minecraft status และยืนยันว่า public response ไม่มี secret; test ผ่าน 7/7
+- [x] รัน `pnpm check`, Vitest 162 ผ่าน 4 skipped และ `pnpm build` ผ่านหลังเพิ่มระบบสถานะเซิร์ฟเวอร์; เหลือเพียงคำเตือน bundle chunk ขนาดใหญ่จาก Vite ซึ่งไม่ทำให้ build ล้มเหลว
+- [x] ตรวจ MCSV แบบอ่านอย่างเดียว: เซิร์ฟเวอร์ active/running, boot จบ, Skript โหลดโดยไม่พบ error, RCON client เชื่อมต่อปกติ และปลั๊กอิน Essentials/FoShop/DiscordSRV/LuckPerms/PlaceholderAPI/TAB/Vault/Geyser/Floodgate enabled; บันทึกหลักฐานใน `mcsv-readonly-validation-2026-08-26.md`
+- [x] เพิ่ม owner-only query/status panel ใน Admin สำหรับ Heartbeat Minecraft presence พร้อมปุ่มสร้าง, หยุด และเปิดต่อ schedule; `pnpm check` ผ่าน และคงการเรียก service ภายนอกไว้เฉพาะตอนผู้ดูแลกดใช้งาน
+- [x] เพิ่ม regression coverage ให้ Discord presence embed ตรวจจำนวนผู้เล่นและสถานะเซิร์ฟเวอร์ และยืนยัน Minecraft presence route; tests เฉพาะส่วนผ่าน 10/10

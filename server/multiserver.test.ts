@@ -57,6 +57,19 @@ const runtimeMocks = vi.hoisted(() => ({
   })),
 }));
 
+const minecraftMocks = vi.hoisted(() => ({
+  fetchMinecraftServerStatus: vi.fn(async () => ({
+    online: true,
+    players: 3,
+    maxPlayers: 50,
+    playerNames: ["RitzPlayer"],
+    playerListKnown: true,
+    version: "Paper 1.21",
+    latency: 42,
+    motd: "RitzSMP",
+  })),
+}));
+
 const dbMocks = vi.hoisted(() => ({
   getEnabledManagedServers: vi.fn(async () => managedServers.filter(server => server.enabled === 1)),
   getManagedServers: vi.fn(async () => managedServers),
@@ -89,11 +102,27 @@ const dbMocks = vi.hoisted(() => ({
     discordGuildId: input.discordGuildId ?? null,
     enabled: input.enabled ? 1 : 0,
   })),
+  getMinecraftPresenceState: vi.fn(async () => undefined),
+  setMinecraftPresenceScheduleTaskUid: vi.fn(async (taskUid: string) => ({
+    id: 1,
+    scheduleCronTaskUid: taskUid,
+    lastOnline: 1,
+    playerListKnown: 1,
+    lastPlayerNames: JSON.stringify(["RitzPlayer"]),
+    lastCheckedAt: new Date("2026-08-21T00:00:00Z"),
+  })),
+}));
+
+const heartbeatMocks = vi.hoisted(() => ({
+  createHeartbeatJob: vi.fn(async (_job: unknown, _session: string) => ({ taskUid: "presence-task-1", nextExecutionAt: "2026-08-21T00:01:00Z" })),
+  updateHeartbeatJob: vi.fn(async (_taskUid: string, _patch: unknown, _session: string) => ({ nextExecutionAt: "2026-08-21T00:02:00Z" })),
 }));
 
 vi.mock("./_core/env", () => ({ ENV: { ownerOpenId: "owner-open-id" } }));
 vi.mock("./db", () => dbMocks);
 vi.mock("./multiserverRuntime", () => runtimeMocks);
+vi.mock("./minecraftIntegration", () => minecraftMocks);
+vi.mock("./_core/heartbeat", () => heartbeatMocks);
 
 function contextFor(openId: string, role: "admin" | "user"): TrpcContext {
   const now = new Date("2026-08-21T00:00:00Z");
@@ -121,6 +150,52 @@ describe("multi-server platform", () => {
     const result = await appRouter.createCaller(contextFor("visitor", "user")).servers.list();
     expect(result).toEqual([expect.objectContaining({ slug: "ritzsmp", enabled: true })]);
     expect(result.some(server => server.slug === "closed-community")).toBe(false);
+  });
+
+  it("creates a presence Heartbeat using the decoded session cookie", async () => {
+    const context = contextFor(OWNER_OPEN_ID, "admin");
+    context.req.headers.cookie = "app_session_id=decoded-session-value";
+    const result = await appRouter.createCaller(context).servers.presenceSchedule({ action: "create" });
+    expect(result).toMatchObject({ action: "create", taskUid: "presence-task-1" });
+    expect(heartbeatMocks.createHeartbeatJob).toHaveBeenCalledWith(expect.objectContaining({
+      path: "/api/scheduled/minecraft-presence",
+      method: "POST",
+    }), "decoded-session-value");
+    expect(dbMocks.setMinecraftPresenceScheduleTaskUid).toHaveBeenCalledWith("presence-task-1");
+  });
+
+  it("allows an owner to pause and resume an existing presence Heartbeat", async () => {
+    dbMocks.getMinecraftPresenceState.mockResolvedValue({
+      id: 1,
+      scheduleCronTaskUid: "presence-task-existing",
+      lastOnline: 1,
+      playerListKnown: 1,
+      lastPlayerNames: JSON.stringify(["RitzPlayer"]),
+      lastCheckedAt: new Date("2026-08-21T00:00:00Z"),
+    });
+    const caller = appRouter.createCaller(contextFor(OWNER_OPEN_ID, "admin"));
+    await caller.servers.presenceSchedule({ action: "pause" });
+    await caller.servers.presenceSchedule({ action: "resume" });
+    expect(heartbeatMocks.updateHeartbeatJob).toHaveBeenNthCalledWith(1, "presence-task-existing", { enable: false }, "");
+    expect(heartbeatMocks.updateHeartbeatJob).toHaveBeenNthCalledWith(2, "presence-task-existing", { enable: true }, "");
+  });
+
+  it("denies presence schedule control to non-owner admins", async () => {
+    const caller = appRouter.createCaller(contextFor("staff-open-id", "admin"));
+    await expect(caller.servers.presenceSchedule({ action: "create" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("returns safe Minecraft status data through the public procedure", async () => {
+    const result = await appRouter.createCaller(contextFor("visitor", "user")).servers.status();
+    expect(result).toMatchObject({
+      online: true,
+      players: 3,
+      maxPlayers: 50,
+      version: "Paper 1.21",
+      latency: 42,
+    });
+    expect(result).toHaveProperty("checkedAt");
+    expect(minecraftMocks.fetchMinecraftServerStatus).toHaveBeenCalledWith({ timeoutMs: 2500 });
   });
 
   it("keeps the server registry owner-only", async () => {

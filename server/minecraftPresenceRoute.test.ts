@@ -80,8 +80,18 @@ describe("scheduled Minecraft presence callback", () => {
 
     await handleMinecraftPresenceScheduled(request, response);
 
-    expect(announcementSpy).toHaveBeenNthCalledWith(1, { kind: "join", playerNames: ["Dana"] });
-    expect(announcementSpy).toHaveBeenNthCalledWith(2, { kind: "leave", playerNames: ["Bob", "Charlie"] });
+    expect(announcementSpy).toHaveBeenNthCalledWith(1, {
+      kind: "join",
+      playerNames: ["Dana"],
+      currentPlayers: 2,
+      serverOnline: true,
+    });
+    expect(announcementSpy).toHaveBeenNthCalledWith(2, {
+      kind: "leave",
+      playerNames: ["Bob", "Charlie"],
+      currentPlayers: 2,
+      serverOnline: true,
+    });
     expect(response.json).toHaveBeenCalledWith(expect.objectContaining({ ok: true, joined: ["Dana"], left: ["Bob", "Charlie"] }));
   });
 

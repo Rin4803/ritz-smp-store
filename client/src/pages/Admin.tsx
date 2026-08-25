@@ -69,6 +69,10 @@ export default function Admin() {
     { id: runtimeServerId ?? 0 },
     { enabled: runtimeServerId !== null },
   );
+  const presenceStatusQuery = trpc.servers.presenceScheduleStatus.useQuery(undefined, { enabled: isAdmin, refetchInterval: 30_000 });
+  const presenceSchedule = trpc.servers.presenceSchedule.useMutation({
+    onSuccess: () => utils.servers.presenceScheduleStatus.invalidate(),
+  });
 
   const submitServer = (event: React.FormEvent) => {
     event.preventDefault();
@@ -163,6 +167,28 @@ export default function Admin() {
               </div>
             )}
             {updateServer.error && <p role="alert" style={{ color: "#fda4af", margin: "10px 0 0", fontSize: 13 }}>{updateServer.error.message}</p>}
+          </section>
+
+          <section className="admin-panel" style={{ marginBottom: 24 }} aria-labelledby="presence-schedule-title">
+            <div className="panel-heading" style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start" }}>
+              <div>
+                <div className="eyebrow" style={{ display: "flex", alignItems: "center", gap: 7 }}><Power size={14} /> SERVER-REALTIME</div>
+                <h2 id="presence-schedule-title" style={{ margin: "7px 0 0", fontSize: 20 }}>ตรวจสถานะและผู้เล่นอัตโนมัติ</h2>
+                <p className="subtle" style={{ margin: "7px 0 0", fontSize: 13 }}>ใช้ Heartbeat แทน timer ในเว็บ เพื่อรองรับ Autoscale และอัปเดตสถานะ server-realtime/server-chat ทุก 1 นาที</p>
+              </div>
+              <Power size={24} className="gold-text" aria-hidden="true" />
+            </div>
+            <div className="empty-box" style={{ marginTop: 16 }} aria-live="polite">
+              {presenceStatusQuery.isLoading ? "กำลังโหลดสถานะ schedule..." : presenceStatusQuery.isError ? "โหลดสถานะ schedule ไม่สำเร็จ" : presenceStatusQuery.data ? (
+                <><strong>{presenceStatusQuery.data.configured ? "มี schedule อยู่ในระบบ" : "ยังไม่ได้เปิด schedule"}</strong><br /><span className="subtle">สถานะล่าสุด: {presenceStatusQuery.data.lastOnline ? "เซิร์ฟเวอร์ออนไลน์" : "ออฟไลน์หรือยังไม่มีข้อมูล"} · ผู้เล่นล่าสุด {presenceStatusQuery.data.playerListKnown ? `${presenceStatusQuery.data.lastPlayerCount} คน` : "ไม่ทราบจำนวน"}{presenceStatusQuery.data.lastCheckedAt ? ` · ตรวจเมื่อ ${formatDate(presenceStatusQuery.data.lastCheckedAt)}` : ""}</span></>
+              ) : null}
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+              <button type="button" className="primary-btn compact-btn" disabled={presenceSchedule.isPending || presenceStatusQuery.data?.configured} onClick={() => presenceSchedule.mutate({ action: "create" })}>{presenceSchedule.isPending ? <Loader2 size={13} className="animate-spin" /> : "เปิดการตรวจอัตโนมัติ"}</button>
+              <button type="button" className="ghost-btn compact-btn" disabled={presenceSchedule.isPending || !presenceStatusQuery.data?.configured} onClick={() => presenceSchedule.mutate({ action: "pause" })}>หยุดชั่วคราว</button>
+              <button type="button" className="ghost-btn compact-btn" disabled={presenceSchedule.isPending || !presenceStatusQuery.data?.configured} onClick={() => presenceSchedule.mutate({ action: "resume" })}>เปิดต่อ</button>
+            </div>
+            {presenceSchedule.error && <p role="alert" style={{ color: "#fda4af", margin: "10px 0 0", fontSize: 13 }}>{presenceSchedule.error.message}</p>}
           </section>
 
           {usersQuery.isSuccess && (

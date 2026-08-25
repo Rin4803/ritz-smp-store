@@ -116,11 +116,21 @@ export async function runMinecraftPresenceMonitor() {
   const transition = diffMinecraftPresence(previous, comparableStatus(currentStatus));
 
   if (transition.joined.length) {
-    const result = await notifyMinecraftPresence({ kind: "join", playerNames: transition.joined });
+    const result = await notifyMinecraftPresence({
+      kind: "join",
+      playerNames: transition.joined,
+      currentPlayers: currentStatus.players,
+      serverOnline: currentStatus.online,
+    });
     if (!result.sent) throw new Error(`Minecraft join announcement failed: ${result.reason ?? "unknown error"}`);
   }
   if (transition.left.length) {
-    const result = await notifyMinecraftPresence({ kind: "leave", playerNames: transition.left });
+    const result = await notifyMinecraftPresence({
+      kind: "leave",
+      playerNames: transition.left,
+      currentPlayers: currentStatus.players,
+      serverOnline: currentStatus.online,
+    });
     if (!result.sent) throw new Error(`Minecraft leave announcement failed: ${result.reason ?? "unknown error"}`);
   }
 
