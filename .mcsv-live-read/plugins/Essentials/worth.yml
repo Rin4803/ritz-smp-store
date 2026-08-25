@@ -1,0 +1,98 @@
+# RitzSMP EssentialsX worth.yml
+# ตารางนี้สะท้อน FoShop sections ที่ enabled และมี sell-price เท่านั้น
+# FoShop ยังคงเป็นแหล่งราคาขายจริงของ /sell และ /sellall
+
+# Farming
+wheat: 3.0
+wheat_seeds: 0.25
+beetroot: 3.0
+pumpkin: 8.0
+melon: 8.0
+sugar_cane: 2.5
+cactus: 1.5
+bamboo: 0.75
+kelp: 0.75
+
+# Food
+potato: 2.0
+sweet_berries: 2.0
+melon_slice: 1.0
+carrot: 2.0
+apple: 1.0
+cooked_chicken: 3.0
+cooked_beef: 4.0
+golden_carrot: 8.0
+cake: 10.0
+
+# Mob Drops
+rotten_flesh: 2.0
+bone: 3.0
+string: 4.0
+spider_eye: 5.0
+gunpowder: 8.0
+slime_ball: 10.0
+feather: 1.0
+leather: 3.0
+phantom_membrane: 20.0
+arrow: 3.0
+
+# Mining
+coal: 3.0
+iron_ingot: 8.0
+gold_ingot: 12.0
+diamond: 80.0
+lapis_lazuli: 6.0
+redstone: 5.0
+copper_ingot: 4.0
+raw_iron: 6.0
+raw_copper: 4.0
+raw_gold: 10.0
+emerald: 100.0
+amethyst_shard: 5.0
+
+# Nether
+blaze_rod: 20.0
+nether_wart: 3.0
+magma_cream: 15.0
+fire_charge: 4.0
+ghast_tear: 30.0
+quartz: 3.0
+blackstone: 1.0
+magma_block: 2.0
+crying_obsidian: 30.0
+
+# End
+ender_chest: 40.0
+end_stone: 1.0
+end_stone_bricks: 1.0
+potion: 25.0
+end_rod: 3.0
+chorus_fruit: 3.0
+popped_chorus_fruit: 3.0
+shulker_shell: 180.0
+purpur_block: 1.0
+
+# Gear
+obsidian: 25.0
+end_crystal: 400.0
+respawn_anchor: 400.0
+glowstone: 3.0
+totem_of_undying: 700.0
+ender_pearl: 15.0
+golden_apple: 35.0
+experience_bottle: 25.0
+wind_charge: 15.0
+
+# Woods
+oak_planks: 2.0
+spruce_planks: 2.0
+birch_planks: 2.0
+jungle_planks: 3.0
+acacia_planks: 3.0
+dark_oak_planks: 3.0
+mangrove_planks: 4.0
+cherry_planks: 4.0
+pale_oak_planks: 4.0
+bamboo_planks: 3.0
+crimson_planks: 4.0
+warped_planks: 4.0

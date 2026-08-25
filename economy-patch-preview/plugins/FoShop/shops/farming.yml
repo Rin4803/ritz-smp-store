@@ -1,0 +1,65 @@
+id: farming
+title: '&a✦ ฟาร์มและพืชผล'
+size: 27
+icon: WHEAT
+slot: 10
+enabled: true
+description:
+- '&#3ecf8eพืชผลทางการเกษตร'
+items:
+  wheat:
+    material: WHEAT
+    slot: 10
+    amount: 16
+    buy-price: 25.0
+    sell-price: 3.0
+    lore:
+    - '&#ffffffขายเพ่อหารายได'
+  wheat_seeds:
+    material: WHEAT_SEEDS
+    slot: 11
+    amount: 16
+    buy-price: 10.0
+    sell-price: 0.25
+  beetroot:
+    material: BEETROOT
+    slot: 12
+    amount: 16
+    buy-price: 20.0
+    sell-price: 3.0
+  pumpkin:
+    material: PUMPKIN
+    slot: 13
+    amount: 8
+    buy-price: 40.0
+    sell-price: 8.0
+  melon:
+    material: MELON
+    slot: 14
+    amount: 8
+    buy-price: 40.0
+    sell-price: 8.0
+  sugar_cane:
+    material: SUGAR_CANE
+    slot: 15
+    amount: 16
+    buy-price: 30.0
+    sell-price: 2.5
+  cactus:
+    material: CACTUS
+    slot: 16
+    amount: 16
+    buy-price: 25.0
+    sell-price: 1.5
+  bamboo:
+    material: BAMBOO
+    slot: 20
+    amount: 16
+    buy-price: 20.0
+    sell-price: 0.75
+  kelp:
+    material: KELP
+    slot: 21
+    amount: 16
+    buy-price: 15.0
+    sell-price: 0.75

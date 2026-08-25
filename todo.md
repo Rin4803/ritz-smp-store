@@ -820,3 +820,23 @@
 - [x] ส่งมอบลิงก์ repository พร้อมคำเตือนว่าไม่ควร commit secret ในอนาคต
 
 - [x] แก้ transaction fulfillment ไม่ให้บันทึกออเดอร์เป็นสำเร็จเมื่อ RCON เชื่อมต่อไม่ได้หรือส่งคำสั่งไม่สำเร็จ และเพิ่ม regression test (ตรวจแล้ว TypeScript, Vitest 157 tests และ production build ผ่าน)
+
+- [x] Audit read-only MCSV Economy config: ยืนยัน EssentialsX `worth.yml` มี 79 รายการ, FoShop `global-sell-prices.yml` มี 1,659 รายการ (เปิดใช้งาน 1,498), และ FoShop มี 9 หมวดร้าน (เปิด 7)
+- [x] Audit พบสาเหตุความไม่ตรงกัน: FoShop shop `sell-price` ถูกกำหนดเป็นราคารวมต่อแพ็ก ขณะที่ global-sell-prices/Essentials worth เป็นราคาต่อชิ้น; พบ enabled shop unit-sell ต่างจาก global 66 รายการ และต่างจาก Essentials worth 54 รายการ
+- [ ] เลือกแหล่งราคาหลักและปรับ FoShop shop sell-price/global-sell-prices/Essentials worth ให้เป็นหน่วยเดียวกัน หลังยืนยันนโยบายราคาและสร้าง rollback ที่อ่านได้จาก MCSV
+- [ ] ทดสอบ `/sell`, `/sellall`, `/worth` และการจ่ายเงินด้วยบัญชีควบคุมบน production หลังแก้ราคา
+- [ ] ตัดไฟล์วิเคราะห์ MCSV ชั่วคราวออกจาก source export ก่อน checkpoint ส่งมอบ หากไม่ต้องการเก็บเป็นหลักฐาน
+- [x] MCSV tool connection retry และดำเนินการอ่าน/เขียน `worth.yml` เมื่อระบบเชื่อมต่อพร้อม; การทดสอบคำสั่งในเกมจริงยังค้าง
+
+- [x] ผู้ใช้ยืนยันให้ดำเนินการแก้ความไม่สอดคล้องของ Economy ต่อ และสร้าง full backup MCSV ก่อนเขียน config จริง
+- [ ] สร้างแพตช์ให้ `/sell`, `/sellall`, `/worth` และ FoShop ใช้ราคาขายต่อชิ้นเดียวกัน โดยรักษาราคาซื้อของร้านเดิม
+- [x] ตรวจและเขียน Essentials `worth.yml` กลับ MCSV หลังอ่านไฟล์สดและยืนยันโครงสร้างสำเร็จ; ยังไม่ได้เปลี่ยน FoShop shop definitions
+- [ ] ตรวจคำสั่งและบันทึกผลหลัง reload/restart พร้อมทดสอบ production ด้วยบัญชีควบคุมโดยไม่แก้ยอดผู้เล่นอื่น
+
+- [ ] ตรวจระบบ Discord ทั้งชุดอีกครั้ง: คำสั่งซื้อ/เติมเงิน, แจ้งเตือนธุรกรรม, player report, สถานะเซิร์ฟเวอร์, จำนวนผู้เล่น, server-realtime, server-chat และ role display
+- [x] ตรวจ HTTP Interaction ACK/deferred response และ error handling ของปุ่ม/เมนู Discord ทุกตัวบน autoscale จาก regression tests ที่มีอยู่; production click-through ยังแยกเป็นงานค้าง
+- [ ] ตรวจทะเบียนคำสั่ง Ritz AI, Music และ Store ให้แยกหมวดและไม่มีคำสั่งซ้ำหรือคำสั่งตกหล่น
+- [ ] ตรวจการส่งข้อความระหว่าง Minecraft กับ Discord พร้อมยศ/ชื่อที่ตรงกัน โดยไม่เปิดเผย token หรือข้อมูลลับใน log
+- [ ] ตรวจระบบ Discord production ด้วยบัญชีจริงและบันทึกผล click-through แยกจากผล unit test
+- [ ] ตรวจและปรับ Embed Template `/embed list`, `/embed save`, `/embed use` หากยังไม่มี implementation ครบ
+- [x] ตรวจและปรับ Health Snapshot สำหรับ RCON และ transaction failure alerts ให้มีหลักฐานสถานะล่าสุดและข้อความแจ้งเตือนที่ปลอดภัยใน `system.botStatus` และ Bot Dashboard

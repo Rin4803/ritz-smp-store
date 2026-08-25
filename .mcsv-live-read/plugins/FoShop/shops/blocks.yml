@@ -1,0 +1,106 @@
+id: blocks
+title: '&8Blocks'
+size: 27
+icon: STONE
+slot: 11
+enabled: false
+description:
+- '&#a7b8b0Basic building materials.'
+- '&#3ecf8eClick to browse blocks.'
+items:
+  stone:
+    material: STONE
+    slot: 10
+    amount: 16
+    buy-price: 100.0
+    sell-price: 10.0
+    lore:
+    - '&#ffffffCommon building block.'
+  oak_log:
+    material: OAK_LOG
+    slot: 12
+    amount: 16
+    buy-price: 120.0
+    sell-price: 12.0
+    lore:
+    - '&#ffffffUseful for building and crafting.'
+  glass:
+    material: GLASS
+    slot: 14
+    amount: 16
+    buy-price: 180.0
+    sell-price: 18.0
+    lore:
+    - '&#ffffffTransparent decorative block.'
+  cobblestone:
+    material: COBBLESTONE
+    slot: 16
+    amount: 32
+    buy-price: 90.0
+    sell-price: 8.0
+    lore:
+    - '&#ffffffSolid and cheap material.'
+  dirt:
+    material: DIRT
+    slot: 11
+    amount: 32
+    buy-price: 90.0
+    sell-price: 8.0
+    lore:
+    - '&#ffffffDirt for farming and building.'
+  sand:
+    material: SAND
+    slot: 13
+    amount: 32
+    buy-price: 90.0
+    sell-price: 8.0
+    lore:
+    - '&#ffffffSand for glass and building.'
+  gravel:
+    material: GRAVEL
+    slot: 15
+    amount: 32
+    buy-price: 90.0
+    sell-price: 8.0
+    lore:
+    - '&#ffffffGravel for paths and flint.'
+  oak_planks:
+    material: OAK_PLANKS
+    slot: 20
+    amount: 32
+    buy-price: 60.0
+    sell-price: 6.0
+    lore:
+    - '&#ffffffWooden planks for building.'
+  stone_bricks:
+    material: STONE_BRICKS
+    slot: 21
+    amount: 32
+    buy-price: 120.0
+    sell-price: 12.0
+    lore:
+    - '&#ffffffClassic stone bricks.'
+  bricks:
+    material: BRICKS
+    slot: 25
+    amount: 32
+    buy-price: 140.0
+    sell-price: 14.0
+    lore:
+    - '&#ffffffRed bricks for cozy builds.'
+  deepslate:
+    material: DEEPSLATE
+    slot: 23
+    amount: 32
+    buy-price: 100.0
+    sell-price: 10.0
+    lore:
+    - '&#ffffffDeep dark building block.'
+  quartz_block:
+    material: QUARTZ_BLOCK
+    slot: 24
+    amount: 32
+    buy-price: 200.0
+    sell-price: 20.0
+    lore:
+    - '&#ffffffClean white quartz block.'

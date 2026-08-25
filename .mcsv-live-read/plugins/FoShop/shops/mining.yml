@@ -1,0 +1,81 @@
+id: mining
+title: '&8✦ แร่และการขุด'
+size: 27
+icon: DIAMOND
+slot: 13
+enabled: true
+description:
+- '&#3ecf8eแร่ธาตุจากการขุด'
+items:
+  coal:
+    material: COAL
+    slot: 10
+    amount: 16
+    buy-price: 30.0
+    sell-price: 3.0
+  iron_ingot:
+    material: IRON_INGOT
+    slot: 11
+    amount: 16
+    buy-price: 80.0
+    sell-price: 8.0
+  gold_ingot:
+    material: GOLD_INGOT
+    slot: 12
+    amount: 16
+    buy-price: 120.0
+    sell-price: 12.0
+  diamond:
+    material: DIAMOND
+    slot: 13
+    amount: 8
+    buy-price: 600.0
+    sell-price: 80.0
+  lapis_lazuli:
+    material: LAPIS_LAZULI
+    slot: 14
+    amount: 16
+    buy-price: 80.0
+    sell-price: 6.0
+  redstone:
+    material: REDSTONE
+    slot: 15
+    amount: 16
+    buy-price: 40.0
+    sell-price: 5.0
+  copper_ingot:
+    material: COPPER_INGOT
+    slot: 16
+    amount: 16
+    buy-price: 40.0
+    sell-price: 4.0
+  raw_iron:
+    material: RAW_IRON
+    slot: 17
+    amount: 16
+    buy-price: -1
+    sell-price: 6.0
+  raw_copper:
+    material: RAW_COPPER
+    slot: 23
+    amount: 16
+    buy-price: -1
+    sell-price: 4.0
+  raw_gold:
+    material: RAW_GOLD
+    slot: 19
+    amount: 16
+    buy-price: -1
+    sell-price: 10.0
+  emerald:
+    material: EMERALD
+    slot: 20
+    amount: 8
+    buy-price: 400.0
+    sell-price: 100.0
+  amethyst_shard:
+    material: AMETHYST_SHARD
+    slot: 21
+    amount: 8
+    buy-price: 50.0
+    sell-price: 5.0

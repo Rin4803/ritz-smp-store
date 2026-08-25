@@ -1,0 +1,63 @@
+id: end
+title: '&5✦ ของจาก End'
+size: 27
+icon: END_STONE
+slot: 15
+enabled: true
+description:
+- '&#3ecf8eของจากโลกเอนด์'
+items:
+  ender_chest:
+    material: ENDER_CHEST
+    slot: 10
+    amount: 1
+    buy-price: 500.0
+    sell-price: 40.0
+  end_stone:
+    material: END_STONE
+    slot: 11
+    amount: 16
+    buy-price: 15.0
+    sell-price: 1.0
+  end_stone_bricks:
+    material: END_STONE_BRICKS
+    slot: 12
+    amount: 16
+    buy-price: 20.0
+    sell-price: 1.0
+  pink_potion:
+    material: POTION
+    slot: 13
+    amount: 1
+    buy-price: 300.0
+    sell-price: 25.0
+  end_rod:
+    material: END_ROD
+    slot: 14
+    amount: 8
+    buy-price: 30.0
+    sell-price: 3.0
+  chorus_fruit:
+    material: CHORUS_FRUIT
+    slot: 15
+    amount: 16
+    buy-price: 40.0
+    sell-price: 3.0
+  popped_chorus_fruit:
+    material: POPPED_CHORUS_FRUIT
+    slot: 16
+    amount: 16
+    buy-price: 60.0
+    sell-price: 3.0
+  shulker_shell:
+    material: SHULKER_SHELL
+    slot: 20
+    amount: 1
+    buy-price: 2000.0
+    sell-price: 180.0
+  purpur_block:
+    material: PURPUR_BLOCK
+    slot: 21
+    amount: 16
+    buy-price: 25.0
+    sell-price: 1.0

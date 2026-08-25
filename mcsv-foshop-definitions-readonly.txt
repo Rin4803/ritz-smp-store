@@ -1,0 +1,599 @@
+### /plugins/FoShop/shops/blocks.yml
+id: blocks
+title: '&8Blocks'
+size: 27
+icon: STONE
+slot: 11
+enabled: false
+description:
+- '&#a7b8b0Basic building materials.'
+- '&#3ecf8eClick to browse blocks.'
+items:
+  stone:
+    material: STONE
+    slot: 10
+    amount: 16
+    buy-price: 100.0
+    sell-price: 10.0
+    lore:
+    - '&#ffffffCommon building block.'
+  oak_log:
+    material: OAK_LOG
+    slot: 12
+    amount: 16
+    buy-price: 120.0
+    sell-price: 12.0
+    lore:
+    - '&#ffffffUseful for building and crafting.'
+  glass:
+    material: GLASS
+    slot: 14
+    amount: 16
+    buy-price: 180.0
+    sell-price: 18.0
+    lore:
+    - '&#ffffffTransparent decorative block.'
+  cobblestone:
+    material: COBBLESTONE
+    slot: 16
+    amount: 32
+    buy-price: 90.0
+    sell-price: 8.0
+    lore:
+    - '&#ffffffSolid and cheap material.'
+  dirt:
+    material: DIRT
+    slot: 11
+    amount: 32
+    buy-price: 90.0
+    sell-price: 8.0
+    lore:
+    - '&#ffffffDirt for farming and building.'
+  sand:
+    material: SAND
+    slot: 13
+    amount: 32
+    buy-price: 90.0
+    sell-price: 8.0
+    lore:
+    - '&#ffffffSand for glass and building.'
+  gravel:
+    material: GRAVEL
+    slot: 15
+    amount: 32
+    buy-price: 90.0
+    sell-price: 8.0
+    lore:
+    - '&#ffffffGravel for paths and flint.'
+  oak_planks:
+    material: OAK_PLANKS
+    slot: 20
+    amount: 32
+    buy-price: 60.0
+    sell-price: 6.0
+    lore:
+    - '&#ffffffWooden planks for building.'
+  stone_bricks:
+    material: STONE_BRICKS
+    slot: 21
+    amount: 32
+    buy-price: 120.0
+    sell-price: 12.0
+    lore:
+    - '&#ffffffClassic stone bricks.'
+  bricks:
+    material: BRICKS
+    slot: 25
+    amount: 32
+    buy-price: 140.0
+    sell-price: 14.0
+    lore:
+    - '&#ffffffRed bricks for cozy builds.'
+  deepslate:
+    material: DEEPSLATE
+    slot: 23
+    amount: 32
+    buy-price: 100.0
+    sell-price: 10.0
+    lore:
+    - '&#ffffffDeep dark building block.'
+  quartz_block:
+    material: QUARTZ_BLOCK
+    slot: 24
+    amount: 32
+    buy-price: 200.0
+    sell-price: 20.0
+    lore:
+    - '&#ffffffClean white quartz block.'
+
+### /plugins/FoShop/shops/end.yml
+id: end
+title: '&5✦ ของจาก End'
+size: 27
+icon: END_STONE
+slot: 15
+enabled: true
+description:
+- '&#3ecf8eของจากโลกเอนด์'
+items:
+  ender_chest:
+    material: ENDER_CHEST
+    slot: 10
+    amount: 1
+    buy-price: 500.0
+    sell-price: 40.0
+  end_stone:
+    material: END_STONE
+    slot: 11
+    amount: 16
+    buy-price: 15.0
+    sell-price: 1.0
+  end_stone_bricks:
+    material: END_STONE_BRICKS
+    slot: 12
+    amount: 16
+    buy-price: 20.0
+    sell-price: 1.0
+  pink_potion:
+    material: POTION
+    slot: 13
+    amount: 1
+    buy-price: 300.0
+    sell-price: 25.0
+  end_rod:
+    material: END_ROD
+    slot: 14
+    amount: 8
+    buy-price: 30.0
+    sell-price: 3.0
+  chorus_fruit:
+    material: CHORUS_FRUIT
+    slot: 15
+    amount: 16
+    buy-price: 40.0
+    sell-price: 3.0
+  popped_chorus_fruit:
+    material: POPPED_CHORUS_FRUIT
+    slot: 16
+    amount: 16
+    buy-price: 60.0
+    sell-price: 3.0
+  shulker_shell:
+    material: SHULKER_SHELL
+    slot: 20
+    amount: 1
+    buy-price: 2000.0
+    sell-price: 180.0
+  purpur_block:
+    material: PURPUR_BLOCK
+    slot: 21
+    amount: 16
+    buy-price: 25.0
+    sell-price: 1.0
+
+### /plugins/FoShop/shops/farming.yml
+id: farming
+title: '&a✦ ฟาร์มและพืชผล'
+size: 27
+icon: WHEAT
+slot: 10
+enabled: true
+description:
+- '&#3ecf8eพืชผลทางการเกษตร'
+items:
+  wheat:
+    material: WHEAT
+    slot: 10
+    amount: 16
+    buy-price: 25.0
+    sell-price: 3.0
+    lore:
+    - '&#ffffffขายเพ่อหารายได'
+  wheat_seeds:
+    material: WHEAT_SEEDS
+    slot: 11
+    amount: 16
+    buy-price: 10.0
+    sell-price: 0.25
+  beetroot:
+    material: BEETROOT
+    slot: 12
+    amount: 16
+    buy-price: 20.0
+    sell-price: 3.0
+  pumpkin:
+    material: PUMPKIN
+    slot: 13
+    amount: 8
+    buy-price: 40.0
+    sell-price: 8.0
+  melon:
+    material: MELON
+    slot: 14
+    amount: 8
+    buy-price: 40.0
+    sell-price: 8.0
+  sugar_cane:
+    material: SUGAR_CANE
+    slot: 15
+    amount: 16
+    buy-price: 30.0
+    sell-price: 2.5
+  cactus:
+    material: CACTUS
+    slot: 16
+    amount: 16
+    buy-price: 25.0
+    sell-price: 1.5
+  bamboo:
+    material: BAMBOO
+    slot: 20
+    amount: 16
+    buy-price: 20.0
+    sell-price: 0.75
+  kelp:
+    material: KELP
+    slot: 21
+    amount: 16
+    buy-price: 15.0
+    sell-price: 0.75
+
+### /plugins/FoShop/shops/food.yml
+id: food
+title: '&6✦ อาหารและของกิน'
+size: 27
+icon: COOKED_BEEF
+slot: 11
+enabled: true
+description:
+- '&#3ecf8eอาหารสำหรบการยงชพ'
+items:
+  potato:
+    material: POTATO
+    slot: 10
+    amount: 16
+    buy-price: 20.0
+    sell-price: 2.0
+  sweet_berries:
+    material: SWEET_BERRIES
+    slot: 11
+    amount: 16
+    buy-price: 25.0
+    sell-price: 2.0
+  melon_slice:
+    material: MELON_SLICE
+    slot: 12
+    amount: 16
+    buy-price: 10.0
+    sell-price: 1.0
+  carrot:
+    material: CARROT
+    slot: 13
+    amount: 16
+    buy-price: 20.0
+    sell-price: 2.0
+  apple:
+    material: APPLE
+    slot: 14
+    amount: 16
+    buy-price: 15.0
+    sell-price: 1.0
+  cooked_chicken:
+    material: COOKED_CHICKEN
+    slot: 15
+    amount: 16
+    buy-price: 30.0
+    sell-price: 3.0
+  cooked_beef:
+    material: COOKED_BEEF
+    slot: 16
+    amount: 16
+    buy-price: 40.0
+    sell-price: 4.0
+  golden_carrot:
+    material: GOLDEN_CARROT
+    slot: 20
+    amount: 16
+    buy-price: 80.0
+    sell-price: 8.0
+  cake:
+    material: CAKE
+    slot: 21
+    amount: 1
+    buy-price: 120.0
+    sell-price: 10.0
+
+### /plugins/FoShop/shops/gear.yml
+id: gear
+title: '&b✦ อุปกรณ์และเครื่องมือ'
+size: 27
+icon: TOTEM_OF_UNDYING
+slot: 16
+enabled: true
+description:
+- '&#3ecf8eอุปกรณ์และของมีค่า'
+items:
+  obsidian:
+    material: OBSIDIAN
+    slot: 10
+    amount: 1
+    buy-price: 300.0
+    sell-price: 25.0
+  end_crystal:
+    material: END_CRYSTAL
+    slot: 11
+    amount: 1
+    buy-price: 5000.0
+    sell-price: 400.0
+  respawn_anchor:
+    material: RESPAWN_ANCHOR
+    slot: 12
+    amount: 1
+    buy-price: 5000.0
+    sell-price: 400.0
+  glowstone:
+    material: GLOWSTONE
+    slot: 13
+    amount: 1
+    buy-price: 30.0
+    sell-price: 3.0
+  totem_of_undying:
+    material: TOTEM_OF_UNDYING
+    slot: 14
+    amount: 1
+    buy-price: 8000.0
+    sell-price: 700.0
+  ender_pearl:
+    material: ENDER_PEARL
+    slot: 15
+    amount: 1
+    buy-price: 150.0
+    sell-price: 15.0
+  golden_apple:
+    material: GOLDEN_APPLE
+    slot: 16
+    amount: 1
+    buy-price: 400.0
+    sell-price: 35.0
+  exp_bottle:
+    material: EXPERIENCE_BOTTLE
+    slot: 20
+    amount: 1
+    buy-price: 300.0
+    sell-price: 25.0
+  wind_charge:
+    material: WIND_CHARGE
+    slot: 21
+    amount: 1
+    buy-price: 200.0
+    sell-price: 15.0
+### /plugins/FoShop/shops/mining.yml
+id: mining
+title: '&8✦ แร่และการขุด'
+size: 27
+icon: DIAMOND
+slot: 13
+enabled: true
+description:
+- '&#3ecf8eแร่ธาตุจากการขุด'
+items:
+  coal:
+    material: COAL
+    slot: 10
+    amount: 16
+    buy-price: 30.0
+    sell-price: 3.0
+  iron_ingot:
+    material: IRON_INGOT
+    slot: 11
+    amount: 16
+    buy-price: 80.0
+    sell-price: 8.0
+  gold_ingot:
+    material: GOLD_INGOT
+    slot: 12
+    amount: 16
+    buy-price: 120.0
+    sell-price: 12.0
+  diamond:
+    material: DIAMOND
+    slot: 13
+    amount: 8
+    buy-price: 600.0
+    sell-price: 80.0
+  lapis_lazuli:
+    material: LAPIS_LAZULI
+    slot: 14
+    amount: 16
+    buy-price: 80.0
+    sell-price: 6.0
+  redstone:
+    material: REDSTONE
+    slot: 15
+    amount: 16
+    buy-price: 40.0
+    sell-price: 5.0
+  copper_ingot:
+    material: COPPER_INGOT
+    slot: 16
+    amount: 16
+    buy-price: 40.0
+    sell-price: 4.0
+  raw_iron:
+    material: RAW_IRON
+    slot: 17
+    amount: 16
+    buy-price: -1
+    sell-price: 6.0
+  raw_copper:
+    material: RAW_COPPER
+    slot: 23
+    amount: 16
+    buy-price: -1
+    sell-price: 4.0
+  raw_gold:
+    material: RAW_GOLD
+    slot: 19
+    amount: 16
+    buy-price: -1
+    sell-price: 10.0
+  emerald:
+    material: EMERALD
+    slot: 20
+    amount: 8
+    buy-price: 400.0
+    sell-price: 100.0
+  amethyst_shard:
+    material: AMETHYST_SHARD
+    slot: 21
+    amount: 8
+    buy-price: 50.0
+    sell-price: 5.0
+
+### /plugins/FoShop/shops/mob_drops.yml
+id: mob_drops
+title: '&c✦ ของดรอปจากมอนสเตอร์'
+size: 27
+icon: ROTTEN_FLESH
+slot: 12
+enabled: true
+description:
+- '&#3ecf8eของดรอปจากมอนสเตอร์'
+items:
+  rotten_flesh:
+    material: ROTTEN_FLESH
+    slot: 10
+    amount: 16
+    buy-price: 10.0
+    sell-price: 2.0
+  bone:
+    material: BONE
+    slot: 11
+    amount: 16
+    buy-price: 25.0
+    sell-price: 3.0
+  string:
+    material: STRING
+    slot: 12
+    amount: 16
+    buy-price: 30.0
+    sell-price: 4.0
+  spider_eye:
+    material: SPIDER_EYE
+    slot: 13
+    amount: 16
+    buy-price: 40.0
+    sell-price: 5.0
+  gunpowder:
+    material: GUNPOWDER
+    slot: 14
+    amount: 16
+    buy-price: 60.0
+    sell-price: 8.0
+  slime_ball:
+    material: SLIME_BALL
+    slot: 15
+    amount: 16
+    buy-price: 80.0
+    sell-price: 10.0
+  feather:
+    material: FEATHER
+    slot: 16
+    amount: 16
+    buy-price: 15.0
+    sell-price: 1.0
+  leather:
+    material: LEATHER
+    slot: 20
+    amount: 16
+    buy-price: 40.0
+    sell-price: 3.0
+  phantom_membrane:
+    material: PHANTOM_MEMBRANE
+    slot: 21
+    amount: 8
+    buy-price: 200.0
+    sell-price: 20.0
+  arrow:
+    material: ARROW
+    slot: 23
+    amount: 16
+    buy-price: -1
+    sell-price: 3.0
+
+### /plugins/FoShop/shops/nether.yml
+id: nether
+title: '&4✦ ของจาก Nether'
+size: 27
+icon: BLAZE_ROD
+slot: 14
+enabled: true
+description:
+- '&#3ecf8eของจากโลกเนเธอร์'
+items:
+  blaze_rod:
+    material: BLAZE_ROD
+    slot: 10
+    amount: 8
+    buy-price: 260.0
+    sell-price: 20.0
+  nether_wart:
+    material: NETHER_WART
+    slot: 11
+    amount: 16
+    buy-price: 40.0
+    sell-price: 3.0
+  magma_cream:
+    material: MAGMA_CREAM
+    slot: 12
+    amount: 8
+    buy-price: 200.0
+    sell-price: 15.0
+  fire_charge:
+    material: FIRE_CHARGE
+    slot: 13
+    amount: 8
+    buy-price: 50.0
+    sell-price: 4.0
+  ghast_tear:
+    material: GHAST_TEAR
+    slot: 14
+    amount: 8
+    buy-price: 360.0
+    sell-price: 30.0
+  quartz:
+    material: QUARTZ
+    slot: 15
+    amount: 16
+    buy-price: 40.0
+    sell-price: 3.0
+  blackstone:
+    material: BLACKSTONE
+    slot: 16
+    amount: 16
+    buy-price: 15.0
+    sell-price: 1.0
+  magma_block:
+    material: MAGMA_BLOCK
+    slot: 20
+    amount: 16
+    buy-price: 25.0
+    sell-price: 2.0
+  crying_obsidian:
+    material: CRYING_OBSIDIAN
+    slot: 21
+    amount: 8
+    buy-price: 400.0
+    sell-price: 30.0
+
+### /plugins/FoShop/shops/woods.yml
+id: woods
+title: '&6✦ ไม้และแผ่นไม้'
+size: 27
+icon: OAK_PLANKS
+slot: 14
+enabled: false
+description:
+- '&#3ecf8eหมวดไม้ถูกปิดใช้งาน'
+items: {}
+

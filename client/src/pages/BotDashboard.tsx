@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Bot, Activity, Terminal, ShieldAlert, ArrowLeft, RefreshCw } from "lucide-react";
+import { Loader2, Bot, Activity, Terminal, ShieldAlert, ArrowLeft, RefreshCw, HeartPulse } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Link } from "wouter";
 
@@ -117,6 +117,38 @@ export default function BotDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Health Snapshot */}
+        <Card className="bg-slate-900 border-slate-800 text-white">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <HeartPulse className="w-5 h-5 text-emerald-400" /> Health Snapshot
+            </CardTitle>
+            <CardDescription className="text-slate-400">
+              เหตุการณ์ล่าสุดของ Discord, RCON และระบบธุรกรรมจากฐานข้อมูล (สูงสุด 12 รายการ)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!botStatus?.healthEvents || botStatus.healthEvents.length === 0 ? (
+              <div className="py-8 text-center text-slate-500">ยังไม่มี Health Event ที่บันทึกไว้</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {botStatus.healthEvents.map((event: { id: number; service: string; status: string; message: string; createdAt: string | Date }, idx: number) => (
+                  <div key={`${event.id}-${idx}`} className="rounded-lg border border-slate-800 bg-slate-950/70 p-3">
+                    <div className="flex items-center justify-between gap-3 mb-1">
+                      <span className="font-semibold text-slate-200">{event.service}</span>
+                      <Badge variant="outline" className={event.status === "ok" ? "border-emerald-500 text-emerald-400" : event.status === "error" || event.status === "down" ? "border-red-500 text-red-400" : "border-amber-500 text-amber-400"}>
+                        {event.status.toUpperCase()}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-slate-400 break-words">{event.message}</p>
+                    <p className="text-[11px] text-slate-600 mt-2">{new Date(event.createdAt).toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Logs Section */}
         <Card className="bg-slate-900 border-slate-800 text-white">

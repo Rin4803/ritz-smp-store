@@ -1,0 +1,63 @@
+id: food
+title: '&6✦ อาหารและของกิน'
+size: 27
+icon: COOKED_BEEF
+slot: 11
+enabled: true
+description:
+- '&#3ecf8eอาหารสำหรบการยงชพ'
+items:
+  potato:
+    material: POTATO
+    slot: 10
+    amount: 16
+    buy-price: 20.0
+    sell-price: 2.0
+  sweet_berries:
+    material: SWEET_BERRIES
+    slot: 11
+    amount: 16
+    buy-price: 25.0
+    sell-price: 2.0
+  melon_slice:
+    material: MELON_SLICE
+    slot: 12
+    amount: 16
+    buy-price: 10.0
+    sell-price: 1.0
+  carrot:
+    material: CARROT
+    slot: 13
+    amount: 16
+    buy-price: 20.0
+    sell-price: 2.0
+  apple:
+    material: APPLE
+    slot: 14
+    amount: 16
+    buy-price: 15.0
+    sell-price: 1.0
+  cooked_chicken:
+    material: COOKED_CHICKEN
+    slot: 15
+    amount: 16
+    buy-price: 30.0
+    sell-price: 3.0
+  cooked_beef:
+    material: COOKED_BEEF
+    slot: 16
+    amount: 16
+    buy-price: 40.0
+    sell-price: 4.0
+  golden_carrot:
+    material: GOLDEN_CARROT
+    slot: 20
+    amount: 16
+    buy-price: 80.0
+    sell-price: 8.0
+  cake:
+    material: CAKE
+    slot: 21
+    amount: 1
+    buy-price: 120.0
+    sell-price: 10.0

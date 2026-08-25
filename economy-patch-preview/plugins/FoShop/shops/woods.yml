@@ -1,0 +1,9 @@
+id: woods
+title: '&6✦ ไม้และแผ่นไม้'
+size: 27
+icon: OAK_PLANKS
+slot: 14
+enabled: false
+description:
+- '&#3ecf8eหมวดไม้ถูกปิดใช้งาน'
+items: {}
