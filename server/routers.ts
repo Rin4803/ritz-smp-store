@@ -13,6 +13,7 @@ import {
   getRankById,
   getRanks,
   getUserById,
+  getUserByEmail,
   getAllUsers,
   updateUserRole,
   updateOrder,
@@ -336,6 +337,20 @@ export const appRouter = router({
         isOwner: user.openId === ENV.ownerOpenId,
       }));
     }),
+    grantAdminByEmail: ownerProcedure
+      .input(z.object({ email: z.string().trim().email().max(320) }))
+      .mutation(async ({ input }) => {
+        const target = await getUserByEmail(input.email);
+        if (!target) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "ไม่พบบัญชีนี้ กรุณาให้เจ้าของ Gmail เข้าสู่ระบบเว็บไซต์ก่อน" });
+        }
+        if (target.openId === ENV.ownerOpenId) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "บัญชี Owner มีสิทธิ์สูงสุดอยู่แล้วค่ะ" });
+        }
+        const updated = await updateUserRole(target.id, "admin");
+        if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "ไม่สามารถบันทึกสิทธิ์บัญชีได้" });
+        return { id: updated.id, name: updated.name, email: updated.email, role: updated.role, createdAt: updated.createdAt, lastSignedIn: updated.lastSignedIn, isOwner: updated.openId === ENV.ownerOpenId };
+      }),
     setUserRole: ownerProcedure
       .input(z.object({ id: z.number().int().positive(), role: z.enum(["user", "admin"]) }))
       .mutation(async ({ input }) => {

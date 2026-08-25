@@ -224,7 +224,7 @@ export async function notifyPlayerReport(input: {
       { name: "เลขที่รายงาน", value: `#${input.reportId}`, inline: true },
       { name: "ผู้รายงาน", value: input.reporterDisplayName.slice(0, 1024) || "ไม่ระบุชื่อ", inline: true },
       { name: "ผู้ถูกรายงาน", value: input.targetDiscordName.slice(0, 1024), inline: true },
-      { name: "Minecraft IGN", value: input.targetMinecraftIGN ? "`" + input.targetMinecraftIGN.slice(0, 1000) + "`" : "ไม่พบข้อมูลที่เชื่อม", inline: true },
+      { name: "Minecraft IGN", value: input.targetMinecraftIGN ? ["`", input.targetMinecraftIGN.slice(0, 1000), "`"].join("") : "ไม่พบข้อมูลที่เชื่อม", inline: true },
       { name: "หมวดหมู่", value: input.category.slice(0, 1024), inline: true },
       { name: "รายละเอียด", value: input.details.slice(0, 1024), inline: false },
     ],

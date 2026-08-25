@@ -40,6 +40,15 @@ export default function Admin() {
   const updateUserRole = trpc.admin.setUserRole.useMutation({
     onSuccess: () => utils.admin.users.invalidate(),
   });
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminCandidateId, setAdminCandidateId] = useState("");
+  const grantAdminByEmail = trpc.admin.grantAdminByEmail.useMutation({
+    onSuccess: () => {
+      setAdminEmail("");
+      setAdminCandidateId("");
+      utils.admin.users.invalidate();
+    },
+  });
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [serverForm, setServerForm] = useState({ slug: "", displayName: "", minecraftHost: "", minecraftPort: "25565", discordGuildId: "" });
   const createServer = trpc.servers.create.useMutation({
@@ -166,6 +175,30 @@ export default function Admin() {
                 </div>
                 <UserCog size={24} className="gold-text" aria-hidden="true" />
               </div>
+              <form
+                onSubmit={event => {
+                  event.preventDefault();
+                  const selected = managedUsers.find(account => String(account.id) === adminCandidateId);
+                  const email = adminEmail.trim() || selected?.email?.trim() || "";
+                  if (email) grantAdminByEmail.mutate({ email });
+                }}
+                style={{ marginTop: 16, padding: 14, border: "1px solid rgba(251, 191, 36, 0.2)", borderRadius: 14, background: "rgba(251, 191, 36, 0.04)" }}
+              >
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10, alignItems: "center" }}>
+                  <input className="admin-note" type="email" value={adminEmail} placeholder="ใส่ Gmail ของผู้ดูแล" aria-label="Gmail ผู้ดูแล" onChange={event => setAdminEmail(event.target.value)} />
+                  <select className="admin-note" value={adminCandidateId} aria-label="เลือกบัญชีผู้ดูแลจากรายชื่อ" onChange={event => setAdminCandidateId(event.target.value)}>
+                    <option value="">หรือเลือกบัญชีที่เคยเข้าสู่ระบบ</option>
+                    {managedUsers.filter(account => !account.isOwner && account.email).map(account => <option key={account.id} value={account.id}>{account.name ?? "ไม่ระบุชื่อ"} · {account.email}</option>)}
+                  </select>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button className="primary-btn compact-btn" type="submit" disabled={grantAdminByEmail.isPending || (!adminEmail.trim() && !adminCandidateId)}>{grantAdminByEmail.isPending ? <Loader2 size={13} className="animate-spin" /> : <><Plus size={13} /> เพิ่ม Admin</>}</button>
+                    <button className="ghost-btn compact-btn" type="button" onClick={() => { setAdminEmail(""); setAdminCandidateId(""); grantAdminByEmail.reset(); }}>ยกเลิก</button>
+                  </div>
+                </div>
+                <p className="subtle" style={{ margin: "9px 0 0", fontSize: 12 }}>บัญชีต้องเคยเข้าสู่ระบบเว็บด้วย Gmail นี้แล้ว ระบบจะไม่สร้างบัญชีใหม่และจะไม่แตะสิทธิ์ Owner</p>
+                {grantAdminByEmail.error && <p role="alert" style={{ color: "#fda4af", margin: "9px 0 0", fontSize: 13 }}>{grantAdminByEmail.error.message}</p>}
+                {grantAdminByEmail.isSuccess && <p role="status" style={{ color: "#86efac", margin: "9px 0 0", fontSize: 13 }}>เพิ่มสิทธิ์ Admin สำเร็จแล้วค่ะ</p>}
+              </form>
               <div className="admin-table-wrap" style={{ marginTop: 16 }}>
                 <table className="admin-table">
                   <thead><tr><th>บัญชี</th><th>อีเมล</th><th>เข้าสู่ระบบล่าสุด</th><th>สิทธิ์</th><th>การจัดการ</th></tr></thead>

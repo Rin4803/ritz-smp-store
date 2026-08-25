@@ -72,6 +72,7 @@ export type RitzSmpInteractionAction =
   | "minecraft-players"
   | "discord-members"
   | "report-open"
+  | "report-cancel"
   | "report-target"
   | "report-submit"
   | "report-edit-open"
@@ -97,6 +98,7 @@ export function identifyRitzSmpInteractionAction(
   if (customId === "ritz_players_button") return "minecraft-players";
   if (customId === "ritz_discord_members_button") return "discord-members";
   if (customId === "ritz_report_button") return "report-open";
+  if (customId === "ritz_report_cancel") return "report-cancel";
   if (customId === "ritz_report_target") return "report-target";
   if (customId?.startsWith("ritz_report_modal:")) return "report-submit";
   if (customId?.startsWith("ritz_report_edit:")) return "report-edit-open";
@@ -383,7 +385,10 @@ function buildReportTargetResponse(verifications: Awaited<ReturnType<typeof getL
     data: {
       content: "เลือกผู้เล่นที่ต้องการรายงานได้เลยค่ะ ระบบจะแสดงบัญชี Minecraft ที่เชื่อมกับ Discord เท่านั้น",
       flags: EPHEMERAL_MESSAGE_FLAG,
-      components: [{ type: 1, components: [{ type: 3, custom_id: "ritz_report_target", placeholder: "เลือกผู้เล่น", min_values: 1, max_values: 1, options }] }],
+      components: [
+        { type: 1, components: [{ type: 3, custom_id: "ritz_report_target", placeholder: "เลือกผู้เล่น", min_values: 1, max_values: 1, options }] },
+        { type: 1, components: [{ type: 2, style: 2, label: "ยกเลิก", custom_id: "ritz_report_cancel" }] },
+      ],
     },
   };
 }
@@ -520,6 +525,9 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
         if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("ระบบรายงานใช้ได้เฉพาะใน Discord RitzSMP ที่ตั้งค่าไว้ค่ะ"));
         const linked = await getLinkedDiscordVerifications();
         return res.status(200).json(linked.length ? buildReportTargetResponse(linked) : ephemeralResponse("ยังไม่มีบัญชี Minecraft ที่เชื่อมกับ Discord ให้เลือกค่ะ"));
+      }
+      case "report-cancel": {
+        return res.status(200).json(ephemeralResponse("ยกเลิกการรายงานแล้วค่ะ หากต้องการรายงานใหม่ให้กดปุ่มรายงานอีกครั้ง"));
       }
       case "report-target": {
         if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("ระบบรายงานใช้ได้เฉพาะใน Discord RitzSMP ที่ตั้งค่าไว้ค่ะ"));

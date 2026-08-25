@@ -309,6 +309,33 @@ export function buildOnboardingComponents() {
   return [actionRow];
 }
 
+export function buildReportPanelComponents() {
+  const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId("ritz_report_button")
+      .setLabel("📝 เริ่มรายงานผู้เล่น")
+      .setStyle(ButtonStyle.Danger),
+    new ButtonBuilder()
+      .setCustomId("ritz_report_cancel")
+      .setLabel("❌ ยกเลิก")
+      .setStyle(ButtonStyle.Secondary),
+  );
+  return [actionRow];
+}
+
+export function buildReportPanelEmbed() {
+  return new EmbedBuilder()
+    .setTitle("🚨 ระบบรายงานผู้เล่น RitzSMP")
+    .setDescription(
+      "หากพบผู้เล่นทำผิดกฎ กรุณากดปุ่ม **เริ่มรายงานผู้เล่น** ด้านล่างค่ะ\n\n" +
+        "ระบบจะแสดงเฉพาะบัญชี Minecraft ที่เชื่อมกับ Discord แล้ว จากนั้นเลือกหมวดหมู่และกรอกรายละเอียดให้ทีมงานตรวจสอบ\n\n" +
+        "การรายงานใช้ได้สำหรับสมาชิกทุกคน มีช่วงพักระหว่างการรายงาน และแก้ไขข้อมูลได้อีกเพียง 1 ครั้งค่ะ",
+    )
+    .setColor(0xef4444)
+    .setTimestamp()
+    .setFooter({ text: "RitzSMP AI • ระบบรายงานผู้เล่น" });
+}
+
 export function buildRankClaimComponents() {
   const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
@@ -630,6 +657,12 @@ export const RITZ_SYSTEM_CHANNEL_TARGETS = [
     legacyNames: ["🪪│ยืนยันตัวตนแมะ", "🎖️│ยืนยันตัวตน-รับยศ"],
     type: ChannelType.GuildText,
     topic: "ระบบยืนยันตัวตนและกดรับยศสมาชิก RitzSMP AI",
+  },
+  {
+    name: "🚫│report-รายงานผู้เล่น",
+    legacyNames: ["🚫│รายงานผู้เล่น", "report-รายงานผู้เล่น", "⛔│report-รายงานผู้เล่น"],
+    type: ChannelType.GuildText,
+    topic: "ระบบรายงานผู้เล่น RitzSMP เลือกผู้เล่นและส่งรายละเอียดให้ทีมงานตรวจสอบ",
   },
   {
     name: "👋│ระบบต้อนรับ",
@@ -2086,6 +2119,11 @@ export function createRitzSmpAiBot(
                           embeds: [buildRankClaimEmbed()],
                           components: buildRankClaimComponents(),
                         });
+                      } else if (target.name === "🚫│report-รายงานผู้เล่น") {
+                        await channel.send({
+                          embeds: [buildReportPanelEmbed()],
+                          components: buildReportPanelComponents(),
+                        });
                       }
                       pushLog(
                         "SUCCESS",
@@ -2436,6 +2474,22 @@ export function createRitzSmpAiBot(
             embeds: [buildRankClaimEmbed()],
             components: buildRankClaimComponents(),
           });
+          const reportChannel = interaction.guild?.channels.cache.find(
+            (candidate: any) =>
+              candidate.isTextBased?.() &&
+              [
+                "🚫│report-รายงานผู้เล่น",
+                "🚫│รายงานผู้เล่น",
+                "report-รายงานผู้เล่น",
+                "⛔│report-รายงานผู้เล่น",
+              ].includes(candidate.name),
+          );
+          if (reportChannel?.isTextBased?.()) {
+            await reportChannel.send({
+              embeds: [buildReportPanelEmbed()],
+              components: buildReportPanelComponents(),
+            });
+          }
           await safeReply(interaction, {
             content:
               "สร้างแผงเชื่อมบัญชี ยืนยันตัวตน และรับยศลงในช่องนี้แล้วค่ะ ✨",

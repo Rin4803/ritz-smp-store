@@ -352,6 +352,14 @@ async function getUserById(id) {
   const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
   return result[0];
 }
+async function getUserByEmail(email) {
+  const db = await getDb();
+  if (!db) return void 0;
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) return void 0;
+  const result = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
+  return result[0];
+}
 async function getAllUsers() {
   const db = await getDb();
   if (!db) return [];
@@ -1995,6 +2003,18 @@ function buildOnboardingComponents() {
   );
   return [actionRow];
 }
+function buildReportPanelComponents() {
+  const actionRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId("ritz_report_button").setLabel("\u{1F4DD} \u0E40\u0E23\u0E34\u0E48\u0E21\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19").setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId("ritz_report_cancel").setLabel("\u274C \u0E22\u0E01\u0E40\u0E25\u0E34\u0E01").setStyle(ButtonStyle.Secondary)
+  );
+  return [actionRow];
+}
+function buildReportPanelEmbed() {
+  return new EmbedBuilder().setTitle("\u{1F6A8} \u0E23\u0E30\u0E1A\u0E1A\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19 RitzSMP").setDescription(
+    "\u0E2B\u0E32\u0E01\u0E1E\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E33\u0E1C\u0E34\u0E14\u0E01\u0E0E \u0E01\u0E23\u0E38\u0E13\u0E32\u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21 **\u0E40\u0E23\u0E34\u0E48\u0E21\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19** \u0E14\u0E49\u0E32\u0E19\u0E25\u0E48\u0E32\u0E07\u0E04\u0E48\u0E30\n\n\u0E23\u0E30\u0E1A\u0E1A\u0E08\u0E30\u0E41\u0E2A\u0E14\u0E07\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Minecraft \u0E17\u0E35\u0E48\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E01\u0E31\u0E1A Discord \u0E41\u0E25\u0E49\u0E27 \u0E08\u0E32\u0E01\u0E19\u0E31\u0E49\u0E19\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48\u0E41\u0E25\u0E30\u0E01\u0E23\u0E2D\u0E01\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14\u0E43\u0E2B\u0E49\u0E17\u0E35\u0E21\u0E07\u0E32\u0E19\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\n\n\u0E01\u0E32\u0E23\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E17\u0E38\u0E01\u0E04\u0E19 \u0E21\u0E35\u0E0A\u0E48\u0E27\u0E07\u0E1E\u0E31\u0E01\u0E23\u0E30\u0E2B\u0E27\u0E48\u0E32\u0E07\u0E01\u0E32\u0E23\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19 \u0E41\u0E25\u0E30\u0E41\u0E01\u0E49\u0E44\u0E02\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E44\u0E14\u0E49\u0E2D\u0E35\u0E01\u0E40\u0E1E\u0E35\u0E22\u0E07 1 \u0E04\u0E23\u0E31\u0E49\u0E07\u0E04\u0E48\u0E30"
+  ).setColor(15680580).setTimestamp().setFooter({ text: "RitzSMP AI \u2022 \u0E23\u0E30\u0E1A\u0E1A\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19" });
+}
 function buildRankClaimComponents() {
   const actionRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId("ritz_claim_rank_button").setLabel("\u2705 \u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19").setStyle(ButtonStyle.Success)
@@ -2155,6 +2175,12 @@ var RITZ_SYSTEM_CHANNEL_TARGETS = [
     legacyNames: ["\u{1FAAA}\u2502\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19\u0E41\u0E21\u0E30", "\u{1F396}\uFE0F\u2502\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19-\u0E23\u0E31\u0E1A\u0E22\u0E28"],
     type: ChannelType2.GuildText,
     topic: "\u0E23\u0E30\u0E1A\u0E1A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19\u0E41\u0E25\u0E30\u0E01\u0E14\u0E23\u0E31\u0E1A\u0E22\u0E28\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 RitzSMP AI"
+  },
+  {
+    name: "\u{1F6AB}\u2502report-\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19",
+    legacyNames: ["\u{1F6AB}\u2502\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19", "report-\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19", "\u26D4\u2502report-\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19"],
+    type: ChannelType2.GuildText,
+    topic: "\u0E23\u0E30\u0E1A\u0E1A\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19 RitzSMP \u0E40\u0E25\u0E37\u0E2D\u0E01\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E41\u0E25\u0E30\u0E2A\u0E48\u0E07\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14\u0E43\u0E2B\u0E49\u0E17\u0E35\u0E21\u0E07\u0E32\u0E19\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A"
   },
   {
     name: "\u{1F44B}\u2502\u0E23\u0E30\u0E1A\u0E1A\u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A",
@@ -3080,6 +3106,11 @@ function createRitzSmpAiBot(runtime, tokenOverride) {
                           embeds: [buildRankClaimEmbed()],
                           components: buildRankClaimComponents()
                         });
+                      } else if (target.name === "\u{1F6AB}\u2502report-\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19") {
+                        await channel.send({
+                          embeds: [buildReportPanelEmbed()],
+                          components: buildReportPanelComponents()
+                        });
                       }
                       pushLog(
                         "SUCCESS",
@@ -3349,6 +3380,20 @@ function createRitzSmpAiBot(runtime, tokenOverride) {
             embeds: [buildRankClaimEmbed()],
             components: buildRankClaimComponents()
           });
+          const reportChannel = interaction.guild?.channels.cache.find(
+            (candidate) => candidate.isTextBased?.() && [
+              "\u{1F6AB}\u2502report-\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19",
+              "\u{1F6AB}\u2502\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19",
+              "report-\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19",
+              "\u26D4\u2502report-\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19"
+            ].includes(candidate.name)
+          );
+          if (reportChannel?.isTextBased?.()) {
+            await reportChannel.send({
+              embeds: [buildReportPanelEmbed()],
+              components: buildReportPanelComponents()
+            });
+          }
           await safeReply(interaction, {
             content: "\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E41\u0E1C\u0E07\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35 \u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19 \u0E41\u0E25\u0E30\u0E23\u0E31\u0E1A\u0E22\u0E28\u0E25\u0E07\u0E43\u0E19\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30 \u2728",
             ephemeral: true
@@ -3696,7 +3741,7 @@ async function notifyPlayerReport(input) {
       { name: "\u0E40\u0E25\u0E02\u0E17\u0E35\u0E48\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19", value: `#${input.reportId}`, inline: true },
       { name: "\u0E1C\u0E39\u0E49\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19", value: input.reporterDisplayName.slice(0, 1024) || "\u0E44\u0E21\u0E48\u0E23\u0E30\u0E1A\u0E38\u0E0A\u0E37\u0E48\u0E2D", inline: true },
       { name: "\u0E1C\u0E39\u0E49\u0E16\u0E39\u0E01\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19", value: input.targetDiscordName.slice(0, 1024), inline: true },
-      { name: "Minecraft IGN", value: input.targetMinecraftIGN ? "`" + input.targetMinecraftIGN.slice(0, 1e3) + "`" : "\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E17\u0E35\u0E48\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21", inline: true },
+      { name: "Minecraft IGN", value: input.targetMinecraftIGN ? ["`", input.targetMinecraftIGN.slice(0, 1e3), "`"].join("") : "\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E17\u0E35\u0E48\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21", inline: true },
       { name: "\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48", value: input.category.slice(0, 1024), inline: true },
       { name: "\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14", value: input.details.slice(0, 1024), inline: false }
     ],
@@ -4000,6 +4045,18 @@ var appRouter = router({
         lastSignedIn: user.lastSignedIn,
         isOwner: user.openId === ENV.ownerOpenId
       }));
+    }),
+    grantAdminByEmail: ownerProcedure.input(z.object({ email: z.string().trim().email().max(320) })).mutation(async ({ input }) => {
+      const target = await getUserByEmail(input.email);
+      if (!target) {
+        throw new TRPCError3({ code: "NOT_FOUND", message: "\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E19\u0E35\u0E49 \u0E01\u0E23\u0E38\u0E13\u0E32\u0E43\u0E2B\u0E49\u0E40\u0E08\u0E49\u0E32\u0E02\u0E2D\u0E07 Gmail \u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E01\u0E48\u0E2D\u0E19" });
+      }
+      if (target.openId === ENV.ownerOpenId) {
+        throw new TRPCError3({ code: "FORBIDDEN", message: "\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Owner \u0E21\u0E35\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E4C\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14\u0E2D\u0E22\u0E39\u0E48\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30" });
+      }
+      const updated = await updateUserRole(target.id, "admin");
+      if (!updated) throw new TRPCError3({ code: "NOT_FOUND", message: "\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E4C\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E44\u0E14\u0E49" });
+      return { id: updated.id, name: updated.name, email: updated.email, role: updated.role, createdAt: updated.createdAt, lastSignedIn: updated.lastSignedIn, isOwner: updated.openId === ENV.ownerOpenId };
     }),
     setUserRole: ownerProcedure.input(z.object({ id: z.number().int().positive(), role: z.enum(["user", "admin"]) })).mutation(async ({ input }) => {
       const target = await getUserById(input.id);
@@ -4543,6 +4600,7 @@ function identifyRitzSmpInteractionAction(interaction) {
   if (customId === "ritz_players_button") return "minecraft-players";
   if (customId === "ritz_discord_members_button") return "discord-members";
   if (customId === "ritz_report_button") return "report-open";
+  if (customId === "ritz_report_cancel") return "report-cancel";
   if (customId === "ritz_report_target") return "report-target";
   if (customId?.startsWith("ritz_report_modal:")) return "report-submit";
   if (customId?.startsWith("ritz_report_edit:")) return "report-edit-open";
@@ -4749,7 +4807,10 @@ function buildReportTargetResponse(verifications) {
     data: {
       content: "\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22\u0E04\u0E48\u0E30 \u0E23\u0E30\u0E1A\u0E1A\u0E08\u0E30\u0E41\u0E2A\u0E14\u0E07\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Minecraft \u0E17\u0E35\u0E48\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E01\u0E31\u0E1A Discord \u0E40\u0E17\u0E48\u0E32\u0E19\u0E31\u0E49\u0E19",
       flags: EPHEMERAL_MESSAGE_FLAG,
-      components: [{ type: 1, components: [{ type: 3, custom_id: "ritz_report_target", placeholder: "\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19", min_values: 1, max_values: 1, options }] }]
+      components: [
+        { type: 1, components: [{ type: 3, custom_id: "ritz_report_target", placeholder: "\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19", min_values: 1, max_values: 1, options }] },
+        { type: 1, components: [{ type: 2, style: 2, label: "\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01", custom_id: "ritz_report_cancel" }] }
+      ]
     }
   };
 }
@@ -4862,6 +4923,9 @@ var handleRitzSmpDiscordInteraction = async (req, res) => {
         if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("\u0E23\u0E30\u0E1A\u0E1A\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E43\u0E19 Discord RitzSMP \u0E17\u0E35\u0E48\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E44\u0E27\u0E49\u0E04\u0E48\u0E30"));
         const linked = await getLinkedDiscordVerifications();
         return res.status(200).json(linked.length ? buildReportTargetResponse(linked) : ephemeralResponse("\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Minecraft \u0E17\u0E35\u0E48\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E01\u0E31\u0E1A Discord \u0E43\u0E2B\u0E49\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E04\u0E48\u0E30"));
+      }
+      case "report-cancel": {
+        return res.status(200).json(ephemeralResponse("\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E01\u0E32\u0E23\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30 \u0E2B\u0E32\u0E01\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E43\u0E2B\u0E21\u0E48\u0E43\u0E2B\u0E49\u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E2D\u0E35\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07"));
       }
       case "report-target": {
         if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("\u0E23\u0E30\u0E1A\u0E1A\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E43\u0E19 Discord RitzSMP \u0E17\u0E35\u0E48\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E44\u0E27\u0E49\u0E04\u0E48\u0E30"));

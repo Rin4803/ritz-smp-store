@@ -958,6 +958,18 @@ function buildOnboardingComponents() {
   );
   return [actionRow];
 }
+function buildReportPanelComponents() {
+  const actionRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId("ritz_report_button").setLabel("\u{1F4DD} \u0E40\u0E23\u0E34\u0E48\u0E21\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19").setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId("ritz_report_cancel").setLabel("\u274C \u0E22\u0E01\u0E40\u0E25\u0E34\u0E01").setStyle(ButtonStyle.Secondary)
+  );
+  return [actionRow];
+}
+function buildReportPanelEmbed() {
+  return new EmbedBuilder().setTitle("\u{1F6A8} \u0E23\u0E30\u0E1A\u0E1A\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19 RitzSMP").setDescription(
+    "\u0E2B\u0E32\u0E01\u0E1E\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E33\u0E1C\u0E34\u0E14\u0E01\u0E0E \u0E01\u0E23\u0E38\u0E13\u0E32\u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21 **\u0E40\u0E23\u0E34\u0E48\u0E21\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19** \u0E14\u0E49\u0E32\u0E19\u0E25\u0E48\u0E32\u0E07\u0E04\u0E48\u0E30\n\n\u0E23\u0E30\u0E1A\u0E1A\u0E08\u0E30\u0E41\u0E2A\u0E14\u0E07\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Minecraft \u0E17\u0E35\u0E48\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E01\u0E31\u0E1A Discord \u0E41\u0E25\u0E49\u0E27 \u0E08\u0E32\u0E01\u0E19\u0E31\u0E49\u0E19\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48\u0E41\u0E25\u0E30\u0E01\u0E23\u0E2D\u0E01\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14\u0E43\u0E2B\u0E49\u0E17\u0E35\u0E21\u0E07\u0E32\u0E19\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\n\n\u0E01\u0E32\u0E23\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E17\u0E38\u0E01\u0E04\u0E19 \u0E21\u0E35\u0E0A\u0E48\u0E27\u0E07\u0E1E\u0E31\u0E01\u0E23\u0E30\u0E2B\u0E27\u0E48\u0E32\u0E07\u0E01\u0E32\u0E23\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19 \u0E41\u0E25\u0E30\u0E41\u0E01\u0E49\u0E44\u0E02\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E44\u0E14\u0E49\u0E2D\u0E35\u0E01\u0E40\u0E1E\u0E35\u0E22\u0E07 1 \u0E04\u0E23\u0E31\u0E49\u0E07\u0E04\u0E48\u0E30"
+  ).setColor(15680580).setTimestamp().setFooter({ text: "RitzSMP AI \u2022 \u0E23\u0E30\u0E1A\u0E1A\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19" });
+}
 function buildRankClaimComponents() {
   const actionRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId("ritz_claim_rank_button").setLabel("\u2705 \u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19").setStyle(ButtonStyle.Success)
@@ -1118,6 +1130,12 @@ var RITZ_SYSTEM_CHANNEL_TARGETS = [
     legacyNames: ["\u{1FAAA}\u2502\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19\u0E41\u0E21\u0E30", "\u{1F396}\uFE0F\u2502\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19-\u0E23\u0E31\u0E1A\u0E22\u0E28"],
     type: ChannelType2.GuildText,
     topic: "\u0E23\u0E30\u0E1A\u0E1A\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19\u0E41\u0E25\u0E30\u0E01\u0E14\u0E23\u0E31\u0E1A\u0E22\u0E28\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 RitzSMP AI"
+  },
+  {
+    name: "\u{1F6AB}\u2502report-\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19",
+    legacyNames: ["\u{1F6AB}\u2502\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19", "report-\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19", "\u26D4\u2502report-\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19"],
+    type: ChannelType2.GuildText,
+    topic: "\u0E23\u0E30\u0E1A\u0E1A\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19 RitzSMP \u0E40\u0E25\u0E37\u0E2D\u0E01\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E41\u0E25\u0E30\u0E2A\u0E48\u0E07\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14\u0E43\u0E2B\u0E49\u0E17\u0E35\u0E21\u0E07\u0E32\u0E19\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A"
   },
   {
     name: "\u{1F44B}\u2502\u0E23\u0E30\u0E1A\u0E1A\u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A",
@@ -2043,6 +2061,11 @@ function createRitzSmpAiBot(runtime, tokenOverride) {
                           embeds: [buildRankClaimEmbed()],
                           components: buildRankClaimComponents()
                         });
+                      } else if (target.name === "\u{1F6AB}\u2502report-\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19") {
+                        await channel.send({
+                          embeds: [buildReportPanelEmbed()],
+                          components: buildReportPanelComponents()
+                        });
                       }
                       pushLog(
                         "SUCCESS",
@@ -2312,6 +2335,20 @@ function createRitzSmpAiBot(runtime, tokenOverride) {
             embeds: [buildRankClaimEmbed()],
             components: buildRankClaimComponents()
           });
+          const reportChannel = interaction.guild?.channels.cache.find(
+            (candidate) => candidate.isTextBased?.() && [
+              "\u{1F6AB}\u2502report-\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19",
+              "\u{1F6AB}\u2502\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19",
+              "report-\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19",
+              "\u26D4\u2502report-\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19"
+            ].includes(candidate.name)
+          );
+          if (reportChannel?.isTextBased?.()) {
+            await reportChannel.send({
+              embeds: [buildReportPanelEmbed()],
+              components: buildReportPanelComponents()
+            });
+          }
           await safeReply(interaction, {
             content: "\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E41\u0E1C\u0E07\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35 \u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19 \u0E41\u0E25\u0E30\u0E23\u0E31\u0E1A\u0E22\u0E28\u0E25\u0E07\u0E43\u0E19\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E30 \u2728",
             ephemeral: true

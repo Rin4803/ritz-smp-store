@@ -776,3 +776,19 @@
 - [x] เพิ่ม regression tests สำหรับ validation, cooldown, interaction flow, notification และ single-edit rule
 - [x] รัน TypeScript checks, Vitest, production build และตรวจ artifact ล่าสุดก่อน checkpoint
 - [x] อัปเดตเอกสารการตั้งค่า channel/custom IDs และผลทดสอบ production ของระบบรายงาน
+
+- [ ] เตรียม repository GitHub แบบ Private ชื่อ `ritz-smp-store` สำหรับบัญชีที่ผูกกับ `optun20@gmail.com` โดยยังไม่อัปโหลดโค้ดสุดท้ายจนกว่าเซิร์ฟเวอร์จะสมบูรณ์
+- [x] แก้ transform error ใน `server/discordNotifications.ts` บรรทัด 227 และตรวจ dev server ให้โหลดโค้ดปัจจุบันได้จริง
+- [ ] รวมโปรเจกต์และไฟล์งาน RitzSMP ที่เกี่ยวข้องทั้งหมดใน repository เดียวกันตามขอบเขตที่ตรวจสอบแล้ว
+- [ ] ตรวจและกัน `.env`, token, รหัสผ่าน, RCON secret, session, log ข้อมูลลับ, node_modules และ build artifact ออกจาก GitHub
+- [ ] เพิ่มตัวอย่าง environment variables และคู่มือแทนค่าลับ เพื่อให้ผู้ใช้แก้ไขงานเองได้อย่างปลอดภัย
+- [ ] ประเมินเปอร์เซ็นต์งานจากสถานะไฟล์ ผลทดสอบ และการทำงานจริงของแต่ละระบบแทนการประมาณจากความรู้สึก
+- [ ] ตรวจรายการไฟล์ระบบเซิร์ฟเวอร์ทั้งหมดที่ยังอยู่นอก repository และจัดหมวดก่อนรวบรวม
+- [ ] ตรวจความครบถ้วนของ integration ที่เกี่ยวข้องหลัง realtime/chat ใช้งานได้
+- [ ] จัดทำแพ็กเกจไฟล์ทั้งหมดที่เกี่ยวกับระบบเซิร์ฟเวอร์โดยตัดข้อมูลลับและไฟล์ที่สร้างใหม่ได้
+- [ ] ซิงก์แพ็กเกจที่ผ่านการตรวจสอบลง GitHub Private repository `Rin4803/ritz-smp-store`
+- [x] แก้หน้า Control Center ให้มีฟอร์มเพิ่มบัญชีผู้ดูแลด้วย Gmail/รายชื่อและตัวเลือกบทบาท
+- [x] เพิ่มปุ่มยกเลิกในฟอร์มเพิ่มผู้ดูแลและทำให้ปิด/ล้างฟอร์มได้จริง
+- [x] แก้ข้อความเริ่มต้นห้องรายงานให้แสดงปุ่มเริ่มรายงานและปุ่มยกเลิก
+- [x] ตรวจ interaction ของปุ่มรายงาน/ยกเลิกไม่ให้สร้างรายงานหรือค้าง modal โดยไม่ตั้งใจ
+- [x] เพิ่ม regression tests สำหรับฟอร์มผู้ดูแลและ onboarding รายงานผู้เล่น

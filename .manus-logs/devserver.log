@@ -6119,3 +6119,32 @@
 [2026-08-25T15:28:56.094Z] 3:28:56 PM [tsx] change in ./server/discordInteractions.ts Restarting...
 [2026-08-25T15:28:56.914Z] c[OAuth] Initialized with baseURL: https://api.manus.im
 [2026-08-25T15:28:57.221Z] Server running on http://localhost:3000/
+[2026-08-25T15:30:39.870Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-25T15:43:27.129Z] ELIFECYCLE  Command failed.
+[2026-08-25T15:43:27.174Z] Dev server exited with code -1
+[2026-08-25T15:43:28.235Z] Starting dev server with command: pnpm run dev
+[2026-08-25T15:43:28.564Z] > ritz-smp-store@1.0.0 dev /home/ubuntu/ritz-smp-store
+[2026-08-25T15:43:28.564Z] > NODE_ENV=development tsx watch server/_core/index.ts
+[2026-08-25T15:43:29.383Z] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:43:29.662Z] Server running on http://localhost:3000/
+[2026-08-25T15:43:30.407Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-25T15:50:57.430Z] 3:50:57 PM [tsx] change in ./server/discordNotifications.ts Restarting...
+[2026-08-25T15:50:58.218Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T15:50:58.520Z] Server running on http://localhost:3000/
+[2026-08-25T16:00:58.357Z] 4:00:58 PM [tsx] change in ./server/db.ts Restarting...
+[2026-08-25T16:00:59.194Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T16:00:59.513Z] Server running on http://localhost:3000/
+[2026-08-25T16:01:14.444Z] 4:01:14 PM [tsx] change in ./server/routers.ts Restarting...
+[2026-08-25T16:01:15.233Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T16:01:15.515Z] Server running on http://localhost:3000/
+[2026-08-25T16:04:12.816Z] 4:04:12 PM [tsx] change in ./server/discordInteractions.ts Restarting...
+[2026-08-25T16:04:13.645Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T16:04:13.955Z] Server running on http://localhost:3000/
+[2026-08-25T16:04:36.029Z] 4:04:36 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-25T16:04:36.837Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T16:04:37.124Z] Server running on http://localhost:3000/
+[2026-08-25T16:04:46.422Z] 4:04:46 PM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-25T16:04:47.234Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T16:04:47.530Z] Server running on http://localhost:3000/
+[2026-08-25T16:07:03.425Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-25T16:07:32.826Z] 4:07:32 PM [vite] (client) hmr update /src/index.css

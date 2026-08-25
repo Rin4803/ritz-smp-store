@@ -196,6 +196,15 @@ export async function getUserById(id: number): Promise<User | undefined> {
   return result[0];
 }
 
+export async function getUserByEmail(email: string): Promise<User | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) return undefined;
+  const result = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
+  return result[0];
+}
+
 export async function getAllUsers(): Promise<User[]> {
   const db = await getDb();
   if (!db) return [];
