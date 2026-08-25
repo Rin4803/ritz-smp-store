@@ -858,3 +858,5 @@
 - [x] ตรวจ MCSV แบบอ่านอย่างเดียว: เซิร์ฟเวอร์ active/running, boot จบ, Skript โหลดโดยไม่พบ error, RCON client เชื่อมต่อปกติ และปลั๊กอิน Essentials/FoShop/DiscordSRV/LuckPerms/PlaceholderAPI/TAB/Vault/Geyser/Floodgate enabled; บันทึกหลักฐานใน `mcsv-readonly-validation-2026-08-26.md`
 - [x] เพิ่ม owner-only query/status panel ใน Admin สำหรับ Heartbeat Minecraft presence พร้อมปุ่มสร้าง, หยุด และเปิดต่อ schedule; `pnpm check` ผ่าน และคงการเรียก service ภายนอกไว้เฉพาะตอนผู้ดูแลกดใช้งาน
 - [x] เพิ่ม regression coverage ให้ Discord presence embed ตรวจจำนวนผู้เล่นและสถานะเซิร์ฟเวอร์ และยืนยัน Minecraft presence route; tests เฉพาะส่วนผ่าน 10/10
+- [x] รัน `pnpm check` และ `pnpm build` หลังปรับ presence notification/monitor; build ผ่าน โดยมีเพียงคำเตือน bundle chunk ขนาดใหญ่จาก Vite
+- [x] ประเมิน Music bot จาก implementation และ regression tests: `/play`, `/queue`, `/skip`, `/stop`, `/leave` และ URL/timeout handling มีใน source; การยืนยันเสียงจริงยังต้องใช้ runtime แบบ always-on และทดสอบ Discord voice จริง ไม่สรุปเกินหลักฐาน
