@@ -3,9 +3,18 @@ import type { RequestHandler } from "express";
 import { ENV } from "./_core/env.js";
 import {
   cancelDiscordVerificationCode,
+  getDiscordVerification,
   unlinkDiscordVerification,
 } from "./db.js";
-import { getMinecraftDiscordVerificationCode } from "./minecraftIntegration.js";
+import {
+  fetchMinecraftServerStatus,
+  getMinecraftDiscordVerificationCode,
+  type MinecraftServerStatus,
+} from "./minecraftIntegration.js";
+import {
+  buildDiscordMembersMessage,
+  fetchDiscordGuildMembers,
+} from "./discordRest.js";
 
 const DISCORD_PUBLIC_KEY_DER_PREFIX = Buffer.from(
   "302a300506032b6570032100",
@@ -14,7 +23,6 @@ const DISCORD_PUBLIC_KEY_DER_PREFIX = Buffer.from(
 
 const DISCORD_INTERACTION_PING = 1;
 const DISCORD_INTERACTION_APPLICATION_COMMAND = 2;
-const DISCORD_INTERACTION_MESSAGE_COMPONENT = 3;
 const DISCORD_RESPONSE_PONG = 1;
 const DISCORD_RESPONSE_CHANNEL_MESSAGE = 4;
 const EPHEMERAL_MESSAGE_FLAG = 1 << 6;
@@ -26,6 +34,7 @@ export const RITZSMP_DISCORD_INTERACTION_ENDPOINT_PATH =
 
 type DiscordInteractionPayload = {
   type?: number;
+  guild_id?: string;
   data?: {
     name?: string;
     custom_id?: string;
@@ -46,6 +55,9 @@ export type RitzSmpInteractionAction =
   | "verification-code"
   | "cancel-code"
   | "unlink"
+  | "profile"
+  | "minecraft-players"
+  | "discord-members"
   | "unsupported";
 
 export function identifyRitzSmpInteractionAction(
@@ -63,6 +75,9 @@ export function identifyRitzSmpInteractionAction(
   }
   if (customId === "ritz_cancel_verify_button") return "cancel-code";
   if (customId === "ritz_unlink_button") return "unlink";
+  if (customId === "ritz_profile_button") return "profile";
+  if (customId === "ritz_players_button") return "minecraft-players";
+  if (customId === "ritz_discord_members_button") return "discord-members";
   return "unsupported";
 }
 
@@ -82,6 +97,79 @@ export function buildVerificationCodeMessage(
       ? "นี่คือรหัสที่รอการยืนยันอยู่เดิม ใช้รหัสนี้ในเกมได้เลย"
       : "รหัสนี้สร้างจาก Minecraft โดยตรง และใช้ได้จนกว่าจะยืนยันสำเร็จ",
     "ห้ามแชร์รหัสนี้กับผู้อื่น",
+  ].join("\n");
+}
+
+export function buildOwnDiscordProfileMessage(
+  verification:
+    | {
+        minecraftIGN: string;
+        verifiedAt?: Date | string | number | null;
+      }
+    | undefined,
+): string {
+  if (!verification) {
+    return [
+      "## 🪪 บัญชีของคุณ",
+      "ยังไม่มีบัญชี Minecraft ที่เชื่อมอยู่ค่ะ",
+      "กดปุ่มเชื่อมบัญชีเพื่อรับรหัส แล้วพิมพ์ `/verify <รหัส>` ในเกม",
+    ].join("\n");
+  }
+
+  const verifiedDate = verification.verifiedAt
+    ? new Date(verification.verifiedAt)
+    : null;
+  const verifiedAt =
+    verifiedDate && !Number.isNaN(verifiedDate.getTime())
+      ? verifiedDate.toLocaleString("th-TH")
+      : "บันทึกไว้แล้ว";
+
+  return [
+    "## 🪪 บัญชีของคุณ",
+    "สถานะ: ✅ เชื่อมบัญชี Minecraft แล้ว",
+    `Minecraft: **${verification.minecraftIGN}**`,
+    `ยืนยันเมื่อ: ${verifiedAt}`,
+    "ข้อมูลนี้แสดงเฉพาะผู้กดปุ่ม และไม่แสดง UUID ของ Minecraft",
+  ].join("\n");
+}
+
+export function buildMinecraftPlayersMessage(
+  status: MinecraftServerStatus,
+): string {
+  const players = Number.isFinite(status.players)
+    ? Math.max(0, Math.floor(status.players))
+    : 0;
+  const maxPlayers = Number.isFinite(status.maxPlayers)
+    ? Math.max(0, Math.floor(status.maxPlayers))
+    : 0;
+
+  if (!status.online) {
+    return [
+      "## 👥 ผู้เล่น Minecraft ออนไลน์",
+      "🔴 ตรวจสอบเซิร์ฟเวอร์ไม่สำเร็จหรือเซิร์ฟเวอร์ออฟไลน์",
+      "จำนวนผู้เล่น: **0 คน**",
+      "กดปุ่มอีกครั้งเพื่อรีเฟรชสถานะได้ค่ะ",
+    ].join("\n");
+  }
+
+  const playerList = status.playerListKnown
+    ? status.playerNames
+        .filter((name) => typeof name === "string" && name.trim())
+        .slice(0, 100)
+        .map((name) => `• ${name.trim().slice(0, 32)}`)
+        .join("\n")
+    : "";
+  const description =
+    players === 0
+      ? "🟢 เซิร์ฟเวอร์ออนไลน์ แต่ตอนนี้ยังไม่มีผู้เล่นอยู่ในเซิร์ฟเวอร์"
+      : playerList ||
+        "🟢 เซิร์ฟเวอร์ออนไลน์ แต่ API ยังไม่เปิดเผยรายชื่อผู้เล่นในขณะนี้ค่ะ";
+
+  return [
+    "## 👥 ผู้เล่น Minecraft ออนไลน์",
+    description,
+    `สถานะ: 🟢 ออนไลน์ **${players}/${maxPlayers} คน**`,
+    "ข้อมูลจาก Minecraft status API • กดปุ่มอีกครั้งเพื่อรีเฟรช",
   ].join("\n");
 }
 
@@ -152,6 +240,14 @@ export function verifyDiscordInteractionSignature(
 function getDiscordUserId(interaction: DiscordInteractionPayload): string | null {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
   return typeof userId === "string" && userId.trim() ? userId : null;
+}
+
+function isConfiguredGuildInteraction(
+  interaction: DiscordInteractionPayload,
+): boolean {
+  return Boolean(
+    ENV.discordGuildId && interaction.guild_id === ENV.discordGuildId,
+  );
 }
 
 function ephemeralResponse(content: string) {
@@ -238,10 +334,42 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
           ),
         );
       }
+      case "profile": {
+        const verification = await getDiscordVerification(userId);
+        return res.status(200).json(
+          ephemeralResponse(buildOwnDiscordProfileMessage(verification)),
+        );
+      }
+      case "minecraft-players": {
+        const status = await fetchMinecraftServerStatus();
+        return res.status(200).json(
+          ephemeralResponse(buildMinecraftPlayersMessage(status)),
+        );
+      }
+      case "discord-members": {
+        if (!isConfiguredGuildInteraction(interaction)) {
+          return res.status(200).json(
+            ephemeralResponse(
+              "ปุ่มนี้ใช้ได้เฉพาะภายใน Discord RitzSMP ที่ตั้งค่าไว้ค่ะ",
+            ),
+          );
+        }
+        const result = await fetchDiscordGuildMembers({
+          guildId: ENV.discordGuildId,
+          botToken: ENV.discordAiBotToken,
+        });
+        return res.status(200).json(
+          ephemeralResponse(
+            result.kind === "ok"
+              ? buildDiscordMembersMessage(result.members)
+              : "ยังไม่สามารถดึงรายชื่อสมาชิกผ่าน Discord API ได้ในขณะนี้ค่ะ โปรดดูรายชื่อจากแถบสมาชิกของ Discord แล้วลองกดปุ่มใหม่ภายหลัง",
+          ),
+        );
+      }
       default:
         return res.status(200).json(
           ephemeralResponse(
-            "ปุ่มนี้ยังต้องใช้ AI bot บน runtime ต่อเนื่องค่ะ ส่วนปุ่มเชื่อมบัญชีและยกเลิกรหัสใช้งานได้จากหน้านี้แล้ว",
+            "ปุ่มนี้ยังไม่ได้รองรับผ่าน HTTP Interaction ค่ะ โปรดลองใช้คำสั่งหรือปุ่มที่ระบุไว้ในแผงนี้แทน",
           ),
         );
     }

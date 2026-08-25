@@ -4355,6 +4355,61 @@ async function handleMinecraftPresenceScheduled(req, res) {
 
 // server/discordInteractions.ts
 import { createPublicKey, verify as verifySignature } from "node:crypto";
+
+// server/discordRest.ts
+function isDiscordSnowflake(value) {
+  return /^\d{17,20}$/.test(value);
+}
+function escapeDiscordMarkdown(value) {
+  return value.replace(/[\\`*_~|>]/g, "\\$&").replace(/[\r\n]+/g, " ").trim().slice(0, 80);
+}
+function memberDisplayName(member, index) {
+  const candidate = member.nick || member.user?.global_name || member.user?.username || `\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 ${index + 1}`;
+  return escapeDiscordMarkdown(candidate) || `\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 ${index + 1}`;
+}
+function isVisibleMember(member) {
+  return isDiscordSnowflake(member.id) && member.user?.bot !== true;
+}
+function buildDiscordMembersMessage(members) {
+  const visibleMembers = members.filter(isVisibleMember).slice(0, 25);
+  const list = visibleMembers.length > 0 ? visibleMembers.map(
+    (member, index) => `**${index + 1}.** ${memberDisplayName(member, index)}`
+  ).join("\n") : "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E17\u0E35\u0E48\u0E41\u0E2A\u0E14\u0E07\u0E44\u0E14\u0E49\u0E43\u0E19\u0E02\u0E13\u0E30\u0E19\u0E35\u0E49\u0E04\u0E48\u0E30";
+  return [
+    "## \u{1F465} \u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 Discord RitzSMP",
+    list,
+    "",
+    "\u0E41\u0E2A\u0E14\u0E07\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E0A\u0E37\u0E48\u0E2D\u0E17\u0E35\u0E48\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E15\u0E31\u0E49\u0E07\u0E44\u0E27\u0E49 \u0E44\u0E21\u0E48\u0E41\u0E2A\u0E14\u0E07 ID, \u0E2D\u0E35\u0E40\u0E21\u0E25 \u0E2B\u0E23\u0E37\u0E2D\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E2A\u0E48\u0E27\u0E19\u0E15\u0E31\u0E27",
+    visibleMembers.length >= 25 ? "\u0E41\u0E2A\u0E14\u0E07 25 \u0E04\u0E19\u0E41\u0E23\u0E01 \u2022 \u0E14\u0E39\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E40\u0E15\u0E47\u0E21\u0E44\u0E14\u0E49\u0E08\u0E32\u0E01\u0E41\u0E16\u0E1A\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E02\u0E2D\u0E07 Discord" : `\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E17\u0E35\u0E48\u0E41\u0E2A\u0E14\u0E07 ${visibleMembers.length} \u0E04\u0E19`
+  ].join("\n");
+}
+async function fetchDiscordGuildMembers(input) {
+  if (!isDiscordSnowflake(input.guildId) || !input.botToken.trim()) {
+    return { kind: "unavailable" };
+  }
+  try {
+    const response = await (input.fetchImpl ?? fetch)(
+      `https://discord.com/api/v10/guilds/${input.guildId}/members?limit=25`,
+      {
+        headers: {
+          Authorization: `Bot ${input.botToken}`
+        },
+        signal: AbortSignal.timeout(4e3)
+      }
+    );
+    if (!response.ok) return { kind: "unavailable" };
+    const payload = await response.json();
+    if (!Array.isArray(payload)) return { kind: "unavailable" };
+    const members = payload.filter(
+      (member) => typeof member === "object" && member !== null && typeof member.id === "string"
+    );
+    return { kind: "ok", members };
+  } catch {
+    return { kind: "unavailable" };
+  }
+}
+
+// server/discordInteractions.ts
 var DISCORD_PUBLIC_KEY_DER_PREFIX = Buffer.from(
   "302a300506032b6570032100",
   "hex"
@@ -4373,6 +4428,9 @@ function identifyRitzSmpInteractionAction(interaction) {
   }
   if (customId === "ritz_cancel_verify_button") return "cancel-code";
   if (customId === "ritz_unlink_button") return "unlink";
+  if (customId === "ritz_profile_button") return "profile";
+  if (customId === "ritz_players_button") return "minecraft-players";
+  if (customId === "ritz_discord_members_button") return "discord-members";
   return "unsupported";
 }
 function buildVerificationCodeMessage(code, isExisting) {
@@ -4386,6 +4444,44 @@ function buildVerificationCodeMessage(code, isExisting) {
     "",
     isExisting ? "\u0E19\u0E35\u0E48\u0E04\u0E37\u0E2D\u0E23\u0E2B\u0E31\u0E2A\u0E17\u0E35\u0E48\u0E23\u0E2D\u0E01\u0E32\u0E23\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E2D\u0E22\u0E39\u0E48\u0E40\u0E14\u0E34\u0E21 \u0E43\u0E0A\u0E49\u0E23\u0E2B\u0E31\u0E2A\u0E19\u0E35\u0E49\u0E43\u0E19\u0E40\u0E01\u0E21\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22" : "\u0E23\u0E2B\u0E31\u0E2A\u0E19\u0E35\u0E49\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E08\u0E32\u0E01 Minecraft \u0E42\u0E14\u0E22\u0E15\u0E23\u0E07 \u0E41\u0E25\u0E30\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E08\u0E19\u0E01\u0E27\u0E48\u0E32\u0E08\u0E30\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08",
     "\u0E2B\u0E49\u0E32\u0E21\u0E41\u0E0A\u0E23\u0E4C\u0E23\u0E2B\u0E31\u0E2A\u0E19\u0E35\u0E49\u0E01\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E2D\u0E37\u0E48\u0E19"
+  ].join("\n");
+}
+function buildOwnDiscordProfileMessage(verification) {
+  if (!verification) {
+    return [
+      "## \u{1FAAA} \u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13",
+      "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Minecraft \u0E17\u0E35\u0E48\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E2D\u0E22\u0E39\u0E48\u0E04\u0E48\u0E30",
+      "\u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E23\u0E31\u0E1A\u0E23\u0E2B\u0E31\u0E2A \u0E41\u0E25\u0E49\u0E27\u0E1E\u0E34\u0E21\u0E1E\u0E4C `/verify <\u0E23\u0E2B\u0E31\u0E2A>` \u0E43\u0E19\u0E40\u0E01\u0E21"
+    ].join("\n");
+  }
+  const verifiedDate = verification.verifiedAt ? new Date(verification.verifiedAt) : null;
+  const verifiedAt = verifiedDate && !Number.isNaN(verifiedDate.getTime()) ? verifiedDate.toLocaleString("th-TH") : "\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E44\u0E27\u0E49\u0E41\u0E25\u0E49\u0E27";
+  return [
+    "## \u{1FAAA} \u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13",
+    "\u0E2A\u0E16\u0E32\u0E19\u0E30: \u2705 \u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Minecraft \u0E41\u0E25\u0E49\u0E27",
+    `Minecraft: **${verification.minecraftIGN}**`,
+    `\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E40\u0E21\u0E37\u0E48\u0E2D: ${verifiedAt}`,
+    "\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E19\u0E35\u0E49\u0E41\u0E2A\u0E14\u0E07\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E1C\u0E39\u0E49\u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21 \u0E41\u0E25\u0E30\u0E44\u0E21\u0E48\u0E41\u0E2A\u0E14\u0E07 UUID \u0E02\u0E2D\u0E07 Minecraft"
+  ].join("\n");
+}
+function buildMinecraftPlayersMessage(status) {
+  const players = Number.isFinite(status.players) ? Math.max(0, Math.floor(status.players)) : 0;
+  const maxPlayers = Number.isFinite(status.maxPlayers) ? Math.max(0, Math.floor(status.maxPlayers)) : 0;
+  if (!status.online) {
+    return [
+      "## \u{1F465} \u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19 Minecraft \u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C",
+      "\u{1F534} \u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08\u0E2B\u0E23\u0E37\u0E2D\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E2D\u0E2D\u0E1F\u0E44\u0E25\u0E19\u0E4C",
+      "\u0E08\u0E33\u0E19\u0E27\u0E19\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19: **0 \u0E04\u0E19**",
+      "\u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21\u0E2D\u0E35\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E44\u0E14\u0E49\u0E04\u0E48\u0E30"
+    ].join("\n");
+  }
+  const playerList = status.playerListKnown ? status.playerNames.filter((name) => typeof name === "string" && name.trim()).slice(0, 100).map((name) => `\u2022 ${name.trim().slice(0, 32)}`).join("\n") : "";
+  const description = players === 0 ? "\u{1F7E2} \u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C \u0E41\u0E15\u0E48\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E2D\u0E22\u0E39\u0E48\u0E43\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C" : playerList || "\u{1F7E2} \u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C \u0E41\u0E15\u0E48 API \u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E40\u0E1B\u0E34\u0E14\u0E40\u0E1C\u0E22\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E43\u0E19\u0E02\u0E13\u0E30\u0E19\u0E35\u0E49\u0E04\u0E48\u0E30";
+  return [
+    "## \u{1F465} \u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19 Minecraft \u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C",
+    description,
+    `\u0E2A\u0E16\u0E32\u0E19\u0E30: \u{1F7E2} \u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C **${players}/${maxPlayers} \u0E04\u0E19**`,
+    "\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E08\u0E32\u0E01 Minecraft status API \u2022 \u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21\u0E2D\u0E35\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A"
   ].join("\n");
 }
 function normalizeHex(value) {
@@ -4437,6 +4533,11 @@ function verifyDiscordInteractionSignature(rawBody, signatureHeader, timestampHe
 function getDiscordUserId(interaction) {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
   return typeof userId === "string" && userId.trim() ? userId : null;
+}
+function isConfiguredGuildInteraction(interaction) {
+  return Boolean(
+    ENV.discordGuildId && interaction.guild_id === ENV.discordGuildId
+  );
 }
 function ephemeralResponse(content) {
   return {
@@ -4507,10 +4608,40 @@ var handleRitzSmpDiscordInteraction = async (req, res) => {
           )
         );
       }
+      case "profile": {
+        const verification = await getDiscordVerification(userId);
+        return res.status(200).json(
+          ephemeralResponse(buildOwnDiscordProfileMessage(verification))
+        );
+      }
+      case "minecraft-players": {
+        const status = await fetchMinecraftServerStatus();
+        return res.status(200).json(
+          ephemeralResponse(buildMinecraftPlayersMessage(status))
+        );
+      }
+      case "discord-members": {
+        if (!isConfiguredGuildInteraction(interaction)) {
+          return res.status(200).json(
+            ephemeralResponse(
+              "\u0E1B\u0E38\u0E48\u0E21\u0E19\u0E35\u0E49\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E20\u0E32\u0E22\u0E43\u0E19 Discord RitzSMP \u0E17\u0E35\u0E48\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E44\u0E27\u0E49\u0E04\u0E48\u0E30"
+            )
+          );
+        }
+        const result = await fetchDiscordGuildMembers({
+          guildId: ENV.discordGuildId,
+          botToken: ENV.discordAiBotToken
+        });
+        return res.status(200).json(
+          ephemeralResponse(
+            result.kind === "ok" ? buildDiscordMembersMessage(result.members) : "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E14\u0E36\u0E07\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E1C\u0E48\u0E32\u0E19 Discord API \u0E44\u0E14\u0E49\u0E43\u0E19\u0E02\u0E13\u0E30\u0E19\u0E35\u0E49\u0E04\u0E48\u0E30 \u0E42\u0E1B\u0E23\u0E14\u0E14\u0E39\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E08\u0E32\u0E01\u0E41\u0E16\u0E1A\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E02\u0E2D\u0E07 Discord \u0E41\u0E25\u0E49\u0E27\u0E25\u0E2D\u0E07\u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21\u0E43\u0E2B\u0E21\u0E48\u0E20\u0E32\u0E22\u0E2B\u0E25\u0E31\u0E07"
+          )
+        );
+      }
       default:
         return res.status(200).json(
           ephemeralResponse(
-            "\u0E1B\u0E38\u0E48\u0E21\u0E19\u0E35\u0E49\u0E22\u0E31\u0E07\u0E15\u0E49\u0E2D\u0E07\u0E43\u0E0A\u0E49 AI bot \u0E1A\u0E19 runtime \u0E15\u0E48\u0E2D\u0E40\u0E19\u0E37\u0E48\u0E2D\u0E07\u0E04\u0E48\u0E30 \u0E2A\u0E48\u0E27\u0E19\u0E1B\u0E38\u0E48\u0E21\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E41\u0E25\u0E30\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E23\u0E2B\u0E31\u0E2A\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19\u0E44\u0E14\u0E49\u0E08\u0E32\u0E01\u0E2B\u0E19\u0E49\u0E32\u0E19\u0E35\u0E49\u0E41\u0E25\u0E49\u0E27"
+            "\u0E1B\u0E38\u0E48\u0E21\u0E19\u0E35\u0E49\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E23\u0E2D\u0E07\u0E23\u0E31\u0E1A\u0E1C\u0E48\u0E32\u0E19 HTTP Interaction \u0E04\u0E48\u0E30 \u0E42\u0E1B\u0E23\u0E14\u0E25\u0E2D\u0E07\u0E43\u0E0A\u0E49\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07\u0E2B\u0E23\u0E37\u0E2D\u0E1B\u0E38\u0E48\u0E21\u0E17\u0E35\u0E48\u0E23\u0E30\u0E1A\u0E38\u0E44\u0E27\u0E49\u0E43\u0E19\u0E41\u0E1C\u0E07\u0E19\u0E35\u0E49\u0E41\u0E17\u0E19"
           )
         );
     }
