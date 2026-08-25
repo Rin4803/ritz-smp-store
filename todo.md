@@ -729,7 +729,7 @@
 - [x] ตั้งค่า `DISCORD_AI_PUBLIC_KEY` และ Interactions Endpoint URL ของ application AI เดิม แล้วตรวจ PING จาก Discord
 
 - [x] ตรวจโครงสร้างหมวดหมู่ ห้อง ชื่อ และข้อความต้อนรับของ Discord เดิม โดยไม่สร้าง ย้าย หรือลบทรัพยากร
-- [ ] เสนอแผนจัดหน้าตา Discord ให้สอดคล้องกับ AI bot, Music bot, Minecraft bridge และร้านค้า โดยคงห้องเดิม
+- [x] เสนอแผนจัดหน้าตา Discord ให้สอดคล้องกับ AI bot, Music bot, Minecraft bridge และร้านค้า โดยคงห้องเดิม
 - [ ] ปรับเฉพาะองค์ประกอบ Discord ที่ผู้ใช้ยืนยันหลังตรวจสอบแผนแล้ว
 
 - [ ] ใช้ Chrome ของผู้ใช้ตรวจ session Discord และโพสต์คู่มือส่วนที่เหลือในห้องเดิมเมื่อ browser sandbox เชื่อมต่อไม่ได้
@@ -847,10 +847,10 @@
 - [ ] ตรวจและปิดช่องว่างของเว็บสโตร์, wallet, การซื้อยศ และ RCON fulfillment ที่ยังทำได้ใน source
 - [ ] ตรวจและปิดช่องว่างระบบ Discord interactions, player report, Embed Template และการแจ้งเตือนธุรกรรม
 - [ ] ตรวจและปิดช่องว่าง server-realtime, server-chat, online count และ role/prefix display
-- [ ] ตรวจทะเบียนคำสั่ง Ritz AI ให้เหลือเฉพาะคำสั่งหลักที่กำหนด และทดสอบข้อความภาษาไทย
-- [ ] ประเมินระบบ Music bot และบันทึกข้อจำกัด/สิ่งที่ต้องรันบนโฮสต์ภายนอกหรือบริการที่รองรับเสียงจริง
-- [ ] รัน regression tests, typecheck และ production build หลังทำงานต่อทั้งหมด
-- [ ] ตรวจ source export, GitHub sync และไฟล์ความลับ/ไฟล์ชั่วคราวอีกครั้งก่อน checkpoint
+- [x] ตรวจทะเบียนคำสั่ง Ritz AI ให้เหลือเฉพาะคำสั่งหลักที่กำหนด และทดสอบข้อความภาษาไทย
+- [x] ประเมินระบบ Music bot และบันทึกข้อจำกัด/สิ่งที่ต้องรันบนโฮสต์ภายนอกหรือบริการที่รองรับเสียงจริง
+- [x] รัน regression tests, typecheck และ production build หลังทำงานต่อทั้งหมด
+- [x] ตรวจ source export, GitHub sync และไฟล์ความลับ/ไฟล์ชั่วคราวอีกครั้งก่อน checkpoint
 - [ ] ทดสอบ production flows ที่ได้รับอนุญาตและบันทึกผลแยกจาก unit tests
 - [x] เพิ่ม `servers.status` แบบ read-only และการ์ดสถานะบนหน้า Home แสดง online/offline, จำนวนผู้เล่น, เวอร์ชัน และ latency พร้อม refresh ทุก 30 วินาที; `pnpm check` ผ่าน
 - [x] เพิ่ม regression test สำหรับ `servers.status` ใน `multiserver.test.ts` โดย mock Minecraft status และยืนยันว่า public response ไม่มี secret; test ผ่าน 7/7
@@ -860,3 +860,7 @@
 - [x] เพิ่ม regression coverage ให้ Discord presence embed ตรวจจำนวนผู้เล่นและสถานะเซิร์ฟเวอร์ และยืนยัน Minecraft presence route; tests เฉพาะส่วนผ่าน 10/10
 - [x] รัน `pnpm check` และ `pnpm build` หลังปรับ presence notification/monitor; build ผ่าน โดยมีเพียงคำเตือน bundle chunk ขนาดใหญ่จาก Vite
 - [x] ประเมิน Music bot จาก implementation และ regression tests: `/play`, `/queue`, `/skip`, `/stop`, `/leave` และ URL/timeout handling มีใน source; การยืนยันเสียงจริงยังต้องใช้ runtime แบบ always-on และทดสอบ Discord voice จริง ไม่สรุปเกินหลักฐาน
+- [ ] ยืนยันนโยบาย canonical price source ระหว่าง FoShop และ Essentials ก่อนเปลี่ยนราคาผู้เล่น
+- [ ] ทดสอบ `/worth`, `/sell hand`, `/sellall` และ FoShop GUI ในเกมด้วย item เดียวกันเพื่อยืนยันหน่วยราคา
+- [ ] ตรวจและวางแผนอัปเดต Essentials ให้รองรับ server version จริง หลังทำ backup และทดสอบความเข้ากันได้
+- [x] ปรับสคริปต์ economy audit ให้รับผล `files_read_many` ผ่านอาร์กิวเมนต์ ไม่ผูกกับ path sandbox และยืนยันว่าไม่เขียนกลับ MCSV
