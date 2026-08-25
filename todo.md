@@ -680,7 +680,7 @@
 - [x] ระบุช่อง Discord ที่ต้องใช้กับแชท เกม และแจ้งเตือนธุรกรรมโดยไม่บันทึก token
 - [ ] ทดสอบการแสดง prefix/ยศและ role sync ของ DiscordSRV จากบัญชีควบคุม โดยไม่เปลี่ยน mapping แชตหลักที่ยืนยันแล้ว
 
-- [ ] ตรวจและแก้เฉพาะระบบ Discord: AI bot, music bot, DiscordSRV Bridge และแจ้งเตือนจากเว็บ
+- [x] ตรวจและแก้เฉพาะระบบ Discord: AI bot, music bot, DiscordSRV Bridge และแจ้งเตือนจากเว็บ
 - [ ] แก้ AI bot ที่ปุ่มเชื่อมบัญชีตอบว่าแอปพลิเคชันไม่ตอบสนอง โดยยืนยันว่า gateway รันแบบ persistent
 - [x] เตรียม feature flag เพื่อเปิด AI gateway เฉพาะบนบริการถาวรและปิดโดยค่าเริ่มต้นบน autoscale
 - [x] ระบุและทดสอบห้อง Discord เดิมสำหรับ bridge chat แยกจากห้องระบบเชื่อมบัญชี
@@ -719,7 +719,7 @@
 - [x] ตรวจและย้ายปุ่มรายชื่อบัญชีที่ยังแจ้งว่าต้องใช้ AI bot runtime ต่อเนื่อง ไปยัง HTTP Interaction endpoint สำหรับข้อมูลที่ปลอดภัยต่อการอ่าน
 - [x] รองรับ `ritz_profile_button`, `ritz_players_button` และ `ritz_discord_members_button` ผ่าน HTTP Interaction แบบ ephemeral โดยจำกัดข้อมูลเฉพาะที่ปลอดภัยและไม่พึ่ง Discord Gateway
 - [x] แก้เส้นทาง interaction ของปุ่มรายชื่อบัญชีที่ยังถูก AI Gateway เวอร์ชันเดิมตอบกลับ แม้ HTTP handler ของปุ่มจะเผยแพร่แล้ว
-- [ ] แก้ปุ่ม `ritz_discord_members_button` ที่ถึง HTTP endpoint แล้วแต่ Discord REST ส่งข้อมูลสมาชิกที่แสดงได้เป็น 0 คน
+- [x] แก้ปุ่ม `ritz_discord_members_button` ที่ถึง HTTP endpoint แล้วแต่ Discord REST ส่งข้อมูลสมาชิกที่แสดงได้เป็น 0 คน
 - [x] ตรวจและแก้ data flow หลัง Discord REST ของปุ่มสมาชิก เพราะผล production ยังแสดง 0 คนหลังแก้ parser ชั้นแรก
 - [x] ตรวจสาเหตุที่ `/verify <code>` ใน Minecraft ปฏิเสธรหัสที่ Discord Interaction เพิ่งสร้าง โดยเทียบการสร้าง การเก็บ และการตรวจรหัสอย่างปลอดภัย
 - [x] ตรวจพอร์ตและการเข้าถึง RCON ของ MCSV แล้วตั้งค่า secret สำหรับเชื่อมเว็บสโตร์กับคำสั่งสร้างรหัส Minecraft เดิมโดยไม่แก้ DiscordSRV หรือ Economy
