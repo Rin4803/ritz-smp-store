@@ -5785,3 +5785,60 @@
 [2026-08-25T04:28:38.475Z] }
 [2026-08-25T04:28:38.475Z] }
 [2026-08-25T04:29:09.897Z] 4:29:09 AM [vite] (client) hmr update /src/index.css
+[2026-08-25T04:29:49.274Z] [Database] Failed to sync ranks table: DrizzleQueryError: Failed query: insert into `ranks` (`id`, `name`, `displayName`, `price`, `duration`, `color`, `badge`, `description`, `features`, `roleId`, `createdAt`, `updatedAt`) values (?, ?, ?, ?, ?, ?, ?, ?, ?, default, default, default) on duplicate key update `name` = ?, `displayName` = ?, `price` = ?, `duration` = ?, `color` = ?, `badge` = ?, `description` = ?, `features` = ?
+[2026-08-25T04:29:49.274Z] params: 1,VIP,VIP,39.00,ถาวร,silver,ENTRY,ยศเริ่มต้นสำหรับผู้สนับสนุน RitzSMP,["/hat","/craft","ตั้งบ้าน 3 หลัง","เงินในเกม 10,000","รับเหรียญ 100 เหรียญ"],VIP,VIP,39.00,ถาวร,silver,ENTRY,ยศเริ่มต้นสำหรับผู้สนับสนุน RitzSMP,["/hat","/craft","ตั้งบ้าน 3 หลัง","เงินในเกม 10,000","รับเหรียญ 100 เหรียญ"]
+[2026-08-25T04:29:49.274Z] at MySql2PreparedQuery.queryWithCache (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/drizzle-orm@0.44.6_mysql2@3.15.1/node_modules/src/mysql-core/session.ts:79:11)
+[2026-08-25T04:29:49.274Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2026-08-25T04:29:49.274Z] at async MySql2PreparedQuery.execute (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/drizzle-orm@0.44.6_mysql2@3.15.1/node_modules/src/mysql2/session.ts:100:16)
+[2026-08-25T04:29:49.274Z] at async getRanks (/home/ubuntu/ritz-smp-store/server/db.ts:137:7)
+[2026-08-25T04:29:49.274Z] at async resolveMiddleware (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@trpc+server@11.6.0_typescript@5.9.3/node_modules/@trpc/server/src/unstable-core-do-not-import/procedureBuilder.ts:571:22)
+[2026-08-25T04:29:49.274Z] at async callRecursive (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@trpc+server@11.6.0_typescript@5.9.3/node_modules/@trpc/server/src/unstable-core-do-not-import/procedureBuilder.ts:633:20)
+[2026-08-25T04:29:49.274Z] at async procedure (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@trpc+server@11.6.0_typescript@5.9.3/node_modules/@trpc/server/src/unstable-core-do-not-import/procedureBuilder.ts:673:20)
+[2026-08-25T04:29:49.274Z] at async <anonymous> (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@trpc+server@11.6.0_typescript@5.9.3/node_modules/@trpc/server/src/unstable-core-do-not-import/http/resolveResponse.ts:347:31)
+[2026-08-25T04:29:49.274Z] at async Promise.all (index 1)
+[2026-08-25T04:29:49.274Z] at async resolveResponse (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@trpc+server@11.6.0_typescript@5.9.3/node_modules/@trpc/server/src/unstable-core-do-not-import/http/resolveResponse.ts:613:35)
+[2026-08-25T04:29:49.274Z] at async <anonymous> (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/@trpc+server@11.6.0_typescript@5.9.3/node_modules/@trpc/server/src/adapters/node-http/nodeHTTPRequestHandler.ts:100:26) {
+[2026-08-25T04:29:49.274Z] query: 'insert into `ranks` (`id`, `name`, `displayName`, `price`, `duration`, `color`, `badge`, `description`, `features`, `roleId`, `createdAt`, `updatedAt`) values (?, ?, ?, ?, ?, ?, ?, ?, ?, default, default, default) on duplicate key update `name` = ?, `displayName` = ?, `price` = ?, `duration` = ?, `color` = ?, `badge` = ?, `description` = ?, `features` = ?',
+[2026-08-25T04:29:49.274Z] params: [
+[2026-08-25T04:29:49.274Z] 1,
+[2026-08-25T04:29:49.274Z] 'VIP',
+[2026-08-25T04:29:49.274Z] 'VIP',
+[2026-08-25T04:29:49.274Z] '39.00',
+[2026-08-25T04:29:49.274Z] 'ถาวร',
+[2026-08-25T04:29:49.274Z] 'silver',
+[2026-08-25T04:29:49.274Z] 'ENTRY',
+[2026-08-25T04:29:49.274Z] 'ยศเริ่มต้นสำหรับผู้สนับสนุน RitzSMP',
+[2026-08-25T04:29:49.274Z] '["/hat","/craft","ตั้งบ้าน 3 หลัง","เงินในเกม 10,000","รับเหรียญ 100 เหรียญ"]',
+[2026-08-25T04:29:49.275Z] 'VIP',
+[2026-08-25T04:29:49.275Z] 'VIP',
+[2026-08-25T04:29:49.275Z] '39.00',
+[2026-08-25T04:29:49.275Z] 'ถาวร',
+[2026-08-25T04:29:49.275Z] 'silver',
+[2026-08-25T04:29:49.275Z] 'ENTRY',
+[2026-08-25T04:29:49.275Z] 'ยศเริ่มต้นสำหรับผู้สนับสนุน RitzSMP',
+[2026-08-25T04:29:49.275Z] '["/hat","/craft","ตั้งบ้าน 3 หลัง","เงินในเกม 10,000","รับเหรียญ 100 เหรียญ"]'
+[2026-08-25T04:29:49.275Z] ],
+[2026-08-25T04:29:49.275Z] cause: Error: Table '94jhsfkxjqp4gfdwbmkp7v.ranks' doesn't exist
+[2026-08-25T04:29:49.275Z] at PromisePool.query (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/mysql2@3.15.1/node_modules/mysql2/lib/promise/pool.js:36:22)
+[2026-08-25T04:29:49.275Z] at <anonymous> (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/drizzle-orm@0.44.6_mysql2@3.15.1/node_modules/src/mysql2/session.ts:101:25)
+[2026-08-25T04:29:49.275Z] at MySql2PreparedQuery.queryWithCache (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/drizzle-orm@0.44.6_mysql2@3.15.1/node_modules/src/mysql-core/session.ts:77:18)
+[2026-08-25T04:29:49.275Z] at MySql2PreparedQuery.execute (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/drizzle-orm@0.44.6_mysql2@3.15.1/node_modules/src/mysql2/session.ts:100:27)
+[2026-08-25T04:29:49.275Z] at QueryPromise.execute (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/drizzle-orm@0.44.6_mysql2@3.15.1/node_modules/src/mysql-core/query-builders/insert.ts:323:25)
+[2026-08-25T04:29:49.275Z] at QueryPromise.then (/home/ubuntu/ritz-smp-store/node_modules/.pnpm/drizzle-orm@0.44.6_mysql2@3.15.1/node_modules/src/query-promise.ts:31:15)
+[2026-08-25T04:29:49.275Z] at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2026-08-25T04:29:49.275Z] code: 'ER_NO_SUCH_TABLE',
+[2026-08-25T04:29:49.275Z] errno: 1146,
+[2026-08-25T04:29:49.275Z] sql: 'insert into `ranks` (`id`, `name`, `displayName`, `price`, `duration`, `color`, `badge`, `description`, `features`, `roleId`, `createdAt`, `updatedAt`) values (1, \'VIP\', \'VIP\', \'39.00\', \'ถาวร\', \'silver\', \'ENTRY\', \'ยศเริ่มต้นสำหรับผู้สนับสนุน RitzSMP\', \'[\\"/hat\\",\\"/craft\\",\\"ตั้งบ้าน 3 หลัง\\",\\"เงินในเกม 10,000\\",\\"รับเหรียญ 100 เหรียญ\\"]\', default, default, default) on duplicate key update `name` = \'VIP\', `displayName` = \'VIP\', `price` = \'39.00\', `duration` = \'ถาวร\', `color` = \'silver\', `badge` = \'ENTRY\', `description` = \'ยศเริ่มต้นสำหรับผู้สนับสนุน RitzSMP\', `features` = \'[\\"/hat\\",\\"/craft\\",\\"ตั้งบ้าน 3 หลัง\\",\\"เงินในเกม 10,000\\",\\"รับเหรียญ 100 เหรียญ\\"]\'',
+[2026-08-25T04:29:49.275Z] sqlState: '42S02',
+[2026-08-25T04:29:49.275Z] sqlMessage: "Table '94jhsfkxjqp4gfdwbmkp7v.ranks' doesn't exist"
+[2026-08-25T04:29:49.275Z] }
+[2026-08-25T04:29:49.275Z] }
+[2026-08-25T04:32:09.143Z] 4:32:09 AM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-25T04:32:09.980Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T04:32:10.258Z] Server running on http://localhost:3000/
+[2026-08-25T04:32:16.773Z] 4:32:16 AM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-25T04:32:17.554Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T04:32:17.844Z] Server running on http://localhost:3000/
+[2026-08-25T04:32:38.082Z] 4:32:38 AM [tsx] change in ./server/discordAiBot.ts Restarting...
+[2026-08-25T04:32:38.910Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-25T04:32:39.218Z] Server running on http://localhost:3000/

@@ -4,12 +4,11 @@ import {
   GatewayIntentBits,
   REST,
   Routes,
-  SlashCommandBuilder,
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  PermissionsBitField,
+  PermissionsBitField as PermissionsBitField2,
   ChannelType as ChannelType2,
   ModalBuilder,
   TextInputBuilder,
@@ -717,6 +716,72 @@ async function getActiveManagedServerRuntimeConfig() {
   return getManagedServerRuntimeConfig(serverId);
 }
 
+// server/discordAiCommandRegistry.ts
+import {
+  PermissionsBitField,
+  SlashCommandBuilder
+} from "discord.js";
+function buildRitzSmpAiCommands() {
+  return [
+    new SlashCommandBuilder().setName("ask").setDescription("\u0E16\u0E32\u0E21\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E01\u0E31\u0E1A RitzSMP AI").addStringOption(
+      (option) => option.setName("question").setDescription("\u0E04\u0E33\u0E16\u0E32\u0E21\u0E17\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E16\u0E32\u0E21 AI").setRequired(true)
+    ),
+    new SlashCommandBuilder().setName("status").setDescription("\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1A\u0E2D\u0E17\u0E41\u0E25\u0E30\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C Minecraft"),
+    new SlashCommandBuilder().setName("store").setDescription("\u0E40\u0E1B\u0E34\u0E14\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32 RitzSMP"),
+    new SlashCommandBuilder().setName("ranks").setDescription("\u0E14\u0E39\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E22\u0E28\u0E41\u0E25\u0E30\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E1B\u0E23\u0E30\u0E42\u0E22\u0E0A\u0E19\u0E4C"),
+    new SlashCommandBuilder().setName("topup").setDescription("\u0E14\u0E39\u0E27\u0E34\u0E18\u0E35\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19\u0E41\u0E25\u0E30\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28"),
+    new SlashCommandBuilder().setName("verify").setDescription("\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35 Discord \u0E01\u0E31\u0E1A Minecraft"),
+    new SlashCommandBuilder().setName("players").setDescription("\u0E41\u0E2A\u0E14\u0E07\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C"),
+    new SlashCommandBuilder().setName("members").setDescription("\u0E41\u0E2A\u0E14\u0E07\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 Discord"),
+    new SlashCommandBuilder().setName("profile").setDescription("\u0E14\u0E39\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C RitzSMP \u0E17\u0E35\u0E48\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E44\u0E27\u0E49"),
+    new SlashCommandBuilder().setName("help").setDescription("\u0E14\u0E39\u0E04\u0E39\u0E48\u0E21\u0E37\u0E2D\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07 RitzSMP AI"),
+    new SlashCommandBuilder().setName("setup").setDescription("\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E41\u0E1C\u0E07\u0E23\u0E30\u0E1A\u0E1A\u0E14\u0E49\u0E27\u0E22\u0E15\u0E19\u0E40\u0E2D\u0E07").setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator).addSubcommand(
+      (sub) => sub.setName("panel").setDescription("\u0E2A\u0E48\u0E07\u0E41\u0E1C\u0E07\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E41\u0E25\u0E30\u0E23\u0E31\u0E1A\u0E22\u0E28\u0E25\u0E07\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49")
+    ).addSubcommand(
+      (sub) => sub.setName("welcome").setDescription("\u0E2A\u0E23\u0E49\u0E32\u0E07 Embed \u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A\u0E25\u0E07\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49")
+    ).addSubcommand(
+      (sub) => sub.setName("leave").setDescription("\u0E2A\u0E23\u0E49\u0E32\u0E07 Embed \u0E41\u0E08\u0E49\u0E07\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E2D\u0E2D\u0E01\u0E25\u0E07\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49")
+    ),
+    new SlashCommandBuilder().setName("embed").setDescription("\u0E08\u0E31\u0E14\u0E01\u0E32\u0E23\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28 Embed").setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator).addSubcommand(
+      (sub) => sub.setName("default").setDescription("\u0E2A\u0E48\u0E07\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08\u0E23\u0E39\u0E1B")
+    ).addSubcommand(
+      (sub) => sub.setName("create").setDescription("\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28 Embed \u0E41\u0E1A\u0E1A\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E40\u0E2D\u0E07").addStringOption(
+        (o) => o.setName("title").setDescription("\u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28").setRequired(true)
+      ).addStringOption(
+        (o) => o.setName("description").setDescription("\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28").setRequired(true)
+      ).addStringOption(
+        (o) => o.setName("color").setDescription("\u0E2A\u0E35 \u0E40\u0E0A\u0E48\u0E19 #ff69b4").setRequired(false)
+      ).addStringOption(
+        (o) => o.setName("image_url").setDescription("\u0E25\u0E34\u0E07\u0E01\u0E4C\u0E23\u0E39\u0E1B\u0E20\u0E32\u0E1E\u0E1B\u0E23\u0E30\u0E01\u0E2D\u0E1A").setRequired(false)
+      ).addStringOption(
+        (o) => o.setName("button_label").setDescription("\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E1A\u0E19\u0E1B\u0E38\u0E48\u0E21\u0E25\u0E34\u0E07\u0E01\u0E4C").setRequired(false)
+      ).addStringOption(
+        (o) => o.setName("button_url").setDescription("\u0E25\u0E34\u0E07\u0E01\u0E4C\u0E1B\u0E25\u0E32\u0E22\u0E17\u0E32\u0E07\u0E02\u0E2D\u0E07\u0E1B\u0E38\u0E48\u0E21").setRequired(false)
+      )
+    ).addSubcommand(
+      (sub) => sub.setName("edit").setDescription("\u0E41\u0E01\u0E49\u0E44\u0E02 Embed \u0E15\u0E32\u0E21 Message ID").addStringOption(
+        (o) => o.setName("message_id").setDescription("Message ID \u0E02\u0E2D\u0E07 Embed").setRequired(true)
+      ).addStringOption(
+        (o) => o.setName("title").setDescription("\u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D\u0E43\u0E2B\u0E21\u0E48").setRequired(false)
+      ).addStringOption(
+        (o) => o.setName("description").setDescription("\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32\u0E43\u0E2B\u0E21\u0E48").setRequired(false)
+      ).addStringOption(
+        (o) => o.setName("color").setDescription("\u0E2A\u0E35\u0E43\u0E2B\u0E21\u0E48").setRequired(false)
+      ).addStringOption(
+        (o) => o.setName("image_url").setDescription("URL \u0E23\u0E39\u0E1B\u0E43\u0E2B\u0E21\u0E48").setRequired(false)
+      ).addStringOption(
+        (o) => o.setName("button_label").setDescription("\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E1B\u0E38\u0E48\u0E21\u0E43\u0E2B\u0E21\u0E48").setRequired(false)
+      ).addStringOption(
+        (o) => o.setName("button_url").setDescription("URL \u0E1B\u0E38\u0E48\u0E21\u0E43\u0E2B\u0E21\u0E48").setRequired(false)
+      )
+    ).addSubcommand(
+      (sub) => sub.setName("delete").setDescription("\u0E25\u0E1A Embed \u0E15\u0E32\u0E21 Message ID").addStringOption(
+        (o) => o.setName("message_id").setDescription("Message ID \u0E02\u0E2D\u0E07 Embed").setRequired(true)
+      )
+    )
+  ].map((command) => command.toJSON());
+}
+
 // server/discordAiBot.ts
 var MAX_LOGS = 100;
 var logsBuffer = [];
@@ -940,7 +1005,7 @@ function isDiscordAdministrator(interaction) {
   if (!interaction?.guild) return false;
   const permissions = interaction.memberPermissions ?? interaction.member?.permissions;
   if (permissions?.has)
-    return permissions.has(PermissionsBitField.Flags.Administrator);
+    return permissions.has(PermissionsBitField2.Flags.Administrator);
   return false;
 }
 function getEmbedData(message) {
@@ -1820,77 +1885,7 @@ function createRitzSmpAiBot(runtime, tokenOverride) {
     botStartTime = Date.now();
     pushLog("SUCCESS", `RitzSMP AI bot logged in as ${client.user?.tag}`);
     const storeUrl = ENV.publicStoreUrl || "https://ritz.mcsv.me";
-    const commands = [
-      new SlashCommandBuilder().setName("ask").setDescription(
-        "\u{1F4AC} \u0E1E\u0E39\u0E14\u0E04\u0E38\u0E22\u0E41\u0E25\u0E30\u0E2A\u0E2D\u0E1A\u0E16\u0E32\u0E21\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E01\u0E31\u0E1A RitzSMP AI \u0E2A\u0E32\u0E27\u0E19\u0E49\u0E2D\u0E22\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22\u0E2A\u0E38\u0E14\u0E19\u0E48\u0E32\u0E23\u0E31\u0E01"
-      ).addStringOption(
-        (option) => option.setName("question").setDescription("\u0E04\u0E33\u0E16\u0E32\u0E21\u0E17\u0E35\u0E48\u0E04\u0E38\u0E13\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E16\u0E32\u0E21\u0E19\u0E49\u0E2D\u0E07 AI").setRequired(true)
-      ),
-      new SlashCommandBuilder().setName("status").setDescription(
-        "\u{1F4CA} \u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1A\u0E2D\u0E17\u0E41\u0E25\u0E30\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C Minecraft RitzSMP \u0E41\u0E1A\u0E1A\u0E40\u0E23\u0E35\u0E22\u0E25\u0E44\u0E17\u0E21\u0E4C"
-      ),
-      new SlashCommandBuilder().setName("ai-status").setDescription(
-        "\u{1F4CA} [Legacy Alias] \u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1A\u0E2D\u0E17\u0E41\u0E25\u0E30\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C Minecraft RitzSMP"
-      ),
-      new SlashCommandBuilder().setName("store").setDescription("\u{1F6D2} \u0E41\u0E2A\u0E14\u0E07\u0E25\u0E34\u0E07\u0E01\u0E4C\u0E40\u0E27\u0E47\u0E1A\u0E44\u0E0B\u0E15\u0E4C\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32\u0E2B\u0E25\u0E31\u0E01\u0E02\u0E2D\u0E07 RitzSMP Store"),
-      new SlashCommandBuilder().setName("ranks").setDescription(
-        "\u{1F451} \u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E22\u0E28\u0E1E\u0E34\u0E40\u0E28\u0E29\u0E41\u0E25\u0E30\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E1B\u0E23\u0E30\u0E42\u0E22\u0E0A\u0E19\u0E4C\u0E20\u0E32\u0E22\u0E43\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C"
-      ),
-      new SlashCommandBuilder().setName("topup").setDescription(
-        "\u{1F4B3} \u0E14\u0E39\u0E27\u0E34\u0E18\u0E35\u0E40\u0E15\u0E34\u0E21\u0E40\u0E07\u0E34\u0E19\u0E1C\u0E48\u0E32\u0E19\u0E2A\u0E25\u0E34\u0E1B\u0E42\u0E2D\u0E19\u0E40\u0E07\u0E34\u0E19\u0E41\u0E25\u0E30\u0E01\u0E32\u0E23\u0E0B\u0E37\u0E49\u0E2D\u0E22\u0E28\u0E1C\u0E48\u0E32\u0E19\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32"
-      ),
-      new SlashCommandBuilder().setName("verify").setDescription("\u2705 \u0E40\u0E1B\u0E34\u0E14\u0E41\u0E1C\u0E07\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E15\u0E31\u0E27\u0E15\u0E19\u0E41\u0E25\u0E30\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E0A\u0E37\u0E48\u0E2D Minecraft"),
-      new SlashCommandBuilder().setName("players").setDescription("\u26CF\uFE0F \u0E41\u0E2A\u0E14\u0E07\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C\u0E43\u0E19 RitzSMP"),
-      new SlashCommandBuilder().setName("members").setDescription("\u{1F465} \u0E41\u0E2A\u0E14\u0E07\u0E23\u0E32\u0E22\u0E0A\u0E37\u0E48\u0E2D\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 Discord \u0E43\u0E19\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C"),
-      new SlashCommandBuilder().setName("profile").setDescription("\u{1FAAA} \u0E14\u0E39\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01 RitzSMP \u0E17\u0E35\u0E48\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E01\u0E31\u0E1A Minecraft"),
-      new SlashCommandBuilder().setName("setup").setDescription("\u{1F6E0}\uFE0F \u0E2A\u0E23\u0E49\u0E32\u0E07\u0E23\u0E30\u0E1A\u0E1A\u0E14\u0E49\u0E27\u0E22\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07\u0E40\u0E17\u0E48\u0E32\u0E19\u0E31\u0E49\u0E19 (\u0E41\u0E2D\u0E14\u0E21\u0E34\u0E19\u0E40\u0E17\u0E48\u0E32\u0E19\u0E31\u0E49\u0E19)").setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator).addSubcommand(
-        (sub) => sub.setName("panel").setDescription("\u0E2A\u0E48\u0E07\u0E41\u0E1C\u0E07\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E41\u0E25\u0E30\u0E23\u0E31\u0E1A\u0E22\u0E28\u0E25\u0E07\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49")
-      ).addSubcommand(
-        (sub) => sub.setName("welcome").setDescription("\u0E2A\u0E23\u0E49\u0E32\u0E07 Embed \u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A\u0E25\u0E07\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49\u0E14\u0E49\u0E27\u0E22\u0E15\u0E19\u0E40\u0E2D\u0E07")
-      ).addSubcommand(
-        (sub) => sub.setName("leave").setDescription("\u0E2A\u0E23\u0E49\u0E32\u0E07 Embed \u0E41\u0E08\u0E49\u0E07\u0E2A\u0E21\u0E32\u0E0A\u0E34\u0E01\u0E2D\u0E2D\u0E01\u0E25\u0E07\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49\u0E14\u0E49\u0E27\u0E22\u0E15\u0E19\u0E40\u0E2D\u0E07")
-      ),
-      new SlashCommandBuilder().setName("help").setDescription("\u{1F4D6} \u0E41\u0E2A\u0E14\u0E07\u0E04\u0E39\u0E48\u0E21\u0E37\u0E2D\u0E41\u0E25\u0E30\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14\u0E02\u0E2D\u0E07 RitzSMP AI"),
-      new SlashCommandBuilder().setName("embed").setDescription(
-        "\u{1F4E2} \u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28 Embed \u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E1B\u0E38\u0E48\u0E21\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32\u0E41\u0E1A\u0E1A\u0E2A\u0E32\u0E18\u0E32\u0E23\u0E13\u0E30\u0E17\u0E31\u0E19\u0E17\u0E35 (\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08\u0E23\u0E39\u0E1B)"
-      ).setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator).addSubcommand(
-        (sub) => sub.setName("default").setDescription("\u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21 Embed \u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08\u0E23\u0E39\u0E1B\u0E17\u0E31\u0E19\u0E17\u0E35")
-      ).addSubcommand(
-        (sub) => sub.setName("create").setDescription("\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28 Embed \u0E41\u0E1A\u0E1A\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E40\u0E2D\u0E07").addStringOption(
-          (o) => o.setName("title").setDescription("\u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28").setRequired(true)
-        ).addStringOption(
-          (o) => o.setName("description").setDescription("\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32\u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28").setRequired(true)
-        ).addStringOption(
-          (o) => o.setName("color").setDescription("\u0E2A\u0E35 \u0E40\u0E0A\u0E48\u0E19 #ff69b4 \u0E2B\u0E23\u0E37\u0E2D #00ffcc").setRequired(false)
-        ).addStringOption(
-          (o) => o.setName("image_url").setDescription("\u0E25\u0E34\u0E07\u0E01\u0E4C\u0E23\u0E39\u0E1B\u0E20\u0E32\u0E1E\u0E1B\u0E23\u0E30\u0E01\u0E2D\u0E1A").setRequired(false)
-        ).addStringOption(
-          (o) => o.setName("button_label").setDescription("\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E1A\u0E19\u0E1B\u0E38\u0E48\u0E21\u0E25\u0E34\u0E07\u0E01\u0E4C").setRequired(false)
-        ).addStringOption(
-          (o) => o.setName("button_url").setDescription("\u0E25\u0E34\u0E07\u0E01\u0E4C\u0E1B\u0E25\u0E32\u0E22\u0E17\u0E32\u0E07\u0E02\u0E2D\u0E07\u0E1B\u0E38\u0E48\u0E21").setRequired(false)
-        )
-      ).addSubcommand(
-        (sub) => sub.setName("edit").setDescription("\u0E41\u0E01\u0E49\u0E44\u0E02 Embed \u0E02\u0E2D\u0E07 RitzSMP AI \u0E15\u0E32\u0E21 Message ID").addStringOption(
-          (o) => o.setName("message_id").setDescription("Message ID \u0E02\u0E2D\u0E07 Embed \u0E17\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E41\u0E01\u0E49").setRequired(true)
-        ).addStringOption(
-          (o) => o.setName("title").setDescription("\u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D\u0E43\u0E2B\u0E21\u0E48 (\u0E44\u0E21\u0E48\u0E1A\u0E31\u0E07\u0E04\u0E31\u0E1A)").setRequired(false)
-        ).addStringOption(
-          (o) => o.setName("description").setDescription("\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32\u0E43\u0E2B\u0E21\u0E48 (\u0E44\u0E21\u0E48\u0E1A\u0E31\u0E07\u0E04\u0E31\u0E1A)").setRequired(false)
-        ).addStringOption(
-          (o) => o.setName("color").setDescription("\u0E2A\u0E35\u0E43\u0E2B\u0E21\u0E48 \u0E40\u0E0A\u0E48\u0E19 #ff69b4 (\u0E44\u0E21\u0E48\u0E1A\u0E31\u0E07\u0E04\u0E31\u0E1A)").setRequired(false)
-        ).addStringOption(
-          (o) => o.setName("image_url").setDescription("URL \u0E23\u0E39\u0E1B\u0E43\u0E2B\u0E21\u0E48 (\u0E44\u0E21\u0E48\u0E1A\u0E31\u0E07\u0E04\u0E31\u0E1A)").setRequired(false)
-        ).addStringOption(
-          (o) => o.setName("button_label").setDescription("\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E1B\u0E38\u0E48\u0E21\u0E43\u0E2B\u0E21\u0E48 (\u0E44\u0E21\u0E48\u0E1A\u0E31\u0E07\u0E04\u0E31\u0E1A)").setRequired(false)
-        ).addStringOption(
-          (o) => o.setName("button_url").setDescription("URL \u0E1B\u0E38\u0E48\u0E21\u0E43\u0E2B\u0E21\u0E48 (\u0E44\u0E21\u0E48\u0E1A\u0E31\u0E07\u0E04\u0E31\u0E1A)").setRequired(false)
-        )
-      ).addSubcommand(
-        (sub) => sub.setName("delete").setDescription("\u0E25\u0E1A Embed \u0E02\u0E2D\u0E07 RitzSMP AI \u0E15\u0E32\u0E21 Message ID").addStringOption(
-          (o) => o.setName("message_id").setDescription("Message ID \u0E02\u0E2D\u0E07 Embed \u0E17\u0E35\u0E48\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E25\u0E1A").setRequired(true)
-        )
-      )
-    ].map((cmd) => cmd.toJSON());
+    const commands = buildRitzSmpAiCommands();
     const rest = new REST({ version: "10" }).setToken(token);
     const clientId = client.user?.id;
     if (!clientId) return;

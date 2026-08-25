@@ -3,7 +3,6 @@ import {
   GatewayIntentBits,
   REST,
   Routes,
-  SlashCommandBuilder,
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
@@ -42,6 +41,7 @@ import {
   getActiveManagedServerRuntimeConfig,
   type ManagedServerRuntimeConfig,
 } from "./multiserverRuntime.js";
+import { buildRitzSmpAiCommands } from "./discordAiCommandRegistry.js";
 
 interface BotLog {
   timestamp: string;
@@ -1903,186 +1903,7 @@ export function createRitzSmpAiBot(
 
     const storeUrl = ENV.publicStoreUrl || "https://ritz.mcsv.me";
 
-    const commands = [
-      new SlashCommandBuilder()
-        .setName("ask")
-        .setDescription(
-          "💬 พูดคุยและสอบถามข้อมูลกับ RitzSMP AI สาวน้อยผู้ช่วยสุดน่ารัก",
-        )
-        .addStringOption((option) =>
-          option
-            .setName("question")
-            .setDescription("คำถามที่คุณต้องการถามน้อง AI")
-            .setRequired(true),
-        ),
-      new SlashCommandBuilder()
-        .setName("status")
-        .setDescription(
-          "📊 ตรวจสอบสถานะบอทและเซิร์ฟเวอร์ Minecraft RitzSMP แบบเรียลไทม์",
-        ),
-      new SlashCommandBuilder()
-        .setName("ai-status")
-        .setDescription(
-          "📊 [Legacy Alias] ตรวจสอบสถานะบอทและเซิร์ฟเวอร์ Minecraft RitzSMP",
-        ),
-      new SlashCommandBuilder()
-        .setName("store")
-        .setDescription("🛒 แสดงลิงก์เว็บไซต์ร้านค้าหลักของ RitzSMP Store"),
-      new SlashCommandBuilder()
-        .setName("ranks")
-        .setDescription(
-          "👑 ตรวจสอบข้อมูลยศพิเศษและสิทธิประโยชน์ภายในเซิร์ฟเวอร์",
-        ),
-      new SlashCommandBuilder()
-        .setName("topup")
-        .setDescription(
-          "💳 ดูวิธีเติมเงินผ่านสลิปโอนเงินและการซื้อยศผ่านกระเป๋า",
-        ),
-      new SlashCommandBuilder()
-        .setName("verify")
-        .setDescription("✅ เปิดแผงยืนยันตัวตนและเชื่อมชื่อ Minecraft"),
-      new SlashCommandBuilder()
-        .setName("players")
-        .setDescription("⛏️ แสดงรายชื่อผู้เล่นที่ออนไลน์ใน RitzSMP"),
-      new SlashCommandBuilder()
-        .setName("members")
-        .setDescription("👥 แสดงรายชื่อสมาชิก Discord ในเซิร์ฟเวอร์"),
-      new SlashCommandBuilder()
-        .setName("profile")
-        .setDescription("🪪 ดูโปรไฟล์สมาชิก RitzSMP ที่เชื่อมกับ Minecraft"),
-      new SlashCommandBuilder()
-        .setName("setup")
-        .setDescription("🛠️ สร้างระบบด้วยคำสั่งเท่านั้น (แอดมินเท่านั้น)")
-        .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator)
-        .addSubcommand((sub) =>
-          sub
-            .setName("panel")
-            .setDescription("ส่งแผงเชื่อมบัญชีและรับยศลงช่องนี้"),
-        )
-        .addSubcommand((sub) =>
-          sub
-            .setName("welcome")
-            .setDescription("สร้าง Embed ต้อนรับลงช่องนี้ด้วยตนเอง"),
-        )
-        .addSubcommand((sub) =>
-          sub
-            .setName("leave")
-            .setDescription("สร้าง Embed แจ้งสมาชิกออกลงช่องนี้ด้วยตนเอง"),
-        ),
-      new SlashCommandBuilder()
-        .setName("help")
-        .setDescription("📖 แสดงคู่มือและรายการคำสั่งทั้งหมดของ RitzSMP AI"),
-      new SlashCommandBuilder()
-        .setName("embed")
-        .setDescription(
-          "📢 ส่งข้อความประกาศ Embed พร้อมปุ่มร้านค้าแบบสาธารณะทันที (สำเร็จรูป)",
-        )
-        .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator)
-        .addSubcommand((sub) =>
-          sub
-            .setName("default")
-            .setDescription("ส่งข้อความ Embed ประกาศร้านค้าสำเร็จรูปทันที"),
-        )
-        .addSubcommand((sub) =>
-          sub
-            .setName("create")
-            .setDescription("สร้างข้อความประกาศ Embed แบบกำหนดเอง")
-            .addStringOption((o) =>
-              o
-                .setName("title")
-                .setDescription("หัวข้อประกาศ")
-                .setRequired(true),
-            )
-            .addStringOption((o) =>
-              o
-                .setName("description")
-                .setDescription("เนื้อหาประกาศ")
-                .setRequired(true),
-            )
-            .addStringOption((o) =>
-              o
-                .setName("color")
-                .setDescription("สี เช่น #ff69b4 หรือ #00ffcc")
-                .setRequired(false),
-            )
-            .addStringOption((o) =>
-              o
-                .setName("image_url")
-                .setDescription("ลิงก์รูปภาพประกอบ")
-                .setRequired(false),
-            )
-            .addStringOption((o) =>
-              o
-                .setName("button_label")
-                .setDescription("ข้อความบนปุ่มลิงก์")
-                .setRequired(false),
-            )
-            .addStringOption((o) =>
-              o
-                .setName("button_url")
-                .setDescription("ลิงก์ปลายทางของปุ่ม")
-                .setRequired(false),
-            ),
-        )
-        .addSubcommand((sub) =>
-          sub
-            .setName("edit")
-            .setDescription("แก้ไข Embed ของ RitzSMP AI ตาม Message ID")
-            .addStringOption((o) =>
-              o
-                .setName("message_id")
-                .setDescription("Message ID ของ Embed ที่ต้องการแก้")
-                .setRequired(true),
-            )
-            .addStringOption((o) =>
-              o
-                .setName("title")
-                .setDescription("หัวข้อใหม่ (ไม่บังคับ)")
-                .setRequired(false),
-            )
-            .addStringOption((o) =>
-              o
-                .setName("description")
-                .setDescription("เนื้อหาใหม่ (ไม่บังคับ)")
-                .setRequired(false),
-            )
-            .addStringOption((o) =>
-              o
-                .setName("color")
-                .setDescription("สีใหม่ เช่น #ff69b4 (ไม่บังคับ)")
-                .setRequired(false),
-            )
-            .addStringOption((o) =>
-              o
-                .setName("image_url")
-                .setDescription("URL รูปใหม่ (ไม่บังคับ)")
-                .setRequired(false),
-            )
-            .addStringOption((o) =>
-              o
-                .setName("button_label")
-                .setDescription("ข้อความปุ่มใหม่ (ไม่บังคับ)")
-                .setRequired(false),
-            )
-            .addStringOption((o) =>
-              o
-                .setName("button_url")
-                .setDescription("URL ปุ่มใหม่ (ไม่บังคับ)")
-                .setRequired(false),
-            ),
-        )
-        .addSubcommand((sub) =>
-          sub
-            .setName("delete")
-            .setDescription("ลบ Embed ของ RitzSMP AI ตาม Message ID")
-            .addStringOption((o) =>
-              o
-                .setName("message_id")
-                .setDescription("Message ID ของ Embed ที่ต้องการลบ")
-                .setRequired(true),
-            ),
-        ),
-    ].map((cmd) => cmd.toJSON());
+    const commands = buildRitzSmpAiCommands();
 
     const rest = new REST({ version: "10" }).setToken(token);
     const clientId = client.user?.id;

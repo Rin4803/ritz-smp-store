@@ -16,7 +16,9 @@
 
 | ไฟล์ | หน้าที่ปัจจุบัน | สถานะในการเริ่มใหม่ |
 |---|---|---|
-| `server/discordAiBot.ts` | คำสั่ง AI, onboarding, verification และ interaction ของ AI bot | เก็บไว้เป็นต้นแบบ; จะจัดคำสั่งและสิทธิ์ใหม่ |
+| `server/discordAiBot.ts` | onboarding, verification และตัวกระจาย interaction ของ AI bot | ใช้ต่อโดยแยกทะเบียนคำสั่งออกแล้ว; ไม่เปิด gateway บน autoscale |
+| `server/discordAiCommandRegistry.ts` | ทะเบียนคำสั่งใหม่เพียงจุดเดียวสำหรับ AI bot | ใช้งานแล้ว; มีเฉพาะคำสั่ง AI/onboarding และไม่มีคำสั่ง music หรือ alias เก่า |
+| `server/discordAiCommandRegistry.test.ts` | ชุดทดสอบทะเบียนคำสั่งใหม่ | ใช้งานแล้ว; ตรวจชื่อคำสั่งไม่ซ้ำและสิทธิ์ผู้ดูแลของคำสั่งตั้งค่า |
 | `server/discordAiBotRunner.ts` | ตัวสั่งรัน AI gateway แยก process | เก็บไว้; ใช้ได้เฉพาะ runtime ที่รันต่อเนื่อง |
 | `server/discordMusic.ts` | คิวเพลง, ดึงเสียง และควบคุมการเล่น | เก็บไว้เป็นต้นแบบ; ห้ามยืนยันว่าเสียงใช้ได้จนกว่าจะมีการฟังจริง |
 | `server/discordMusicBot.ts` | bootstrap และคำสั่งของ music bot | เก็บไว้; จะแยกคำสั่ง/สิทธิ์จาก AI bot ชัดเจน |
@@ -75,6 +77,12 @@
 | **AI bot** | onboarding, ปุ่มยืนยันตัวตน, คำสั่งช่วยเหลือ/AI, แจ้งเตือนจากเว็บ | ห้ามใช้ token ร่วมกับบอทอื่น และห้ามเปิด gateway บน autoscale |
 | **Music bot** | เข้าห้องเสียง, เล่น/พัก/ข้าม/ออก และแสดงคิวเพลง | ห้ามอ้างว่าเสียงพร้อมจนกว่าผู้ฟังในห้องจะยืนยัน |
 | **BOT CHAT (DiscordSRV)** | แชต Minecraft↔Discord, event messages และ role display/sync ที่ผ่านการทดสอบ | ห้ามนำ token ไปใช้รัน discord.js gateway พร้อมกัน |
+
+### สถานะการเริ่มใหม่ของ AI bot
+
+AI bot เริ่มย้ายจุดตั้งค่าคำสั่งไปที่ `server/discordAiCommandRegistry.ts` แล้ว โดยคำสั่งที่ลงทะเบียนมีเพียง `/ask`, `/status`, `/store`, `/ranks`, `/topup`, `/verify`, `/players`, `/members`, `/profile`, `/help`, `/setup` และ `/embed` เท่านั้น คำสั่ง `/ai-status` ถูกยกเลิกจากทะเบียนใหม่เพื่อลดคำสั่งซ้ำซ้อน ส่วน `/play` และ `/leave` เป็นของ music bot เท่านั้น
+
+> การเปลี่ยนทะเบียนคำสั่งจะมีผลใน Discord ก็ต่อเมื่อมีการรัน AI gateway บน runtime ต่อเนื่องที่แยกจากเว็บ autoscale แล้วเท่านั้น จึงยังไม่มีการเปิด bot หรือใช้ token ในขั้นตอนนี้
 
 ## สิ่งที่ยังทำไม่ได้บน runtime ปัจจุบัน
 
