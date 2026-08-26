@@ -56,7 +56,7 @@ class DiscordAttachmentPreparationError extends Error {
 const DISCORD_API = "https://discord.com/api/v10";
 
 function getDiscordToken(): string {
-  return process.env.DISCORD_AI_BOT_TOKEN || ENV.discordAiBotToken || "";
+  return process.env.DISCORD_BOT_TOKEN || ENV.discordBotToken || "";
 }
 
 function getSupportChannelId(): string {
@@ -67,6 +67,26 @@ function getSupportChannelId(): string {
     ENV.discordStoreChannelId ||
     process.env.DISCORD_DONATE_CHANNEL_ID ||
     ENV.discordDonateChannelId ||
+    ""
+  );
+}
+
+function getOrderInGameChannelId(): string {
+  return (
+    process.env.DISCORD_ORDER_IN_GAME_CHANNEL_ID ||
+    ENV.discordOrderInGameChannelId ||
+    process.env.DISCORD_ORDERS_CHANNEL_ID ||
+    ENV.discordOrdersChannelId ||
+    getSupportChannelId()
+  );
+}
+
+function getDieLogChannelId(): string {
+  return (
+    process.env.DISCORD_DIE_LOG_CHANNEL_ID ||
+    ENV.discordDieLogChannelId ||
+    process.env.DISCORD_CHAT_CHANNEL_ID ||
+    ENV.discordChatChannelId ||
     ""
   );
 }
@@ -248,14 +268,14 @@ export async function notifyMinecraftDeath(input: {
   message: string;
   occurredAt?: Date | string | number;
 }): Promise<DiscordNotificationResult> {
-  const channelId = ENV.discordChatChannelId?.trim() || process.env.DISCORD_CHAT_CHANNEL_ID?.trim() || "";
+  const channelId = getDieLogChannelId();
   const playerName = input.playerName.trim().slice(0, 256);
   const message = input.message.trim().slice(0, 1024);
   const embed: DiscordEmbed = {
     title: "☠️ ผู้เล่นเสียชีวิตในเซิร์ฟเวอร์ RitzSMP",
     description: `ผู้เล่น \`${playerName || "ไม่ระบุชื่อ"}\` เสียชีวิต\n${message || "ไม่ระบุสาเหตุ"}`,
     color: 0x6b7280,
-    footer: { text: "RitzSMP • Minecraft server-chat" },
+    footer: { text: "RitzSMP • Minecraft die-log" },
     timestamp: new Date(input.occurredAt ?? Date.now()).toISOString(),
   };
   return postDiscordMessage(channelId, { embeds: [embed] });
@@ -393,7 +413,7 @@ export async function notifyPurchaseCompleted(input: {
   rconExecuted?: boolean;
 }): Promise<DiscordNotificationResult> {
   const { order, userName, rconExecuted = false } = input;
-  const channelId = getSupportChannelId();
+  const channelId = getOrderInGameChannelId();
   const embed: DiscordEmbed = {
     title: "🎉 มีผู้สนับสนุน RitzSMP ใหม่ค่ะ!",
     description: "ขอบพระคุณสำหรับการสนับสนุนเซิร์ฟเวอร์ RitzSMP ขอให้สนุกกับสิทธิพิเศษในเกมนะคะ",
@@ -461,6 +481,8 @@ export async function postDiscordSetupSystemPanel(
 
 export const discordNotificationInternals = {
   getSupportChannelId,
+  getOrderInGameChannelId,
+  getDieLogChannelId,
   getDonateLogChannelId,
   formatAmount,
   postDiscordMessage,

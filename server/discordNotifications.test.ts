@@ -2,12 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./_core/env", () => ({
   ENV: {
+    discordBotToken: "",
     discordAiBotToken: "",
     discordSupportChannelId: "support-channel-123",
     discordDonateLogChannelId: "donate-log-channel-456",
     discordStoreChannelId: "store-channel-789",
     discordDonateChannelId: "donate-channel-000",
     discordOrdersChannelId: "orders-channel-111",
+    discordOrderInGameChannelId: "order-in-game-channel-222",
+    discordDieLogChannelId: "die-log-channel-333",
+    discordChatChannelId: "chat-channel-legacy",
   },
 }));
 
@@ -20,12 +24,16 @@ import { setMinecraftStatusChannelIdForTests } from "./discordMinecraftStatusCha
 import { storageGetSignedUrl } from "./storage";
 
 beforeEach(() => {
+  vi.stubEnv("DISCORD_BOT_TOKEN", "unit-test-main-token");
   vi.stubEnv("DISCORD_AI_BOT_TOKEN", "unit-test-ai-token");
   vi.stubEnv("DISCORD_SUPPORT_CHANNEL_ID", "");
   vi.stubEnv("DISCORD_DONATE_LOG_CHANNEL_ID", "");
   vi.stubEnv("DISCORD_STORE_CHANNEL_ID", "");
   vi.stubEnv("DISCORD_DONATE_CHANNEL_ID", "");
   vi.stubEnv("DISCORD_ORDERS_CHANNEL_ID", "");
+  vi.stubEnv("DISCORD_ORDER_IN_GAME_CHANNEL_ID", "");
+  vi.stubEnv("DISCORD_DIE_LOG_CHANNEL_ID", "");
+  vi.stubEnv("DISCORD_CHAT_CHANNEL_ID", "");
 });
 
 afterEach(() => {
@@ -59,7 +67,7 @@ describe("Discord web-store notifications", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0]?.[0]).toBe("https://discord.com/api/v10/channels/welcome-channel-123/messages");
     const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
-    expect(requestInit.headers).toMatchObject({ Authorization: "Bot unit-test-ai-token" });
+    expect(requestInit.headers).toMatchObject({ Authorization: "Bot unit-test-main-token" });
     const payload = JSON.parse(String(requestInit.body));
     expect(payload.embeds[0].title).toContain("ระบบต้อนรับสมาชิกใหม่ RitzSMP");
     expect(payload.components[0].components.map((component: { custom_id: string }) => component.custom_id)).toEqual([
@@ -87,7 +95,7 @@ describe("Discord web-store notifications", () => {
 
     const requestInit = fetchMock.mock.calls[1]?.[1] as RequestInit;
     expect(requestInit.method).toBe("POST");
-    expect(requestInit.headers).toMatchObject({ Authorization: "Bot unit-test-ai-token" });
+    expect(requestInit.headers).toMatchObject({ Authorization: "Bot unit-test-main-token" });
     expect(requestInit.body).toBeInstanceOf(FormData);
 
     const form = requestInit.body as FormData;
@@ -146,7 +154,7 @@ describe("Discord web-store notifications", () => {
       .toContain("ไม่สามารถแนบรูปสลิปอัตโนมัติได้");
   });
 
-  it("posts a supporter announcement to the configurable support channel", async () => {
+  it("posts a supporter announcement to the configurable order-in-game channel", async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ id: "support-message-43" }), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -156,7 +164,7 @@ describe("Discord web-store notifications", () => {
       rconExecuted: true,
     });
 
-    expect(result).toMatchObject({ sent: true, channelId: "support-channel-123", messageId: "support-message-43" });
+    expect(result).toMatchObject({ sent: true, channelId: "order-in-game-channel-222", messageId: "support-message-43" });
     const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
     const payload = JSON.parse(String(requestInit.body));
     expect(payload.embeds[0]).toMatchObject({
@@ -189,9 +197,9 @@ describe("Discord web-store notifications", () => {
     ]));
   });
 
-  it("does not fall back to a generic or music bot token when the AI token is absent", async () => {
-    vi.stubEnv("DISCORD_AI_BOT_TOKEN", "");
-    vi.stubEnv("DISCORD_BOT_TOKEN", "generic-token-must-not-be-used");
+  it("does not fall back to an AI or music bot token when the main token is absent", async () => {
+    vi.stubEnv("DISCORD_BOT_TOKEN", "");
+    vi.stubEnv("DISCORD_AI_BOT_TOKEN", "ai-token-must-not-be-used");
     vi.stubEnv("DISCORD_MUSIC_BOT_TOKEN", "music-token-must-not-be-used");
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
@@ -202,7 +210,7 @@ describe("Discord web-store notifications", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("uses the configured report channel endpoint with the existing AI bot token", async () => {
+  it("uses the configured report channel endpoint with the main bot token", async () => {
     vi.stubEnv("DISCORD_REPORT_CHANNEL_ID", "report-channel-secret-test");
     const fetchMock = vi.fn().mockResolvedValueOnce(
       new Response(JSON.stringify({ id: "report-message-1" }), { status: 200 }),
@@ -223,7 +231,7 @@ describe("Discord web-store notifications", () => {
       "https://discord.com/api/v10/channels/report-channel-secret-test/messages",
       expect.objectContaining({
         method: "POST",
-        headers: expect.objectContaining({ Authorization: "Bot unit-test-ai-token" }),
+        headers: expect.objectContaining({ Authorization: "Bot unit-test-main-token" }),
       }),
     );
     const [, request] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -271,14 +279,14 @@ describe("Discord web-store notifications", () => {
     expect(fetchMock.mock.calls[1]?.[0]).toContain("/channels/dm-channel-1/messages");
   });
 
-  it("uses DISCORD_CHAT_CHANNEL_ID for Minecraft death notifications", async () => {
-    vi.stubEnv("DISCORD_CHAT_CHANNEL_ID", "chat-channel-secret-test");
+  it("uses DISCORD_DIE_LOG_CHANNEL_ID for Minecraft death notifications", async () => {
+    vi.stubEnv("DISCORD_DIE_LOG_CHANNEL_ID", "die-log-channel-secret-test");
     const fetchMock = vi.fn().mockResolvedValueOnce(
       new Response(JSON.stringify({ id: "death-message-1" }), { status: 200 }),
     );
     vi.stubGlobal("fetch", fetchMock);
     const { notifyMinecraftDeath } = await import("./discordNotifications");
     const result = await notifyMinecraftDeath({ playerName: "RitzPlayer", message: "ถูกซอมบี้โจมตีจนเสียชีวิต" });
-    expect(result).toMatchObject({ sent: true, channelId: "chat-channel-secret-test" });
-    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://discord.com/api/v10/channels/chat-channel-secret-test/messages");
+    expect(result).toMatchObject({ sent: true, channelId: "die-log-channel-secret-test" });
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://discord.com/api/v10/channels/die-log-channel-secret-test/messages");
   });

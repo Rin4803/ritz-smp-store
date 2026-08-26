@@ -294,11 +294,12 @@ async function sendSlipInstructions(user: { send: (payload: any) => Promise<any>
 }
 
 async function createReviewMessage(client: Client, order: any): Promise<void> {
-  if (!ENV.discordOrdersChannelId) {
-    console.warn("[DiscordBot] DISCORD_ORDERS_CHANNEL_ID is not configured");
+  const orderChannelId = process.env.DISCORD_ORDER_IN_GAME_CHANNEL_ID?.trim() || ENV.discordOrderInGameChannelId || process.env.DISCORD_ORDERS_CHANNEL_ID?.trim() || ENV.discordOrdersChannelId;
+  if (!orderChannelId) {
+    console.warn("[DiscordBot] DISCORD_ORDER_IN_GAME_CHANNEL_ID is not configured");
     return;
   }
-  const channel = await client.channels.fetch(ENV.discordOrdersChannelId);
+  const channel = await client.channels.fetch(orderChannelId);
   if (!channel?.isTextBased() || !("send" in channel)) return;
   const slipUrl = await storageGetSignedUrl(order.slipKey).catch(() => undefined);
   const embed = new EmbedBuilder()
