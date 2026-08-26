@@ -31,6 +31,7 @@ export default function Admin() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const isAdmin = user?.role === "admin";
   const ordersQuery = trpc.admin.orders.useQuery(undefined, { enabled: isAdmin });
+  const reportDashboardQuery = trpc.admin.playerReportDashboard.useQuery(undefined, { enabled: isAdmin, refetchInterval: 30_000 });
   const usersQuery = trpc.admin.users.useQuery(undefined, { enabled: isAdmin });
   const managedServersQuery = trpc.servers.adminList.useQuery(undefined, { enabled: isAdmin });
   const utils = trpc.useUtils();
@@ -189,6 +190,33 @@ export default function Admin() {
               <button type="button" className="ghost-btn compact-btn" disabled={presenceSchedule.isPending || !presenceStatusQuery.data?.configured} onClick={() => presenceSchedule.mutate({ action: "resume" })}>เปิดต่อ</button>
             </div>
             {presenceSchedule.error && <p role="alert" style={{ color: "#fda4af", margin: "10px 0 0", fontSize: 13 }}>{presenceSchedule.error.message}</p>}
+          </section>
+
+          <section className="admin-panel" style={{ marginBottom: 24 }} aria-labelledby="report-dashboard-title">
+            <div className="panel-heading" style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start" }}>
+              <div>
+                <div className="eyebrow" style={{ display: "flex", alignItems: "center", gap: 7 }}><ShieldAlert size={14} /> PLAYER REPORT DASHBOARD</div>
+                <h2 id="report-dashboard-title" style={{ margin: "7px 0 0", fontSize: 20 }}>สรุปการแจ้งเตือนผู้เล่น</h2>
+                <p className="subtle" style={{ margin: "7px 0 0", fontSize: 13 }}>ข้อมูลจากรายงานในห้องกลาง อัปเดตอัตโนมัติทุก 30 วินาที และแสดงเฉพาะผู้ดูแลระบบ</p>
+              </div>
+              <ShieldAlert size={24} className="gold-text" aria-hidden="true" />
+            </div>
+            {reportDashboardQuery.isLoading ? <div className="loading" style={{ marginTop: 16 }}><Loader2 size={20} className="animate-spin" /></div> : reportDashboardQuery.isError ? <div className="empty-box" style={{ marginTop: 16 }} role="alert">โหลดสรุปรายงานไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</div> : reportDashboardQuery.data ? <>
+              <div className="admin-stats" style={{ marginTop: 16 }}>
+                <div className="stat-card"><span className="subtle">รายงานทั้งหมด</span><strong>{reportDashboardQuery.data.total}</strong></div>
+                {reportDashboardQuery.data.byStatus.map(item => <div className="stat-card" key={item.status}><span className="subtle">{item.status}</span><strong>{item.count}</strong></div>)}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14, marginTop: 16 }}>
+                <div className="admin-table-wrap">
+                  <div className="panel-heading" style={{ padding: "12px 14px" }}><strong>แยกตามหมวดหมู่</strong></div>
+                  {reportDashboardQuery.data.byCategory.length === 0 ? <div className="empty-box">ยังไม่มีข้อมูลหมวดหมู่</div> : <table className="admin-table"><thead><tr><th>หมวดหมู่</th><th>จำนวน</th></tr></thead><tbody>{reportDashboardQuery.data.byCategory.map(item => <tr key={item.category}><td>{item.category}</td><td><strong>{item.count}</strong></td></tr>)}</tbody></table>}
+                </div>
+                <div className="admin-table-wrap">
+                  <div className="panel-heading" style={{ padding: "12px 14px" }}><strong>ผู้ถูกรายงานซ้ำ</strong></div>
+                  {reportDashboardQuery.data.repeatTargets.length === 0 ? <div className="empty-box">ยังไม่พบผู้ถูกรายงานซ้ำ</div> : <table className="admin-table"><thead><tr><th>ผู้เล่น</th><th>จำนวน</th></tr></thead><tbody>{reportDashboardQuery.data.repeatTargets.map(item => <tr key={`${item.target}-${item.minecraftIGN ?? ""}`}><td><strong>{item.minecraftIGN ?? "ไม่ทราบ IGN"}</strong><br /><span className="subtle">{item.target ?? "ยังไม่เชื่อม Discord"}</span></td><td><strong>{item.count}</strong></td></tr>)}</tbody></table>}
+                </div>
+              </div>
+            </> : null}
           </section>
 
           {usersQuery.isSuccess && (
