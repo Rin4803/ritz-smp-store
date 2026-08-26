@@ -823,14 +823,14 @@
 
 - [x] Audit read-only MCSV Economy config: ยืนยัน EssentialsX `worth.yml` มี 79 รายการ, FoShop `global-sell-prices.yml` มี 1,659 รายการ (เปิดใช้งาน 1,498), และ FoShop มี 9 หมวดร้าน (เปิด 7)
 - [x] Audit พบสาเหตุความไม่ตรงกัน: FoShop shop `sell-price` ถูกกำหนดเป็นราคารวมต่อแพ็ก ขณะที่ global-sell-prices/Essentials worth เป็นราคาต่อชิ้น; พบ enabled shop unit-sell ต่างจาก global 66 รายการ และต่างจาก Essentials worth 54 รายการ
-- [ ] เลือกแหล่งราคาหลักและปรับ FoShop shop sell-price/global-sell-prices/Essentials worth ให้เป็นหน่วยเดียวกัน หลังยืนยันนโยบายราคาและสร้าง rollback ที่อ่านได้จาก MCSV
+- [x] เลือกแหล่งราคาหลักเป็น EssentialsX และปรับ FoShop shop sell-price/global-sell-prices ให้เป็นหน่วยเดียวกัน หลังสร้าง full backup ที่อ่านได้จาก MCSV; verification หลังแก้ผ่าน
 - [ ] ทดสอบ `/sell`, `/sellall`, `/worth` และการจ่ายเงินด้วยบัญชีควบคุมบน production หลังแก้ราคา
 - [x] นำ snapshot/config ดิบ, ผลลัพธ์ และสคริปต์ audit MCSV/Discord ชั่วคราวออกจาก source index ก่อน checkpoint; คงเอกสารสรุปที่จำเป็นไว้เป็นหลักฐาน
 - [x] MCSV tool connection retry และดำเนินการอ่าน/เขียน `worth.yml` เมื่อระบบเชื่อมต่อพร้อม; การทดสอบคำสั่งในเกมจริงยังค้าง
 
 - [x] ผู้ใช้ยืนยันให้ดำเนินการแก้ความไม่สอดคล้องของ Economy ต่อ และสร้าง full backup MCSV ก่อนเขียน config จริง
-- [ ] สร้างแพตช์ให้ `/sell`, `/sellall`, `/worth` และ FoShop ใช้ราคาขายต่อชิ้นเดียวกัน โดยรักษาราคาซื้อของร้านเดิม
-- [x] ตรวจและเขียน Essentials `worth.yml` กลับ MCSV หลังอ่านไฟล์สดและยืนยันโครงสร้างสำเร็จ; ยังไม่ได้เปลี่ยน FoShop shop definitions
+- [x] สร้างและใช้แพตช์ให้ `/sell`, `/sellall`, `/worth` และ FoShop ใช้ราคาขายต่อชิ้นเดียวกัน โดยรักษาราคาซื้อของร้านเดิม; global mismatch และ shop mismatch หลังแก้เป็น 0
+- [x] ตรวจและยืนยัน Essentials `worth.yml` เป็น canonical หลังอ่านไฟล์สด; ปรับ FoShop shop definitions เฉพาะ `sell-price` ที่มี mapping แล้ว โดยยังไม่เปลี่ยน `buy-price`
 - [ ] ตรวจคำสั่งและบันทึกผลหลัง reload/restart พร้อมทดสอบ production ด้วยบัญชีควบคุมโดยไม่แก้ยอดผู้เล่นอื่น
 
 - [ ] ตรวจระบบ Discord ทั้งชุดอีกครั้ง: คำสั่งซื้อ/เติมเงิน, แจ้งเตือนธุรกรรม, player report, สถานะเซิร์ฟเวอร์, จำนวนผู้เล่น, server-realtime, server-chat และ role display
@@ -870,3 +870,15 @@
 - [x] ปรับ Discord slip flow ให้ fallback เป็น embed ภาษาไทยเมื่อเตรียมไฟล์สลิปล้มเหลว และคืน `sent:false` เมื่อ Discord ปฏิเสธการโพสต์ พร้อม regression coverage
 - [x] แก้สถานะออเดอร์ซื้อยศจาก `สำเร็จ` เป็น `รอตรวจสอบ` เมื่อ RCON เติมยศหรือเหรียญไม่สำเร็จ และเพิ่ม regression test กันการแสดงผลคลาดเคลื่อน; Vitest รวมผ่าน 171 tests, TypeScript check และ production build ผ่าน
 - [x] ตรวจ schema/database แล้วพบว่าสถานะ `รอตรวจสอบ` มีอยู่เดิม จึงไม่ต้องทำ migration เพิ่ม; ให้ purchaseRank ใช้สถานะนี้เมื่อ RCON ไม่พร้อมหรือล้มเหลว พร้อม regression test
+
+## Economy policy B — FoShop เป็นแหล่งราคาหลัก (ยกเลิกโดยผู้ใช้ เปลี่ยนเป็น policy A)
+- [x] ยกเลิกแนวทาง B ก่อนดำเนินการจริง; ใช้ policy A แทน
+- [x] ไม่ได้แก้ EssentialsX worth.yml ตาม policy B และไม่เปลี่ยนราคาซื้อของร้าน
+
+## Economy policy A — EssentialsX เป็นแหล่งราคาหลัก
+- [x] ยืนยัน EssentialsX `worth.yml` เป็น canonical และจัดทำ mapping ราคาขายต่อชิ้นสำหรับ FoShop กับ `global-sell-prices.yml`; ไม่แก้รายการที่ไม่มี canonical key
+- [x] สร้างและเก็บ full backup ของไฟล์ Economy บน MCSV ก่อนแก้ไขจริง พร้อม manifest และขั้นตอน rollback; backup UUID `fc561430-3c82-4d77-a395-50e98f057a1d`
+- [x] ปรับ FoShop sell-price และ `global-sell-prices.yml` ให้ตรงกับราคาต่อชิ้นจาก EssentialsX โดยไม่เปลี่ยนราคาซื้อของร้าน
+- [x] เพิ่ม/ปรับ regression checks สำหรับความสอดคล้องของ EssentialsX, FoShop และคำสั่ง `/worth`, `/sell`, `/sellall`; deterministic check ได้ `ECONOMY_VERIFY=PASS`
+- [ ] reload/restart และทดสอบ production ด้วยบัญชีควบคุม โดยตรวจจำนวน item, เงินก่อน/หลัง และไม่กระทบผู้เล่นอื่น
+- [x] บันทึกผลการแก้ Economy และหลักฐานการตรวจไฟล์แยกจากผล unit testไว้ใน `docs/economy-audit-2026-08-26.md`; หลักฐาน production จริงยัง pending
