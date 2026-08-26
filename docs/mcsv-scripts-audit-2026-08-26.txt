@@ -1,0 +1,369 @@
+===== /plugins/Skript/scripts/travel.sk =====
+# Travel Commands - RitzSMP
+# /play, /tpa, /tpaccept, /tpdeny
+
+# ── /play ──
+command /play:
+    executable by: players
+    trigger:
+        # ── Cooldown Check ──
+        if {cooldown::play::%player%} > now:
+            set {_rem} to difference between {cooldown::play::%player%} and now
+            send "&c⏳ กรุณารอ &6%{_rem}% &cวินาทีก่อนใช้ /play อีกครั้ง" to player
+            stop
+        # ── Combat Check ──
+        if {combat::%player's uuid%} is set:
+            send "&c✗ คุณอยู่ในโหมดต่อสู้! ใช้ /play ไม่ได้" to player
+            stop
+        # ── Resolve โลก Survival แบบไม่ผูกตัวพิมพ์ ──
+        set {_survival} to world("Survival")
+        if {_survival} is not set:
+            set {_survival} to world("survival")
+        if {_survival} is not set:
+            send "&c❌ โลก Survival ยังไม่พร้อม" to player
+            stop
+        if world of player is {_survival}:
+            send "&c✗ คุณอยู่ในโลก Survival อยู่แล้ว!" to player
+            stop
+        # ── ใช้ตำแหน่งเดิมเฉพาะเมื่ออยู่ในโลก Survival เดียวกัน ──
+        if {survival::lastloc::%player%} is set:
+            if world of {survival::lastloc::%player%} is {_survival}:
+                set {_target} to {survival::lastloc::%player%}
+        if {_target} is not set:
+            set {_target} to spawn point of {_survival}
+        if {_target} is not set:
+            send "&c❌ ไม่พบจุดเกิดของโลก Survival" to player
+            stop
+        # ── Countdown 3 วิ ──
+        set {_start} to location of player
+        send "&a✦ &fกำลังวาร์ปไป Survival &7(ห้ามขยับ)"
+        set {_cd} to 3
+        loop 3 times:
+            if world of player is not world of {_start}:
+                send "&c✗ &fวาปยกเลิก &8— &fคุณเปลี่ยนโลก!" to player
+                stop
+            if distance between player and {_start} > 0.5:
+                send "&c✗ &fวาปยกเลิก &8— &fคุณขยับ!" to player
+                stop
+            if {combat::%player's uuid%} is set:
+                send "&c✗ &fคุณติด Combat ระหว่างวาป! &8— &fยกเลิก" to player
+                stop
+            send actionbar "&a⏳ &2%{_cd}% &fวิ &8| &cอย่าขยับ!" to player
+            wait 1 second
+            subtract 1 from {_cd}
+        teleport player to {_target}
+        wait 2 ticks
+        # ยืนยันปลายทางจริง ไม่ให้ข้อความสำเร็จทั้งที่ยังอยู่ Lobby
+        if world of player is not {_survival}:
+            teleport player to spawn point of {_survival}
+            wait 2 ticks
+        if world of player is not {_survival}:
+            send "&c❌ วาร์ปไป Survival ไม่สำเร็จ กรุณาติดต่อแอดมิน" to player
+            stop
+        send "&a✦ &fเข้าสู่ Survival แล้ว" to player
+        set {cooldown::play::%player%} to now + 30 seconds
+
+# ── /tpa ──
+command /tpa <player>:
+    executable by: players
+    trigger:
+        if {combat::%player's uuid%} is set:
+            send "&c✖ คุณอยู่ในโหมดต่อสู้! ใช้ TPA ไม่ได้" to player
+            stop
+        if arg-1 is not online:
+            send "&c❌ ไม่พบผู้เล่น %arg-1%" to player
+            stop
+        set {tpa.request.%uuid of arg-1%} to player
+        send "&d✦ &fส่งคำขอเทเลพอร์ตไปหา &e%arg-1% &fแล้ว" to player
+        send "&d✦ &e%player% &fต้องการเทเลพอร์ตมาหาคุณ ใช้ &a/tpaccept &fเพื่อยอมรับ &7(ภายใน 60 วินาที)" to arg-1
+
+# ── /tpaccept ──
+command /tpaccept:
+    executable by: players
+    trigger:
+        if {tpa.request.%uuid of player%} is not set:
+            send "&c❌ ไม่มีคำขอเทเลพอร์ต" to player
+            stop
+        set {_sender} to {tpa.request.%uuid of player%}
+        delete {tpa.request.%uuid of player%}
+        if {_sender} is online:
+            teleport {_sender} to player
+            send "&a✦ &fยอมรับคำขอ! &e%{_sender}% &fเทเลพอร์ตมาหาคุณแล้ว" to player
+            send "&a✦ &fเทเลพอร์ตไปหา &e%player% &fสำเร็จ" to {_sender}
+        else:
+            send "&c❌ %{_sender}% ไม่ออนไลน์แล้ว" to player
+
+# ── /tpdeny ──
+command /tpdeny:
+    executable by: players
+    trigger:
+        if {tpa.request.%uuid of player%} is set:
+            set {_sender} to {tpa.request.%uuid of player%}
+            delete {tpa.request.%uuid of player%}
+            send "&c✘ &fปฏิเสธคำขอจาก &e%{_sender}%" to player
+            if {_sender} is online:
+                send "&c✘ &e%player% &fปฏิเสธคำขอเทเลพอร์ตของคุณ" to {_sender}
+        else:
+            send "&c❌ ไม่มีคำขอเทเลพอร์ต" to player
+===== /plugins/Skript/scripts/survival-respawn.sk =====
+options:
+    survival-world: Survival
+
+# ถ้ามีเตียง/จุดเกิดที่ถูกต้อง ให้ Minecraft ใช้จุดนั้นตามปกติ
+# ถ้าไม่มีเตียง ให้เกิดใน Survival แล้วเรียก RTP เพื่อสุ่มจุดปลอดภัย
+on respawn:
+    if respawn location is not a bed:
+        set {_survival} to world "{@survival-world}"
+        if {_survival} is set:
+            set respawn location to spawn point of {_survival}
+            wait 10 ticks
+            if world of player is {_survival}:
+                execute player command "rtp"
+            else:
+                teleport player to spawn point of {_survival}
+                wait 2 ticks
+                execute player command "rtp"
+        else:
+            send "&cไม่พบโลก Survival กรุณาแจ้งแอดมิน" to player
+
+===== /plugins/Skript/scripts/nightvision-gui.sk =====
+# RitzSMP Night Vision GUI
+# Command: /nv
+
+command /nv:
+    executable by: players
+    trigger:
+        open chest inventory with 3 rows named "&8Night Vision" to player
+        wait 1 tick
+        set slot 11 of player's current inventory to potion of night vision named "&aเปิด Night Vision" with lore "&7คลิกเพื่อเปิดใช้งาน"
+        set slot 15 of player's current inventory to redstone torch named "&cปิด Night Vision" with lore "&7คลิกเพื่อปิดใช้งาน"
+        if {nv.enabled::%uuid of player%} is set:
+            set slot 13 of player's current inventory to lime concrete named "&aสถานะ: ใช้งานอยู่" with lore "&7Night Vision กำลังทำงาน"
+        else:
+            set slot 13 of player's current inventory to gray concrete named "&cสถานะ: ปิดอยู่" with lore "&7Night Vision ยังไม่ทำงาน"
+
+on inventory click:
+    if name of event-inventory is "&8Night Vision":
+        cancel event
+        if clicked slot is 11:
+            set {nv.enabled::%uuid of player%} to true
+            apply night vision 1 to player for 999999 seconds
+            play sound "entity.player.levelup" with volume 1 and pitch 1.5 to player
+            close player's inventory
+            send "&aเปิด Night Vision แล้วครับ" to player
+        else if clicked slot is 15:
+            delete {nv.enabled::%uuid of player%}
+            remove night vision from player
+            play sound "block.lever.click" with volume 1 and pitch 0.8 to player
+            close player's inventory
+            send "&cปิด Night Vision แล้วครับ" to player
+
+on inventory drag:
+    if name of event-inventory is "&8Night Vision":
+        cancel event
+
+# Reapply เฉพาะตอนเกิดใหม่/เข้าเซิร์ฟ/เปลี่ยนโลก ไม่ใช้ loop เติมเอฟเฟกต์
+on join:
+    if {nv.enabled::%uuid of player%} is set:
+        wait 2 ticks
+        apply night vision 1 to player for 999999 seconds
+
+on respawn:
+    if {nv.enabled::%uuid of player%} is set:
+        wait 2 ticks
+        apply night vision 1 to player for 999999 seconds
+
+on world change:
+    if {nv.enabled::%uuid of player%} is set:
+        wait 2 ticks
+        apply night vision 1 to player for 999999 seconds
+
+
+on inventory close:
+    if name of event-inventory is "&8Night Vision":
+        wait 1 tick
+        if player is online:
+            # No action; status is refreshed whenever /nv is opened.
+            stop
+
+===== /plugins/Skript/scripts/lobby-protection.sk =====
+# ===== RitzSMP Lobby Protection =====
+# ป้องกันเฉพาะโลก Lobby เท่านั้น
+# โลก AFK ไม่ได้รับ protection ตามที่กำหนด
+
+on break:
+    if player's world is "Lobby":
+        if player is not op:
+            cancel event
+            send "&c✘ Lobby ถูกป้องกัน ไม่สามารถทุบ Block ได้" to player
+
+on place:
+    if player's world is "Lobby":
+        if player is not op:
+            cancel event
+            send "&c✘ Lobby ถูกป้องกัน ไม่สามารถวาง Block ได้" to player
+
+on damage:
+    if victim is a player:
+        if victim's world is "Lobby":
+            cancel event
+
+on food level change:
+    if player's world is "Lobby":
+        cancel event
+
+on bucket fill:
+    if player's world is "Lobby":
+        if player is not op:
+            cancel event
+
+on bucket empty:
+    if player's world is "Lobby":
+        if player is not op:
+            cancel event
+
+on ignite:
+    if event-block is set:
+        if world of event-block is "Lobby":
+            cancel event
+
+on explode:
+    if world of event-location is "Lobby":
+        cancel event
+
+===== /plugins/Skript/scripts/lobby-mob-protection.sk =====
+# RitzSMP Lobby Mob Protection
+# Prevent all living entities from naturally spawning in Lobby.
+
+on spawn of living entity:
+    if name of world of event-entity is "Lobby":
+        cancel event
+
+===== /plugins/Skript/scripts/rtp.sk =====
+# RTP v2.1 - RitzSMP (Fixed with countdown & cooldown)
+options:
+    rtp-world: Survival
+    rtp-radius: 25000
+
+command /rtp:
+    executable by: players
+    trigger:
+        # ── ใช้งานได้เฉพาะโลก Survival เท่านั้น ──
+        if name of player's world is not "Survival":
+            send "&c✗ คำสั่ง /rtp ใช้ได้เฉพาะในโลก Survival เท่านั้น" to player
+            stop
+
+        # ── Cooldown Check ──
+        if {cooldown::rtp::%player%} > now:
+            set {_rem} to difference between {cooldown::rtp::%player%} and now
+            send "&c⏳ กรุณารอ &6%{_rem}% &cวินาทีก่อนใช้ /rtp อีกครั้ง" to player
+            stop
+
+        # ── Combat Check ──
+        if {combat::%player's uuid%} is set:
+            send "&c✖ คุณอยู่ในโหมดต่อสู้! วาร์ปไม่ได้" to player
+            stop
+
+        # ── เช็คโลก Survival ──
+        set {_world} to world("{@rtp-world}")
+        if {_world} is not set:
+            send "&c❌ ไม่พบโลก Survival กรุณาติดต่อแอดมิน" to player
+            stop
+
+        set {_negRadius} to -25000
+        set {_posRadius} to 25000
+
+        loop 10 times:
+            set {_x} to random integer between {_negRadius} and {_posRadius}
+            set {_z} to random integer between {_negRadius} and {_posRadius}
+            set {_top} to highest solid block at location({_x}, 0, {_z}, {_world})
+            set {_block} to block at location({_x}, y-coordinate of {_top}, {_z}, {_world})
+            if {_block} is water or lava:
+                continue
+
+            set {_target} to location({_x} + 0.5, y-coordinate of {_top} + 1, {_z} + 0.5, {_world})
+
+            # ── เริ่ม countdown 3 วิ ──
+            set {_start} to location of player
+            send "&a✦ &fกำลังวาร์ปไปที่ &eX:%{_x}% Z:%{_z}% &f... &7(ห้ามขยับ)"
+            set {_cd} to 3
+            loop 3 times:
+                if distance between player and {_start} > 0.5:
+                    send "&c✗ &fวาปยกเลิก &8— &fคุณขยับ!" to player
+                    stop
+                if {combat::%player's uuid%} is set:
+                    send "&c✗ &fคุณติด Combat ระหว่างวาป! &8— &fยกเลิก" to player
+                    stop
+                send actionbar "&a⏳ &2%{_cd}% &fวิ &8| &cอย่าขยับ!" to player
+                wait 1 second
+                subtract 1 from {_cd}
+
+            # ── วาร์ปสำเร็จ ──
+            teleport player to {_target}
+            set {_px} to x-coordinate of player
+            set {_py} to y-coordinate of player + 1
+            set {_pz} to z-coordinate of player
+            execute console command "/particle witch %{_px}% %{_py}% %{_pz}% 1 1 1 0 15"
+            play sound "entity.enderman.teleport" to player
+            send "&a✦ &fสุ่มวาร์ปไปที่ &eX:%{_x}% Z:%{_z}% &fสำเร็จ!" to player
+
+            # ── Cooldown 60 วินาที ──
+            set {cooldown::rtp::%player%} to now + 60 seconds
+            stop
+
+        # ── หาพื้นที่ไม่ได้ ──
+        send "&c✗ ไม่พบพื้นที่ปลอดภัยหลังจากพยายาม 10 ครั้ง" to player
+===== /plugins/Skript/scripts/menu.sk =====
+# ===== RitzSMP Menu =====
+# /menu → หน้าเดียว จบ 9 ปุ่มกด
+
+command /menu:
+    trigger:
+        set {_inv} to chest inventory with 3 rows named "&8&l* &6&lRitzSMP &8&l*"
+        set {_g} to black stained glass pane named "&r"
+
+        # ใส่กรอบรอบ GUI
+        loop 9 times:
+            set slot loop-number - 1 of {_inv} to {_g}
+        set slot 9 of {_inv} to {_g}
+        set slot 17 of {_inv} to {_g}
+        set slot 18 of {_inv} to {_g}
+        set slot 26 of {_inv} to {_g}
+
+        # ปุ่ม 8 ปุ่มหลัก
+        set slot 10 of {_inv} to crafting table named "&6&lร้านค้า" with lore "&7/shop"
+        set slot 11 of {_inv} to emerald named "&a&lขายของ" with lore "&7/sell"
+        set slot 12 of {_inv} to chest named "&d&lประมูล" with lore "&7/ah"
+        set slot 13 of {_inv} to hopper named "&e&lออเดอร์" with lore "&7/orders"
+        set slot 14 of {_inv} to paper named "&b&lราคาขาย" with lore "&7/worth"
+        set slot 15 of {_inv} to feather named "&a&lเข้าเล่น" with lore "&7/play"
+        set slot 16 of {_inv} to lime dye named "&a&lLobby" with lore "&7/spawn"
+        set slot 22 of {_inv} to ender pearl named "&a&lAFK" with lore "&7คลิกไป AFK หา Coins" and "&7ได้ &e5 Coins &7ทุก 1 นาที"
+
+        open {_inv} to player
+
+# จัดการคลิกเมนูหลัก
+on inventory click:
+    if name of player's current inventory is "&8&l* &6&lRitzSMP &8&l*":
+        cancel event
+        set {_s} to index of event-slot
+        close player's inventory
+
+        # ตรวจสอบ slot แล้วสั่งคำสั่งที่ถูกต้อง
+        if {_s} is 10:
+            make player execute command "shop"
+        else if {_s} is 11:
+            make player execute command "sell"
+        else if {_s} is 12:
+            make player execute command "ah"
+        else if {_s} is 13:
+            make player execute command "orders"
+        else if {_s} is 14:
+            make player execute command "worth"
+        else if {_s} is 15:
+            make player execute command "play"
+        else if {_s} is 16:
+            make player execute command "spawn"
+        else if {_s} is 22:
+            make player execute command "afk"
+        stop

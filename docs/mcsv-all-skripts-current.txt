@@ -1,0 +1,1507 @@
+===== /plugins/Skript/scripts/afk-mob-protection.sk =====
+# ===== RitzSMP AFK Safe Zone =====
+# โลก AFK = พื้นที่ปลอดภัย: กัน Mob/สัตว์เกิด, ดาเมจ, PvP,
+# การวาง/ทำลายบล็อก และการระเบิด/ไฟ
+
+on spawn of living entity:
+    if name of world of event-entity is "afk":
+        cancel event
+
+on damage:
+    if world of victim is world "afk":
+        cancel event
+
+on break:
+    if world of event-block is world "afk":
+        cancel event
+
+on place:
+    if world of event-block is world "afk":
+        cancel event
+
+on explode:
+    if world of event-entity is world "afk":
+        cancel event
+
+on combust:
+    if world of event-entity is world "afk":
+        cancel event
+
+===== /plugins/Skript/scripts/afk.sk =====
+# ===== ✦ RitzSMP AFK System ✦ =====
+
+command /afk:
+    trigger:
+        if player's world is "AFK":
+            # ── ออกจาก AFK ──
+            delete {afk::%player%}
+            delete {afk::count::%player%}
+            set {_x} to {afk::ret::%player%::x}
+            set {_y} to {afk::ret::%player%::y}
+            set {_z} to {afk::ret::%player%::z}
+            set {_w} to {afk::ret::%player%::world}
+            if {_x} is set:
+                teleport player to location({_x}, {_y}, {_z}, {_w})
+            delete {afk::ret::%player%}
+            play sound "entity.player.levelup" at player
+            send "&8&m━━━━━━━━━━━━━━━━━━━━━" to player
+            send "&c✘ &7ออกจากโหมด &b&lAFK &7แล้ว &c✘" to player
+            send "&8&m━━━━━━━━━━━━━━━━━━━━━" to player
+
+        else if {afk::cd::%player%} is set:
+            # ── ยกเลิก countdown ──
+            delete {afk::cd::%player%}
+            delete {afk::ret::%player%}
+            send "&8&m━━━━━━━━━━━━━━━━━━━━━" to player
+            send "&c✘ &7ยกเลิกเทเลไป &b&lAFK &7แล้ว &c✘" to player
+            send "&8&m━━━━━━━━━━━━━━━━━━━━━" to player
+
+        else:
+            # ── นับถอยหลัง 5 วิ ──
+            set {afk::ret::%player%::x} to x-coord of player
+            set {afk::ret::%player%::y} to y-coord of player
+            set {afk::ret::%player%::z} to z-coord of player
+            set {afk::ret::%player%::world} to world of player
+            set {afk::cd::%player%} to 5
+            play sound "block.note_block.harp" at player
+            send "&8&m━━━━━━━━━━━━━━━━━━━━━" to player
+            send "&b✦ &7กำลังเทเลไป &b&lAFK &7... &f5 &7วินาที" to player
+            send "&8&m━━━━━━━━━━━━━━━━━━━━━" to player
+
+            while {afk::cd::%player%} > 0:
+                if {afk::cd::%player%} > 3:
+                    send title "&e✦ &6%{afk::cd::%player%}% &e✦" with subtitle "&7เตรียมไป &bAFK" to player for 10 ticks
+                else if {afk::cd::%player%} > 1:
+                    send title "&c✦ &6%{afk::cd::%player%}% &c✦" with subtitle "&7เตรียมไป &bAFK" to player for 10 ticks
+                else:
+                    send title "&c✦ &4%{afk::cd::%player%}% &c✦" with subtitle "&7เตรียมไป &bAFK" to player for 10 ticks
+                send actionbar "&8[&b✦&8] &fเทเลไป &bAFK &8▪ &e%{afk::cd::%player%}%s" to player
+                play sound "block.note_block.hat" at player
+                wait 1 second
+                if {afk::cd::%player%} is not set:
+                    stop
+                remove 1 from {afk::cd::%player%}
+
+            if {afk::cd::%player%} is set:
+                delete {afk::cd::%player%}
+                set {afk::%player%} to true
+                set {afk::count::%player%} to 0
+                teleport player to location(-1, -58, -20, "AFK")
+                play sound "entity.player.levelup" at player
+                send title "&b✦ &fAFK Mode &b✦" with subtitle "&a+2 Coins &7ทุก 1 นาที" to player for 30 ticks
+                send "&8&m━━━━━━━━━━━━━━━━━━━━━" to player
+                send "&b✦ &7เข้าโหมด &b&lAFK &7แล้ว!" to player
+                send "&a▶ &7อยู่ในโลก AFK ได้ &e+2 Coins &7ทุก &f1 นาที &8(&7ไม่จำกัดจำนวนครั้ง&8)" to player
+                send "&c▶ &7พิมพ์ &f/afk &7เพื่อออกจากโลก AFK" to player
+                send "&8&m━━━━━━━━━━━━━━━━━━━━━" to player
+
+
+on quit:
+    delete {afk::%player%}
+    delete {afk::count::%player%}
+    delete {afk::cd::%player%}
+    delete {afk::ret::%player%::x}
+    delete {afk::ret::%player%::y}
+    delete {afk::ret::%player%::z}
+    delete {afk::ret::%player%::world}
+
+
+every 1 second:
+    loop all players:
+        if loop-player's world is "AFK":
+            if {afk::%loop-player%} is not true:
+                set {afk::%loop-player%} to true
+                set {afk::count::%loop-player%} to 0
+
+            add 1 to {afk::count::%loop-player%}
+            set {_left} to 60 - {afk::count::%loop-player%}
+
+            if {_left} <= 0:
+                # ให้ Coins ทุกครั้งที่ครบ 60 วินาที ไม่มีจำกัด
+                execute console command "points give %loop-player% 2"
+                send title "&6✦ &e+2 Coins &6✦" with subtitle "&7ถัดไป &e60s" to loop-player for 15 ticks
+                send actionbar "&8[&6✦&8] &a&l+2 Coins &8▪ &7ถัดไป &f60s" to loop-player
+                play sound "entity.experience_orb.pickup" at loop-player
+                set {afk::count::%loop-player%} to 0
+            else if {_left} <= 5:
+                send actionbar "&8[&6✦&8] &e%{_left}%s &8▪ &f&lใกล้! &7+2 Coins" to loop-player
+            else if {_left} <= 10:
+                send actionbar "&8[&6✦&8] &e%{_left}%s &8▪ &6✦✦" to loop-player
+            else:
+                send actionbar "&8[&6✦&8] &e%{_left}%s &8▪ &7✦ &8✦ &7✦" to loop-player
+
+
+on world change:
+    if {afk::%player%} is true:
+        if player's world is not "AFK":
+            delete {afk::%player%}
+            delete {afk::count::%player%}
+            delete {afk::ret::%player%}
+            send "&8&m━━━━━━━━━━━━━━━━━━━━━" to player
+            send "&c✘ &7ออกจาก AFK เพราะออกจากโลก AFK!" to player
+            send "&8&m━━━━━━━━━━━━━━━━━━━━━" to player
+
+
+on player move:
+    if {afk::cd::%player%} is set:
+        set {_loc} to location({afk::ret::%player%::x}, {afk::ret::%player%::y}, {afk::ret::%player%::z}, {afk::ret::%player%::world})
+        if distance between player and {_loc} > 2:
+            delete {afk::cd::%player%}
+            delete {afk::ret::%player%}
+            send "&8&m━━━━━━━━━━━━━━━━━━━━━" to player
+            send "&c✘ &7ยกเลิกเทเลไป &b&lAFK &7เพราะเดินออก! &c✘" to player
+            send "&8&m━━━━━━━━━━━━━━━━━━━━━" to player
+            send actionbar "&c✘ ยกเลิก AFK" to player
+===== /plugins/Skript/scripts/auto-skin.sk =====
+on join:
+    if "%player%" starts with "_":
+        if {bedrock-auto-skin::%player's uuid%} is not set:
+            set {_skins::1} to "Notch"
+            set {_skins::2} to "jeb_"
+            set {_skins::3} to "Dream"
+            set {_skins::4} to "Technoblade"
+            set {_skins::5} to "Grian"
+            set {_skins::6} to "MumboJumbo"
+            set {_skins::7} to "TommyInnit"
+            set {_skin} to random element out of {_skins::*}
+            wait 5 seconds
+            make console execute command "sr applyskin %player% %{_skin}%"
+            set {bedrock-auto-skin::%player's uuid%} to "%player%"
+        stop
+    wait 5 seconds
+    make console execute command "sr applyskin %player%"
+
+===== /plugins/Skript/scripts/clearlag.sk =====
+# ClearLag - RitzSMP
+# เตือน+ลบไอเทม ยกเว้น Lobby
+
+on script load:
+    set {clearlag::seconds} to 0
+
+every 1 second:
+    add 1 to {clearlag::seconds}
+    
+    # ── 1 นาทีก่อนเริ่มนับถอยหลัง (วินาที 235) ──
+    if {clearlag::seconds} is 235:
+        loop all players:
+            set {_w} to world of loop-player
+            if name of {_w} is not "Lobby":
+                send actionbar "&c⚠ &fอีก &c1 นาที &fจะเริ่มล้างของ &7▪ &fเตรียมเก็บของ!" to loop-player
+    
+    # ── นับถอยหลัง 5 วิ (วินาที 295-299) ──
+    else if {clearlag::seconds} is 295:
+        loop all players:
+            set {_w} to world of loop-player
+            if name of {_w} is not "Lobby":
+                send actionbar "&c&l5  &7กำลังลบไอเทม..." to loop-player
+    else if {clearlag::seconds} is 296:
+        loop all players:
+            set {_w} to world of loop-player
+            if name of {_w} is not "Lobby":
+                send actionbar "&c&l4" to loop-player
+    else if {clearlag::seconds} is 297:
+        loop all players:
+            set {_w} to world of loop-player
+            if name of {_w} is not "Lobby":
+                send actionbar "&e&l3" to loop-player
+    else if {clearlag::seconds} is 298:
+        loop all players:
+            set {_w} to world of loop-player
+            if name of {_w} is not "Lobby":
+                send actionbar "&6&l2" to loop-player
+    else if {clearlag::seconds} is 299:
+        loop all players:
+            set {_w} to world of loop-player
+            if name of {_w} is not "Lobby":
+                send actionbar "&a&l1" to loop-player
+    
+    # ── ลบของ (วินาที 300) ──
+    else if {clearlag::seconds} is 300:
+        broadcast "&8[&cClearLag&8] &7✦ &c⚡ &fกำลังลบไอเทมบนพื้นจ้า"
+        loop all dropped items:
+            if name of world of loop-value is not "Lobby":
+                delete loop-value
+        broadcast "&8[&cClearLag&8] &7✦ &a✔ ลบไอเทมเรียบร้อยฮะ!"
+        set {clearlag::seconds} to 0
+===== /plugins/Skript/scripts/coins.sk =====
+# Coins System - RitzSMP
+# ย่อจำนวนเหรียญให้เป็น K / M / B / T ใช้ %js_coins% ในสกอร์บอร์ด
+
+# Function ย่อตัวเลข (รองรับ K, M, B, T)
+function fmt_num(n: number) :: text:
+    if {_n} >= 1000000000000:
+        set {_f} to round({_n} / 1000000000000 * 10) / 10
+        return "%{_f}%T"
+    else if {_n} >= 1000000000:
+        set {_f} to round({_n} / 1000000000 * 10) / 10
+        return "%{_f}%B"
+    else if {_n} >= 1000000:
+        set {_f} to round({_n} / 1000000 * 10) / 10
+        return "%{_f}%M"
+    else if {_n} >= 1000:
+        set {_f} to round({_n} / 1000 * 10) / 10
+        return "%{_f}%K"
+    else:
+        return "%{_n}%"
+
+# %js_coins% - ย่อแล้ว
+placeholderapi placeholder with the prefix "js":
+    if the identifier is "coins":
+        set {_s} to placeholder "playerpoints_points" from player
+        if {_s} is not set:
+            set the result to "0"
+            stop
+        set {_n} to {_s} parsed as number
+        if {_n} is not set:
+            set the result to "0"
+            stop
+        set the result to fmt_num({_n})
+
+# %js_coins_raw% - เลขจริงๆ
+placeholderapi placeholder with the prefix "js":
+    if the identifier is "coins_raw":
+        set {_s} to placeholder "playerpoints_points" from player
+        if {_s} is not set:
+            set the result to "0"
+            stop
+        set {_n} to {_s} parsed as number
+        if {_n} is not set:
+            set the result to "0"
+            stop
+        set the result to "%{_n}%"
+===== /plugins/Skript/scripts/combat.sk =====
+# ===== Combat Tag System - RitzSMP =====
+# โดนผู้เล่นตี = ติด Combat 50 วิ
+# โดนซ้ำตอนติด = รีเซ็ตเป็น 50 วิใหม่
+# damage from mob / fall / lava / etc. ไม่นับ
+# แสดง actionbar นับถอยหลัง
+# ออกจากเกมขณะติด Combat = กลับเข้ามาตายทันที
+
+on damage:
+    attacker is a player
+    victim is a player
+    damage cause is entity attack
+    
+    set {combat::%victim's uuid%} to unix timestamp of now
+    send actionbar "&c⚔ Combat &750s" to victim
+
+every 1 second:
+    loop all players:
+        if {combat::%loop-player's uuid%} is set:
+            set {_remain} to ({combat::%loop-player's uuid%} + 50) - unix timestamp of now
+            
+            if {_remain} <= 0:
+                delete {combat::%loop-player's uuid%}
+                send actionbar "&a✓ &7ออกจาก Combat แล้ว" to loop-player
+                wait 1 second
+                send actionbar "" to loop-player
+            else:
+                send actionbar "&c⚔ Combat &7%round({_remain})%s" to loop-player
+
+# ===== ตาย = เคลียร์ Combat =====
+on death:
+    set {_vic} to victim
+    if {combat::%{_vic}'s uuid%} is set:
+        set {_remain} to ({combat::%{_vic}'s uuid%} + 50) - unix timestamp of now
+        if {_remain} > 0:
+            send actionbar "&c✖ &7Combat ถูกยกเลิก — คุณตาย!" to {_vic}
+        delete {combat::%{_vic}'s uuid%}
+
+# ===== ออกเกมขณะติด Combat =====
+on quit:
+    if {combat::%player's uuid%} is set:
+        set {_remain} to ({combat::%player's uuid%} + 50) - unix timestamp of now
+        if {_remain} > 0:
+            # Mark ว่า combat-flee แล้วลบ combat tag
+            set {combatflee::%player's uuid%} to true
+            delete {combat::%player's uuid%}
+
+# ===== เข้ามาใหม่ = โดน kill ทันที =====
+on join:
+    if {combatflee::%player's uuid%} is true:
+        delete {combatflee::%player's uuid%}
+        wait 5 ticks
+        make console execute command "kill %player%"
+        broadcast "&c&l☠ &7%player% &cหนีตายขณะติด Combat! ถูกฆ่าเรียบร้อย"
+
+===== /plugins/Skript/scripts/crate-guard.sk =====
+on right click:
+    if player's world is not "Lobby":
+        set {_item} to player's tool
+        if name of {_item} contains "กุญแจ":
+            cancel event
+            send "&c⚠️ ใช้กุญแจกล่องสุ่มได้เฉพาะใน Lobby เท่านั้น!" to player
+
+===== /plugins/Skript/scripts/crate-menu.sk =====
+# Crate Menu RitzSMP - ใช้เหรียญ PlayerPoints
+# คลิก Shulker Box ใน Lobby เท่านั้น
+
+on script load:
+    # ราคากล่อง
+    set {crate_price::Common} to 50
+    set {crate_price::Epic} to 100
+    set {crate_price::Rare} to 200
+    set {crate_price::Legend} to 400
+    set {crate_price::Spawn} to 500
+
+    # ชื่อ crate ต้องตรงกับไฟล์จริงของ CrazyCrates
+    set {crate_id::Common} to "CommonBox"
+    set {crate_id::Epic} to "Epic"
+    set {crate_id::Rare} to "RareBox"
+    set {crate_id::Legend} to "LegendaryBox"
+    set {crate_id::Spawn} to "SpawnerBox"
+
+# ===== คลิกเฉพาะ Shulker Box กล่องสุ่มใน Lobby =====
+on right click:
+    if player's world is "Lobby":
+        set {_b} to target block of player
+        set {_t} to type of {_b}
+
+        if {_t} is white shulker box:
+            set {_crate} to "Common"
+        else if {_t} is light blue shulker box:
+            set {_crate} to "Epic"
+        else if {_t} is purple shulker box:
+            set {_crate} to "Rare"
+        else if {_t} is red shulker box:
+            set {_crate} to "Legend"
+        else if {_t} is pink shulker box:
+            set {_crate} to "Spawn"
+        else:
+            stop
+
+        # ยกเลิกการเปิด Shulker Box (กัน CrazyCrates รับ event)
+        cancel event
+
+        # ── Cooldown 1 วินาทีแบบ Timestamp (กันคลิกถี่) ──
+        if {crate_click_cooldown::%player's uuid%} is set:
+            set {_last} to {crate_click_cooldown::%player's uuid%}
+            set {_diff} to difference between {_last} and now
+            if {_diff} < 1 second:
+                stop
+        set {crate_click_cooldown::%player's uuid%} to now
+
+        # ตรวจสอบราคา
+        set {_price} to {crate_price::%{_crate}%}
+        if {_price} is not set:
+            send "&c❌ กล่องนี้ยังไม่มีราคา" to player
+            stop
+
+        # ดึงยอด PlayerPoints
+        set {_bal} to placeholder "playerpoints_points" from player
+        if {_bal} is not set:
+            set {_bal} to "0"
+        set {_bal} to {_bal} parsed as number
+        if {_bal} is not set:
+            set {_bal} to 0
+
+        if {_bal} < {_price}:
+            send "&c❌ เหรียญไม่พอ! ต้องการ &6%fmt_num({_price})% &cเหรียญ (คุณมี &e%fmt_num({_bal})%&c)" to player
+            stop
+
+        # ตรวจสอบ Crate ID
+        set {_crate_id} to {crate_id::%{_crate}%}
+        if {_crate_id} is not set:
+            send "&c❌ ไม่พบกล่องนี้ในระบบ" to player
+            stop
+
+        # หักเหรียญก่อนเปิด
+        make console execute command "points take %player's name% %{_price}%"
+
+        # ให้ virtual key + เปิดกล่อง
+        make console execute command "crazycrates give virtual %{_crate_id}% 1 %player's name%"
+        wait 1 tick
+        make console execute command "crazycrates forceopen %{_crate_id}% %player's name%"
+
+        send "&a✦ ใช้ &6%fmt_num({_price})% &aเหรียญ เปิดกล่อง &e%{_crate}% &aแล้ว!" to player
+
+# ===== Sync Balance ตอนผู้เล่นเข้า =====
+on join:
+    delete {bal::%player%}
+===== /plugins/Skript/scripts/death-effects.sk =====
+on death of player:
+    if attacker is a player:
+        draw 25 of soul fire flame particle at victim
+        play sound "entity.wither.death" with volume 0.35 and pitch 1.8 to attacker
+        send action bar "&6⚔ &e%attacker% &7ปลิดชีพคุณ &6⚔" to victim
+        send action bar "&c⚡ &7คุณสังหาร &e%victim% &c⚡" to attacker
+        wait 2 ticks
+        strike lightning effect at victim
+        draw 35 of electric spark particle at victim
+        draw 25 of flame particle at victim
+    else:
+        draw 25 of soul fire flame particle at victim
+        play sound "entity.lightning_bolt.impact" with volume 0.5 and pitch 1.4 to victim
+        send action bar "&c☠ &7คุณเสียชีวิต &c☠" to victim
+        wait 2 ticks
+        strike lightning effect at victim
+        draw 30 of electric spark particle at victim
+        draw 20 of end rod particle at victim
+===== /plugins/Skript/scripts/help.sk =====
+command /help:
+    trigger:
+        send "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        send "&6&l✦ &e&lRitzSMP Help &6&l✦"
+        send "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        send " &b⛏ เดินทาง:"
+        send " &e/lobby &7- &fกลับ Lobby"
+        send " &e/rtp &7- &fสุ่มวาร์ป"
+        send " &e/play &7- &fไป Survival"
+        send " &e/home &7- &fกลับบ้าน"
+        send " &e/tpa <ชื่อ> &7- &fขอวาร์ป"
+        send " &e/tpaccept &7- &fยอมรับ"
+        send " "
+        send " &6💰 เศรษฐกิจ:"
+        send " &e/bal &7- &fดูเงิน"
+        send " &e/shop &7- &fร้านค้า"
+        send " &e/sell &7- &fขายของ"
+        send " &e/worth &7- &fราคาขาย"
+        send " &e/ah &7- &fประมูล"
+        send " &e/order <ราคา> &7- &fตั้งซื้อ"
+        send " "
+        send " &a🤝 สังคม:"
+        send " &e/msg &7- &fข้อความส่วนตัว"
+        send " &e/team &7- &fระบบทีม"
+        send " &e/afk &7- &fย้ายไป AFK"
+        send " "
+        send " &d⚡ อื่นๆ:"
+        send " &e/nv &7- &fNight Vision"
+        send " &e/ping &7- &fเช็คปิง"
+        send " &e/help &7- &fเปิดเมนูนี้"
+        send "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        send "&7พิมพ์คำสั่งเพื่อใช้งานได้เลย!"
+===== /plugins/Skript/scripts/home.sk =====
+# ===== /home - RitzSMP (30 Jul 69) =====
+# Skript จัด delay เอง: actionbar นับถอยหลัง 3→1 + cancel on move + cooldown 30s + combat check
+# /homes → HomeForge GUI
+
+command /home:
+    trigger:
+        # ── Cooldown check ──
+        if {home::cooldown::%player's uuid%} > now:
+            message "&c⏳ ยังติดคูลดาวน์อยู่ กรุณารอสักครู่..." to player
+            stop
+        
+        # ── Combat check ──
+        if {combat::%player's uuid%} is set:
+            message "&c✖ คุณอยู่ในโหมดต่อสู้! วาร์ปไม่ได้" to player
+            stop
+        
+        # ── เริ่มนับถอยหลัง ──
+        set {_loc} to location of player
+        set {_count} to 3
+        message "&8[&b/home&8] &7✦ &aกำลังวาร์ป..." to player
+        send action bar "&3&l3  &7กำลังวาร์ปกลับบ้าน..." to player
+        
+        while {_count} > 0:
+            wait 1 second
+            remove 1 from {_count}
+            
+            # ── Cancel on move ──
+            if distance between {_loc} and location of player > 0.5:
+                message "&c✖ ยกเลิกเพราะคุณขยับตัว!" to player
+                send action bar "&c✖ ยกเลิกเพราะคุณขยับ!" to player
+                stop
+            
+            # ── อัปเดต actionbar และเทเลเมื่อถึง 0 ──
+            if {_count} is 2:
+                send action bar "&e&l2" to player
+            else if {_count} is 1:
+                send action bar "&a&l1" to player
+            else if {_count} is 0:
+                # เทเลก่อน แล้วค่อยขึ้นข้อความ
+                make player execute command "homeforge:home"
+                wait 1 tick
+                send action bar "&a&l✔ วาร์ปเรียบร้อย!" to player
+        
+        # ── ตั้ง cooldown 30 วิ ──
+        set {home::cooldown::%player's uuid%} to now + 30 seconds
+
+===== /plugins/Skript/scripts/homegui.sk =====
+# Home GUI - RitzSMP
+# เมนูบ้านหลัก ใช้ร่วมกับ HomeForge
+
+command /homegui:
+    aliases: /homesgui
+    trigger:
+        set {_inv} to chest inventory with 3 rows named "&8✦ &aบ้านของฉัน &8✦"
+        set {_g} to black stained glass pane named " "
+        
+        # ใส่กรอบ
+        loop 27 times:
+            set slot loop-number - 1 of {_inv} to {_g}
+        
+        # ปุ่มกลับบ้าน
+        set slot 11 of {_inv} to red_bed named "&a&lกลับบ้าน" with lore "&7วาร์ปกลับบ้านทันที"
+        # ปุ่มจัดการบ้าน (HomeForge GUI)
+        set slot 13 of {_inv} to book named "&e&lจัดการบ้าน" with lore "&7เปิดหน้าจัดการบ้านทั้งหมด"
+        # ปุ่มตั้งบ้าน
+        set slot 15 of {_inv} to compass named "&b&lตั้งบ้าน" with lore "&7ตั้งจุดบ้านใหม่"
+        # ปุ่มปิด
+        set slot 22 of {_inv} to barrier named "&c✘ ปิด"
+        
+        set {homegui::%player%} to true
+        open {_inv} to player
+
+on inventory click:
+    if {homegui::%player%} is true:
+        cancel event
+        set {_s} to index of event-slot
+        close player's inventory
+        delete {homegui::%player%}
+        
+        if {_s} is 11:
+            make player execute command "home"
+        else if {_s} is 13:
+            make player execute command "homes"
+        else if {_s} is 15:
+            make player execute command "sethome"
+        else if {_s} is 22:
+            stop
+
+on inventory close:
+    delete {homegui::%player%}
+===== /plugins/Skript/scripts/lobby-mob-protection.sk =====
+# RitzSMP Lobby Mob Protection
+# Prevent all living entities from naturally spawning in Lobby.
+
+on spawn of living entity:
+    if name of world of event-entity is "Lobby":
+        cancel event
+
+===== /plugins/Skript/scripts/lobby-protection.sk =====
+# ===== RitzSMP Lobby Protection =====
+# ป้องกันเฉพาะโลก Lobby เท่านั้น
+# โลก AFK ไม่ได้รับ protection ตามที่กำหนด
+
+on break:
+    if player's world is "Lobby":
+        if player is not op:
+            cancel event
+            send "&c✘ Lobby ถูกป้องกัน ไม่สามารถทุบ Block ได้" to player
+
+on place:
+    if player's world is "Lobby":
+        if player is not op:
+            cancel event
+            send "&c✘ Lobby ถูกป้องกัน ไม่สามารถวาง Block ได้" to player
+
+on damage:
+    if victim is a player:
+        if victim's world is "Lobby":
+            cancel event
+
+on food level change:
+    if player's world is "Lobby":
+        cancel event
+
+on bucket fill:
+    if player's world is "Lobby":
+        if player is not op:
+            cancel event
+
+on bucket empty:
+    if player's world is "Lobby":
+        if player is not op:
+            cancel event
+
+on ignite:
+    if event-block is set:
+        if world of event-block is "Lobby":
+            cancel event
+
+on explode:
+    if world of event-location is "Lobby":
+        cancel event
+
+===== /plugins/Skript/scripts/lobby.sk =====
+command /lobby:
+    aliases: /hub, /spawn
+    trigger:
+        if player's world is world("{@lobby-world}"):
+            send "&c⚠️ คุณอยู่ใน Lobby อยู่แล้ว!" to player
+            stop
+        if {lobby::spawn} is not set:
+            send "&c❌ ยังไม่ได้ตั้งค่า Spawn (Admin ใช้ /setlobby)" to player
+            stop
+        # ── Cooldown Check ──
+        if {cooldown::lobby::%player%} > now:
+            set {_rem} to difference between {cooldown::lobby::%player%} and now
+            send "&c⏳ กรุณารอ &6%{_rem}% &cวินาทีก่อนใช้ /lobby อีกครั้ง" to player
+            stop
+        # ── Combat Check ──
+        if {combat::%player's uuid%} is set:
+            send "&c✗ คุณอยู่ในโหมดต่อสู้! ใช้ /lobby ไม่ได้" to player
+            stop
+        # ── บันทึกตำแหน่งก่อนวาร์ป (เฉพาะโลก Survival) ──
+        set {_worldName} to name of world of player
+        if {_worldName} is "survival":
+            set {survival::lastloc::%player%} to location of player
+        # ── เริ่มนับถอยหลัง 3 วินาที (Pattern เหมือน /play) ──
+        set {_start} to location of player
+        send "&6&l✦ &fกำลังเดินทางไป Lobby &7(ห้ามขยับ)" to player
+        play sound "entity.enderman.teleport" with volume 1 and pitch 0.8 to player
+        set {_cd} to 3
+        loop 3 times:
+            if distance between player and {_start} > 0.5:
+                send "&c✗ &fวาปยกเลิก &8— &fคุณขยับ!" to player
+                stop
+            if {combat::%player's uuid%} is set:
+                send "&c✗ &fคุณติด Combat ระหว่างวาป! &8— &fยกเลิก" to player
+                stop
+            send actionbar "&a⏳ &2%{_cd}% &fวิ &8| &cอย่าขยับ!" to player
+            wait 1 second
+            subtract 1 from {_cd}
+        # ── เทเลพอร์ตไป Lobby ──
+        set {_loc} to {lobby::spawn}
+        teleport player to {_loc}
+        play sound "entity.enderman.teleport" with volume 1 and pitch 1.5 to player
+        # ── เอฟเฟกต์ต้อนรับ ──
+        set {_x} to x-coordinate of player
+        set {_y} to y-coordinate of player + 1
+        set {_z} to z-coordinate of player
+        execute console command "/particle firework %{_x}% %{_y}% %{_z}% 1 1 1 0 30"
+        send action bar "&a✨ ยินดีต้อนรับสู่ RitzSMP Lobby!" to player
+        apply night vision 1 to player for 999 days
+        # ── ตั้ง Cooldown 30 วินาที ──
+        set {cooldown::lobby::%player%} to now + 30 seconds
+        stop
+===== /plugins/Skript/scripts/menu.sk =====
+# ===== RitzSMP Menu =====
+# /menu → หน้าเดียว จบ 9 ปุ่มกด
+
+command /menu:
+    trigger:
+        set {_inv} to chest inventory with 3 rows named "&8&l* &6&lRitzSMP &8&l*"
+        set {_g} to black stained glass pane named "&r"
+
+        # ใส่กรอบรอบ GUI
+        loop 9 times:
+            set slot loop-number - 1 of {_inv} to {_g}
+        set slot 9 of {_inv} to {_g}
+        set slot 17 of {_inv} to {_g}
+        set slot 18 of {_inv} to {_g}
+        set slot 26 of {_inv} to {_g}
+
+        # ปุ่ม 8 ปุ่มหลัก
+        set slot 10 of {_inv} to crafting table named "&6&lร้านค้า" with lore "&7/shop"
+        set slot 11 of {_inv} to emerald named "&a&lขายของ" with lore "&7/sell"
+        set slot 12 of {_inv} to chest named "&d&lประมูล" with lore "&7/ah"
+        set slot 13 of {_inv} to hopper named "&e&lออเดอร์" with lore "&7/orders"
+        set slot 14 of {_inv} to paper named "&b&lราคาขาย" with lore "&7/worth"
+        set slot 15 of {_inv} to feather named "&a&lเข้าเล่น" with lore "&7/play"
+        set slot 16 of {_inv} to lime dye named "&a&lLobby" with lore "&7/spawn"
+        set slot 22 of {_inv} to ender pearl named "&a&lAFK" with lore "&7คลิกไป AFK หา Coins" and "&7ได้ &e5 Coins &7ทุก 1 นาที"
+
+        open {_inv} to player
+
+# จัดการคลิกเมนูหลัก
+on inventory click:
+    if name of player's current inventory is "&8&l* &6&lRitzSMP &8&l*":
+        cancel event
+        set {_s} to index of event-slot
+        close player's inventory
+
+        # ตรวจสอบ slot แล้วสั่งคำสั่งที่ถูกต้อง
+        if {_s} is 10:
+            make player execute command "shop"
+        else if {_s} is 11:
+            make player execute command "sell"
+        else if {_s} is 12:
+            make player execute command "ah"
+        else if {_s} is 13:
+            make player execute command "orders"
+        else if {_s} is 14:
+            make player execute command "worth"
+        else if {_s} is 15:
+            make player execute command "play"
+        else if {_s} is 16:
+            make player execute command "spawn"
+        else if {_s} is 22:
+            make player execute command "afk"
+        stop
+===== /plugins/Skript/scripts/mob-prevention.sk =====
+# Mob Prevention - RitzSMP
+# ป้องกันวัว แกะ ไก่ หมู เกิดใน Lobby และ afk
+
+on spawn of cow, sheep, chicken, or pig:
+    set {_worldName} to name of world of event-entity
+    set {_isRestricted} to false
+    if {_worldName} is "Lobby":
+        set {_isRestricted} to true
+    if {_worldName} is "afk":
+        set {_isRestricted} to true
+    if {_isRestricted} is true:
+        cancel event
+===== /plugins/Skript/scripts/nightvision-gui.sk =====
+# RitzSMP Night Vision GUI
+# Command: /nv
+
+command /nv:
+    executable by: players
+    trigger:
+        open chest inventory with 3 rows named "&8Night Vision" to player
+        wait 1 tick
+        set slot 11 of player's current inventory to potion of night vision named "&aเปิด Night Vision" with lore "&7คลิกเพื่อเปิดใช้งาน"
+        set slot 15 of player's current inventory to redstone torch named "&cปิด Night Vision" with lore "&7คลิกเพื่อปิดใช้งาน"
+        if {nv.enabled::%uuid of player%} is set:
+            set slot 13 of player's current inventory to lime concrete named "&aสถานะ: ใช้งานอยู่" with lore "&7Night Vision กำลังทำงาน"
+        else:
+            set slot 13 of player's current inventory to gray concrete named "&cสถานะ: ปิดอยู่" with lore "&7Night Vision ยังไม่ทำงาน"
+
+on inventory click:
+    if name of event-inventory is "&8Night Vision":
+        cancel event
+        if clicked slot is 11:
+            set {nv.enabled::%uuid of player%} to true
+            apply night vision 1 to player for 999999 seconds
+            play sound "entity.player.levelup" with volume 1 and pitch 1.5 to player
+            close player's inventory
+            send "&aเปิด Night Vision แล้วครับ" to player
+        else if clicked slot is 15:
+            delete {nv.enabled::%uuid of player%}
+            remove night vision from player
+            play sound "block.lever.click" with volume 1 and pitch 0.8 to player
+            close player's inventory
+            send "&cปิด Night Vision แล้วครับ" to player
+
+on inventory drag:
+    if name of event-inventory is "&8Night Vision":
+        cancel event
+
+# Reapply เฉพาะตอนเกิดใหม่/เข้าเซิร์ฟ/เปลี่ยนโลก ไม่ใช้ loop เติมเอฟเฟกต์
+on join:
+    if {nv.enabled::%uuid of player%} is set:
+        wait 2 ticks
+        apply night vision 1 to player for 999999 seconds
+
+on respawn:
+    if {nv.enabled::%uuid of player%} is set:
+        wait 2 ticks
+        apply night vision 1 to player for 999999 seconds
+
+on world change:
+    if {nv.enabled::%uuid of player%} is set:
+        wait 2 ticks
+        apply night vision 1 to player for 999999 seconds
+
+
+on inventory close:
+    if name of event-inventory is "&8Night Vision":
+        wait 1 tick
+        if player is online:
+            # No action; status is refreshed whenever /nv is opened.
+            stop
+
+===== /plugins/Skript/scripts/orders.sk =====
+command /order <number>:
+    trigger:
+        set {_item} to player's tool
+        if {_item} is air:
+            send "&6&l[Order] &r&c❌ กรุณาถือของที่อยากซื้อในมือ!"
+            stop
+        set {_price} to argument 1
+        if {_price} < 1:
+            send "&6&l[Order] &r&c❌ ราคาต้องมากกว่า 1 เหรียญ!"
+            stop
+        set {_id} to 1
+        while {orders::list::%{_id}%} is set:
+            add 1 to {_id}
+        set {orders::list::%{_id}%::player} to player's name
+        set {orders::list::%{_id}%::uuid} to player's uuid
+        set {orders::list::%{_id}%::item} to type of {_item}
+        set {orders::list::%{_id}%::amount} to 64
+        set {orders::list::%{_id}%::price} to {_price}
+        set {orders::list::%{_id}%::active} to true
+        set {_iname} to name of {_item}
+        if {_iname} is not set:
+            set {_iname} to type of {_item}
+        set {_total} to 64 * {_price}
+        send "&6&l[Order] &r&a✓ สร้าง Order #%{_id}% แล้ว!"
+        send " &7ซื้อ %{_iname}% x64 ราคา %{_price}%/ชิ้น รวม %{_total}% เหรียญ"
+        broadcast "&6&l[Order] &r&e%player% &aได้สร้าง Order #%{_id}% — %{_iname}% x64 ราคา %{_price}%/ชิ้น"
+
+command /orders:
+    trigger:
+        set {_count} to 0
+        loop 500 times:
+            if {orders::list::%loop-value-1%::active} is true:
+                add 1 to {_count}
+        if {_count} = 0:
+            send "&6&l[Order] &r&cไม่มี Order"
+            send " &7ใช้ &e/order <ราคา> &7ถือของในมือ"
+            stop
+        send "&8&m━━━━━━━━━━━━"
+        send "&6✦ Buy Orders &8☐ &7(%{_count}%)"
+        send "&8&m━━━━━━━━━━━━"
+        loop 500 times:
+            if {orders::list::%loop-value-1%::active} is not true:
+                continue
+            set {_id} to loop-value-1
+            set {_item} to {orders::list::%{_id}%::item}
+            set {_amount} to {orders::list::%{_id}%::amount}
+            set {_price} to {orders::list::%{_id}%::price}
+            set {_buyer} to {orders::list::%{_id}%::player}
+            set {_total} to {_amount} * {_price}
+            send "&8#%{_id}% &f%{_item}% &7x%{_amount}% &8| &7%{_buyer}% &8| &6%{_price}% &7รวม &e%{_total}%"
+            send " &7→ &a/sellorder %{_id}%"
+        send "&8&m━━━━━━━━━━━━"
+
+command /sellorder <integer>:
+    trigger:
+        set {_id} to argument 1
+        if {orders::list::%{_id}%::active} is not true:
+            send "&6&l[Order] &r&c❌ ไม่พบ Order #%{_id}%!"
+            stop
+        set {_item} to {orders::list::%{_id}%::item}
+        set {_amount} to {orders::list::%{_id}%::amount}
+        set {_price} to {orders::list::%{_id}%::price}
+        set {_buyerUUID} to {orders::list::%{_id}%::uuid}
+        set {_buyerName} to {orders::list::%{_id}%::player}
+        if player's uuid = {_buyerUUID}:
+            send "&6&l[Order] &r&c❌ ขายให้ตัวเองไม่ได้!"
+            stop
+        set {_available} to amount of {_item} in player's inventory
+        if {_available} < {_amount}:
+            send "&6&l[Order] &r&c❌ ของไม่พอ! ต้องการ %{_item}% x%{_amount}%"
+            stop
+        set {_total} to {_price} * {_amount}
+        loop all players:
+            if name of loop-player = {_buyerName}:
+                set {_buyerPlayer} to loop-player
+                exit loop
+        if {_buyerPlayer} is not set:
+            send "&6&l[Order] &r&c❌ %{_buyerName}% ไม่ได้ออนไลน์อยู่"
+            stop
+        if {_buyerPlayer}'s balance < {_total}:
+            send "&6&l[Order] &r&c❌ %{_buyerName}% เงินไม่พอ!"
+            stop
+        remove {_total} from {_buyerPlayer}'s balance
+        remove {_amount} of {_item} from player's inventory
+        add {_total} to player's balance
+        give {_amount} of {_item} to {_buyerPlayer}
+        send "&6&l[Order] &r&a✓ มีคนขายของให้คุณ! %player% ขาย %{_item}% x%{_amount}% ราคา %{_total}% เหรียญ" to {_buyerPlayer}
+        send "&6&l[Order] &r&a✓ ขายสำเร็จ! ได้รับ %{_total}% เหรียญ"
+        send " &7ขาย %{_item}% x%{_amount}% ให้ %{_buyerName}%"
+        broadcast "&6&l[Order] &r&e%player% &aได้ขาย %{_item}% x%{_amount}% ให้ &e%{_buyerName}% &a%{_total}% เหรียญ"
+        delete {orders::list::%{_id}%::active}
+        delete {orders::list::%{_id}%}
+
+command /cancelorder <integer>:
+    trigger:
+        set {_id} to argument 1
+        if {orders::list::%{_id}%::active} is not true:
+            send "&6&l[Order] &r&c❌ ไม่พบ Order #%{_id}%!"
+            stop
+        if {orders::list::%{_id}%::uuid} is not player's uuid:
+            send "&6&l[Order] &r&c❌ ไม่ใช่ Order ของคุณ!"
+            stop
+        delete {orders::list::%{_id}%::active}
+        delete {orders::list::%{_id}%}
+        send "&6&l[Order] &r&a✓ ยกเลิก Order #%{_id}% แล้ว!"
+===== /plugins/Skript/scripts/rankgrad.sk =====
+# Rank Gradient - RitzSMP
+# สร้าง %js_rankgrad% คืน MiniMessage gradient ตามกลุ่ม LP (DonutScoreboard รองรับ)
+# chat/TAB ยังใช้ %luckperms_prefix% เดิม ไม่กระทบ
+
+placeholderapi placeholder with the prefix "js":
+    if the identifier is "rankgrad":
+        if player has permission "group.owner":
+            set the result to "<gradient:#FF1744:#FF9100>[Owner]"
+            stop
+        else if player has permission "group.admin":
+            set the result to "<gradient:#FF3D00:#FFC400>[ADMIN]"
+            stop
+        else if player has permission "group.emperor":
+            set the result to "<gradient:#FFAB00:#FFFF00>[EMPEROR]"
+            stop
+        else if player has permission "group.celestial":
+            set the result to "<gradient:#00E5FF:#FFFFFF>[CELESTIAL]"
+            stop
+        else if player has permission "group.mythic":
+            set the result to "<gradient:#2962FF:#00E5FF>[MYTHIC]"
+            stop
+        else if player has permission "group.overlord":
+            set the result to "<gradient:#6A1B9A:#E040FB>[OVERLORD]"
+            stop
+        else if player has permission "group.lord":
+            set the result to "<gradient:#8E24AA:#FF4081>[LORD]"
+            stop
+        else if player has permission "group.noble":
+            set the result to "<gradient:#AB47BC:#CE93D8>[NOBLE]"
+            stop
+        else if player has permission "group.elite":
+            set the result to "<gradient:#00C853:#69F0AE>[ELITE]"
+            stop
+        else if player has permission "group.vip":
+            set the result to "<gradient:#00E676:#B2FF59>[VIP]"
+            stop
+        else if player has permission "group.premium":
+            set the result to "<gradient:#448AFF:#80D8FF>[PREMIUM]"
+            stop
+        else if player has permission "group.player":
+            set the result to "<gradient:#9E9E9E:#E0E0E0>[PLAYER]"
+            stop
+        else:
+            set the result to "<gray>[Player]"
+
+===== /plugins/Skript/scripts/rtp.sk =====
+# RTP v2.1 - RitzSMP (Fixed with countdown & cooldown)
+options:
+    rtp-world: Survival
+    rtp-radius: 25000
+
+command /rtp:
+    executable by: players
+    trigger:
+        # ── ใช้งานได้เฉพาะโลก Survival เท่านั้น ──
+        if name of player's world is not "Survival":
+            send "&c✗ คำสั่ง /rtp ใช้ได้เฉพาะในโลก Survival เท่านั้น" to player
+            stop
+
+        # ── Cooldown Check ──
+        if {cooldown::rtp::%player%} > now:
+            set {_rem} to difference between {cooldown::rtp::%player%} and now
+            send "&c⏳ กรุณารอ &6%{_rem}% &cวินาทีก่อนใช้ /rtp อีกครั้ง" to player
+            stop
+
+        # ── Combat Check ──
+        if {combat::%player's uuid%} is set:
+            send "&c✖ คุณอยู่ในโหมดต่อสู้! วาร์ปไม่ได้" to player
+            stop
+
+        # ── เช็คโลก Survival ──
+        set {_world} to world("{@rtp-world}")
+        if {_world} is not set:
+            send "&c❌ ไม่พบโลก Survival กรุณาติดต่อแอดมิน" to player
+            stop
+
+        set {_negRadius} to -25000
+        set {_posRadius} to 25000
+
+        loop 10 times:
+            set {_x} to random integer between {_negRadius} and {_posRadius}
+            set {_z} to random integer between {_negRadius} and {_posRadius}
+            set {_top} to highest solid block at location({_x}, 0, {_z}, {_world})
+            set {_block} to block at location({_x}, y-coordinate of {_top}, {_z}, {_world})
+            if {_block} is water or lava:
+                continue
+
+            set {_target} to location({_x} + 0.5, y-coordinate of {_top} + 1, {_z} + 0.5, {_world})
+
+            # ── เริ่ม countdown 3 วิ ──
+            set {_start} to location of player
+            send "&a✦ &fกำลังวาร์ปไปที่ &eX:%{_x}% Z:%{_z}% &f... &7(ห้ามขยับ)"
+            set {_cd} to 3
+            loop 3 times:
+                if distance between player and {_start} > 0.5:
+                    send "&c✗ &fวาปยกเลิก &8— &fคุณขยับ!" to player
+                    stop
+                if {combat::%player's uuid%} is set:
+                    send "&c✗ &fคุณติด Combat ระหว่างวาป! &8— &fยกเลิก" to player
+                    stop
+                send actionbar "&a⏳ &2%{_cd}% &fวิ &8| &cอย่าขยับ!" to player
+                wait 1 second
+                subtract 1 from {_cd}
+
+            # ── วาร์ปสำเร็จ ──
+            teleport player to {_target}
+            set {_px} to x-coordinate of player
+            set {_py} to y-coordinate of player + 1
+            set {_pz} to z-coordinate of player
+            execute console command "/particle witch %{_px}% %{_py}% %{_pz}% 1 1 1 0 15"
+            play sound "entity.enderman.teleport" to player
+            send "&a✦ &fสุ่มวาร์ปไปที่ &eX:%{_x}% Z:%{_z}% &fสำเร็จ!" to player
+
+            # ── Cooldown 60 วินาที ──
+            set {cooldown::rtp::%player%} to now + 60 seconds
+            stop
+
+        # ── หาพื้นที่ไม่ได้ ──
+        send "&c✗ ไม่พบพื้นที่ปลอดภัยหลังจากพยายาม 10 ครั้ง" to player
+===== /plugins/Skript/scripts/save-location.sk =====
+# Save Location - RitzSMP
+# บันทึกตำแหน่งก่อนออกจากกลุ่มโลก Survival ทุกครั้งที่มีการเทเลพอร์ต
+
+on teleport:
+    set {_wn} to name of player's world
+
+    # เช็คว่าผู้เล่นกำลังอยู่ในกลุ่มโลก Survival ก่อนที่จะถูกพาออก
+    if {_wn} is "Survival":
+        set {survival::lastloc::%player%} to location of player
+    else if {_wn} is "survival_neither":
+        set {survival::lastloc::%player%} to location of player
+    else if {_wn} is "survival_the_end":
+        set {survival::lastloc::%player%} to location of player
+===== /plugins/Skript/scripts/sell-alias.sk =====
+# /sell - ขายเฉพาะ stack ในมือหลักผ่าน FoShop
+# ใช้ FoShop โดยตรงเพื่อให้ตรวจราคา ตัดของ และจ่ายเงิน Vault เป็นธุรกรรมเดียว
+# ของที่ไม่มีราคาหรือขายไม่ได้จะไม่ถูกตัดออก
+
+command /sell:
+    executable by: players
+    trigger:
+        make player execute command "foshop:sell hand"
+===== /plugins/Skript/scripts/team.sk =====
+# Team System - RitzSMP (Vanilla Safe)
+options:
+    max_name: 16
+    max_teams: 50
+
+command /team [<text>] [<text>]:
+    trigger:
+        if argument 1 is "create":
+            if argument 2 is not set:
+                send "&cใช้: /team create <ชื่อทีม>"
+                stop
+            if {team::%player's uuid%} is set:
+                send "&cคุณมีทีมอยู่แล้ว! ออกก่อน: /team leave"
+                stop
+            if length of argument 2 > {@max_name}:
+                send "&cชื่อทีมยาวเกิน {@max_name} ตัวอักษร!"
+                stop
+            if argument 2 contains " ":
+                send "&cชื่อทีมห้ามมีเว้นวรรค!"
+                stop
+            if {teams::%argument 2%} is set:
+                send "&cมีทีม &f%argument 2% &cอยู่แล้ว!"
+                stop
+            if {teamcount} >= {@max_teams}:
+                send "&cทีมเต็มแล้ว!"
+                stop
+            set {teams::%argument 2%::owner} to player's uuid
+            set {teams::%argument 2%::members::1} to player's uuid
+            set {teams::%argument 2%::count} to 1
+            set {team::%player's uuid%} to argument 2
+            add 1 to {teamcount}
+            set {_s} to "&e[%argument 2%]"
+            execute console command "/lp user %player's uuid% meta addsuffix 60 %{_s}%"
+            send "&aสร้างทีม &e%argument 2% &aเรียบร้อย!"
+            send "&7>> ชวนเพื่อน: /team invite <ชื่อ>"
+            stop
+
+        else if argument 1 is "invite":
+            if argument 2 is not set:
+                send "&cใช้: /team invite <ชื่อผู้เล่น>"
+                stop
+            if {team::%player's uuid%} is not set:
+                send "&cคุณยังไม่มีทีม!"
+                stop
+            set {_team} to {team::%player's uuid%}
+            if {teams::%{_team}%::owner} is not player's uuid:
+                send "&cเฉพาะหัวหน้าทีมเท่านั้นที่เชิญได้!"
+                stop
+            if argument 2 is "%player's name%":
+                send "&cเชิญตัวเองไม่ได้!"
+                stop
+            set {_target} to argument 2
+            set {_targetuuid} to ""
+            loop all players:
+                if loop-player's name is {_target}:
+                    set {_targetuuid} to loop-player's uuid
+            if {_targetuuid} is "":
+                send "&cไม่พบผู้เล่น &f%argument 2% &cในเซิร์ฟเวอร์!"
+                stop
+            if {team::%{_targetuuid}%} is set:
+                send "&c%argument 2% มีทีมอยู่แล้ว!"
+                stop
+            set {invite::%{_targetuuid}%} to {_team}
+            send "&aส่งคำเชิญให้ &f%argument 2% &aเรียบร้อย!"
+            loop all players:
+                if loop-player's uuid is {_targetuuid}:
+                    send "&e[ทีม] &f%player% &eเชิญคุณเข้าร่วมทีม &f%{_team}%"
+                    send "&eพิมพ์ /team accept เพื่อตอบรับ!"
+                    exit loop
+            stop
+
+        else if argument 1 is "accept":
+            if {invite::%player's uuid%} is not set:
+                send "&cคุณไม่มีคำเชิญ!"
+                stop
+            if {team::%player's uuid%} is set:
+                send "&cคุณมีทีมอยู่แล้ว! ออกก่อน"
+                delete {invite::%player's uuid%}
+                stop
+            set {_team} to {invite::%player's uuid%}
+            set {_count} to {teams::%{_team}%::count} + 1
+            set {teams::%{_team}%::members::%{_count}%} to player's uuid
+            set {teams::%{_team}%::count} to {_count}
+            set {team::%player's uuid%} to {_team}
+            delete {invite::%player's uuid%}
+            set {_s} to "&e[%{_team}%]"
+            execute console command "/lp user %player's uuid% meta addsuffix 60 %{_s}%"
+            send "&aคุณเข้าร่วมทีม &e%{_team}% &aเรียบร้อย!"
+            loop {teams::%{_team}%::members::*}:
+                set {_uuid} to loop-value
+                if {_uuid} is not player's uuid:
+                    loop all players:
+                        if loop-player's uuid is {_uuid}:
+                            send "&e[ทีม] &f%player% &eเข้าร่วมทีม!" to loop-player
+                            exit loop
+            stop
+
+        else if argument 1 is "leave":
+            if {team::%player's uuid%} is not set:
+                send "&cคุณไม่มีทีม!"
+                stop
+            set {_team} to {team::%player's uuid%}
+            if {teams::%{_team}%::owner} is player's uuid:
+                send "&cคุณเป็นหัวหน้าทีม! ใช้ /team disband เพื่อลบทีม"
+                stop
+            loop {teams::%{_team}%::members::*}:
+                if loop-value is player's uuid:
+                    delete {teams::%{_team}%::members::%loop-index%}
+                    exit loop
+            set {teams::%{_team}%::count} to {teams::%{_team}%::count} - 1
+            delete {team::%player's uuid%}
+            execute console command "/lp user %player's uuid% meta removesuffix 60"
+            send "&eคุณออกจากทีม &f%{_team}% &eเรียบร้อย!"
+            loop {teams::%{_team}%::members::*}:
+                set {_uuid} to loop-value
+                loop all players:
+                    if loop-player's uuid is {_uuid}:
+                        send "&e[ทีม] &f%player% &eออกจากทีม!" to loop-player
+                        exit loop
+            stop
+
+        else if argument 1 is "list":
+            set {_list::*} to ""
+            loop {teams::*}:
+                set {_n} to loop-index
+                if {_n} contains "::":
+                    continue
+                set {_c} to {teams::%{_n}%::count}
+                add "&e%{_n}% &7(%{_c}% คน)" to {_list::*}
+            if size of {_list::*} is 0:
+                send "&cยังไม่มีทีม!"
+                stop
+            send "&6&l=== รายชื่อทีม (&e%{teamcount}%&6&l) ==="
+            loop {_list::*}:
+                send "&7  - %loop-value%"
+            send "&7======================"
+            stop
+
+        else if argument 1 is "info":
+            if argument 2 is set:
+                if {teams::%argument 2%} is not set:
+                    send "&cไม่มีทีม &f%argument 2%"
+                    stop
+                set {_team} to argument 2
+            else:
+                if {team::%player's uuid%} is not set:
+                    send "&cคุณไม่มีทีม! ใช้ /team list ดูทีมทั้งหมด"
+                    stop
+                set {_team} to {team::%player's uuid%}
+            set {_owner} to {teams::%{_team}%::owner}
+            set {_count} to {teams::%{_team}%::count}
+            send "&6&l=== &e%{_team}% &6&l==="
+            set {_ownerName} to "Unknown"
+            loop all players:
+                if loop-player's uuid is {_owner}:
+                    set {_ownerName} to loop-player's name
+                    exit loop
+            send "&eหัวหน้า: &f%{_ownerName}%"
+            send "&eสมาชิก &8(%{_count}%):"
+            loop {teams::%{_team}%::members::*}:
+                set {_uuid} to loop-value
+                set {_name} to "Unknown"
+                loop all players:
+                    if loop-player's uuid is {_uuid}:
+                        set {_name} to loop-player's name
+                        exit loop
+                send "  &7- &f%{_name}%"
+            stop
+
+        else if argument 1 is "disband":
+            if {team::%player's uuid%} is not set:
+                send "&cคุณไม่มีทีม!"
+                stop
+            set {_team} to {team::%player's uuid%}
+            if {teams::%{_team}%::owner} is not player's uuid:
+                send "&cเฉพาะหัวหน้าทีมเท่านั้น!"
+                stop
+            loop {teams::%{_team}%::members::*}:
+                execute console command "/lp user %loop-value% meta removesuffix 60"
+                delete {team::%loop-value%}
+            delete {teams::%{_team}%}
+            if {teamcount} > 0:
+                subtract 1 from {teamcount}
+            send "&cลบทีม &f%{_team}% &cเรียบร้อย!"
+            stop
+
+        else if argument 1 is "transfer":
+            if argument 2 is not set:
+                send "&cใช้: /team transfer <ชื่อผู้เล่น>"
+                stop
+            if {team::%player's uuid%} is not set:
+                send "&cคุณไม่มีทีม!"
+                stop
+            set {_team} to {team::%player's uuid%}
+            if {teams::%{_team}%::owner} is not player's uuid:
+                send "&cเฉพาะหัวหน้าทีมเท่านั้น!"
+                stop
+            set {_targetuuid} to ""
+            set {_targetname} to argument 2
+            loop all players:
+                if loop-player's name is {_targetname}:
+                    set {_targetuuid} to loop-player's uuid
+            if {_targetuuid} is "":
+                send "&cไม่พบผู้เล่น &f%argument 2% &cในเซิร์ฟเวอร์!"
+                stop
+            if {team::%{_targetuuid}%} is not {_team}:
+                send "&c%argument 2% ไม่อยู่ในทีมคุณ!"
+                stop
+            set {teams::%{_team}%::owner} to {_targetuuid}
+            set {_s} to "&e[%{_team}%]"
+            execute console command "/lp user %{_targetuuid}% meta addsuffix 60 %{_s}%"
+            send "&aโอนหัวหน้าทีมให้ &f%argument 2% &aเรียบร้อย!"
+            loop all players:
+                if loop-player's uuid is {_targetuuid}:
+                    send "&eคุณได้รับตำแหน่งหัวหน้าทีม &f%{_team}%" to loop-player
+                    exit loop
+            stop
+
+        else if argument 1 is "chat":
+            if argument 2 is not set:
+                send "&cใช้: /team chat <ข้อความ>"
+                stop
+            if {team::%player's uuid%} is not set:
+                send "&cคุณไม่มีทีม!"
+                stop
+            set {_team} to {team::%player's uuid%}
+            loop {teams::%{_team}%::members::*}:
+                set {_uuid} to loop-value
+                loop all players:
+                    if loop-player's uuid is {_uuid}:
+                        send "&e[ทีม] &f%player%&7: &f%argument 2%" to loop-player
+                        exit loop
+            stop
+
+        if argument 1 is not set:
+            send "&6&l=== ระบบทีม ==="
+            send "&e/team create <ชื่อ> &7- สร้างทีม"
+            send "&e/team invite <ชื่อ> &7- เชิญเพื่อน"
+            send "&e/team accept &7- ตอบรับคำเชิญ"
+            send "&e/team leave &7- ออกจากทีม"
+            send "&e/team list &7- ดูรายชื่อทีม"
+            send "&e/team info &7- ดูข้อมูลทีม"
+            send "&e/team disband &7- ลบทีม (หัวหน้า)"
+            send "&e/team transfer <ชื่อ> &7- โอนหัวหน้า"
+            send "&e/team chat <ข้อความ> &7- พูดคุยในทีม"
+            stop
+
+        send "&cไม่รู้จักคำสั่ง /team %argument 1%"
+        send "&7พิมพ์ /team เพื่อดูคำสั่งที่ใช้ได้"
+
+placeholderapi placeholder with the prefix "js":
+    if the identifier is "team":
+        if {team::%player's uuid%} is set:
+            set {_t} to {team::%player's uuid%}
+            set the result to "&e%{_t}%"
+        else:
+            set the result to ""
+===== /plugins/Skript/scripts/tpag.sk =====
+# ===== /tpag - TPA GUI (RitzSMP) =====
+# /tpag → เลือกหัว → กด → GUI ✔/✘ เด้งให้ผู้รับ
+# รับ → นับถอยหลัง 3 วิ (คนส่งห้ามขยับ, คนรับขยับได้) → วาป
+# คูลดาวน์ 15 วิ + cloud particles หลังส่งคำขอ
+
+command /tpag:
+    trigger:
+        # ── Combat Check ──
+        if {combat::%player's uuid%} is set:
+            send "&c✗ คุณอยู่ในโหมดต่อสู้! ใช้ TPA ไม่ได้" to player
+            stop
+        # ── Cooldown Check ──
+        if {tpag::cd::%player%} is true:
+            send "&c✗ คูลดาวน์ 15 วิ! กรุณารอก่อนใช้ /tpag อีกครั้ง" to player
+            set {_x} to x-coordinate of player
+            set {_y} to y-coordinate of player + 1
+            set {_z} to z-coordinate of player
+            execute console command "/particle cloud %{_x}% %{_y}% %{_z}% 1 1 1 0 5"
+            stop
+
+        # ── สร้างรายชื่อผู้เล่น ──
+        loop all players:
+            if loop-player is not player:
+                add loop-player to {_list::*}
+
+        set {_count} to size of {_list::*}
+        if {_count} is 0:
+            send "&c✗ ไม่มีผู้เล่นออนไลน์คนอื่น" to player
+            stop
+
+        # ── คำนวณจำนวนแถว GUI ──
+        set {_rows} to 1
+        if {_count} > 9:
+            set {_rows} to 2
+        if {_count} > 18:
+            set {_rows} to 3
+        if {_count} > 27:
+            set {_rows} to 4
+        if {_count} > 36:
+            set {_rows} to 5
+        if {_count} > 45:
+            set {_rows} to 6
+
+        # ── สร้าง GUI ──
+        set {_inv} to chest inventory with {_rows} rows named "TPA: เลือกผู้เล่น"
+
+        set {_i} to 0
+        loop {_list::*}:
+            set slot {_i} of {_inv} to skull of loop-value named "&e%loop-value%" with lore "&7คลิกขอ TPA"
+            set {tpag::slot::%player%::%{_i}%} to loop-value
+            add 1 to {_i}
+
+        set {tpag::gui::%player%} to true
+        open {_inv} to player
+
+# ── คลิกใน GUI เลือกผู้เล่น ──
+on inventory click:
+    if {tpag::gui::%player%} is true:
+        cancel event
+        set {_s} to index of event-slot
+        set {_t} to {tpag::slot::%player%::%{_s}%}
+
+        if {_t} is not set:
+            stop
+
+        close inventory of player
+        delete {tpag::gui::%player%}
+        delete {tpag::slot::%player%::*}
+
+        if {_t} is player:
+            send "&c✗ TPA ตัวเองไม่ได้!" to player
+            stop
+
+        if {_t} is not online:
+            send "&c✗ %{_t}% ไม่ออนไลน์" to player
+            stop
+
+        if {tpag::ask::%{_t}%} is not set:
+            set {tpag::ask::%{_t}%} to player
+
+            # ── สร้าง GUI ให้ผู้รับ ──
+            set {_r} to chest inventory with 1 row named "TPA จาก %player%"
+            set slot 0 of {_r} to green wool named "&a&l✔ รับ" with lore "&7%player% ขอวาปมาหาคุณ"
+            set slot 1 of {_r} to lime stained glass pane named "&a✔"
+            set slot 2 of {_r} to lime stained glass pane named "&a✔"
+            set slot 4 of {_r} to skull of player named "&e%player%" with lore "&7ส่ง TPA ให้คุณ"
+            set slot 6 of {_r} to red stained glass pane named "&c✘"
+            set slot 7 of {_r} to red stained glass pane named "&c✘"
+            set slot 8 of {_r} to red wool named "&c&l✘ ปฏิเสธ" with lore "&7ปฏิเสธ TPA"
+
+            open {_r} to {_t}
+            send "&d✦ &fส่ง TPA ไป &e%{_t}% &fแล้ว! &7(คูลดาวน์ 15 วิ)" to player
+            send "&d✦ &e%player% &fขอ TPA! &7(✔/✘)" to {_t}
+
+            # ── คูลดาวน์ 15 วิ ──
+            set {tpag::cd::%player%} to true
+            wait 15 seconds
+            delete {tpag::cd::%player%}
+            send "&a✔ &fคูลดาวน์ /tpag หมดแล้ว! ใช้ได้อีกครั้ง" to player
+        else:
+            send "&c✗ %{_t}% มีคำขอ TPA ค้างอยู่!" to player
+        stop
+
+# ── GUI รับ/ปฏิเสธ (ฝั่งผู้รับ) ──
+on inventory click:
+    if {tpag::ask::%player%} is set:
+        if name of player's current inventory is not "TPA จาก %{tpag::ask::%player%}%":
+            stop
+        cancel event
+        set {_sender} to {tpag::ask::%player%}
+        set {_s} to index of event-slot
+
+        # รับ = slot 0,1,2
+        if {_s} is between 0 and 2:
+            close inventory of player
+            delete {tpag::ask::%player%}
+
+            # ── Combat Check (ทั้งสองฝ่าย) ──
+            if {combat::%player's uuid%} is set:
+                send "&c✗ คุณอยู่ในโหมดต่อสู้! รับ TPA ไม่ได้" to player
+                stop
+            if {_sender} is not online:
+                send "&c✗ %{_sender}% ไม่ออนไลน์แล้ว" to player
+                stop
+            if {combat::%{_sender}'s uuid%} is set:
+                send "&c✗ %{_sender}% อยู่ในโหมดต่อสู้! TPA ล้มเหลว" to player
+                send "&c✗ %player% รับไม่ได้เพราะคุณติด Combat" to {_sender}
+                stop
+
+            # ── นับถอยหลัง 3 วิ ฝั่งคนส่ง ──
+            set {_pos} to location of {_sender}
+            # แสดง particle หนึ่งครั้งเมื่อเริ่มวาป
+            set {_x0} to x-coordinate of {_sender}
+            set {_y0} to y-coordinate of {_sender} + 1
+            set {_z0} to z-coordinate of {_sender}
+            execute console command "/particle cloud %{_x0}% %{_y0}% %{_z0}% 1 1 1 0 8"
+
+            send "&a✔ &fคุณรับ TPA จาก &e%{_sender}% &f! &7(วาปใน 3 วิ)" to player
+            send "&a✔ &e%player% &fรับคำขอ! &7(วาปใน &2&l3 &7วิ — &cห้ามขยับ!&7)" to {_sender}
+
+            set {_cd} to 3
+            loop 3 times:
+                if {_sender} is not online:
+                    send "&c✗ %{_sender}% ออกจากเซิร์ฟ &8— &fยกเลิก TPA" to player
+                    stop
+                # ── Combat Check (ทุกวินาที) ──
+                if {combat::%{_sender}'s uuid%} is set:
+                    send "&c✗ &fคุณติด Combat ระหว่างวาป! &8— &fยกเลิก TPA" to {_sender}
+                    send "&c✗ &e%{_sender}% &fติด Combat &8— &fยกเลิก TPA" to player
+                    stop
+                if distance between {_sender} and {_pos} > 0.5:
+                    send "&c✗ &fวาปยกเลิก &8— &fคุณขยับ!" to {_sender}
+                    send "&c✗ &e%{_sender}% &fขยับ &8— &fยกเลิก TPA" to player
+                    stop
+                send actionbar "&a⏳ &2%{_cd}% &fวิ &8| &cอย่าขยับ!" to {_sender}
+                wait 1 second
+                subtract 1 from {_cd}
+
+            if {_sender} is online:
+                teleport {_sender} to player
+                set {_x} to x-coordinate of {_sender}
+                set {_y} to y-coordinate of {_sender} + 1
+                set {_z} to z-coordinate of {_sender}
+                execute console command "/particle witch %{_x}% %{_y}% %{_z}% 1 1 1 0 15"
+                send "&a✔ &fวาปไปหา &e%player% &fแล้ว!" to {_sender}
+                send "&a✔ &fวาป! %{_sender}% มาหาคุณแล้ว!" to player
+            stop
+
+        # ปฏิเสธ = slot 6,7,8
+        if {_s} is between 6 and 8:
+            close inventory of player
+            delete {tpag::ask::%player%}
+            if {_sender} is online:
+                send "&c✘ %player% ปฏิเสธ TPA" to {_sender}
+            send "&c✘ ปฏิเสธ TPA จาก %{_sender}%" to player
+            stop
+
+# ── ปิด GUI = ปฏิเสธ ──
+on inventory close:
+    if {tpag::ask::%player%} is set:
+        set {_sender} to {tpag::ask::%player%}
+        if {_sender} is online:
+            send "&c✘ %player% ปิด GUI = ปฏิเสธ" to {_sender}
+        delete {tpag::ask::%player%}
+
+    if {tpag::gui::%player%} is true:
+        delete {tpag::gui::%player%}
+        delete {tpag::slot::%player%::*}
+
+# ── ล้างตัวแปรเมื่อออกเกม ──
+on quit:
+    delete {tpag::cd::%player%}
+    delete {tpag::ask::%player%}
+    delete {tpag::gui::%player%}
+    delete {tpag::slot::%player%::*}
+
+# ── รีเซ็ตตัวแปรเมื่อเข้าเกมใหม่ กัน cooldown/คำขอค้าง ──
+on join:
+    delete {tpag::cd::%player%}
+    delete {tpag::ask::%player%}
+    delete {tpag::gui::%player%}
+    delete {tpag::slot::%player%::*}
+===== /plugins/Skript/scripts/travel.sk =====
+

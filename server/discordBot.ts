@@ -294,9 +294,9 @@ async function sendSlipInstructions(user: { send: (payload: any) => Promise<any>
 }
 
 async function createReviewMessage(client: Client, order: any): Promise<void> {
-  const orderChannelId = process.env.DISCORD_ORDER_IN_GAME_CHANNEL_ID?.trim() || ENV.discordOrderInGameChannelId || process.env.DISCORD_ORDERS_CHANNEL_ID?.trim() || ENV.discordOrdersChannelId;
+  const orderChannelId = process.env.DISCORD_ORDERS_CHANNEL_ID?.trim() || ENV.discordOrdersChannelId;
   if (!orderChannelId) {
-    console.warn("[DiscordBot] DISCORD_ORDER_IN_GAME_CHANNEL_ID is not configured");
+    console.warn("[DiscordBot] DISCORD_ORDERS_CHANNEL_ID is not configured");
     return;
   }
   const channel = await client.channels.fetch(orderChannelId);

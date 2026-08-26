@@ -979,3 +979,34 @@
 - [x] ตรวจ Bot identity, Guild access และสิทธิ์อ่านช่องแบบอ่านอย่างเดียว
 - [x] ทดสอบการส่งข้อความแยกไปยัง Channel ID ของระบบที่ตั้งค่าไว้
 - [x] แก้ regression test ของ presence ให้ใช้ค่า mock แบบ deterministic และไม่ถูก live Channel ID override
+- [x] ตรวจแหล่ง event จริงของ AuctionHouse 1.5.2 และปลั๊กอิน bridge/Skript ที่ติดตั้งอยู่
+- [x] สำรองไฟล์ AuctionHouse/DiscordSRV/bridge ก่อนปรับระบบ
+- [x] เชื่อม event ลงขายและซื้อสำเร็จไปยัง Discord ห้อง order-in-game โดยไม่สร้างข้อมูลปลอมและไม่ปะปนช่องอื่น (ติดตั้ง companion bridge และใช้ TransactionLogger เป็นแหล่ง event จริง)
+- [x] เพิ่ม/ปรับ notifier ฝั่งเว็บและ regression tests สำหรับ AuctionHouse payload/routing
+- [ ] ทดสอบ flow จริงของ /ah และตรวจ log ไม่ให้แจ้งเตือนซ้ำหรือรั่วไปช่องอื่น
+- [ ] ซิงก์การเปลี่ยนแปลงทั้งหมดไปยัง private GitHub repository หลังตรวจสอบเสร็จ
+
+- [ ] วินิจฉัยและกู้คืน `/play` ให้ย้ายผู้เล่นไปโลก survival ได้
+- [ ] กู้คืนระบบสุ่ม/จัดสรรผู้เล่นครั้งแรกของ `/play`
+- [ ] ตรวจและกู้ DiscordSRV/bridge ให้ server-login, chat-game, die-log, advancement และ order-in-game ส่งข้อความได้จริง
+- [ ] ตรวจ channel ID, permission และ dependency ของช่อง Discord หมวด RITZ SMP REAL-TIME
+- [ ] ทดสอบจริงทุก event ที่ผู้ใช้รายงาน โดยไม่สร้างข้อมูลจำลอง
+- [ ] อัปเดตเอกสารสาเหตุและซิงก์การแก้ไขไปยัง private GitHub repository
+- [ ] ตรวจและแก้ปัญหา `/nv` ไม่แสดง Night Vision โดยหาสคริปต์/ปลั๊กอินที่ยกเลิกหรือทับเอฟเฟกต์
+- [ ] ตรวจทุกเมนูแบบกดใช้งานจริงและยืนยันว่าแต่ละปุ่มเปิดหน้าหรือทำคำสั่งได้ถูกต้อง ไม่ใช่ตรวจเฉพาะ build/test
+- [ ] ตรวจผลลัพธ์ปลายทางของทุกระบบ Minecraft/Discord เช่น โลก ตำแหน่ง เอฟเฟกต์ ห้องข้อความ ผู้เล่น ราคา และข้อมูลผู้ซื้อ/ผู้ขาย
+- [ ] ทำ end-to-end audit แยกสถานะผ่าน/ผิด/ยังทดสอบไม่ได้ พร้อมหลักฐานจาก UI, server state และ live logs
+- [ ] แก้ `/play` ให้ย้ายออกจาก Lobby ไปโลก Survival ก่อนทำการสุ่มตำแหน่ง และตรวจโลก/ตำแหน่งหลังใช้งานจริง
+- [ ] แก้ `/nv` ให้เปิดเอฟเฟกต์จริงและคงอยู่หลังทุบพื้น ตีอากาศ และวางบล็อก โดยตรวจ event ที่ล้าง effect จากทุก Skript/plugin ที่เกี่ยวข้อง
+- [ ] แยก server-login ให้มีเฉพาะเหตุการณ์เข้า/ออกและสถานะเซิร์ฟเวอร์ ไม่รวมข้อความแชตผู้เล่น
+- [ ] แยก advancement ให้ส่งเฉพาะ advancement ไปห้อง advancement ไม่ไหลไปรวมใน chat-game
+- [ ] ตรวจ routing ที่แสดงผิดห้องจากภาพด้วยข้อความจริงและยืนยันปลายทาง Discord แต่ละห้อง
+
+- [ ] ตรวจทุก event ที่ส่งเข้า Discord ว่าต้นทางคือ DiscordSRV, เว็บ notifier หรือ RitzAuctionBridge และ channel ID ปลายทางตรงตามประเภท
+- [ ] แก้ `order-in-game` ให้รับเฉพาะรายการลงขาย/ซื้อสำเร็จจาก `/ah` พร้อมชื่อผู้ลงขาย ผู้ซื้อ ไอเทม และราคา
+- [ ] แก้ช่อง orders/order ให้รับเฉพาะออเดอร์จากเว็บ เช่น เติมเงิน/ซื้อยศ และไม่ปะปนกับ `/ah`
+- [ ] ตรวจทุกช่อง Discord ที่สร้างใหม่แบบส่งข้อความจริงและยืนยันว่าไม่มี event ไหลข้ามช่อง
+- [ ] แก้ respawn: มีเตียงที่บันทึกไว้ให้เกิดที่เตียงตามปกติ; ไม่มีเตียงให้สุ่มจุดปลอดภัยในโลก `survival` และห้ามเกิดที่ Lobby
+- [ ] ตรวจกรณีเตียงถูกทำลาย/จุดเกิดไม่ปลอดภัยและยืนยัน world/coordinates หลังตายจริง
+- [x] แก้ TransformError ใน `server/discordNotifications.ts` บริเวณฟังก์ชัน AuctionHouse notifier ที่ทำให้ dev server แปลงไฟล์ไม่สำเร็จ
+- [x] แก้ death notifier ไม่ให้ fallback ไป `chat-game` และแก้ข้อความเตือนของ web orders ให้ชี้ไปยัง env ที่ถูกต้อง เพื่อป้องกันข้อความปนห้อง

@@ -1,0 +1,142 @@
+ConfigVersion: 1.30.5
+BotToken: "MTU0MDc2MjUzNDYwMzEyODkxMw.GdX7fA.W9F6en_nvPQ643rQ9FyhasHtF4OfHFZBBA7pfQ"
+
+# 📌 ประกาศชื่อ Channel ให้ตรงกับ synchronization.yml
+Channels:
+  global: "1542107038148984902"      # ช่องแชต Minecraft ↔ Discord (chat-game)
+  status: "1542106844158230548"     # ช่องสถานะเซิร์ฟเวอร์ (server-login)
+  join: "1542106844158230548"       # ช่องผู้เล่นเข้า (server-login)
+  leave: "1542106844158230548"      # ช่องผู้เล่นออก (server-login)
+  deaths: "1542107099276775524"     # ช่องแจ้งการตาย (die-log)
+  awards: "1542107165672738886"     # ช่องแจ้ง Advancement (advancement)
+
+DiscordConsoleChannelId: ""
+DiscordInviteLink: ""
+
+Experiment_JdbcAccountLinkBackend: ""
+Experiment_JdbcTablePrefix: "discordsrv"
+Experiment_JdbcUsername: "u2690_SKhCu2NsYB"
+Experiment_JdbcPassword: "AWgE1=2BK=dOE.ARnnzz^xps"
+
+Experiment_WebhookChatMessageDelivery: false
+Experiment_WebhookChatMessageUsernameFormat: "%displayname%"
+Experiment_WebhookChatMessageFormat: "%message%"
+Experiment_WebhookChatMessageUsernameFromDiscord: false
+Experiment_WebhookChatMessageAvatarFromDiscord: false
+Experiment_WebhookChatMessageUsernameFilters: {}
+
+AvatarUrl: ""
+
+Experiment_MCDiscordReserializer_ToDiscord: false
+Experiment_MCDiscordReserializer_ToMinecraft: false
+Experiment_MCDiscordReserializer_InBroadcast: false
+
+CancelConsoleCommandIfLoggingFailed: true
+ForcedLanguage: none
+ForceTLSv12: true
+NoopHostnameVerifier: false
+MaximumAttemptsForSystemDNSBeforeUsingFallbackDNS: 3
+TimestampFormat: EEE, d. MMM yyyy HH:mm:ss z
+DateFormat: yyyy-MM-dd
+Timezone: default
+MinecraftMentionSound: true
+
+DisabledPluginHooks: []
+VentureChatBungee: false
+EnablePresenceInformation: false
+UseModernPaperChatEvent: false
+
+DiscordGameStatus: ["playing Minecraft"]
+DiscordOnlineStatus: ONLINE
+StatusUpdateRateInMinutes: 2
+
+DiscordChatChannelDiscordToMinecraft: true
+DiscordChatChannelMinecraftToDiscord: true
+DiscordChatChannelTruncateLength: 256
+DiscordChatChannelTranslateMentions: true
+DiscordChatChannelAllowedMentions: [user, channel, emote]
+DiscordChatChannelEmojiBehavior: "name"
+DiscordChatChannelEmoteBehavior: "name"
+DiscordChatChannelPrefixRequiredToProcessMessage: ""
+DiscordChatChannelPrefixActsAsBlacklist: false
+DiscordChatChannelRolesAllowedToUseColorCodesInChat: ["Developer", "Owner", "Admin", "Moderator"]
+DiscordChatChannelBroadcastDiscordMessagesToConsole: true
+DiscordChatChannelRequireLinkedAccount: false
+DiscordChatChannelBlockBots: false
+DiscordChatChannelBlockWebhooks: true
+DiscordChatChannelBlockedIds: []
+DiscordChatChannelBlockedRolesAsWhitelist: false
+DiscordChatChannelBlockedRolesIds: []
+DiscordChatChannelRolesSelectionAsWhitelist: false
+DiscordChatChannelRolesSelection: ["Don't show me!", "Misc role"]
+DiscordChatChannelRoleAliases: {"Developer": "Dev"}
+
+DiscordConsoleChannelLogRefreshRateInSeconds: 5
+DiscordConsoleChannelUsageLog: "Console-%date%.log"
+DiscordConsoleChannelBlacklistActsAsWhitelist: false
+DiscordConsoleChannelBlacklistedCommands: ["?", "op", "deop", "execute"]
+DiscordConsoleChannelFilters: {".*(?i)async chat thread.*": "", ".*There are \\d+ (?:of a max of|out of maximum) \\d+ players online.*": ""}
+DiscordConsoleChannelLevels: []
+DiscordConsoleChannelUseCodeBlocks: true
+DiscordConsoleChannelBlockBots: true
+
+DiscordChatChannelConsoleCommandEnabled: true
+DiscordChatChannelConsoleCommandNotifyErrors: true
+DiscordChatChannelConsoleCommandPrefix: "!c"
+DiscordChatChannelConsoleCommandRolesAllowed: ["Owner", "Developer"]
+DiscordChatChannelConsoleCommandWhitelist: ["say", "lag", "tps"]
+DiscordChatChannelConsoleCommandWhitelistBypassRoles: ["Owner", "Developer"]
+DiscordChatChannelConsoleCommandWhitelistActsAsBlacklist: false
+DiscordChatChannelConsoleCommandExpiration: 0
+DiscordChatChannelConsoleCommandExpirationDeleteRequest: true
+
+DiscordChatChannelListCommandEnabled: true
+DiscordChatChannelListCommandMessage: "playerlist"
+DiscordChatChannelListCommandExpiration: 10
+DiscordChatChannelListCommandExpirationDeleteRequest: true
+
+DiscordChatChannelGameFilters: {}
+DiscordChatChannelDiscordFilters: {".*Online players \\(.*": "", ".*\\*\\*No online players\\*\\*.*": ""}
+
+ChannelTopicUpdaterChannelTopicsAtShutdownEnabled: true
+ChannelTopicUpdaterRateInMinutes: 10
+
+ChannelUpdater: []
+
+DiscordCannedResponses: {"!ip": "yourserveripchange.me", "!site": "http://yoursiteurl.net"}
+
+MinecraftDiscordAccountLinkedConsoleCommands: ["", "", ""]
+MinecraftDiscordAccountUnlinkedConsoleCommands: ["", "", ""]
+MinecraftDiscordAccountLinkedRoleNameToAddUserTo: "Linked"
+MinecraftDiscordAccountLinkedAllowRelinkBySendingANewCode: false
+MinecraftDiscordAccountLinkedUsePM: true
+MinecraftDiscordAccountLinkedMessageDeleteSeconds: 0
+
+ServerWatchdogEnabled: true
+ServerWatchdogTimeout: 30
+ServerWatchdogMessageCount: 3
+
+ProxyHost: "example.com"
+ProxyPort: 1234
+ProxyUser: "USERNAME"
+ProxyPassword: "PASSWORD"
+
+Debug: []
+
+GroupRoleSynchronizationGroupsAndRolesToSync: {
+  "owner": "1530565360623947826",
+  "admin": "1530565361924051097",
+  "emperor": "1531749795633299696",
+  "celestial": "1531749655115731066",
+  "mythic": "1531749496529354904",
+  "overlord": "1531749346628862002",
+  "lord": "1531749246653431948",
+  "noble": "1531749104458404056",
+  "elite": "1531749008769552385",
+  "knight": "1531748887013097572",
+  "vip+": "1531748735070240808",
+  "vip": "1531748575917375520"
+}
+GroupRoleSynchronizationPrimaryGroupOnly: true
+GroupRoleSynchronizationOnInitialLink: true
+GroupRoleSynchronizationCycleTimeInMinutes: 5

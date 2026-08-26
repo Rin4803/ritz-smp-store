@@ -1,0 +1,12 @@
+# RitzAuctionBridge configuration
+# The bridge never reads a Discord token. DiscordSRV owns authentication.
+auctionhouse-log-directory: "../AuctionHouse/logs"
+transaction-log-pattern: "*.log"
+order-in-game-channel-id: "1542112620402970654"
+poll-interval-ticks: 40
+retry-delay-seconds: 10
+start-at-end-when-state-is-missing: true
+
+# Only these two transaction records are forwarded.
+forward-listings: true
+forward-sales: true

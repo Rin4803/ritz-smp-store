@@ -1,0 +1,128 @@
+===== /plugins/Skript/scripts/travel.sk =====
+# Travel Commands - RitzSMP
+# /play, /tpa, /tpaccept, /tpdeny
+
+# ── /play ──
+command /play:
+    executable by: players
+    trigger:
+        # ── Cooldown Check ──
+        if {cooldown::play::%player%} > now:
+            set {_rem} to difference between {cooldown::play::%player%} and now
+            send "&c⏳ กรุณารอ &6%{_rem}% &cวินาทีก่อนใช้ /play อีกครั้ง" to player
+            stop
+        # ── Combat Check ──
+        if {combat::%player's uuid%} is set:
+            send "&c✗ คุณอยู่ในโหมดต่อสู้! ใช้ /play ไม่ได้" to player
+            stop
+        # ── Resolve โลก Survival แบบไม่ผูกตัวพิมพ์ ──
+        set {_survival} to world("Survival")
+        if {_survival} is not set:
+            set {_survival} to world("survival")
+        if {_survival} is not set:
+            send "&c❌ โลก Survival ยังไม่พร้อม" to player
+            stop
+        if world of player is {_survival}:
+            send "&c✗ คุณอยู่ในโลก Survival อยู่แล้ว!" to player
+            stop
+        # ── ใช้ตำแหน่งเดิมเฉพาะเมื่ออยู่ในโลก Survival เดียวกัน ──
+        if {survival::lastloc::%player%} is set:
+            if world of {survival::lastloc::%player%} is {_survival}:
+                set {_target} to {survival::lastloc::%player%}
+        if {_target} is not set:
+            set {_target} to spawn point of {_survival}
+        if {_target} is not set:
+            send "&c❌ ไม่พบจุดเกิดของโลก Survival" to player
+            stop
+        # ── Countdown 3 วิ ──
+        set {_start} to location of player
+        send "&a✦ &fกำลังวาร์ปไป Survival &7(ห้ามขยับ)"
+        set {_cd} to 3
+        loop 3 times:
+            if world of player is not world of {_start}:
+                send "&c✗ &fวาปยกเลิก &8— &fคุณเปลี่ยนโลก!" to player
+                stop
+            if distance between player and {_start} > 0.5:
+                send "&c✗ &fวาปยกเลิก &8— &fคุณขยับ!" to player
+                stop
+            if {combat::%player's uuid%} is set:
+                send "&c✗ &fคุณติด Combat ระหว่างวาป! &8— &fยกเลิก" to player
+                stop
+            send actionbar "&a⏳ &2%{_cd}% &fวิ &8| &cอย่าขยับ!" to player
+            wait 1 second
+            subtract 1 from {_cd}
+        teleport player to {_target}
+        wait 2 ticks
+        # ยืนยันปลายทางจริง ไม่ให้ข้อความสำเร็จทั้งที่ยังอยู่ Lobby
+        if world of player is not {_survival}:
+            teleport player to spawn point of {_survival}
+            wait 2 ticks
+        if world of player is not {_survival}:
+            send "&c❌ วาร์ปไป Survival ไม่สำเร็จ กรุณาติดต่อแอดมิน" to player
+            stop
+        send "&a✦ &fเข้าสู่ Survival แล้ว" to player
+        set {cooldown::play::%player%} to now + 30 seconds
+
+# ── /tpa ──
+command /tpa <player>:
+    executable by: players
+    trigger:
+        if {combat::%player's uuid%} is set:
+            send "&c✖ คุณอยู่ในโหมดต่อสู้! ใช้ TPA ไม่ได้" to player
+            stop
+        if arg-1 is not online:
+            send "&c❌ ไม่พบผู้เล่น %arg-1%" to player
+            stop
+        set {tpa.request.%uuid of arg-1%} to player
+        send "&d✦ &fส่งคำขอเทเลพอร์ตไปหา &e%arg-1% &fแล้ว" to player
+        send "&d✦ &e%player% &fต้องการเทเลพอร์ตมาหาคุณ ใช้ &a/tpaccept &fเพื่อยอมรับ &7(ภายใน 60 วินาที)" to arg-1
+
+# ── /tpaccept ──
+command /tpaccept:
+    executable by: players
+    trigger:
+        if {tpa.request.%uuid of player%} is not set:
+            send "&c❌ ไม่มีคำขอเทเลพอร์ต" to player
+            stop
+        set {_sender} to {tpa.request.%uuid of player%}
+        delete {tpa.request.%uuid of player%}
+        if {_sender} is online:
+            teleport {_sender} to player
+            send "&a✦ &fยอมรับคำขอ! &e%{_sender}% &fเทเลพอร์ตมาหาคุณแล้ว" to player
+            send "&a✦ &fเทเลพอร์ตไปหา &e%player% &fสำเร็จ" to {_sender}
+        else:
+            send "&c❌ %{_sender}% ไม่ออนไลน์แล้ว" to player
+
+# ── /tpdeny ──
+command /tpdeny:
+    executable by: players
+    trigger:
+        if {tpa.request.%uuid of player%} is set:
+            set {_sender} to {tpa.request.%uuid of player%}
+            delete {tpa.request.%uuid of player%}
+            send "&c✘ &fปฏิเสธคำขอจาก &e%{_sender}%" to player
+            if {_sender} is online:
+                send "&c✘ &e%player% &fปฏิเสธคำขอเทเลพอร์ตของคุณ" to {_sender}
+        else:
+            send "&c❌ ไม่มีคำขอเทเลพอร์ต" to player
+===== /plugins/Skript/scripts/survival-respawn.sk =====
+options:
+    survival-world: Survival
+
+# ถ้ามีเตียง/จุดเกิดที่ถูกต้อง ให้ Minecraft ใช้จุดนั้นตามปกติ
+# ถ้าไม่มีเตียง ให้เกิดใน Survival แล้วเรียก RTP เพื่อสุ่มจุดปลอดภัย
+on respawn:
+    if respawn location is not a bed:
+        set {_survival} to world "{@survival-world}"
+        if {_survival} is set:
+            set respawn location to spawn point of {_survival}
+            wait 10 ticks
+            if world of player is {_survival}:
+                execute player command "rtp"
+            else:
+                teleport player to spawn point of {_survival}
+                wait 2 ticks
+                execute player command "rtp"
+        else:
+            send "&cไม่พบโลก Survival กรุณาแจ้งแอดมิน" to player
+

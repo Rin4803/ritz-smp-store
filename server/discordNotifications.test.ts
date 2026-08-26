@@ -19,7 +19,14 @@ vi.mock("./storage", () => ({
   storageGetSignedUrl: vi.fn(async () => "https://storage.example.test/signed-slip.png"),
 }));
 
-import { notifyMinecraftPresence, notifyPurchaseCompleted, notifyTopupSubmitted, postDiscordSetupSystemPanel } from "./discordNotifications";
+import {
+  notifyAuctionHouseEvent,
+  notifyMinecraftDeath,
+  notifyMinecraftPresence,
+  notifyPurchaseCompleted,
+  notifyTopupSubmitted,
+  postDiscordSetupSystemPanel,
+} from "./discordNotifications";
 import { setMinecraftStatusChannelIdForTests } from "./discordMinecraftStatusChannel";
 import { storageGetSignedUrl } from "./storage";
 
@@ -154,7 +161,7 @@ describe("Discord web-store notifications", () => {
       .toContain("ไม่สามารถแนบรูปสลิปอัตโนมัติได้");
   });
 
-  it("posts a supporter announcement to the configurable order-in-game channel", async () => {
+  it("posts a supporter announcement to the configurable store orders channel", async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ id: "support-message-43" }), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -164,7 +171,7 @@ describe("Discord web-store notifications", () => {
       rconExecuted: true,
     });
 
-    expect(result).toMatchObject({ sent: true, channelId: "order-in-game-channel-222", messageId: "support-message-43" });
+    expect(result).toMatchObject({ sent: true, channelId: "orders-channel-111", messageId: "support-message-43" });
     const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
     const payload = JSON.parse(String(requestInit.body));
     expect(payload.embeds[0]).toMatchObject({
@@ -174,6 +181,48 @@ describe("Discord web-store notifications", () => {
     expect(payload.embeds[0].fields).toEqual(expect.arrayContaining([
       expect.objectContaining({ name: "Minecraft IGN", value: "`RitzWarrior`" }),
       expect.objectContaining({ name: "การส่งยศเข้าเกม", value: "✅ RCON สำเร็จ" }),
+    ]));
+  });
+
+  it("routes AuctionHouse listing and completed-sale events only to order-in-game", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: "auction-listing-1" }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: "auction-sale-1" }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const listed = await notifyAuctionHouseEvent({
+      kind: "listed",
+      seller: "RitzSeller",
+      item: "Diamond Sword",
+      amount: 1,
+      price: 1250,
+      occurredAt: "2026-08-26T05:00:00.000Z",
+    });
+    const sold = await notifyAuctionHouseEvent({
+      kind: "sold",
+      seller: "RitzSeller",
+      buyer: "RitzBuyer",
+      item: "Diamond Sword",
+      amount: 1,
+      price: "1250.00",
+      occurredAt: "2026-08-26T05:01:00.000Z",
+    });
+
+    expect(listed).toMatchObject({ sent: true, channelId: "order-in-game-channel-222", messageId: "auction-listing-1" });
+    expect(sold).toMatchObject({ sent: true, channelId: "order-in-game-channel-222", messageId: "auction-sale-1" });
+    expect(fetchMock.mock.calls).toHaveLength(2);
+    for (const [url, request] of fetchMock.mock.calls as Array<[string, RequestInit]>) {
+      expect(url).toBe("https://discord.com/api/v10/channels/order-in-game-channel-222/messages");
+      expect(request.headers).toMatchObject({ Authorization: "Bot unit-test-main-token" });
+    }
+    const listedPayload = JSON.parse(String((fetchMock.mock.calls[0]?.[1] as RequestInit).body));
+    const soldPayload = JSON.parse(String((fetchMock.mock.calls[1]?.[1] as RequestInit).body));
+    expect(listedPayload.embeds[0]).toMatchObject({ title: "📦 มีผู้เล่นลงขายสินค้าใน AuctionHouse" });
+    expect(soldPayload.embeds[0]).toMatchObject({ title: "✅ มีการซื้อสินค้าใน AuctionHouse" });
+    expect(soldPayload.embeds[0].fields).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "ผู้ลงขาย", value: "RitzSeller" }),
+      expect.objectContaining({ name: "ผู้ซื้อ", value: "RitzBuyer" }),
+      expect.objectContaining({ name: "ราคา", value: "1,250.00 เงินในเกม" }),
     ]));
   });
 
@@ -195,6 +244,22 @@ describe("Discord web-store notifications", () => {
       expect.objectContaining({ name: "ผู้เล่นออนไลน์ปัจจุบัน", value: "3 คน" }),
       expect.objectContaining({ name: "สถานะเซิร์ฟเวอร์", value: "ออนไลน์" }),
     ]));
+  });
+
+  it("routes death notifications only to die-log even when chat-game is configured", async () => {
+    vi.stubEnv("DISCORD_DIE_LOG_CHANNEL_ID", "die-log-runtime");
+    vi.stubEnv("DISCORD_CHAT_CHANNEL_ID", "chat-game-must-not-receive-death");
+    const fetchMock = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ id: "death-message-1" }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await notifyMinecraftDeath({
+      playerName: "RitzWarrior",
+      message: "ตกจากที่สูง",
+      occurredAt: "2026-08-26T05:02:00.000Z",
+    });
+
+    expect(result).toMatchObject({ sent: true, channelId: "die-log-runtime", messageId: "death-message-1" });
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://discord.com/api/v10/channels/die-log-runtime/messages");
   });
 
   it("does not fall back to an AI or music bot token when the main token is absent", async () => {

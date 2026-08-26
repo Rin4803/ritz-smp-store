@@ -71,24 +71,23 @@ function getSupportChannelId(): string {
   );
 }
 
-function getOrderInGameChannelId(): string {
+function getStoreOrderChannelId(): string {
   return (
-    process.env.DISCORD_ORDER_IN_GAME_CHANNEL_ID ||
-    ENV.discordOrderInGameChannelId ||
     process.env.DISCORD_ORDERS_CHANNEL_ID ||
     ENV.discordOrdersChannelId ||
+    process.env.DISCORD_DONATE_LOG_CHANNEL_ID ||
+    ENV.discordDonateLogChannelId ||
     getSupportChannelId()
   );
 }
 
+function getOrderInGameChannelId(): string {
+  return process.env.DISCORD_ORDER_IN_GAME_CHANNEL_ID || ENV.discordOrderInGameChannelId || "";
+}
+
 function getDieLogChannelId(): string {
-  return (
-    process.env.DISCORD_DIE_LOG_CHANNEL_ID ||
-    ENV.discordDieLogChannelId ||
-    process.env.DISCORD_CHAT_CHANNEL_ID ||
-    ENV.discordChatChannelId ||
-    ""
-  );
+  // Fail closed: death events must never leak into chat-game when die-log is unset.
+  return process.env.DISCORD_DIE_LOG_CHANNEL_ID || ENV.discordDieLogChannelId || "";
 }
 
 function getDonateLogChannelId(): string {
@@ -413,7 +412,7 @@ export async function notifyPurchaseCompleted(input: {
   rconExecuted?: boolean;
 }): Promise<DiscordNotificationResult> {
   const { order, userName, rconExecuted = false } = input;
-  const channelId = getOrderInGameChannelId();
+  const channelId = getStoreOrderChannelId();
   const embed: DiscordEmbed = {
     title: "🎉 มีผู้สนับสนุน RitzSMP ใหม่ค่ะ!",
     description: "ขอบพระคุณสำหรับการสนับสนุนเซิร์ฟเวอร์ RitzSMP ขอให้สนุกกับสิทธิพิเศษในเกมนะคะ",
@@ -430,6 +429,48 @@ export async function notifyPurchaseCompleted(input: {
     timestamp: formatTimestamp(order.createdAt),
   };
   return postDiscordMessage(channelId, { embeds: [embed] });
+}
+
+function formatGamePrice(value: string | number): string {
+  const amount = Number(value);
+  return Number.isFinite(amount)
+    ? amount.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : String(value);
+}
+
+export async function notifyAuctionHouseEvent(input: {
+  kind: "listed" | "sold";
+  seller: string;
+  buyer?: string;
+  item: string;
+  amount: number;
+  price: string | number;
+  isBid?: boolean;
+  occurredAt?: Date | string | number;
+}): Promise<DiscordNotificationResult> {
+  const listed = input.kind === "listed";
+  const eventTitle = listed ? "📦 มีผู้เล่นลงขายสินค้าใน AuctionHouse" : "✅ มีการซื้อสินค้าใน AuctionHouse";
+  const fields: DiscordEmbedField[] = [
+    { name: "ผู้ลงขาย", value: input.seller.slice(0, 100), inline: true },
+    { name: "ไอเทม", value: input.item.slice(0, 1024), inline: true },
+    { name: "จำนวน", value: String(input.amount), inline: true },
+    { name: "ราคา", value: `${formatGamePrice(input.price)} เงินในเกม`, inline: true },
+    { name: "ประเภท", value: input.isBid ? "ประมูล (BID)" : "ขายขาด", inline: true },
+  ];
+  if (!listed) fields.splice(1, 0, { name: "ผู้ซื้อ", value: (input.buyer || "ไม่ระบุ").slice(0, 100), inline: true });
+
+  return postDiscordMessage(getOrderInGameChannelId(), {
+    embeds: [{
+      title: eventTitle,
+      description: listed
+        ? "มีรายการใหม่ถูกลงขายในตลาดกลางของเซิร์ฟเวอร์ค่ะ"
+        : "รายการในตลาดกลางถูกซื้อสำเร็จแล้วค่ะ",
+      color: listed ? 0x8b5cf6 : 0x22c55e,
+      fields,
+      footer: { text: "RitzSMP AuctionHouse • แจ้งเตือนจากธุรกรรมจริง" },
+      timestamp: formatTimestamp(input.occurredAt),
+    }],
+  });
 }
 
 export async function postDiscordReportPanel(channelId: string): Promise<DiscordNotificationResult> {
@@ -481,7 +522,9 @@ export async function postDiscordSetupSystemPanel(
 
 export const discordNotificationInternals = {
   getSupportChannelId,
+  getStoreOrderChannelId,
   getOrderInGameChannelId,
+  notifyAuctionHouseEvent,
   getDieLogChannelId,
   getDonateLogChannelId,
   formatAmount,

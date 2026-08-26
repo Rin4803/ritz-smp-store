@@ -1,0 +1,10 @@
+name: RitzAuctionBridge
+version: '${version}'
+main: com.ritzsmp.auctionbridge.RitzAuctionBridge
+api-version: '1.21'
+author: RitzSMP
+description: Routes verified AuctionHouse transactions to the Discord order-in-game channel.
+softdepend: []
+depend:
+  - AuctionHouse
+  - DiscordSRV

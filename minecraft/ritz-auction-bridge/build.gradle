@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.ritzsmp'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+}
+
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT'
+    // DiscordSRV is provided by the Minecraft server at runtime.
+    compileOnly files(System.getenv('DISCORDSRV_JAR') ?: '/tmp/DiscordSRV-1.30.5.jar')
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+jar {
+    archiveBaseName = 'RitzAuctionBridge'
+    archiveVersion = ''
+}
+
+processResources {
+    filesMatching('plugin.yml') {
+        expand(version: project.version)
+    }
+}
