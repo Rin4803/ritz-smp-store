@@ -9,6 +9,7 @@ import {
   buildOnboardingComponents,
   buildReportPanelComponents,
   buildReportPanelEmbed,
+  reportPanelNeedsRefresh,
   buildRankClaimComponents,
   buildRankClaimEmbed,
   buildWelcomeMemberEmbed,
@@ -147,6 +148,12 @@ describe("Discord onboarding interactions", () => {
     expect(embed.title).toContain("ระบบรายงานผู้เล่น");
     expect(embed.description).toContain("เริ่มรายงานผู้เล่น");
     expect(ids).toEqual(["ritz_report_button", "ritz_report_cancel"]);
+  });
+
+  it("marks legacy report messages without both action buttons for refresh", () => {
+    expect(reportPanelNeedsRefresh({ components: [] })).toBe(true);
+    expect(reportPanelNeedsRefresh({ components: [{ components: [{ customId: "ritz_report_button" }] }] })).toBe(true);
+    expect(reportPanelNeedsRefresh({ components: [{ components: [{ customId: "ritz_report_button" }, { customId: "ritz_report_cancel" }] }] })).toBe(false);
   });
 
   it("uses the supplied cover images and exposes a single rank-claim button", () => {

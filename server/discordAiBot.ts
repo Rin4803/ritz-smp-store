@@ -309,6 +309,13 @@ export function buildOnboardingComponents() {
   return [actionRow];
 }
 
+export function reportPanelNeedsRefresh(message: { components?: any[] }) {
+  const ids = (message.components ?? [])
+    .flatMap((row: any) => row.components ?? [])
+    .map((component: any) => component.customId ?? component.custom_id);
+  return !ids.includes("ritz_report_button") || !ids.includes("ritz_report_cancel");
+}
+
 export function buildReportPanelComponents() {
   const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
@@ -2094,7 +2101,13 @@ export function createRitzSmpAiBot(
                     const existingBotMsg = messages.find(
                       (m) => m.author.id === client.user?.id,
                     );
-                    if (!existingBotMsg) {
+                    if (target.name === "🚫│report-รายงานผู้เล่น" && existingBotMsg && reportPanelNeedsRefresh(existingBotMsg)) {
+                      await existingBotMsg.edit({
+                        embeds: [buildReportPanelEmbed()],
+                        components: buildReportPanelComponents(),
+                      });
+                      pushLog("SUCCESS", `Reconciled missing report buttons in ${target.name}`);
+                    } else if (!existingBotMsg) {
                       if (target.name === "🔗│ระบบเชื่อมบัญชี") {
                         const embed = new EmbedBuilder()
                           .setTitle("✨ ระบบเชื่อมบัญชี Minecraft RitzSMP")

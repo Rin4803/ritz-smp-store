@@ -886,3 +886,4 @@
 
 - [x] แก้ recovery path ของ `admin.updateOrderStatus` ให้การอนุมัติออเดอร์ยศส่งคำสั่งเพิ่มเหรียญตาม rank เดียวกับ `purchaseRank` และเพิ่ม regression tests เพื่อป้องกันเติมยศได้แต่เหรียญไม่เข้า
 - [x] ปรับ Discord player report ให้เลือกหมวดหมู่ผ่าน select menu ก่อนเปิด modal รายละเอียด และเพิ่ม regression tests สำหรับ custom id/flow
+- [x] แก้บั๊ก production: ช่อง `#report-รายงานผู้เล่น` แสดงข้อความต้อนรับแต่ไม่แสดงปุ่มเริ่มรายงาน/ปุ่มยกเลิก ให้ตรวจและทำให้ข้อความเริ่มต้นโพสต์ components ครบ
