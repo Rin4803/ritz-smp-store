@@ -380,6 +380,8 @@ export function buildWelcomeMemberEmbed(member: any) {
 }
 
 export const AUTO_SYSTEM_PANEL_DEPLOYMENT_ENABLED = false;
+// Report panel self-healing is enabled independently so a stale channel can recover on startup.
+export const AUTO_REPORT_PANEL_DEPLOYMENT_ENABLED = true;
 
 export type ManualEmbedKind = "welcome" | "leave";
 
@@ -1983,13 +1985,17 @@ export function createRitzSmpAiBot(
       // Member welcome/leave messages and system panels are now manual commands.
       // Keep the cleanup helpers above for legacy messages, but never post or create
       // these panels during bot startup.
-      if (AUTO_SYSTEM_PANEL_DEPLOYMENT_ENABLED) {
+      if (AUTO_SYSTEM_PANEL_DEPLOYMENT_ENABLED || AUTO_REPORT_PANEL_DEPLOYMENT_ENABLED) {
         try {
           const guild = await client.guilds
             .fetch(getConfiguredDiscordGuildId())
             .catch(() => null);
           if (guild) {
-            const channelsToEnsure = RITZ_SYSTEM_CHANNEL_TARGETS;
+            const channelsToEnsure = AUTO_SYSTEM_PANEL_DEPLOYMENT_ENABLED
+              ? RITZ_SYSTEM_CHANNEL_TARGETS
+              : RITZ_SYSTEM_CHANNEL_TARGETS.filter(
+                  (target) => target.name === "🚫│report-รายงานผู้เล่น",
+                );
 
             for (const target of channelsToEnsure) {
               const cleanupPlan = planManagedSystemChannelCleanup(

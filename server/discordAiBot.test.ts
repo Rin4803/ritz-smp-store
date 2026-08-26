@@ -15,6 +15,7 @@ import {
   isLegacyKanopiRankLogMessage,
   planLegacyKanopiRankLogCleanup,
   AUTO_SYSTEM_PANEL_DEPLOYMENT_ENABLED,
+  AUTO_REPORT_PANEL_DEPLOYMENT_ENABLED,
   buildManualEmbedPayload,
   parseEmbedColor,
   isDiscordAdministrator,
@@ -149,8 +150,9 @@ describe("RitzSMP AI Bot Expanded Commands", () => {
     expect(getPreferredWelcomeChannelId(undefined, "explicit-welcome")).toBe("explicit-welcome");
   });
 
-  it("keeps automatic onboarding deployment disabled so setup is command-driven", () => {
+  it("keeps onboarding command-driven while enabling report-panel self-healing", () => {
     expect(AUTO_SYSTEM_PANEL_DEPLOYMENT_ENABLED).toBe(false);
+    expect(AUTO_REPORT_PANEL_DEPLOYMENT_ENABLED).toBe(true);
   });
 
   it("does not register automatic member event listeners in command-driven mode", () => {
