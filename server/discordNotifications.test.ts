@@ -16,6 +16,7 @@ vi.mock("./storage", () => ({
 }));
 
 import { notifyMinecraftPresence, notifyPurchaseCompleted, notifyTopupSubmitted, postDiscordSetupSystemPanel } from "./discordNotifications";
+import { setMinecraftStatusChannelIdForTests } from "./discordMinecraftStatusChannel";
 import { storageGetSignedUrl } from "./storage";
 
 beforeEach(() => {
@@ -169,7 +170,7 @@ describe("Discord web-store notifications", () => {
   });
 
   it("posts presence updates with current player count and server status", async () => {
-    vi.stubEnv("DISCORD_ONLINE_CHANNEL_ID", "presence-channel-123");
+    setMinecraftStatusChannelIdForTests("presence-channel-123");
     const fetchMock = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ id: "presence-message-1" }), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 

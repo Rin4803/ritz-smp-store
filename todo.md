@@ -967,3 +967,15 @@
 - [x] ส่ง Embed รายงานและปุ่มรับเรื่อง/ปิดเคสเข้าไปในห้องเคส พร้อมเก็บ channel ID กับ report record
 - [ ] รองรับการสร้างห้องเคสซ้ำอย่างปลอดภัย การปิด/เก็บห้องเมื่อจบเคส และแจ้งผู้รายงาน
 - [x] เพิ่ม regression tests และตรวจ production build สำหรับระบบห้องเคสรายงาน
+
+- [ ] เพิ่มช่องกรอก Channel ID แยกสำหรับ server-login, chat-game, die-log, advancement, order-in-game และ shop โดยไม่รวมค่าไว้ในช่องเดียว
+- [ ] เชื่อม Channel ID แต่ละรายการเข้ากับ routing ของระบบที่ตรงกันเท่านั้น
+- [ ] เพิ่ม regression tests ตรวจว่าข้อความแต่ละประเภทไม่ถูกส่งข้ามหรือรวมเข้าช่องอื่น
+- [ ] เพิ่มเอกสาร/คำแนะนำตำแหน่งช่องกรอก Channel ID สำหรับผู้ดูแลระบบ
+- [ ] ยืนยันขอบเขตล่าสุด: ไม่เพิ่มหรือใช้ Channel ID แยกสำหรับช่อง shop
+
+- [x] แก้ปัญหา Discord Bot Token 401 ของบอทหลักและยืนยันตัวตนกับ Discord API
+- [x] ตรวจว่า Authorization ใช้รูปแบบ Bot Token และไม่สลับกับ Token ของ RitzSMP AI หรือ Music Bot
+- [x] ตรวจ Bot identity, Guild access และสิทธิ์อ่านช่องแบบอ่านอย่างเดียว
+- [x] ทดสอบการส่งข้อความแยกไปยัง Channel ID ของระบบที่ตั้งค่าไว้
+- [x] แก้ regression test ของ presence ให้ใช้ค่า mock แบบ deterministic และไม่ถูก live Channel ID override

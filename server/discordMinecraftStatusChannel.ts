@@ -3,7 +3,10 @@ import { ChannelType, Client, PermissionFlagsBits } from "discord.js";
 export const MINECRAFT_STATUS_CHANNEL_NAME = "📡│ระบบสถานะเซิร์ฟเวอร์";
 export const LEGACY_MINECRAFT_STATUS_CHANNEL_NAMES = ["📡│สถานะเซิร์ฟเวอร์"];
 
-let configuredMinecraftStatusChannelId = process.env.DISCORD_ONLINE_CHANNEL_ID?.trim() || "";
+let configuredMinecraftStatusChannelId =
+  process.env.DISCORD_SERVER_LOGIN_CHANNEL_ID?.trim() ||
+  process.env.DISCORD_ONLINE_CHANNEL_ID?.trim() ||
+  "";
 
 export function getMinecraftStatusChannelId(): string {
   return configuredMinecraftStatusChannelId;
