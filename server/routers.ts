@@ -28,6 +28,7 @@ import {
   createManagedServer,
   updateManagedServer,
   getRecentHealthEvents,
+  getPlayerReportDashboardStats,
   getMinecraftPresenceState,
   setMinecraftPresenceScheduleTaskUid,
 } from "./db";
@@ -407,6 +408,7 @@ export const appRouter = router({
   }),
   admin: router({
     orders: adminProcedure.query(() => getAllOrders()),
+    playerReportDashboard: adminProcedure.query(() => getPlayerReportDashboardStats()),
     users: ownerProcedure.query(async () => {
       const allUsers = await getAllUsers();
       return allUsers.map(user => ({

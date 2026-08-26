@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq, sql } from "drizzle-orm";
 import { randomInt } from "node:crypto";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
@@ -33,6 +33,13 @@ import {
   playerReports,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
+
+export type PlayerReportDashboardStats = {
+  total: number;
+  byStatus: Array<{ status: PlayerReport["status"]; count: number }>;
+  byCategory: Array<{ category: string; count: number }>;
+  repeatTargets: Array<{ target: string; minecraftIGN: string | null; count: number }>;
+};
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -805,6 +812,30 @@ export async function getLatestPlayerReportByReporter(reporterDiscordId: string)
     .where(eq(playerReports.reporterDiscordId, reporterDiscordId))
     .orderBy(desc(playerReports.createdAt)).limit(1);
   return rows[0];
+}
+
+export async function getPlayerReportDashboardStats(): Promise<PlayerReportDashboardStats> {
+  const db = await getDb();
+  if (!db) return { total: 0, byStatus: [], byCategory: [], repeatTargets: [] };
+
+  const [totalRows, statusRows, categoryRows, targetRows] = await Promise.all([
+    db.select({ count: count() }).from(playerReports),
+    db.select({ status: playerReports.status, count: count() }).from(playerReports).groupBy(playerReports.status),
+    db.select({ category: playerReports.category, count: count() }).from(playerReports).groupBy(playerReports.category).orderBy(desc(sql`count(*)`)),
+    db.select({ target: playerReports.targetDiscordName, minecraftIGN: playerReports.targetMinecraftIGN, count: count() })
+      .from(playerReports)
+      .groupBy(playerReports.targetDiscordName, playerReports.targetMinecraftIGN)
+      .having(sql`count(*) > 1`)
+      .orderBy(desc(sql`count(*)`))
+      .limit(10),
+  ]);
+
+  return {
+    total: Number(totalRows[0]?.count ?? 0),
+    byStatus: statusRows.map(row => ({ status: row.status, count: Number(row.count) })),
+    byCategory: categoryRows.map(row => ({ category: row.category, count: Number(row.count) })),
+    repeatTargets: targetRows.map(row => ({ target: row.target, minecraftIGN: row.minecraftIGN, count: Number(row.count) })),
+  };
 }
 
 export async function updatePlayerReportStatus(input: {

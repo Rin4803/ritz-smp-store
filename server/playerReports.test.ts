@@ -3,6 +3,7 @@ import {
   getPlayerReportCooldownRemainingMs,
   validatePlayerReportInput,
 } from "./discordInteractions";
+import { appRouter } from "./routers";
 
 describe("Player report validation", () => {
   it("accepts an allowed category with sufficient details", () => {
@@ -20,6 +21,14 @@ describe("Player report validation", () => {
     expect(getPlayerReportCooldownRemainingMs(now - 1_000, now, 0)).toBe(0);
     expect(getPlayerReportCooldownRemainingMs(now - 1_000, now, 15 * 60 * 1000)).toBe(14 * 60 * 1000 + 59 * 1000);
     expect(getPlayerReportCooldownRemainingMs(now - 15 * 60 * 1000, now, 15 * 60 * 1000)).toBe(0);
+  });
+});
+
+describe("Player report dashboard contract", () => {
+  it("exposes the dashboard query under the admin router", () => {
+    const adminRouter = (appRouter as any)._def.record.admin;
+    expect(adminRouter).toBeDefined();
+    expect(adminRouter.playerReportDashboard).toBeDefined();
   });
 });
 
