@@ -82,3 +82,13 @@
 | ผลรวม | `ECONOMY_VERIFY=PASS` |
 
 รายการที่ไม่มี key ใน EssentialsX ไม่ถูกเดาราคาและไม่ถูกแก้ ส่วน shop ที่ปิดใช้งานไม่ได้ถูกเปิดใช้งานจากงานนี้ การ reload/restart และการทดสอบคำสั่ง `/worth`, `/sell`, `/sellall` ด้วยผู้เล่นจริงยังต้องทำบน production ตามคู่มือ เพราะ API ไม่อนุญาตให้ส่งคำสั่ง reload แทนเจ้าของเซิร์ฟเวอร์
+
+## Production reload evidence — 2026-08-26
+
+ผู้ดูแลยืนยันให้ restart หลังแพตช์ราคา และ MCSV restart สำเร็จ สถานะหลังรอให้บูตเสร็จเป็น `active` / runtime `running` จาก `server_overview` ล่าสุด
+
+`logs_startup` ตรวจพบ `failed: []` และไม่พบ error จาก FoShop หรือไฟล์ราคา มี error ที่ไม่เกี่ยวกับแพตช์ราคา ได้แก่ GrimAC รายงาน SLF4J provider และ Essentials แจ้ง `You are running an unsupported server version!` จึงควรติดตามแยกต่างหาก
+
+ยังไม่มีหลักฐานการรันคำสั่งด้วยผู้เล่นจริง จึงยังไม่สรุปว่า `/worth`, `/sell`, `/sellall` ผ่าน production จนกว่าจะทำ click-through checklist ด้วยบัญชีควบคุม
+
+**สถานะ:** ไฟล์ราคาแพตช์แล้ว, backup พร้อม rollback, reload สำเร็จ; player command verification ยัง pending

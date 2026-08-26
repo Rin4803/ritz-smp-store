@@ -880,5 +880,6 @@
 - [x] สร้างและเก็บ full backup ของไฟล์ Economy บน MCSV ก่อนแก้ไขจริง พร้อม manifest และขั้นตอน rollback; backup UUID `fc561430-3c82-4d77-a395-50e98f057a1d`
 - [x] ปรับ FoShop sell-price และ `global-sell-prices.yml` ให้ตรงกับราคาต่อชิ้นจาก EssentialsX โดยไม่เปลี่ยนราคาซื้อของร้าน
 - [x] เพิ่ม/ปรับ regression checks สำหรับความสอดคล้องของ EssentialsX, FoShop และคำสั่ง `/worth`, `/sell`, `/sellall`; deterministic check ได้ `ECONOMY_VERIFY=PASS`
-- [ ] reload/restart และทดสอบ production ด้วยบัญชีควบคุม โดยตรวจจำนวน item, เงินก่อน/หลัง และไม่กระทบผู้เล่นอื่น
+- [x] restart/reload production หลังแพตช์สำเร็จ; MCSV กลับมา `active/running` และ startup `failed: []`
+- [ ] ทดสอบ production ด้วยบัญชีควบคุม โดยตรวจจำนวน item, เงินก่อน/หลัง และไม่กระทบผู้เล่นอื่น
 - [x] บันทึกผลการแก้ Economy และหลักฐานการตรวจไฟล์แยกจากผล unit testไว้ใน `docs/economy-audit-2026-08-26.md`; หลักฐาน production จริงยัง pending
