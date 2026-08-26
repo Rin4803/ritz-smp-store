@@ -11,3 +11,6 @@
 หลักฐาน live server ที่ตรวจพบ: `/plugins/DiscordSRV/config.yml` มี `Channels` mapping แยก `global`, `status`, `join`, `leave`, `deaths`, `awards`; `/plugins/RitzAuctionBridge/config.yml` กำหนด `order-in-game-channel-id: "1542112620402970654"`, อ่าน log จาก `../AuctionHouse/logs`, และเปิด `forward-listings`/`forward-sales`. Log ล่าสุดระบุว่า RitzAuctionBridge v1.0.0 enable สำเร็จและทำงานแบบอ่านเฉพาะรายการลงขาย/ซื้อสำเร็จเพื่อส่งไป order-in-game.
 
 ข้อควรระวัง: config audit ที่ดึงจาก live มี credential/token อยู่ในบางบรรทัด จึงไม่ควรนำค่า secret ไปใส่ในรายงานหรือ commit.
+
+## Live routing audit 2026-08-26
+ผลอ่าน live ยืนยันว่า `global` ไป chat-game, `status/join/leave` ไป server-login, `deaths` ไป die-log และ `awards` ไป advancement ตามคีย์มาตรฐานของ DiscordSRV. `RitzAuctionBridge` แยก channel order-in-game และเปิด forwarding เฉพาะ listings/sales; AuctionHouse ปิด `auction-announcements` เพื่อลดการส่งซ้ำ. ห้ามนำ token หรือ credential จาก config ไปแสดงในรายงานหรือ commit.
