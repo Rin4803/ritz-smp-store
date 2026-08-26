@@ -860,7 +860,7 @@
 - [x] เพิ่ม regression coverage ให้ Discord presence embed ตรวจจำนวนผู้เล่นและสถานะเซิร์ฟเวอร์ และยืนยัน Minecraft presence route; tests เฉพาะส่วนผ่าน 10/10
 - [x] รัน `pnpm check` และ `pnpm build` หลังปรับ presence notification/monitor; build ผ่าน โดยมีเพียงคำเตือน bundle chunk ขนาดใหญ่จาก Vite
 - [x] ประเมิน Music bot จาก implementation และ regression tests: `/play`, `/queue`, `/skip`, `/stop`, `/leave` และ URL/timeout handling มีใน source; การยืนยันเสียงจริงยังต้องใช้ runtime แบบ always-on และทดสอบ Discord voice จริง ไม่สรุปเกินหลักฐาน
-- [ ] ยืนยันนโยบาย canonical price source ระหว่าง FoShop และ Essentials ก่อนเปลี่ยนราคาผู้เล่น
+- [x] ยืนยันนโยบาย canonical price source เป็น EssentialsX ก่อนเปลี่ยนราคาขายที่เกี่ยวข้อง; ผู้ใช้เลือกแนวทาง A
 - [ ] ทดสอบ `/worth`, `/sell hand`, `/sellall` และ FoShop GUI ในเกมด้วย item เดียวกันเพื่อยืนยันหน่วยราคา
 - [ ] ตรวจและวางแผนอัปเดต Essentials ให้รองรับ server version จริง หลังทำ backup และทดสอบความเข้ากันได้
 - [x] ปรับสคริปต์ economy audit ให้รับผล `files_read_many` ผ่านอาร์กิวเมนต์ ไม่ผูกกับ path sandbox และยืนยันว่าไม่เขียนกลับ MCSV
