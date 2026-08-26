@@ -807,6 +807,35 @@ export async function getLatestPlayerReportByReporter(reporterDiscordId: string)
   return rows[0];
 }
 
+export async function updatePlayerReportStatus(input: {
+  id: number;
+  status: Extract<PlayerReport["status"], "กำลังตรวจสอบ" | "ปิดแล้ว">;
+  handledByDiscordId: string;
+  handledByDisplayName: string;
+}): Promise<PlayerReport | undefined> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const current = await getPlayerReportById(input.id);
+  if (!current) return undefined;
+  const validTransition = input.status === "กำลังตรวจสอบ"
+    ? current.status === "ใหม่"
+    : current.status === "กำลังตรวจสอบ";
+  if (!validTransition) return undefined;
+  const now = new Date();
+  const result = await db.update(playerReports)
+    .set({
+      status: input.status,
+      handledByDiscordId: input.handledByDiscordId,
+      handledByDisplayName: input.handledByDisplayName.slice(0, 128),
+      handledAt: current.handledAt ?? now,
+      closedAt: input.status === "ปิดแล้ว" ? now : current.closedAt,
+      updatedAt: now,
+    })
+    .where(and(eq(playerReports.id, input.id), eq(playerReports.status, current.status)));
+  if (!result[0].affectedRows) return undefined;
+  return getPlayerReportById(input.id);
+}
+
 export async function updatePlayerReportOnce(input: {
   id: number;
   reporterDiscordId: string;

@@ -233,3 +233,51 @@ describe("Discord web-store notifications", () => {
     ]));
   });
 });
+
+  it("adds staff case-management buttons to player report embeds", async () => {
+    vi.stubEnv("DISCORD_REPORT_CHANNEL_ID", "report-channel-secret-test");
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({ id: "report-message-2" }), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { notifyPlayerReport } = await import("./discordNotifications");
+    await notifyPlayerReport({
+      reportId: 42,
+      guildId: "guild-1",
+      reporterDisplayName: "ผู้รายงาน",
+      targetDiscordName: "ยังไม่เชื่อม Discord",
+      targetMinecraftIGN: "RitzPlayer",
+      category: "อื่น ๆ",
+      details: "รายละเอียด",
+    });
+    const [, request] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const payload = JSON.parse(String(request.body)) as { components?: Array<{ components?: Array<{ custom_id?: string; style?: number }> }> };
+    expect(payload.components?.[0]?.components).toEqual(expect.arrayContaining([
+      expect.objectContaining({ custom_id: "ritz_report_claim:42", style: 1 }),
+      expect.objectContaining({ custom_id: "ritz_report_close:42", style: 4 }),
+    ]));
+  });
+
+  it("notifies a linked reporter by DM when a report status changes", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: "dm-channel-1" }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: "dm-message-1" }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const { notifyPlayerReportStatus } = await import("./discordNotifications");
+    const sent = await notifyPlayerReportStatus({ reporterDiscordId: "123456789012345678", reportId: 42, status: "ปิดแล้ว" });
+    expect(sent).toBe(true);
+    expect(fetchMock.mock.calls[0]?.[0]).toContain("/users/@me/channels");
+    expect(fetchMock.mock.calls[1]?.[0]).toContain("/channels/dm-channel-1/messages");
+  });
+
+  it("uses DISCORD_CHAT_CHANNEL_ID for Minecraft death notifications", async () => {
+    vi.stubEnv("DISCORD_CHAT_CHANNEL_ID", "chat-channel-secret-test");
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({ id: "death-message-1" }), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { notifyMinecraftDeath } = await import("./discordNotifications");
+    const result = await notifyMinecraftDeath({ playerName: "RitzPlayer", message: "ถูกซอมบี้โจมตีจนเสียชีวิต" });
+    expect(result).toMatchObject({ sent: true, channelId: "chat-channel-secret-test" });
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://discord.com/api/v10/channels/chat-channel-secret-test/messages");
+  });

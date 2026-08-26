@@ -21,6 +21,7 @@ export const ENV = {
   discordWelcomeChannelId: process.env.DISCORD_WELCOME_CHANNEL_ID ?? "",
   discordVerificationChannelId: process.env.DISCORD_VERIFICATION_CHANNEL_ID ?? "",
   discordOnlineChannelId: process.env.DISCORD_ONLINE_CHANNEL_ID ?? "",
+  discordChatChannelId: process.env.DISCORD_CHAT_CHANNEL_ID ?? "",
   discordVerifiedRoleId: process.env.DISCORD_VERIFIED_ROLE_ID ?? "",
   discordMemberRoleId: process.env.DISCORD_MEMBER_ROLE_ID ?? "",
   discordClaimRankGroup: process.env.DISCORD_CLAIM_RANK_GROUP ?? "member",

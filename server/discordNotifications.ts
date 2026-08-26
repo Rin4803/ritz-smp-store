@@ -239,6 +239,24 @@ export async function notifyMinecraftPresence(input: {
   return postDiscordMessage(channelId, { embeds: [embed] });
 }
 
+export async function notifyMinecraftDeath(input: {
+  playerName: string;
+  message: string;
+  occurredAt?: Date | string | number;
+}): Promise<DiscordNotificationResult> {
+  const channelId = ENV.discordChatChannelId?.trim() || process.env.DISCORD_CHAT_CHANNEL_ID?.trim() || "";
+  const playerName = input.playerName.trim().slice(0, 256);
+  const message = input.message.trim().slice(0, 1024);
+  const embed: DiscordEmbed = {
+    title: "☠️ ผู้เล่นเสียชีวิตในเซิร์ฟเวอร์ RitzSMP",
+    description: `ผู้เล่น \`${playerName || "ไม่ระบุชื่อ"}\` เสียชีวิต\n${message || "ไม่ระบุสาเหตุ"}`,
+    color: 0x6b7280,
+    footer: { text: "RitzSMP • Minecraft server-chat" },
+    timestamp: new Date(input.occurredAt ?? Date.now()).toISOString(),
+  };
+  return postDiscordMessage(channelId, { embeds: [embed] });
+}
+
 export async function notifyPlayerReport(input: {
   reportId: number;
   guildId: string;
@@ -265,7 +283,46 @@ export async function notifyPlayerReport(input: {
     footer: { text: `RitzSMP • Guild ${input.guildId} • สถานะ: ใหม่` },
     timestamp: formatTimestamp(input.createdAt),
   };
-  return postDiscordMessage(channelId, { embeds: [embed] });
+  return postDiscordMessage(channelId, {
+    embeds: [embed],
+    components: [{
+      type: 1,
+      components: [
+        { type: 2, style: 1, label: "🔎 รับเรื่อง", custom_id: `ritz_report_claim:${input.reportId}` },
+        { type: 2, style: 4, label: "✅ ปิดเคส", custom_id: `ritz_report_close:${input.reportId}` },
+      ],
+    }],
+  });
+}
+
+export async function notifyPlayerReportStatus(input: {
+  reporterDiscordId: string;
+  reportId: number;
+  status: "กำลังตรวจสอบ" | "ปิดแล้ว";
+}): Promise<boolean> {
+  const token = getDiscordToken();
+  if (!token || !/^\d{17,20}$/.test(input.reporterDiscordId)) return false;
+  const statusText = input.status === "กำลังตรวจสอบ" ? "ทีมงานรับเรื่องและกำลังตรวจสอบแล้ว" : "ทีมงานปิดเคสและดำเนินการตรวจสอบเรียบร้อยแล้ว";
+  try {
+    const dmResponse = await fetch(`${DISCORD_API}/users/@me/channels`, {
+      method: "POST",
+      headers: { Authorization: `Bot ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ recipient_id: input.reporterDiscordId }),
+      signal: AbortSignal.timeout(4_000),
+    });
+    if (!dmResponse.ok) return false;
+    const dmChannel = await dmResponse.json() as { id?: string };
+    if (!dmChannel.id) return false;
+    const messageResponse = await fetch(`${DISCORD_API}/channels/${dmChannel.id}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bot ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ content: `📋 รายงาน #${input.reportId} ของคุณ: ${statusText}ค่ะ` }),
+      signal: AbortSignal.timeout(4_000),
+    });
+    return messageResponse.ok;
+  } catch {
+    return false;
+  }
 }
 
 export async function notifyPurchaseCompleted(input: {

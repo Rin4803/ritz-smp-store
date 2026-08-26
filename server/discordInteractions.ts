@@ -11,6 +11,7 @@ import {
   getPlayerReportById,
   unlinkDiscordVerification,
   updatePlayerReportOnce,
+  updatePlayerReportStatus,
 } from "./db.js";
 import {
   announceMinecraftPlayerReport,
@@ -21,6 +22,7 @@ import {
 } from "./minecraftIntegration.js";
 import {
   notifyPlayerReport,
+  notifyPlayerReportStatus,
   postDiscordReportPanel,
   postDiscordSetupSystemPanel,
 } from "./discordNotifications.js";
@@ -86,6 +88,8 @@ export type RitzSmpInteractionAction =
   | "report-target"
   | "report-category"
   | "report-submit"
+  | "report-claim"
+  | "report-close"
   | "report-edit-open"
   | "report-edit-category"
   | "report-edit-submit"
@@ -117,6 +121,8 @@ export function identifyRitzSmpInteractionAction(
   if (customId === "ritz_report_target") return "report-target";
   if (customId?.startsWith("ritz_report_category:")) return "report-category";
   if (customId?.startsWith("ritz_report_modal:")) return "report-submit";
+  if (customId?.startsWith("ritz_report_claim:")) return "report-claim";
+  if (customId?.startsWith("ritz_report_close:")) return "report-close";
   if (customId?.startsWith("ritz_report_edit:")) return "report-edit-open";
   if (customId?.startsWith("ritz_report_edit_category:")) return "report-edit-category";
   if (customId?.startsWith("ritz_report_edit_modal:")) return "report-edit-submit";
@@ -849,6 +855,36 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
           return res.status(200).json(ephemeralResponse("ไม่พบรายงานนี้ หรือรายงานนี้ไม่สามารถแก้ไขได้แล้วค่ะ"));
         }
         return res.status(200).json(buildReportEditDetailsModalResponse(report.id, category, report.details));
+      }
+      case "report-claim":
+      case "report-close": {
+        if (!isConfiguredGuildInteraction(interaction) || !isDiscordAdministrator(interaction)) {
+          return res.status(200).json(ephemeralResponse("ปุ่มจัดการรายงานใช้ได้เฉพาะ Staff/ผู้ดูแลระบบเท่านั้นค่ะ"));
+        }
+        const prefix = action === "report-claim" ? "ritz_report_claim:" : "ritz_report_close:";
+        const reportId = Number((interaction.data?.custom_id ?? "").slice(prefix.length));
+        if (!Number.isInteger(reportId) || reportId <= 0) {
+          return res.status(200).json(ephemeralResponse("ไม่พบเลขที่รายงานค่ะ กรุณาลองใหม่อีกครั้ง"));
+        }
+        const report = await updatePlayerReportStatus({
+          id: reportId,
+          status: action === "report-claim" ? "กำลังตรวจสอบ" : "ปิดแล้ว",
+          handledByDiscordId: userId,
+          handledByDisplayName: getInteractionDisplayName(interaction),
+        });
+        if (!report) {
+          return res.status(200).json(ephemeralResponse("รายงานนี้อาจถูกดำเนินการไปแล้ว หรือยังไม่อยู่ในสถานะที่เปลี่ยนได้ค่ะ"));
+        }
+        const notified = await notifyPlayerReportStatus({
+          reporterDiscordId: report.reporterDiscordId,
+          reportId: report.id,
+          status: report.status as "กำลังตรวจสอบ" | "ปิดแล้ว",
+        });
+        return res.status(200).json(ephemeralResponse(
+          action === "report-claim"
+            ? `รับรายงาน #${report.id} แล้วค่ะ${notified ? " และแจ้งผู้รายงานทาง DM แล้ว" : " แต่ไม่สามารถส่ง DM แจ้งผู้รายงานได้"}`
+            : `ปิดรายงาน #${report.id} แล้วค่ะ${notified ? " และแจ้งผู้รายงานทาง DM แล้ว" : " แต่ไม่สามารถส่ง DM แจ้งผู้รายงานได้"}`,
+        ));
       }
       case "setup-panel":
       case "setup-welcome":
