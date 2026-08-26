@@ -45,6 +45,7 @@ public final class RitzAuctionBridge extends JavaPlugin {
     private static final Pattern SALE = Pattern.compile(
             "^\\[([^]]+)] Buyer: ([^|]+) \\| Seller: ([^|]+) \\| Item: ([^|]+) \\| Amount: (\\d+) \\| Price: ([^|]+) \\| BID: (true|false)$",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern TRANSACTION_LOG_FILE = Pattern.compile("^(.+)-(\\d+)\\.log$");
 
     private final AtomicBoolean pollRunning = new AtomicBoolean(false);
     private BukkitTask pollTask;
@@ -122,16 +123,40 @@ public final class RitzAuctionBridge extends JavaPlugin {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory, getConfig().getString("transaction-log-pattern", "*.log"))) {
             for (Path path : stream) if (Files.isRegularFile(path)) files.add(path);
         }
-        files.sort(Comparator.comparing(path -> path.getFileName().toString()));
+        files.sort((left, right) -> compareTransactionLogNames(
+                left.getFileName().toString(), right.getFileName().toString()));
         if (files.isEmpty()) return null;
         if (cursor.fileName == null) return files.get(files.size() - 1);
 
+        Path current = null;
         for (Path file : files) {
             String name = file.getFileName().toString();
-            if (name.equals(cursor.fileName)) return file;
-            if (name.compareTo(cursor.fileName) > 0) return file;
+            int comparison = compareTransactionLogNames(name, cursor.fileName);
+            if (comparison == 0) {
+                current = file;
+                // Keep reading the current file only while it has unread data (or was truncated).
+                // Otherwise advance to the next numeric sequence file, such as -10 after -9.
+                if (cursor.offset != Files.size(file)) return file;
+                continue;
+            }
+            if (comparison > 0) return file;
         }
-        return files.get(files.size() - 1);
+        return current != null ? current : files.get(files.size() - 1);
+    }
+
+    static int compareTransactionLogNames(String leftName, String rightName) {
+        Matcher left = TRANSACTION_LOG_FILE.matcher(leftName);
+        Matcher right = TRANSACTION_LOG_FILE.matcher(rightName);
+        if (!left.matches() || !right.matches()) return leftName.compareTo(rightName);
+
+        int dateComparison = left.group(1).compareTo(right.group(1));
+        if (dateComparison != 0) return dateComparison;
+        try {
+            int sequenceComparison = Long.compare(Long.parseLong(left.group(2)), Long.parseLong(right.group(2)));
+            return sequenceComparison != 0 ? sequenceComparison : leftName.compareTo(rightName);
+        } catch (NumberFormatException ignored) {
+            return leftName.compareTo(rightName);
+        }
     }
 
     private Path resolveLogDirectory() {

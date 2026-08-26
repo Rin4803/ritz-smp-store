@@ -1029,3 +1029,13 @@
 - [x] ปรับห้อง Player Report ให้สมาชิกทุกคนเห็นและพิมพ์ข้อมูลแก้ไข/เพิ่มเติมได้ โดยไม่จำกัดเฉพาะ Staff กับผู้รายงาน
 - [x] คงห้องและรายการเคสที่ยังดำเนินการไม่ครบไว้จนปิดเคสทุกเคส และไม่ลบเมื่อเพียงกดรับเรื่องบางส่วน
 - [ ] ทดสอบ click-through จริงด้วยแผง Player Report ที่ RitzSMP AI ส่งใหม่ เพื่อยืนยันปุ่มรับเรื่อง/ปิดเคสและสิทธิ์ห้องบน Discord production
+
+- [x] ปรับและ reload `survival-respawn.sk`: มีเตียงที่ใช้งานได้คงการเกิดแบบ native; ไม่มีเตียงกำหนดจุดเริ่มใน `Survival` แล้วเรียก RTP โดยไม่ใช้เงื่อนไข Skript เดิมที่เชื่อถือไม่ได้
+- [x] ปรับและ reload `save-location.sk`: บันทึกตำแหน่งเมื่อ teleport/quit และคืนตำแหน่งเมื่อ join สำหรับ `Survival`, `survival_nether` และ `survival_the_end` โดยผ่านการตรวจไวยากรณ์จาก Skript
+- [x] ปิด `enderchest45.sk` ผ่านคำสั่ง Skript สำเร็จ และคงข้อมูล `{ec45::*}` เดิมไว้โดยไม่ลบ
+- [x] ตรวจ Night Vision เพิ่มเติมใน Skript ที่ทำงานจริง, Geyser, Floodgate และ GrimAC แล้ว ยังไม่พบ rule ที่ลบ effect โดยตรงระหว่าง break/place/attack/interact
+- [x] ระบุและแก้ bug RitzAuctionBridge ที่เรียงไฟล์ TransactionLogger แบบข้อความจน cursor ติดอยู่ไฟล์ท้ายผิดลำดับ; เพิ่ม regression test, build JAR, สำรองเต็มระบบ, ติดตั้งและตรวจ startup สำเร็จ
+- [ ] ผู้เล่นทดสอบหลังแก้ respawn: ไม่มีเตียงต้องไปจุดปลอดภัยแบบสุ่มใน `Survival`; เตียงใช้งานได้ต้องเกิดแบบ native; quit/rejoin ใน Survival, Nether และ End ต้องกลับตำแหน่งเดิม
+- [ ] ผู้เล่นทดสอบ Ender Chest มาตรฐาน: กล่อง Ender Chest ต้องเปิด 27 ช่องตาม vanilla และ aliases ของ `enderchest45.sk` ต้องไม่เปิดเมนู 45 ช่อง
+- [ ] ผู้เล่นทดสอบ Night Vision แบบควบคุม: เปิด `/nv` แล้ว break, place, attack-air และ interact เพื่อเก็บเวลา/โลก/ชนิดไคลเอนต์สำหรับระบุผู้ล้าง effect จริง
+- [ ] ผู้เล่นทดสอบ RitzAuctionBridge รุ่นแก้: ทำ `/ah sell` และซื้อจริง เพื่อตรวจ `order-in-game` มี seller, buyer, item, amount, price ถูกต้องครั้งเดียว และไม่รั่วข้ามห้อง

@@ -54,3 +54,14 @@ AuctionHouse มีข้อความสำหรับการซื้อ�
 - DiscordSRV 1.30.5 ที่ติดตั้งจริงมี public API `DiscordSRV.getPlugin()`, `getJda()`, JDA `getTextChannelById(String)` และ JDA `TextChannel.sendMessage(MessageEmbed)`; จึงสามารถให้ companion bridge ใช้บอทเดิมส่ง Embed ไปยัง channel ID เฉพาะได้โดยไม่ต้องเพิ่ม Discord token อีกชุด.
 - สรุปวิธีที่เลือก: companion Paper plugin จะ tail เฉพาะ AuctionHouse transaction log, parse เฉพาะ `Player set up an auction` และ `Buyer` entries, เก็บ cursor/dedup ในไฟล์ bridge และส่ง Embed ผ่าน DiscordSRV ไป `DISCORD_ORDER_IN_GAME_CHANNEL_ID`; ห้ามอ่าน chat ทั่วไปและห้ามสร้าง event จากข้อมูลที่ไม่มีใน log.
 - แหล่งภายนอกที่ตรวจ: [AuctionHouse source repository](https://github.com/ElaineQheart/Auction-House), [AuctionHouse 1.5.2 release page](https://modrinth.com/plugin/auction-house-plugin/version/1.5.2).
+
+## การแก้ cursor และลำดับ transaction log (2026-08-27)
+
+- **สาเหตุที่ยืนยันได้:** AuctionHouse สร้างไฟล์ชื่อ `YYYY-MM-DD-N.log` โดย `N` เป็นลำดับตัวเลข เช่น `2026-07-27-1.log`, `2026-07-27-10.log`, …, `2026-07-27-9.log` จึงไม่สามารถเรียงชื่อแบบข้อความได้ เพราะ `-10` จะมาก่อน `-9` ทั้งที่ลำดับธุรกรรมจริงเป็น `9 → 10`.
+- RitzAuctionBridge เดิมเรียง path แบบข้อความ และเมื่อ cursor อยู่ไฟล์ลำดับเดียว อาจเลือกไฟล์ต่อไปผิดลำดับหรือวนกลับไฟล์เก่า ส่งผลให้รายการ `/ah sell` ที่อยู่ใน log ใหม่ไม่ถูกอ่านตามลำดับที่ AuctionHouse บันทึกไว้.
+- แก้ `findNextLog()` ให้เปรียบเทียบส่วนวันที่และลำดับท้ายชื่อไฟล์เป็นจำนวนเต็มด้วย `compareTransactionLogNames()` พร้อมเลือกไฟล์ถัดไปเมื่อ cursor อ่านไฟล์ปัจจุบันถึงท้ายแล้ว. กรณีชื่อไม่ตรงรูปแบบจะ fallback ไปเปรียบเทียบข้อความอย่างปลอดภัย.
+- เพิ่ม regression test ที่ครอบคลุมลำดับ `-9`, `-10`, `-11` เพื่อป้องกันไม่ให้ bug เดิมกลับมา และสร้าง JAR ใหม่ผ่าน build/test ของโปรเจกต์ bridge แล้ว.
+- ก่อนติดตั้งได้สร้าง MCSV backup ชื่อ `ก่อนแก้ RitzAuctionBridge log-order 2026-08-27` (UUID เก็บไว้ในประวัติการดำเนินงาน) จากนั้นอัปโหลด `/plugins/RitzAuctionBridge.jar` ใหม่และรีสตาร์ตในช่วงที่ตรวจพบผู้เล่นออนไลน์ **0 คน**.
+- หลังรีสตาร์ต `logs_startup` ยืนยันว่า `RitzAuctionBridge v1.0.0` เปิดใช้งานสำเร็จ ไม่มีรายการ plugin failed และ cursor ปัจจุบันคือ `2026-08-26-9.log` ที่ offset `290`. ข้อความเตือนเดิมของ Essentials และ GrimAC เป็นคนละปลั๊กอิน ไม่ใช่ความผิดพลาดของ bridge.
+
+> การติดตั้งและการโหลดปลั๊กอินได้รับการยืนยันแล้ว แต่การยืนยันผลลัพธ์ปลายทางยังต้องใช้ผู้เล่นทำทั้ง **ลงขายหนึ่งรายการ** และ **ซื้อสำเร็จหนึ่งรายการ** หลังเวลารีสตาร์ต เพื่อยืนยันว่า Embed เข้า `order-in-game` เพียงครั้งเดียวต่อธุรกรรม พร้อมข้อมูลผู้ขาย/ผู้ซื้อ/ไอเทม/จำนวน/ราคา.
