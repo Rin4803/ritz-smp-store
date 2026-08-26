@@ -311,6 +311,35 @@ export async function postDiscordReportPanel(channelId: string): Promise<Discord
   });
 }
 
+export async function postDiscordSetupSystemPanel(
+  channelId: string,
+  kind: "welcome" | "leave",
+): Promise<DiscordNotificationResult> {
+  const isWelcome = kind === "welcome";
+  return postDiscordMessage(channelId, {
+    embeds: [{
+      title: isWelcome ? "👋 ระบบต้อนรับสมาชิกใหม่ RitzSMP" : "ไว้เจอกันใหม่นะคะ 👋",
+      description: isWelcome
+        ? "ช่องนี้ใช้สำหรับข้อความต้อนรับสมาชิกใหม่ค่ะ กดปุ่มด้านล่างเพื่อเชื่อมบัญชีและเริ่มใช้งานระบบได้เลยนะคะ 💖"
+        : "ช่องนี้ใช้สำหรับแจ้งเตือนเมื่อสมาชิกออกจากเซิร์ฟเวอร์ RitzSMP ค่ะ",
+      color: isWelcome ? 0xec4899 : 0xf472b6,
+      footer: { text: isWelcome ? "RitzSMP AI • แผงต้อนรับที่แอดมินสั่งสร้าง" : "RitzSMP AI • แผงสมาชิกออกที่แอดมินสั่งสร้าง" },
+      timestamp: new Date().toISOString(),
+    }],
+    ...(isWelcome ? {
+      components: [{
+        type: 1,
+        components: [
+          { type: 2, style: 1, label: "🔗 เชื่อมบัญชี Minecraft", custom_id: "ritz_verify_button" },
+          { type: 2, style: 2, label: "❌ ยกเลิกรหัส / เปลี่ยนบัญชี", custom_id: "ritz_cancel_verify_button" },
+          { type: 2, style: 4, label: "🔓 ยกเลิกการเชื่อมต่อ", custom_id: "ritz_unlink_button" },
+          { type: 2, style: 2, label: "📝 รายงานผู้เล่น", custom_id: "ritz_report_button" },
+        ],
+      }],
+    } : {}),
+  });
+}
+
 export const discordNotificationInternals = {
   getSupportChannelId,
   getDonateLogChannelId,

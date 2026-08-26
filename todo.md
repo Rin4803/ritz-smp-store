@@ -889,3 +889,11 @@
 - [x] แก้บั๊ก production: ช่อง `#report-รายงานผู้เล่น` แสดงข้อความต้อนรับแต่ไม่แสดงปุ่มเริ่มรายงาน/ปุ่มยกเลิก ให้ตรวจและทำให้ข้อความเริ่มต้นโพสต์ components ครบ
 - [ ] ตรวจต่อจากหลักฐาน production: หลังรีสตาร์ตบอท ช่อง `#report-รายงานผู้เล่น` ยังไม่มีปุ่ม ต้องยืนยัน channel target, สิทธิ์ และเส้นทาง startup reconcile ก่อนปิดบั๊ก
 - [ ] แก้บั๊ก production: ปุ่มในแผงรายงานตอบว่าไม่รองรับผ่าน HTTP Interaction ต้องทำให้กดรายงานได้จริงโดยไม่ให้ผู้ใช้รัน `/setup panel` เอง
+- [ ] แก้บั๊ก production: หลังเลือกหมวดหมู่รายงาน ระบบ timeout เพราะรอ AI ต้องเปิด modal รายละเอียดแบบ deterministic โดยไม่บล็อกด้วย AI
+
+- [x] แก้ Discord Player Report: หลังเลือกหมวดหมู่ต้องเปิด modal รายละเอียดทันทีภายใน interaction deadline โดยไม่รอ AI หรือ dependency ที่ไม่จำเป็น
+- [x] เพิ่ม regression test ยืนยัน category interaction ส่ง response type modal และไม่เรียกกระบวนการ AI
+- [ ] ทดสอบ production flow รายงานผู้เล่นตั้งแต่เลือกผู้เล่น เลือกหมวดหมู่ ส่งรายละเอียด และแก้ไขได้หนึ่งครั้ง
+
+- [x] แก้ production bug: `/setup welcome` ผ่าน HTTP Interaction ตอบว่าไม่รองรับ ทั้งที่คำสั่งถูกลงทะเบียนไว้
+- [x] ตรวจสอบและทำให้ `/setup leave` และ `/setup panel` ใช้เส้นทาง HTTP Interaction เดียวกันได้ พร้อมตรวจ permission และข้อความตอบกลับภาษาไทย

@@ -15,7 +15,7 @@ vi.mock("./storage", () => ({
   storageGetSignedUrl: vi.fn(async () => "https://storage.example.test/signed-slip.png"),
 }));
 
-import { notifyMinecraftPresence, notifyPurchaseCompleted, notifyTopupSubmitted } from "./discordNotifications";
+import { notifyMinecraftPresence, notifyPurchaseCompleted, notifyTopupSubmitted, postDiscordSetupSystemPanel } from "./discordNotifications";
 import { storageGetSignedUrl } from "./storage";
 
 beforeEach(() => {
@@ -46,6 +46,28 @@ const order = {
 };
 
 describe("Discord web-store notifications", () => {
+  it("posts the welcome setup panel with its interactive controls to the requested channel", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({ id: "welcome-panel-1" }), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await postDiscordSetupSystemPanel("welcome-channel-123", "welcome");
+
+    expect(result).toMatchObject({ sent: true, channelId: "welcome-channel-123", messageId: "welcome-panel-1" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://discord.com/api/v10/channels/welcome-channel-123/messages");
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(requestInit.headers).toMatchObject({ Authorization: "Bot unit-test-ai-token" });
+    const payload = JSON.parse(String(requestInit.body));
+    expect(payload.embeds[0].title).toContain("ระบบต้อนรับสมาชิกใหม่ RitzSMP");
+    expect(payload.components[0].components.map((component: { custom_id: string }) => component.custom_id)).toEqual([
+      "ritz_verify_button",
+      "ritz_cancel_verify_button",
+      "ritz_unlink_button",
+      "ritz_report_button",
+    ]);
+  });
   it("posts the uploaded slip as a Discord file attachment in donate-log", async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(Buffer.from("fake-slip"), { status: 200 }))

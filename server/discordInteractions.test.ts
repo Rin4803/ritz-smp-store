@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildMinecraftPlayersMessage,
   buildOwnDiscordProfileMessage,
+  buildPlayerReportDetailsModalResponse,
   deferredEphemeralResponse,
   finishDeferredMinecraftPlayersInteraction,
   buildVerificationCodeMessage,
@@ -81,13 +82,38 @@ describe("Discord interaction endpoint helpers", () => {
     ).toBe("report-submit");
   });
 
-  it("routes the /setup panel command to the report-panel setup flow", () => {
+  it("builds the report details modal immediately from the selected target and category", () => {
+    const response = buildPlayerReportDetailsModalResponse(
+      "discord-target-1",
+      "โกงหรือใช้โปรแกรมช่วยเล่น",
+    );
+
+    expect(response.type).toBe(9);
+    expect(response.data.custom_id).toBe(
+      "ritz_report_modal:discord-target-1:%E0%B9%82%E0%B8%81%E0%B8%87%E0%B8%AB%E0%B8%A3%E0%B8%B7%E0%B8%AD%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B9%82%E0%B8%9B%E0%B8%A3%E0%B9%81%E0%B8%81%E0%B8%A3%E0%B8%A1%E0%B8%8A%E0%B9%88%E0%B8%A7%E0%B8%A2%E0%B9%80%E0%B8%A5%E0%B9%88%E0%B8%99");
+    expect(response.data.components).toHaveLength(1);
+    expect(response.data.components[0].components[0].custom_id).toBe("details");
+  });
+
+  it("routes all registered /setup subcommands through HTTP interactions", () => {
     expect(
       identifyRitzSmpInteractionAction({
         type: 2,
         data: { name: "setup", options: [{ name: "panel" }] },
       }),
     ).toBe("setup-panel");
+    expect(
+      identifyRitzSmpInteractionAction({
+        type: 2,
+        data: { name: "setup", options: [{ name: "welcome" }] },
+      }),
+    ).toBe("setup-welcome");
+    expect(
+      identifyRitzSmpInteractionAction({
+        type: 2,
+        data: { name: "setup", options: [{ name: "leave" }] },
+      }),
+    ).toBe("setup-leave");
   });
 
   it("routes the /verify command to the same verification-code flow", () => {

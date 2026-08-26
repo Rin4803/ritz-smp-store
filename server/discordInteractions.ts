@@ -17,7 +17,11 @@ import {
   getMinecraftDiscordVerificationCode,
   type MinecraftServerStatus,
 } from "./minecraftIntegration.js";
-import { notifyPlayerReport, postDiscordReportPanel } from "./discordNotifications.js";
+import {
+  notifyPlayerReport,
+  postDiscordReportPanel,
+  postDiscordSetupSystemPanel,
+} from "./discordNotifications.js";
 import {
   buildDiscordMembersMessage,
   editDiscordOriginalInteractionResponse,
@@ -54,6 +58,7 @@ type DiscordInteractionPayload = {
 
     components?: Array<{ components?: Array<{ custom_id?: string; value?: string }> }>;
   };
+  channel_id?: string;
   member?: {
     user?: {
       id?: string;
@@ -82,6 +87,8 @@ export type RitzSmpInteractionAction =
   | "report-edit-open"
   | "report-edit-submit"
   | "setup-panel"
+  | "setup-welcome"
+  | "setup-leave"
   | "unsupported";
 
 export function identifyRitzSmpInteractionAction(
@@ -109,11 +116,12 @@ export function identifyRitzSmpInteractionAction(
   if (customId?.startsWith("ritz_report_modal:")) return "report-submit";
   if (customId?.startsWith("ritz_report_edit:")) return "report-edit-open";
   if (customId?.startsWith("ritz_report_edit_modal:")) return "report-edit-submit";
-  if (
-    interaction.type === DISCORD_INTERACTION_APPLICATION_COMMAND &&
-    commandName === "setup" &&
-    interaction.data?.options?.some((option) => option.name?.toLowerCase() === "panel")
-  ) return "setup-panel";
+  if (interaction.type === DISCORD_INTERACTION_APPLICATION_COMMAND && commandName === "setup") {
+    const subcommand = interaction.data?.options?.[0]?.name?.toLowerCase();
+    if (subcommand === "panel") return "setup-panel";
+    if (subcommand === "welcome") return "setup-welcome";
+    if (subcommand === "leave") return "setup-leave";
+  }
   return "unsupported";
 }
 
@@ -416,6 +424,13 @@ function buildReportCategoryResponse(targetId: string) {
   };
 }
 
+export function buildPlayerReportDetailsModalResponse(targetId: string, category: string) {
+  return reportDetailsModalResponse(
+    `ritz_report_modal:${targetId}:${encodeURIComponent(category)}`,
+    "รายงานผู้เล่น RitzSMP",
+  );
+}
+
 function reportDetailsModalResponse(customId: string, title: string) {
   return {
     type: 9,
@@ -487,7 +502,8 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
   }
 
   try {
-    switch (identifyRitzSmpInteractionAction(interaction)) {
+    const action = identifyRitzSmpInteractionAction(interaction);
+    switch (action) {
       case "verification-code": {
         const codeResult = await getMinecraftDiscordVerificationCode(userId);
         if (codeResult.kind === "linked") {
@@ -595,11 +611,15 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
       case "report-category": {
         if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("ระบบรายงานใช้ได้เฉพาะใน Discord RitzSMP ที่ตั้งค่าไว้ค่ะ"));
         const customId = interaction.data?.custom_id ?? "";
-        const targetId = customId.slice("ritz_report_category:".length);
+        const targetId = customId.slice("ritz_report_category:".length).trim();
         const category = interaction.data?.values?.[0] ?? "";
-        const linked = targetId ? (await getLinkedDiscordVerifications()).find((item) => item.discordUserId === targetId) : undefined;
-        if (!linked || !REPORT_CATEGORIES.includes(category as (typeof REPORT_CATEGORIES)[number])) return res.status(200).json(ephemeralResponse("ไม่พบผู้เล่นหรือหมวดหมู่ที่เลือกค่ะ กรุณาเปิดเมนูรายงานใหม่แล้วลองอีกครั้ง"));
-        return res.status(200).json(reportDetailsModalResponse(`ritz_report_modal:${linked.discordUserId}:${encodeURIComponent(category)}`, "รายงานผู้เล่น RitzSMP"));
+        // A category select must be acknowledged within Discord's interaction
+        // deadline. The target came from the signed panel response, while the
+        // authoritative linked-account check remains in report-submit.
+        if (!targetId || !REPORT_CATEGORIES.includes(category as (typeof REPORT_CATEGORIES)[number])) {
+          return res.status(200).json(ephemeralResponse("ไม่พบผู้เล่นหรือหมวดหมู่ที่เลือกค่ะ กรุณาเปิดเมนูรายงานใหม่แล้วลองอีกครั้ง"));
+        }
+        return res.status(200).json(buildPlayerReportDetailsModalResponse(targetId, category));
       }
       case "report-submit": {
         if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("ระบบรายงานใช้ได้เฉพาะใน Discord RitzSMP ที่ตั้งค่าไว้ค่ะ"));
@@ -646,18 +666,31 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
         if (report.editCount >= 1) return res.status(200).json(ephemeralResponse("รายงานนี้ถูกแก้ไขไปแล้วหนึ่งครั้ง จึงไม่สามารถแก้ไขซ้ำได้ค่ะ"));
         return res.status(200).json(reportModalResponse(`ritz_report_edit_modal:${report.id}`, "แก้ไขรายงานผู้เล่น", { category: report.category, details: report.details }));
       }
-      case "setup-panel": {
+      case "setup-panel":
+      case "setup-welcome":
+      case "setup-leave": {
         if (!isConfiguredGuildInteraction(interaction) || !isDiscordAdministrator(interaction)) {
           return res.status(200).json(ephemeralResponse("คำสั่งนี้ใช้ได้เฉพาะผู้ดูแลระบบใน Discord RitzSMP เท่านั้นค่ะ"));
         }
-        if (!ENV.discordReportChannelId) {
-          return res.status(200).json(ephemeralResponse("ยังไม่ได้ตั้งค่าช่องรายงานในระบบค่ะ กรุณาตรวจสอบการตั้งค่า Discord"));
+        if (action === "setup-panel") {
+          if (!ENV.discordReportChannelId) {
+            return res.status(200).json(ephemeralResponse("ยังไม่ได้ตั้งค่าช่องรายงานในระบบค่ะ กรุณาตรวจสอบการตั้งค่า Discord"));
+          }
+          const posted = await postDiscordReportPanel(ENV.discordReportChannelId);
+          return res.status(200).json(ephemeralResponse(
+            posted.sent
+              ? "สร้างแผงรายงานพร้อมปุ่มเริ่มรายงานและยกเลิกในช่องรายงานเรียบร้อยแล้วค่ะ"
+              : "ไม่สามารถสร้างแผงรายงานได้ในขณะนี้ กรุณาตรวจสอบสิทธิ์บอทในช่องรายงานค่ะ",
+          ));
         }
-        const posted = await postDiscordReportPanel(ENV.discordReportChannelId);
+        const channelId = interaction.channel_id?.trim();
+        if (!channelId) return res.status(200).json(ephemeralResponse("ไม่พบช่อง Discord ที่ใช้สร้างแผงค่ะ กรุณาลองใช้คำสั่งในช่องข้อความอีกครั้ง"));
+        const kind = action === "setup-welcome" ? "welcome" : "leave";
+        const posted = await postDiscordSetupSystemPanel(channelId, kind);
         return res.status(200).json(ephemeralResponse(
           posted.sent
-            ? "สร้างแผงรายงานพร้อมปุ่มเริ่มรายงานและยกเลิกในช่องรายงานเรียบร้อยแล้วค่ะ"
-            : "ไม่สามารถสร้างแผงรายงานได้ในขณะนี้ กรุณาตรวจสอบสิทธิ์บอทในช่องรายงานค่ะ",
+            ? `สร้าง Embed ${kind === "welcome" ? "ต้อนรับสมาชิก" : "แจ้งสมาชิกออก"} ลงในช่องนี้เรียบร้อยแล้วค่ะ`
+            : "ไม่สามารถสร้าง Embed ได้ในขณะนี้ กรุณาตรวจสอบสิทธิ์บอทในช่องนี้ค่ะ",
         ));
       }
       case "report-edit-submit": {
