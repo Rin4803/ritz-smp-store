@@ -156,12 +156,20 @@ describe("Discord interaction endpoint helpers", () => {
       "cat_6",
     ]);
     expect(select.options.map((option) => option.label)).toEqual([
-      "🛡️ โกงหรือใช้โปรแกรมช่วยเล่น",
-      "⚔️ ทำร้ายหรือก่อกวนผู้เล่น",
-      "💬 แชตไม่เหมาะสม/สแปม",
-      "🐛 ใช้บั๊กหรือช่องโหว่",
-      "🎭 ชื่อหรือสกินไม่เหมาะสม",
-      "📌 อื่น ๆ",
+      "โกงหรือใช้โปรแกรมช่วยเล่น",
+      "ทำร้ายหรือก่อกวนผู้เล่น",
+      "แชตไม่เหมาะสม/สแปม",
+      "ใช้บั๊กหรือช่องโหว่",
+      "ชื่อหรือสกินไม่เหมาะสม",
+      "อื่น ๆ",
+    ]);
+    expect(select.options.map((option) => option.emoji?.name)).toEqual([
+      "🛡️",
+      "⚔️",
+      "💬",
+      "🐛",
+      "🎭",
+      "📌",
     ]);
     expect(select.options.map((option) => option.description)).toEqual([
       "พบการโกงหรือใช้โปรแกรมช่วยเล่น",

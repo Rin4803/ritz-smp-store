@@ -922,3 +922,6 @@
 - [x] แก้ runtime export mismatch: discordInteractions เรียก postDiscordSetupSystemPanel แต่ discordNotifications ไม่มี export ดังกล่าว
 
 - [x] เพิ่มอิโมจิและคำอธิบายสั้นในตัวเลือกหมวดหมู่ Player Report โดยคง category key สั้นและ mapping เดิม
+- [x] แก้ production payload ของเมนูหมวดหมู่ Player Report ที่ยังไม่แสดงอิโมจิใน Discord ทั้ง flow รายงานใหม่และแก้ไขรายงาน
+- [x] เพิ่ม regression tests ยืนยัน emoji field และ label ของหมวดหมู่ทั้ง 6 รายการใน payload ที่ส่งจริง โดยยังใช้ค่า cat_* เดิม
+- [x] ผู้ใช้ยืนยันจากภาพหน้าจอว่าอิโมจิและคำอธิบายหมวดหมู่ Player Report ทั้ง 6 รายการแสดงบน Discord มือถือ production แล้ว

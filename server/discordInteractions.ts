@@ -376,7 +376,8 @@ const REPORT_CATEGORY_PRESENTATION: Record<(typeof REPORT_CATEGORIES)[number], {
 function reportCategoryOption(category: (typeof REPORT_CATEGORIES)[number], isDefault = false) {
   const presentation = REPORT_CATEGORY_PRESENTATION[category];
   return {
-    label: `${presentation.emoji} ${category}`.slice(0, 100),
+    label: category.slice(0, 100),
+    emoji: { name: presentation.emoji },
     value: reportCategoryId(category) ?? "cat_6",
     description: presentation.description.slice(0, 100),
     ...(isDefault ? { default: true } : {}),
