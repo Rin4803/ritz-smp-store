@@ -85,6 +85,7 @@ export type RitzSmpInteractionAction =
   | "report-category"
   | "report-submit"
   | "report-edit-open"
+  | "report-edit-category"
   | "report-edit-submit"
   | "setup-panel"
   | "setup-welcome"
@@ -115,6 +116,7 @@ export function identifyRitzSmpInteractionAction(
   if (customId?.startsWith("ritz_report_category:")) return "report-category";
   if (customId?.startsWith("ritz_report_modal:")) return "report-submit";
   if (customId?.startsWith("ritz_report_edit:")) return "report-edit-open";
+  if (customId?.startsWith("ritz_report_edit_category:")) return "report-edit-category";
   if (customId?.startsWith("ritz_report_edit_modal:")) return "report-edit-submit";
   if (interaction.type === DISCORD_INTERACTION_APPLICATION_COMMAND && commandName === "setup") {
     const subcommand = interaction.data?.options?.[0]?.name?.toLowerCase();
@@ -420,6 +422,45 @@ function reportModalResponse(customId: string, title: string, defaults?: { categ
     },
   };
 }
+
+export function buildReportEditCategoryResponse(reportId: number, currentCategory: string) {
+  const currentId = reportCategoryId(currentCategory);
+  return {
+    type: DISCORD_RESPONSE_CHANNEL_MESSAGE,
+    data: {
+      content: "เลือกหมวดหมู่ใหม่ของรายงาน แล้วกรอกรายละเอียดเพิ่มเติมได้เลยค่ะ",
+      flags: EPHEMERAL_MESSAGE_FLAG,
+      components: [
+        {
+          type: 1,
+          components: [{
+            type: 3,
+            custom_id: `ritz_report_edit_category:${reportId}`,
+            placeholder: "เลือกหมวดหมู่รายงาน",
+            min_values: 1,
+            max_values: 1,
+            options: REPORT_CATEGORIES.map((category) => ({
+              label: category,
+              value: reportCategoryId(category) ?? "cat_6",
+              description: "เลือกหมวดหมู่ใหม่สำหรับรายงาน".slice(0, 100),
+              ...(reportCategoryId(category) === currentId ? { default: true } : {}),
+            })),
+          }],
+        },
+        { type: 1, components: [{ type: 2, style: 2, label: "ยกเลิก", custom_id: "ritz_report_cancel" }] },
+      ],
+    },
+  };
+}
+
+export function buildReportEditDetailsModalResponse(reportId: number, category: string, details: string) {
+  const categoryId = reportCategoryId(category);
+  return reportDetailsModalResponse(
+    `ritz_report_edit_modal:${reportId}:${categoryId ?? "cat_6"}`,
+    "แก้ไขรายงานผู้เล่น",
+    details,
+  );
+}
 export function buildReportCategoryResponse(targetId: string) {
   return {
     type: DISCORD_RESPONSE_CHANNEL_MESSAGE,
@@ -452,7 +493,7 @@ export function buildPlayerReportDetailsModalResponse(targetId: string, category
   );
 }
 
-function reportDetailsModalResponse(customId: string, title: string) {
+function reportDetailsModalResponse(customId: string, title: string, details?: string) {
   return {
     type: 9,
     data: {
@@ -460,7 +501,7 @@ function reportDetailsModalResponse(customId: string, title: string) {
       title,
       components: [{
         type: 1,
-        components: [{ type: 4, custom_id: "details", label: "รายละเอียด", style: 2, required: true, min_length: 1, max_length: 1000 }],
+        components: [{ type: 4, custom_id: "details", label: "รายละเอียด", style: 2, required: true, min_length: 1, max_length: 1000, ...(details !== undefined ? { value: details } : {}) }],
       }],
     },
   };
@@ -727,7 +768,17 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
         const report = Number.isInteger(reportId) ? await getPlayerReportById(reportId) : undefined;
         if (!report || report.reporterDiscordId !== userId) return res.status(200).json(ephemeralResponse("ไม่พบรายงานของคุณค่ะ หรือรายงานนี้ไม่สามารถแก้ไขจากบัญชีนี้ได้"));
         if (report.editCount >= 1) return res.status(200).json(ephemeralResponse("รายงานนี้ถูกแก้ไขไปแล้วหนึ่งครั้ง จึงไม่สามารถแก้ไขซ้ำได้ค่ะ"));
-        return res.status(200).json(reportModalResponse(`ritz_report_edit_modal:${report.id}`, "แก้ไขรายงานผู้เล่น", { category: report.category, details: report.details }));
+        return res.status(200).json(buildReportEditCategoryResponse(report.id, report.category));
+      }
+      case "report-edit-category": {
+        const customId = interaction.data?.custom_id ?? "";
+        const reportId = Number(customId.slice("ritz_report_edit_category:".length));
+        const category = reportCategoryFromId(interaction.data?.values?.[0] ?? "");
+        const report = Number.isInteger(reportId) ? await getPlayerReportById(reportId) : undefined;
+        if (!report || report.reporterDiscordId !== userId || report.editCount >= 1 || !category) {
+          return res.status(200).json(ephemeralResponse("ไม่พบรายงานนี้ หรือรายงานนี้ไม่สามารถแก้ไขได้แล้วค่ะ"));
+        }
+        return res.status(200).json(buildReportEditDetailsModalResponse(report.id, category, report.details));
       }
       case "setup-panel":
       case "setup-welcome":
@@ -757,9 +808,10 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
         ));
       }
       case "report-edit-submit": {
-        const reportId = Number((interaction.data?.custom_id ?? "").slice("ritz_report_edit_modal:".length));
+        const [, reportIdRaw, categoryId] = (interaction.data?.custom_id ?? "").split(":");
+        const reportId = Number(reportIdRaw);
         const fields = modalFieldValues(interaction);
-        const category = fields.category ?? "";
+        const category = reportCategoryFromId(categoryId ?? "") ?? fields.category ?? "";
         const details = fields.details ?? "";
         if (!Number.isInteger(reportId) || !validatePlayerReportInput({ category, details })) return res.status(200).json(ephemeralResponse("ข้อมูลแก้ไขไม่ครบถ้วนค่ะ กรุณาตรวจสอบหมวดหมู่และรายละเอียด"));
         const updated = await updatePlayerReportOnce({ id: reportId, reporterDiscordId: userId, category, details });

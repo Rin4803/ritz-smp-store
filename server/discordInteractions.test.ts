@@ -4,6 +4,8 @@ import {
   buildOwnDiscordProfileMessage,
   buildPlayerReportDetailsModalResponse,
   buildReportCategoryResponse,
+  buildReportEditCategoryResponse,
+  buildReportEditDetailsModalResponse,
   deferredEphemeralResponse,
   finishDeferredMinecraftPlayersInteraction,
   finishDeferredReportOpenInteraction,
@@ -79,9 +81,15 @@ describe("Discord interaction endpoint helpers", () => {
     expect(
       identifyRitzSmpInteractionAction({
         type: 3,
-        data: { custom_id: "ritz_report_modal:discord-target-1:%E0%B9%82%E0%B8%81%E0%B8%87" },
+        data: { custom_id: "ritz_report_modal:discord-target-1:cat_1" },
       }),
     ).toBe("report-submit");
+    expect(
+      identifyRitzSmpInteractionAction({
+        type: 3,
+        data: { custom_id: "ritz_report_edit_category:30001" },
+      }),
+    ).toBe("report-edit-category");
   });
 
   it("edits a deferred report-open response with linked Minecraft names", async () => {
@@ -155,6 +163,26 @@ describe("Discord interaction endpoint helpers", () => {
       expect(response.data.custom_id.length).toBeLessThanOrEqual(100);
       expect(response.data.components[0].components[0].custom_id).toBe("details");
     });
+  });
+
+  it("builds the edit category menu with the existing category selected", () => {
+    const response = buildReportEditCategoryResponse(30001, "แชตไม่เหมาะสม/สแปม");
+    const select = response.data.components[0].components[0];
+
+    expect(response.type).toBe(4);
+    expect(select.custom_id).toBe("ritz_report_edit_category:30001");
+    expect(select.options).toHaveLength(6);
+    expect(select.options.find((option) => option.default)?.value).toBe("cat_3");
+    expect(response.data.components[1].components[0].custom_id).toBe("ritz_report_cancel");
+  });
+
+  it("builds the edit modal with only details and carries the selected category id", () => {
+    const response = buildReportEditDetailsModalResponse(30001, "ใช้บั๊กหรือช่องโหว่", "รายละเอียดเดิม");
+
+    expect(response.type).toBe(9);
+    expect(response.data.custom_id).toBe("ritz_report_edit_modal:30001:cat_4");
+    expect(response.data.components[0].components[0].custom_id).toBe("details");
+    expect(response.data.components[0].components[0].value).toBe("รายละเอียดเดิม");
   });
 
   it("routes all registered /setup subcommands through HTTP interactions", () => {
