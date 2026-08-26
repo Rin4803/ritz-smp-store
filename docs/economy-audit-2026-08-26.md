@@ -92,3 +92,11 @@
 ยังไม่มีหลักฐานการรันคำสั่งด้วยผู้เล่นจริง จึงยังไม่สรุปว่า `/worth`, `/sell`, `/sellall` ผ่าน production จนกว่าจะทำ click-through checklist ด้วยบัญชีควบคุม
 
 **สถานะ:** ไฟล์ราคาแพตช์แล้ว, backup พร้อม rollback, reload สำเร็จ; player command verification ยัง pending
+
+## Production command verification หลัง restart
+
+- MCSV restart สำเร็จและ startup log แสดงว่า `Essentials`, `FoShop` และ `Vault` โหลดสำเร็จ; ไม่พบ plugin failed ใน boot ล่าสุด
+- ส่งคำสั่ง read-only `essentials:worth diamond` และ `essentials:worth diamond 1` ผ่าน server console สำเร็จในระดับการรับคำสั่ง แต่ EssentialsX ตอบ `That item cannot be sold to the server.` ทั้งสองครั้ง
+- ผลนี้ **ยังไม่ใช่หลักฐานว่า diamond ขายไม่ได้สำหรับผู้เล่น** เพราะคำสั่ง `/worth` ของ EssentialsX ต้องอาศัยบริบท inventory/ผู้เล่น และ console ไม่สามารถจำลอง click-through ของ `/sell` หรือ `/sellall` ได้อย่างถูกต้อง
+- ดังนั้นการตรวจด้วยผู้เล่นจริงยังคงเป็น pending: ใช้บัญชีควบคุม ตรวจ `/worth diamond`, ขาย diamond จำนวนเล็กน้อยด้วย `/sell` หรือ `/sellall`, เปรียบเทียบยอดเงินก่อน/หลัง และบันทึกผลโดยไม่ใช้ยอดของผู้เล่นอื่น
+- คำเตือนที่พบจาก startup เรื่อง server version/การแจ้งอัปเดตของปลั๊กอินไม่เกี่ยวกับการแพตช์ราคาโดยตรง และยังไม่ควรอัปเดตปลั๊กอินในรอบนี้โดยไม่มี backup/ทดสอบแยก
