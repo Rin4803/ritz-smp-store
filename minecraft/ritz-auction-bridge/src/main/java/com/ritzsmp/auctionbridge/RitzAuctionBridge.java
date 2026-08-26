@@ -83,7 +83,17 @@ public final class RitzAuctionBridge extends JavaPlugin {
             Path log = findNextLog();
             if (log == null) return;
 
-            long start = cursor.fileName == null ? initialOffset(log) : offsetFor(log);
+            long start;
+            if (cursor.fileName == null) {
+                start = initialOffset(log);
+                // Persist the initial position even when the file has no new complete lines.
+                // Without this, start-at-end would be recalculated on every poll and skip all
+                // future AuctionHouse events forever when the state file has no file name.
+                cursor = new Cursor(log.getFileName().toString(), start);
+                saveCursor();
+            } else {
+                start = offsetFor(log);
+            }
             List<LogLine> lines = readCompleteLines(log, start);
             if (lines.isEmpty()) return;
 

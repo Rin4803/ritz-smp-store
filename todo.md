@@ -993,9 +993,13 @@
 - [ ] ทดสอบจริงทุก event ที่ผู้ใช้รายงาน โดยไม่สร้างข้อมูลจำลอง
 - [x] อัปเดตเอกสารสาเหตุและซิงก์การแก้ไขไปยัง private GitHub repository
 - [ ] ตรวจและแก้ปัญหา `/nv` ไม่แสดง Night Vision โดยหาสคริปต์/ปลั๊กอินที่ยกเลิกหรือทับเอฟเฟกต์
+- [ ] หาต้นเหตุที่ล้าง Night Vision ตอนทุบ/วาง/คลิกบล็อก และเอา re-apply loop ที่ทำให้เอฟเฟกต์กระพริบออก
+- [ ] ทำให้ AuctionHouse ลงขาย/ซื้อส่งแจ้งเตือน realtime ไป `order-in-game` พร้อมชื่อผู้ขาย/ผู้ซื้อ/ไอเทม/ราคา
 - [ ] ตรวจทุกเมนูแบบกดใช้งานจริงและยืนยันว่าแต่ละปุ่มเปิดหน้าหรือทำคำสั่งได้ถูกต้อง ไม่ใช่ตรวจเฉพาะ build/test
 - [ ] ตรวจผลลัพธ์ปลายทางของทุกระบบ Minecraft/Discord เช่น โลก ตำแหน่ง เอฟเฟกต์ ห้องข้อความ ผู้เล่น ราคา และข้อมูลผู้ซื้อ/ผู้ขาย
 - [ ] ทำ end-to-end audit แยกสถานะผ่าน/ผิด/ยังทดสอบไม่ได้ พร้อมหลักฐานจาก UI, server state และ live logs
+- [ ] เพิ่มระบบ Ender Chest แบบ 45 ช่อง (5 แถว) แยกข้อมูลตามผู้เล่นและบันทึกถาวร
+- [ ] ตรวจคำสั่ง/เมนูเปิด Ender Chest และความเข้ากันได้กับ Skript/ปลั๊กอินเดิม
 - [ ] แก้ `/play` ให้ย้ายออกจาก Lobby ไปโลก Survival ก่อนทำการสุ่มตำแหน่ง และตรวจโลก/ตำแหน่งหลังใช้งานจริง
 - [ ] แก้ `/nv` ให้เปิดเอฟเฟกต์จริงและคงอยู่หลังทุบพื้น ตีอากาศ และวางบล็อก โดยตรวจ event ที่ล้าง effect จากทุก Skript/plugin ที่เกี่ยวข้อง
 - [ ] แยก server-login ให้มีเฉพาะเหตุการณ์เข้า/ออกและสถานะเซิร์ฟเวอร์ ไม่รวมข้อความแชตผู้เล่น
@@ -1010,3 +1014,9 @@
 - [ ] ตรวจกรณีเตียงถูกทำลาย/จุดเกิดไม่ปลอดภัยและยืนยัน world/coordinates หลังตายจริง
 - [x] แก้ TransformError ใน `server/discordNotifications.ts` บริเวณฟังก์ชัน AuctionHouse notifier ที่ทำให้ dev server แปลงไฟล์ไม่สำเร็จ
 - [x] แก้ death notifier ไม่ให้ fallback ไป `chat-game` และแก้ข้อความเตือนของ web orders ให้ชี้ไปยัง env ที่ถูกต้อง เพื่อป้องกันข้อความปนห้อง
+- [x] ตรวจสุขภาพ bot Discord ทุกตัว สถานะ token/login และ runtime error
+- [x] ตรวจทุก channel routing, permission และคำสั่งที่ไม่ตอบสนอง พร้อมแยกสาเหตุจาก bot กับช่องปลายทาง
+- [x] แก้ RitzAuctionBridge ให้ initialize cursor เมื่อ state file ไม่มี file เพื่อไม่ข้าม event ใหม่ตลอดเวลา
+- [x] เพิ่ม regression test ครอบคลุม start-at-end cursor initialization และรูปแบบ log AuctionHouse จริง
+- [x] build และติดตั้ง RitzAuctionBridge รุ่นแก้ไขบนเซิร์ฟเวอร์จริง พร้อมตรวจ log หลัง reload
+- [x] แก้ TransformError ล่าสุดใน server/discordNotifications.ts บรรทัด 459 และตรวจว่า runtime ไม่มี error ซ้ำ
