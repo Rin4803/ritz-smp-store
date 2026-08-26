@@ -939,7 +939,7 @@
 - [ ] เชื่อมข้อมูลรายงานกับ Dashboard กลางและตรวจ permission สำหรับ Staff/แอดมิน
 - [x] ย้ายเหตุการณ์ผู้เล่นเข้า/ออกไปใช้ช่อง server-realtime โดยไม่ fallback ไปช่อง server-chat
 - [x] ย้ายเหตุการณ์เซิร์ฟเวอร์เปิด/ปิดไปใช้ช่อง server-realtime และคงข้อมูลจำนวนผู้เล่น
-- [ ] ส่งเหตุการณ์ผู้เล่นตายไปช่อง server-chat แยกจาก presence และ server status
+- [x] ส่งเหตุการณ์ผู้เล่นตายไปช่อง server-chat แยกจาก presence และ server status
 - [x] เพิ่ม regression tests ยืนยัน channel routing ของ join/leave, server status และ death event
 - [x] ยืนยัน mapping ตามผู้ใช้: join/leave และ server open/close ใช้ server-realtime; death event ใช้ server-chat
 - [ ] จัดเตรียม death-event webhook/interface สำหรับรับข้อมูลจริงจาก Minecraft แล้วส่งเข้า server-chat โดยยังรอปลั๊กอินหรือแหล่ง event

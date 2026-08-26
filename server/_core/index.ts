@@ -16,6 +16,7 @@ import {
   RITZSMP_DISCORD_INTERACTION_ENDPOINT_PATH,
 } from "../discordInteractions";
 import { shouldRunAiGateway } from "../discordRuntime";
+import { handleMinecraftDeathWebhook } from "../minecraftDeathWebhook";
 
 async function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -83,6 +84,11 @@ async function startServer() {
       return res.status(400).json({ error: error instanceof Error ? error.message : "Failed to redeem code" });
     }
   });
+
+  // Minecraft death events are sent by a server plugin/script using the same
+  // internal Bearer key as the verification callback unless a dedicated
+  // DISCORD_MINECRAFT_WEBHOOK_SECRET is configured.
+  app.post("/api/minecraft/death", handleMinecraftDeathWebhook);
 
   // tRPC API
   app.use(
