@@ -467,6 +467,32 @@ function reportEditButton(reportId: number) {
   return [{ type: 1, components: [{ type: 2, style: 2, label: "แก้ไขรายงาน (ได้อีก 1 ครั้ง)", custom_id: `ritz_report_edit:${reportId}` }] }];
 }
 
+export async function finishDeferredReportOpenInteraction(
+  interaction: DiscordInteractionPayload,
+  dependencies: {
+    getLinked?: typeof getLinkedDiscordVerifications;
+    editResponse?: typeof editDiscordOriginalInteractionResponse;
+  } = {},
+): Promise<void> {
+  const applicationId = interaction.application_id;
+  const interactionToken = interaction.token;
+  if (!applicationId || !interactionToken) return;
+
+  const getLinked = dependencies.getLinked ?? getLinkedDiscordVerifications;
+  const editResponse =
+    dependencies.editResponse ?? editDiscordOriginalInteractionResponse;
+  const linked = await getLinked();
+  const response = linked.length
+    ? buildReportTargetResponse(linked)
+    : ephemeralResponse("ยังไม่มีบัญชี Minecraft ที่เชื่อมกับ Discord ให้เลือกค่ะ");
+  await editResponse({
+    applicationId,
+    interactionToken,
+    content: response.data.content,
+    components: response.data.components,
+  });
+}
+
 export const handleRitzSmpDiscordInteraction: RequestHandler = async (
   req,
   res,
@@ -595,8 +621,16 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
       }
       case "report-open": {
         if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("ระบบรายงานใช้ได้เฉพาะใน Discord RitzSMP ที่ตั้งค่าไว้ค่ะ"));
-        const linked = await getLinkedDiscordVerifications();
-        return res.status(200).json(linked.length ? buildReportTargetResponse(linked) : ephemeralResponse("ยังไม่มีบัญชี Minecraft ที่เชื่อมกับ Discord ให้เลือกค่ะ"));
+        if (!interaction.application_id || !interaction.token) {
+          return res.status(200).json(ephemeralResponse("ไม่สามารถเปิดเมนูรายงานได้ในขณะนี้ กรุณาลองใหม่อีกครั้งค่ะ"));
+        }
+        res.status(200).json(deferredEphemeralResponse());
+        try {
+          await finishDeferredReportOpenInteraction(interaction);
+        } catch {
+          console.error("[DiscordInteractions] Player report target menu could not be completed");
+        }
+        return;
       }
       case "report-cancel": {
         return res.status(200).json(ephemeralResponse("ยกเลิกการรายงานแล้วค่ะ หากต้องการรายงานใหม่ให้กดปุ่มรายงานอีกครั้ง"));

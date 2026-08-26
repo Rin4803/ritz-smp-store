@@ -6,6 +6,7 @@ import {
   buildReportCategoryResponse,
   deferredEphemeralResponse,
   finishDeferredMinecraftPlayersInteraction,
+  finishDeferredReportOpenInteraction,
   buildVerificationCodeMessage,
   identifyRitzSmpInteractionAction,
   isUsableDiscordApplicationPublicKey,
@@ -81,6 +82,29 @@ describe("Discord interaction endpoint helpers", () => {
         data: { custom_id: "ritz_report_modal:discord-target-1:%E0%B9%82%E0%B8%81%E0%B8%87" },
       }),
     ).toBe("report-submit");
+  });
+
+  it("edits a deferred report-open response with linked Minecraft names", async () => {
+    const edits: Array<{ content: string; components?: unknown[] }> = [];
+    await finishDeferredReportOpenInteraction(
+      { application_id: "123456789012345678", token: "interaction-token" },
+      {
+        getLinked: async () => [
+          { discordUserId: "discord-target-1", minecraftIGN: "RitzPlayer", minecraftUuid: "uuid-1", verifiedAt: new Date() },
+        ],
+        editResponse: async (input) => {
+          edits.push({ content: input.content, components: input.components });
+          return true;
+        },
+      },
+    );
+
+    expect(edits).toHaveLength(1);
+    expect(edits[0]?.content).toContain("Minecraft");
+    expect(edits[0]?.components?.[0]).toMatchObject({
+      type: 1,
+      components: [{ type: 3, custom_id: "ritz_report_target", options: [{ label: expect.stringContaining("RitzPlayer") }] }],
+    });
   });
 
   it("builds the report category menu directly from the selected target", () => {

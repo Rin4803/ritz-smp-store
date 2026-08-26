@@ -76,6 +76,7 @@ export async function editDiscordOriginalInteractionResponse(input: {
   applicationId: string;
   interactionToken: string;
   content: string;
+  components?: unknown[];
   fetchImpl?: FetchLike;
 }): Promise<boolean> {
   if (
@@ -91,7 +92,10 @@ export async function editDiscordOriginalInteractionResponse(input: {
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: input.content }),
+        body: JSON.stringify({
+          content: input.content,
+          ...(input.components ? { components: input.components } : {}),
+        }),
         signal: AbortSignal.timeout(4_000),
       },
     );
