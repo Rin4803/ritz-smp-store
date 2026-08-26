@@ -7,6 +7,7 @@ import {
   getDiscordVerification,
   getLatestPlayerReportByReporter,
   getLinkedDiscordVerifications,
+  getMinecraftPresenceState,
   getPlayerReportById,
   unlinkDiscordVerification,
   updatePlayerReportOnce,
@@ -15,6 +16,7 @@ import {
   announceMinecraftPlayerReport,
   fetchMinecraftServerStatus,
   getMinecraftDiscordVerificationCode,
+  isValidMinecraftIgn,
   type MinecraftServerStatus,
 } from "./minecraftIntegration.js";
 import {
@@ -507,16 +509,51 @@ function reportDetailsModalResponse(customId: string, title: string, details?: s
   };
 }
 
-function buildReportTargetResponse(verifications: Awaited<ReturnType<typeof getLinkedDiscordVerifications>>) {
-  const options = verifications.slice(0, 25).map((verification) => ({
-    label: `${verification.minecraftIGN} • Discord เชื่อมแล้ว`.slice(0, 100),
-    value: verification.discordUserId,
-    description: "เลือกผู้เล่นที่ต้องการรายงาน".slice(0, 100),
+type ReportTargetOption = {
+  minecraftIGN: string;
+  discordUserId?: string;
+};
+
+function parseCachedPresenceNames(
+  presence: Awaited<ReturnType<typeof getMinecraftPresenceState>>,
+): string[] {
+  if (!presence?.lastOnline || !presence.playerListKnown || !presence.lastPlayerNames) return [];
+  try {
+    const names = JSON.parse(presence.lastPlayerNames);
+    return Array.isArray(names)
+      ? names.filter((name): name is string => typeof name === "string" && isValidMinecraftIgn(name.trim()))
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function buildReportTargetResponse(
+  verifications: Awaited<ReturnType<typeof getLinkedDiscordVerifications>>,
+  presence?: Awaited<ReturnType<typeof getMinecraftPresenceState>>,
+) {
+  const linkedByIgn = new Map(verifications.map((verification) => [verification.minecraftIGN.toLowerCase(), verification]));
+  const targets: ReportTargetOption[] = verifications.map((verification) => ({
+    minecraftIGN: verification.minecraftIGN,
+    discordUserId: verification.discordUserId,
+  }));
+  for (const minecraftIGN of parseCachedPresenceNames(presence)) {
+    if (!linkedByIgn.has(minecraftIGN.toLowerCase())) targets.push({ minecraftIGN });
+  }
+
+  const options = targets.slice(0, 25).map((target) => ({
+    label: target.discordUserId
+      ? `${target.minecraftIGN} • Discord เชื่อมแล้ว`.slice(0, 100)
+      : `${target.minecraftIGN} • ยังไม่เชื่อม Discord`.slice(0, 100),
+    value: target.discordUserId ?? `mc:${encodeURIComponent(target.minecraftIGN)}`,
+    description: target.discordUserId
+      ? "เลือกผู้เล่นที่เชื่อมบัญชีแล้ว"
+      : "ผู้เล่นออนไลน์ใน Minecraft ที่ยังไม่ได้เชื่อม Discord",
   }));
   return {
     type: DISCORD_RESPONSE_CHANNEL_MESSAGE,
     data: {
-      content: "เลือกผู้เล่นที่ต้องการรายงานได้เลยค่ะ ระบบจะแสดงบัญชี Minecraft ที่เชื่อมกับ Discord เท่านั้น",
+      content: "เลือกผู้เล่นที่ต้องการรายงานได้เลยค่ะ ระบบรวมผู้เล่น Minecraft ที่ออนไลน์ พร้อมแสดงสถานะบัญชี Discord เมื่อมีการเชื่อมแล้ว",
       flags: EPHEMERAL_MESSAGE_FLAG,
       components: [
         { type: 1, components: [{ type: 3, custom_id: "ritz_report_target", placeholder: "เลือกผู้เล่น", min_values: 1, max_values: 1, options }] },
@@ -533,6 +570,7 @@ export async function finishDeferredReportOpenInteraction(
   interaction: DiscordInteractionPayload,
   dependencies: {
     getLinked?: typeof getLinkedDiscordVerifications;
+    getPresence?: typeof getMinecraftPresenceState;
     editResponse?: typeof editDiscordOriginalInteractionResponse;
   } = {},
 ): Promise<void> {
@@ -541,12 +579,13 @@ export async function finishDeferredReportOpenInteraction(
   if (!applicationId || !interactionToken) return;
 
   const getLinked = dependencies.getLinked ?? getLinkedDiscordVerifications;
+  const getPresence = dependencies.getPresence ?? getMinecraftPresenceState;
   const editResponse =
     dependencies.editResponse ?? editDiscordOriginalInteractionResponse;
-  const linked = await getLinked();
-  const response = linked.length
-    ? buildReportTargetResponse(linked)
-    : ephemeralResponse("ยังไม่มีบัญชี Minecraft ที่เชื่อมกับ Discord ให้เลือกค่ะ");
+  const [linked, presence] = await Promise.all([getLinked(), getPresence()]);
+  const response = linked.length || parseCachedPresenceNames(presence).length
+    ? buildReportTargetResponse(linked, presence)
+    : ephemeralResponse("ยังไม่พบผู้เล่น Minecraft ออนไลน์หรือบัญชีที่เชื่อมกับ Discord ให้เลือกค่ะ");
   await editResponse({
     applicationId,
     interactionToken,
@@ -724,12 +763,15 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
         if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("ระบบรายงานใช้ได้เฉพาะใน Discord RitzSMP ที่ตั้งค่าไว้ค่ะ"));
         const customId = interaction.data?.custom_id ?? "";
         const [, targetId, categoryId] = customId.split(":");
-        const linked = (await getLinkedDiscordVerifications()).find((item) => item.discordUserId === targetId);
+        const linked = targetId?.startsWith("mc:")
+          ? undefined
+          : (await getLinkedDiscordVerifications()).find((item) => item.discordUserId === targetId);
+        const targetMinecraftIGN = linked?.minecraftIGN ?? (targetId?.startsWith("mc:") ? decodeURIComponent(targetId.slice(3)) : "");
         const fields = modalFieldValues(interaction);
         const category = categoryId ? reportCategoryFromId(categoryId) : null;
         const details = fields.details ?? "";
-        if (!linked || !category) {
-          return res.status(200).json(ephemeralResponse("ข้อมูลรายงานไม่ครบถ้วนค่ะ กรุณาเลือกหมวดหมู่และใส่รายละเอียดอย่างน้อย 1 ตัวอักษร"));
+        if ((!linked && !isValidMinecraftIgn(targetMinecraftIGN)) || !category) {
+          return res.status(200).json(ephemeralResponse("ข้อมูลรายงานไม่ครบถ้วนค่ะ กรุณาเลือกผู้เล่น หมวดหมู่ และใส่รายละเอียดอย่างน้อย 1 ตัวอักษร"));
         }
         if (!validatePlayerReportInput({ category, details })) {
           return res.status(200).json(ephemeralResponse("ข้อมูลรายงานไม่ครบถ้วนค่ะ กรุณาเลือกหมวดหมู่และใส่รายละเอียดอย่างน้อย 1 ตัวอักษร"));
@@ -746,11 +788,11 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
           guildId: interaction.guild_id ?? ENV.discordGuildId,
           reporterDiscordId: userId,
           reporterDisplayName: getInteractionDisplayName(interaction),
-          targetDiscordId: linked.discordUserId,
-          // Discord renders this mention as the member's current display name,
-          // while the linked record remains the authoritative Minecraft identity.
-          targetDiscordName: `<@${linked.discordUserId}>`,
-          targetMinecraftIGN: linked.minecraftIGN,
+          targetDiscordId: linked?.discordUserId ?? null,
+          // Linked targets are rendered as a Discord mention; unlinked online
+          // targets remain explicitly Minecraft-only instead of inventing an ID.
+          targetDiscordName: linked ? `<@${linked.discordUserId}>` : "ยังไม่เชื่อม Discord",
+          targetMinecraftIGN,
           category,
           details,
         });

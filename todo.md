@@ -914,3 +914,5 @@
 - [x] แก้ root cause ของ category modal: ใช้รหัสหมวดหมู่สั้นใน custom_id แทนการฝังข้อความภาษาไทย เพื่อไม่เกิน Discord custom_id limit
 
 - [x] แก้ฟอร์มแก้ไข Player Report ให้หมวดหมู่เป็นเมนูเลือกภาษาไทยแทนช่องพิมพ์เอง โดยยังแก้ไขได้เพียงครั้งเดียว
+
+- [x] ปรับเมนูเลือกผู้เล่นใน Player Report ให้รวมผู้เล่น Minecraft ที่ออนไลน์ แม้ยังไม่เชื่อม Discord และแสดง Minecraft IGN พร้อม Discord identity เมื่อเชื่อมแล้ว

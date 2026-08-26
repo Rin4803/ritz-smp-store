@@ -100,6 +100,14 @@ describe("Discord interaction endpoint helpers", () => {
         getLinked: async () => [
           { discordUserId: "discord-target-1", minecraftIGN: "RitzPlayer", minecraftUuid: "uuid-1", verifiedAt: new Date() },
         ],
+        getPresence: async () => ({
+          id: 1,
+          lastOnline: 1,
+          playerListKnown: 1,
+          lastPlayerNames: JSON.stringify(["RitzPlayer", "OnlineOnly"]),
+          lastCheckedAt: new Date(),
+          scheduleCronTaskUid: null,
+        }),
         editResponse: async (input) => {
           edits.push({ content: input.content, components: input.components });
           return true;
@@ -111,7 +119,14 @@ describe("Discord interaction endpoint helpers", () => {
     expect(edits[0]?.content).toContain("Minecraft");
     expect(edits[0]?.components?.[0]).toMatchObject({
       type: 1,
-      components: [{ type: 3, custom_id: "ritz_report_target", options: [{ label: expect.stringContaining("RitzPlayer") }] }],
+      components: [{
+        type: 3,
+        custom_id: "ritz_report_target",
+        options: [
+          { label: expect.stringContaining("RitzPlayer"), value: "discord-target-1" },
+          { label: expect.stringContaining("OnlineOnly"), value: "mc:OnlineOnly" },
+        ],
+      }],
     });
   });
 
