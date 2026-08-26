@@ -9,9 +9,10 @@ describe("Player report validation", () => {
     expect(validatePlayerReportInput({ category: "โกงหรือใช้โปรแกรมช่วยเล่น", details: "พบการใช้โปรแกรมบริเวณจุดเกิดและมีหลักฐานประกอบ" })).toBe(true);
   });
 
-  it("rejects unknown categories and short details", () => {
+  it("rejects unknown categories and empty details while accepting short details", () => {
     expect(validatePlayerReportInput({ category: "หมวดหมู่ปลอม", details: "รายละเอียดที่ยาวพอสมควร" })).toBe(false);
-    expect(validatePlayerReportInput({ category: "อื่น ๆ", details: "สั้น" })).toBe(false);
+    expect(validatePlayerReportInput({ category: "อื่น ๆ", details: "สั้น" })).toBe(true);
+    expect(validatePlayerReportInput({ category: "อื่น ๆ", details: "   " })).toBe(false);
   });
 
   it("enforces the configured cooldown mathematically while allowing test mode zero", () => {

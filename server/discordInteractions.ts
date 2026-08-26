@@ -356,7 +356,7 @@ const REPORT_CATEGORIES = [
 const REPORT_COOLDOWN_DEFAULT_MS = 0;
 
 export function validatePlayerReportInput(input: { category: string; details: string }): boolean {
-  return REPORT_CATEGORIES.includes(input.category as (typeof REPORT_CATEGORIES)[number]) && input.details.trim().length >= 10 && input.details.trim().length <= 1000;
+  return REPORT_CATEGORIES.includes(input.category as (typeof REPORT_CATEGORIES)[number]) && input.details.trim().length >= 1 && input.details.trim().length <= 1000;
 }
 export function getPlayerReportCooldownRemainingMs(createdAt: Date | string | number | undefined, now = Date.now(), cooldownMs = reportCooldownMs()): number {
   if (!createdAt || cooldownMs <= 0) return 0;
@@ -394,7 +394,7 @@ function reportModalResponse(customId: string, title: string, defaults?: { categ
         },
         {
           type: 1,
-          components: [{ type: 4, custom_id: "details", label: "รายละเอียด", style: 2, required: true, min_length: 10, max_length: 1000, value: defaults?.details ?? "" }],
+          components: [{ type: 4, custom_id: "details", label: "รายละเอียด", style: 2, required: true, min_length: 1, max_length: 1000, value: defaults?.details ?? "" }],
         },
       ],
     },
@@ -439,7 +439,7 @@ function reportDetailsModalResponse(customId: string, title: string) {
       title,
       components: [{
         type: 1,
-        components: [{ type: 4, custom_id: "details", label: "รายละเอียด", style: 2, required: true, min_length: 10, max_length: 1000 }],
+        components: [{ type: 4, custom_id: "details", label: "รายละเอียด", style: 2, required: true, min_length: 1, max_length: 1000 }],
       }],
     },
   };
