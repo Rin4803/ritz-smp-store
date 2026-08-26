@@ -17,7 +17,7 @@ import {
   getMinecraftDiscordVerificationCode,
   type MinecraftServerStatus,
 } from "./minecraftIntegration.js";
-import { notifyPlayerReport } from "./discordNotifications.js";
+import { notifyPlayerReport, postDiscordReportPanel } from "./discordNotifications.js";
 import {
   buildDiscordMembersMessage,
   editDiscordOriginalInteractionResponse,
@@ -50,6 +50,8 @@ type DiscordInteractionPayload = {
     name?: string;
     custom_id?: string;
     values?: string[];
+    options?: Array<{ name?: string; type?: number; options?: Array<{ name?: string }> }>;
+
     components?: Array<{ components?: Array<{ custom_id?: string; value?: string }> }>;
   };
   member?: {
@@ -57,6 +59,7 @@ type DiscordInteractionPayload = {
       id?: string;
       username?: string;
     };
+    permissions?: string;
   };
   user?: {
     id?: string;
@@ -78,6 +81,7 @@ export type RitzSmpInteractionAction =
   | "report-submit"
   | "report-edit-open"
   | "report-edit-submit"
+  | "setup-panel"
   | "unsupported";
 
 export function identifyRitzSmpInteractionAction(
@@ -105,6 +109,11 @@ export function identifyRitzSmpInteractionAction(
   if (customId?.startsWith("ritz_report_modal:")) return "report-submit";
   if (customId?.startsWith("ritz_report_edit:")) return "report-edit-open";
   if (customId?.startsWith("ritz_report_edit_modal:")) return "report-edit-submit";
+  if (
+    interaction.type === DISCORD_INTERACTION_APPLICATION_COMMAND &&
+    commandName === "setup" &&
+    interaction.data?.options?.some((option) => option.name?.toLowerCase() === "panel")
+  ) return "setup-panel";
   return "unsupported";
 }
 
@@ -264,6 +273,13 @@ export function verifyDiscordInteractionSignature(
   }
 }
 
+function isDiscordAdministrator(interaction: DiscordInteractionPayload): boolean {
+  const permissions = interaction.member?.permissions;
+  if (typeof permissions !== "string" || !/^[0-9]+$/.test(permissions)) return false;
+  let modulo16 = 0;
+  for (const digit of permissions) modulo16 = (modulo16 * 10 + Number(digit)) % 16;
+  return (modulo16 & 8) === 8;
+}
 function getDiscordUserId(interaction: DiscordInteractionPayload): string | null {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
   return typeof userId === "string" && userId.trim() ? userId : null;
@@ -629,6 +645,20 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
         if (!report || report.reporterDiscordId !== userId) return res.status(200).json(ephemeralResponse("ไม่พบรายงานของคุณค่ะ หรือรายงานนี้ไม่สามารถแก้ไขจากบัญชีนี้ได้"));
         if (report.editCount >= 1) return res.status(200).json(ephemeralResponse("รายงานนี้ถูกแก้ไขไปแล้วหนึ่งครั้ง จึงไม่สามารถแก้ไขซ้ำได้ค่ะ"));
         return res.status(200).json(reportModalResponse(`ritz_report_edit_modal:${report.id}`, "แก้ไขรายงานผู้เล่น", { category: report.category, details: report.details }));
+      }
+      case "setup-panel": {
+        if (!isConfiguredGuildInteraction(interaction) || !isDiscordAdministrator(interaction)) {
+          return res.status(200).json(ephemeralResponse("คำสั่งนี้ใช้ได้เฉพาะผู้ดูแลระบบใน Discord RitzSMP เท่านั้นค่ะ"));
+        }
+        if (!ENV.discordReportChannelId) {
+          return res.status(200).json(ephemeralResponse("ยังไม่ได้ตั้งค่าช่องรายงานในระบบค่ะ กรุณาตรวจสอบการตั้งค่า Discord"));
+        }
+        const posted = await postDiscordReportPanel(ENV.discordReportChannelId);
+        return res.status(200).json(ephemeralResponse(
+          posted.sent
+            ? "สร้างแผงรายงานพร้อมปุ่มเริ่มรายงานและยกเลิกในช่องรายงานเรียบร้อยแล้วค่ะ"
+            : "ไม่สามารถสร้างแผงรายงานได้ในขณะนี้ กรุณาตรวจสอบสิทธิ์บอทในช่องรายงานค่ะ",
+        ));
       }
       case "report-edit-submit": {
         const reportId = Number((interaction.data?.custom_id ?? "").slice("ritz_report_edit_modal:".length));

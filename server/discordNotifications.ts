@@ -20,6 +20,7 @@ type DiscordEmbed = {
 
 type DiscordMessagePayload = {
   embeds: DiscordEmbed[];
+  components?: unknown[];
 };
 
 type DiscordNotificationResult = {
@@ -290,6 +291,24 @@ export async function notifyPurchaseCompleted(input: {
     timestamp: formatTimestamp(order.createdAt),
   };
   return postDiscordMessage(channelId, { embeds: [embed] });
+}
+
+export async function postDiscordReportPanel(channelId: string): Promise<DiscordNotificationResult> {
+  return postDiscordMessage(channelId, {
+    embeds: [{
+      title: "🚨 ระบบรายงานผู้เล่น RitzSMP",
+      description: "กดปุ่มเริ่มรายงานเพื่อเลือกผู้เล่นและหมวดหมู่ จากนั้นกรอกรายละเอียดเพิ่มเติม ทีมงานจะได้รับแจ้งเตือนใน Discord ค่ะ",
+      color: 0xef4444,
+      footer: { text: "RitzSMP • กรุณารายงานตามข้อเท็จจริง" },
+    }],
+    components: [{
+      type: 1,
+      components: [
+        { type: 2, style: 1, label: "เริ่มรายงาน", custom_id: "ritz_report_button" },
+        { type: 2, style: 2, label: "ยกเลิก", custom_id: "ritz_report_cancel" },
+      ],
+    }],
+  });
 }
 
 export const discordNotificationInternals = {

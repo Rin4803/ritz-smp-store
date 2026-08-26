@@ -12,6 +12,7 @@ export const ENV = {
   discordAiPublicKey: process.env.DISCORD_AI_PUBLIC_KEY ?? "",
   discordGuildId: process.env.DISCORD_GUILD_ID ?? "",
   discordStoreChannelId: process.env.DISCORD_STORE_CHANNEL_ID ?? "",
+  discordReportChannelId: process.env.DISCORD_REPORT_CHANNEL_ID ?? "",
   discordSupportChannelId: process.env.DISCORD_SUPPORT_CHANNEL_ID ?? "",
   discordDonateChannelId: process.env.DISCORD_DONATE_CHANNEL_ID ?? "",
   discordDonateLogChannelId: process.env.DISCORD_DONATE_LOG_CHANNEL_ID ?? "",

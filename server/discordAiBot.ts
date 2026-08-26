@@ -41,7 +41,10 @@ import {
   getActiveManagedServerRuntimeConfig,
   type ManagedServerRuntimeConfig,
 } from "./multiserverRuntime.js";
-import { buildRitzSmpAiCommands } from "./discordAiCommandRegistry.js";
+import {
+  buildRitzSmpAdminCommands,
+  buildRitzSmpAiCommands,
+} from "./discordAiCommandRegistry.js";
 
 interface BotLog {
   timestamp: string;
@@ -1949,7 +1952,10 @@ export function createRitzSmpAiBot(
 
     const storeUrl = ENV.publicStoreUrl || "https://ritz.mcsv.me";
 
-    const commands = buildRitzSmpAiCommands();
+    const commands = [
+      ...buildRitzSmpAiCommands(),
+      ...buildRitzSmpAdminCommands(),
+    ];
 
     const rest = new REST({ version: "10" }).setToken(token);
     const clientId = client.user?.id;

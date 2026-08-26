@@ -26,6 +26,29 @@ export const RITZ_AI_COMMAND_CATALOG: readonly RitzAiCommandDefinition[] = [
   { name: "help", audience: "member", purpose: "ดูคู่มือคำสั่งของ RitzSMP AI" },
 ] as const;
 
+export function buildRitzSmpAdminCommands(): RESTPostAPIChatInputApplicationCommandsJSONBody[] {
+  return [
+    new SlashCommandBuilder()
+      .setName("setup")
+      .setDescription("ตั้งค่าแผงระบบ Discord ของ RitzSMP")
+      .addSubcommand((subcommand) =>
+        subcommand
+          .setName("panel")
+          .setDescription("สร้างแผงเชื่อมบัญชีและรายงานผู้เล่น"),
+      )
+      .addSubcommand((subcommand) =>
+        subcommand
+          .setName("welcome")
+          .setDescription("สร้าง Embed ต้อนรับสมาชิกในช่องปัจจุบัน"),
+      )
+      .addSubcommand((subcommand) =>
+        subcommand
+          .setName("leave")
+          .setDescription("สร้าง Embed แจ้งสมาชิกออกในช่องปัจจุบัน"),
+      ),
+  ].map((command) => command.toJSON());
+}
+
 export function buildRitzSmpAiCommands(): RESTPostAPIChatInputApplicationCommandsJSONBody[] {
   return [
     new SlashCommandBuilder()

@@ -81,6 +81,15 @@ describe("Discord interaction endpoint helpers", () => {
     ).toBe("report-submit");
   });
 
+  it("routes the /setup panel command to the report-panel setup flow", () => {
+    expect(
+      identifyRitzSmpInteractionAction({
+        type: 2,
+        data: { name: "setup", options: [{ name: "panel" }] },
+      }),
+    ).toBe("setup-panel");
+  });
+
   it("routes the /verify command to the same verification-code flow", () => {
     expect(
       identifyRitzSmpInteractionAction({
