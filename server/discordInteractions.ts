@@ -358,6 +358,79 @@ export async function finishDeferredMinecraftPlayersInteraction(
   });
 }
 
+export async function finishDeferredReportStatusInteraction(
+  interaction: DiscordInteractionPayload,
+  input: {
+    reportId: number;
+    status: "กำลังตรวจสอบ" | "ปิดแล้ว";
+    handledByDiscordId: string;
+    handledByDisplayName: string;
+  },
+  dependencies: {
+    updateStatus?: typeof updatePlayerReportStatus;
+    notifyReporter?: typeof notifyPlayerReportStatus;
+    notifyCase?: typeof notifyPlayerReportCaseStatus;
+    editResponse?: typeof editDiscordOriginalInteractionResponse;
+  } = {},
+): Promise<void> {
+  const applicationId = interaction.application_id;
+  const interactionToken = interaction.token;
+  if (!applicationId || !interactionToken) return;
+
+  const updateStatus = dependencies.updateStatus ?? updatePlayerReportStatus;
+  const notifyReporter = dependencies.notifyReporter ?? notifyPlayerReportStatus;
+  const notifyCase = dependencies.notifyCase ?? notifyPlayerReportCaseStatus;
+  const editResponse = dependencies.editResponse ?? editDiscordOriginalInteractionResponse;
+  const isClaim = input.status === "กำลังตรวจสอบ";
+
+  try {
+    const report = await updateStatus({
+      id: input.reportId,
+      status: input.status,
+      handledByDiscordId: input.handledByDiscordId,
+      handledByDisplayName: input.handledByDisplayName,
+    });
+    if (!report) {
+      await editResponse({
+        applicationId,
+        interactionToken,
+        content: "รายงานนี้อาจถูกดำเนินการไปแล้ว หรือยังไม่อยู่ในสถานะที่เปลี่ยนได้ค่ะ",
+      });
+      return;
+    }
+
+    const [notified] = await Promise.all([
+      notifyReporter({
+        reporterDiscordId: report.reporterDiscordId,
+        reportId: report.id,
+        status: report.status as "กำลังตรวจสอบ" | "ปิดแล้ว",
+      }),
+      notifyCase({
+        caseChannelId: report.caseChannelId,
+        reportId: report.id,
+        status: report.status as "กำลังตรวจสอบ" | "ปิดแล้ว",
+        handledByDisplayName: report.handledByDisplayName ?? input.handledByDisplayName,
+      }),
+    ]);
+
+    const actionText = isClaim ? "รับรายงาน" : "ปิดรายงาน";
+    const roomText = isClaim
+      ? " ห้องเคสของรายงานนี้ยังคงอยู่จนกว่าจะปิดเคส"
+      : " ห้องเคสยังคงเก็บไว้เป็นบันทึกของเคสนี้";
+    await editResponse({
+      applicationId,
+      interactionToken,
+      content: `${actionText} #${report.id} แล้วค่ะ${notified ? " และแจ้งผู้รายงานทาง DM แล้ว" : " แต่ไม่สามารถส่ง DM แจ้งผู้รายงานได้"}${roomText}`,
+    });
+  } catch {
+    await editResponse({
+      applicationId,
+      interactionToken,
+      content: "ไม่สามารถดำเนินการกับรายงานได้ในขณะนี้ กรุณาลองใหม่อีกครั้งค่ะ",
+    });
+  }
+}
+
 const REPORT_CATEGORIES = [
   "โกงหรือใช้โปรแกรมช่วยเล่น",
   "ทำร้ายหรือก่อกวนผู้เล่น",
@@ -886,31 +959,19 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
         if (!Number.isInteger(reportId) || reportId <= 0) {
           return res.status(200).json(ephemeralResponse("ไม่พบเลขที่รายงานค่ะ กรุณาลองใหม่อีกครั้ง"));
         }
-        const report = await updatePlayerReportStatus({
-          id: reportId,
+        if (!interaction.application_id || !interaction.token) {
+          return res.status(200).json(ephemeralResponse("ไม่สามารถดำเนินการกับรายงานได้ในขณะนี้ กรุณาลองใหม่อีกครั้งค่ะ"));
+        }
+        // Acknowledge first. Database writes, DM delivery and the case-channel
+        // status post can exceed Discord's initial interaction deadline.
+        res.status(200).json(deferredEphemeralResponse());
+        await finishDeferredReportStatusInteraction(interaction, {
+          reportId,
           status: action === "report-claim" ? "กำลังตรวจสอบ" : "ปิดแล้ว",
           handledByDiscordId: userId,
           handledByDisplayName: getInteractionDisplayName(interaction),
         });
-        if (!report) {
-          return res.status(200).json(ephemeralResponse("รายงานนี้อาจถูกดำเนินการไปแล้ว หรือยังไม่อยู่ในสถานะที่เปลี่ยนได้ค่ะ"));
-        }
-        const notified = await notifyPlayerReportStatus({
-          reporterDiscordId: report.reporterDiscordId,
-          reportId: report.id,
-          status: report.status as "กำลังตรวจสอบ" | "ปิดแล้ว",
-        });
-        const caseUpdated = await notifyPlayerReportCaseStatus({
-          caseChannelId: report.caseChannelId,
-          reportId: report.id,
-          status: report.status as "กำลังตรวจสอบ" | "ปิดแล้ว",
-          handledByDisplayName: report.handledByDisplayName ?? getInteractionDisplayName(interaction),
-        });
-        return res.status(200).json(ephemeralResponse(
-          action === "report-claim"
-            ? `รับรายงาน #${report.id} แล้วค่ะ${notified ? " และแจ้งผู้รายงานทาง DM แล้ว" : " แต่ไม่สามารถส่ง DM แจ้งผู้รายงานได้"}`
-            : `ปิดรายงาน #${report.id} แล้วค่ะ${notified ? " และแจ้งผู้รายงานทาง DM แล้ว" : " แต่ไม่สามารถส่ง DM แจ้งผู้รายงานได้"}`,
-        ));
+        return;
       }
       case "setup-panel":
       case "setup-welcome":

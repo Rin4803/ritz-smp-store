@@ -275,7 +275,7 @@ describe("Discord web-store notifications", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("uses the configured report channel endpoint with the main bot token", async () => {
+  it("uses the configured report channel endpoint with the RitzSMP AI token", async () => {
     vi.stubEnv("DISCORD_REPORT_CHANNEL_ID", "report-channel-secret-test");
     const fetchMock = vi.fn().mockResolvedValueOnce(
       new Response(JSON.stringify({ id: "report-message-1" }), { status: 200 }),
@@ -296,7 +296,7 @@ describe("Discord web-store notifications", () => {
       "https://discord.com/api/v10/channels/report-channel-secret-test/messages",
       expect.objectContaining({
         method: "POST",
-        headers: expect.objectContaining({ Authorization: "Bot unit-test-main-token" }),
+        headers: expect.objectContaining({ Authorization: "Bot unit-test-ai-token" }),
       }),
     );
     const [, request] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -330,6 +330,26 @@ describe("Discord web-store notifications", () => {
       expect.objectContaining({ custom_id: "ritz_report_claim:42", style: 1 }),
       expect.objectContaining({ custom_id: "ritz_report_close:42", style: 4 }),
     ]));
+  });
+
+  it("does not fall back to the main bot token when the RitzSMP AI token is absent", async () => {
+    vi.stubEnv("DISCORD_REPORT_CHANNEL_ID", "report-channel-secret-test");
+    vi.stubEnv("DISCORD_AI_BOT_TOKEN", "");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const { notifyPlayerReport } = await import("./discordNotifications");
+
+    const result = await notifyPlayerReport({
+      reportId: 43,
+      guildId: "guild-1",
+      reporterDisplayName: "ผู้รายงาน",
+      targetDiscordName: "ผู้ถูกรายงาน",
+      category: "อื่น ๆ",
+      details: "รายละเอียดการทดสอบ",
+    });
+
+    expect(result).toMatchObject({ sent: false, reason: "Discord bot token is not configured" });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("notifies a linked reporter by DM when a report status changes", async () => {

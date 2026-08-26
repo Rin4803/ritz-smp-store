@@ -1020,3 +1020,12 @@
 - [x] เพิ่ม regression test ครอบคลุม start-at-end cursor initialization และรูปแบบ log AuctionHouse จริง
 - [x] build และติดตั้ง RitzAuctionBridge รุ่นแก้ไขบนเซิร์ฟเวอร์จริง พร้อมตรวจ log หลัง reload
 - [x] แก้ TransformError ล่าสุดใน server/discordNotifications.ts บรรทัด 459 และตรวจว่า runtime ไม่มี error ซ้ำ
+- [ ] แก้ respawn จริง: เมื่อไม่มีเตียงให้สุ่มจุดปลอดภัยใน `survival` แต่เมื่อออก/เข้าเซิร์ฟเวอร์ให้คงตำแหน่งล่าสุดเดิมใน Survival, Nether หรือ End
+- [ ] ตรวจหาและกำจัดทุกตัวที่ล้างหรือ re-apply Night Vision ระหว่างทุบ ตีอากาศ วางบล็อก หรือ interact เพื่อหยุดอาการกระพริบ
+- [ ] ยกเลิก Ender Chest 45 ช่องตามคำขอ: ปิด/ถอน custom script อย่างปลอดภัยและกลับไปใช้ Ender Chest มาตรฐานโดยไม่ลบข้อมูลเดิมโดยพลการ
+- [ ] วิเคราะห์ event `/ah sell` และซื้อจริงจาก log/current plugin API แล้วแก้ `RitzAuctionBridge` ให้แจ้ง `order-in-game` แบบ realtime
+- [x] แก้ Player Report interaction ให้ defer/acknowledge ภายในเวลาของ Discord เพื่อให้ปุ่มรับเรื่องและปิดเคสไม่ขึ้นว่าแอปไม่ตอบสนอง
+- [x] แก้ routing ของ Player Report ให้ทุกข้อความและ Embed เคสส่งผ่าน RitzSMP AI application/bot ที่กำหนด ไม่สลับไป BOT CHAT
+- [x] ปรับห้อง Player Report ให้สมาชิกทุกคนเห็นและพิมพ์ข้อมูลแก้ไข/เพิ่มเติมได้ โดยไม่จำกัดเฉพาะ Staff กับผู้รายงาน
+- [x] คงห้องและรายการเคสที่ยังดำเนินการไม่ครบไว้จนปิดเคสทุกเคส และไม่ลบเมื่อเพียงกดรับเรื่องบางส่วน
+- [ ] ทดสอบ click-through จริงด้วยแผง Player Report ที่ RitzSMP AI ส่งใหม่ เพื่อยืนยันปุ่มรับเรื่อง/ปิดเคสและสิทธิ์ห้องบน Discord production

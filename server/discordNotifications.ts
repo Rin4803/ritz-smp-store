@@ -59,6 +59,13 @@ function getDiscordToken(): string {
   return process.env.DISCORD_BOT_TOKEN || ENV.discordBotToken || "";
 }
 
+// Player Report interactions are signed for the RitzSMP AI application. Every
+// report message containing its components must be created by that application;
+// a BOT CHAT-created message cannot deliver its button click to this endpoint.
+function getPlayerReportBotToken(): string {
+  return process.env.DISCORD_AI_BOT_TOKEN || ENV.discordAiBotToken || "";
+}
+
 function getSupportChannelId(): string {
   return (
     process.env.DISCORD_SUPPORT_CHANNEL_ID ||
@@ -121,8 +128,9 @@ async function postDiscordMessage(
   channelId: string,
   payload: DiscordMessagePayload,
   attachment?: { url: string; fileName: string; contentType: string },
+  botToken = getDiscordToken(),
 ): Promise<DiscordNotificationResult> {
-  const token = getDiscordToken();
+  const token = botToken;
   if (!token) return { sent: false, reason: "Discord bot token is not configured" };
   if (!channelId) return { sent: false, reason: "Discord notification channel is not configured" };
 
@@ -290,7 +298,7 @@ export async function notifyPlayerReport(input: {
   details: string;
   createdAt?: Date | string | number;
 }): Promise<DiscordNotificationResult> {
-  const channelId = process.env.DISCORD_REPORT_CHANNEL_ID?.trim() || "";
+  const channelId = process.env.DISCORD_REPORT_CHANNEL_ID?.trim() || ENV.discordReportChannelId.trim();
   const embed: DiscordEmbed = {
     title: "🚨 รายงานผู้เล่น RitzSMP",
     description: "มีรายงานใหม่จากสมาชิก Discord กรุณาตรวจสอบข้อมูลตามขั้นตอนของทีมงาน",
@@ -315,7 +323,7 @@ export async function notifyPlayerReport(input: {
         { type: 2, style: 4, label: "✅ ปิดเคส", custom_id: `ritz_report_close:${input.reportId}` },
       ],
     }],
-  });
+  }, undefined, getPlayerReportBotToken());
 }
 
 export async function createPlayerReportCase(input: {
@@ -330,7 +338,7 @@ export async function createPlayerReportCase(input: {
   details: string;
   createdAt?: Date | string | number;
 }): Promise<DiscordNotificationResult> {
-  const token = getDiscordToken();
+  const token = getPlayerReportBotToken();
   const reportChannelId = process.env.DISCORD_REPORT_CHANNEL_ID?.trim() || ENV.discordReportChannelId.trim();
   const adminRoleId = process.env.DISCORD_ADMIN_ROLE_ID?.trim() || ENV.discordAdminRoleId.trim();
   const channel = await createDiscordPlayerReportCaseChannel({
@@ -349,8 +357,8 @@ export async function createPlayerReportCase(input: {
     botToken: token,
     payload: {
       embeds: [{
-        title: `🔒 ห้องเคสรายงาน #${input.reportId}`,
-        description: "ห้องนี้ใช้พูดคุยระหว่างผู้รายงานกับทีมงาน RitzSMP เท่านั้นค่ะ",
+        title: `📋 ห้องเคสรายงาน #${input.reportId}`,
+        description: "สมาชิก RitzSMP ทุกคนสามารถดูและพิมพ์ข้อมูลแก้ไขหรือรายละเอียดเพิ่มเติมในห้องนี้ได้ค่ะ ทีมงานเท่านั้นที่ใช้ปุ่มรับเรื่องและปิดเคส",
         color: 0xef4444,
         fields: [
           { name: "ผู้รายงาน", value: input.reporterDisplayName.slice(0, 1024) || "ไม่ระบุชื่อ", inline: true },
@@ -381,7 +389,7 @@ export async function notifyPlayerReportStatus(input: {
   reportId: number;
   status: "กำลังตรวจสอบ" | "ปิดแล้ว";
 }): Promise<boolean> {
-  const token = getDiscordToken();
+  const token = getPlayerReportBotToken();
   if (!token || !/^\d{17,20}$/.test(input.reporterDiscordId)) return false;
   const statusText = input.status === "กำลังตรวจสอบ" ? "ทีมงานรับเรื่องและกำลังตรวจสอบแล้ว" : "ทีมงานปิดเคสและดำเนินการตรวจสอบเรียบร้อยแล้ว";
   try {
@@ -488,7 +496,7 @@ export async function postDiscordReportPanel(channelId: string): Promise<Discord
         { type: 2, style: 2, label: "ยกเลิก", custom_id: "ritz_report_cancel" },
       ],
     }],
-  });
+  }, undefined, getPlayerReportBotToken());
 }
 
 export async function postDiscordSetupSystemPanel(
@@ -527,6 +535,7 @@ export const discordNotificationInternals = {
   notifyAuctionHouseEvent,
   getDieLogChannelId,
   getDonateLogChannelId,
+  getPlayerReportBotToken,
   formatAmount,
   postDiscordMessage,
   notifyMinecraftPresence,
@@ -541,13 +550,13 @@ export async function notifyPlayerReportCaseStatus(input: {
   if (!input.caseChannelId) return false;
   return postDiscordChannelPayload({
     channelId: input.caseChannelId,
-    botToken: getDiscordToken(),
+    botToken: getPlayerReportBotToken(),
     payload: {
       embeds: [{
         title: input.status === "ปิดแล้ว" ? "✅ ปิดเคสรายงานแล้ว" : "🔎 รับเคสรายงานแล้ว",
         description: input.status === "ปิดแล้ว"
-          ? "ทีมงานดำเนินการกับรายงานนี้เสร็จแล้ว หากมีข้อมูลเพิ่มเติมสามารถแจ้งในห้องนี้ได้ค่ะ"
-          : "ทีมงานรับเรื่องแล้ว กำลังตรวจสอบข้อมูลเพิ่มเติมค่ะ",
+          ? "ทีมงานดำเนินการกับรายงานนี้เสร็จแล้ว ห้องนี้ยังคงเก็บเป็นบันทึกของเคส และสมาชิกยังสามารถแจ้งข้อมูลเพิ่มเติมได้ค่ะ"
+          : "ทีมงานรับเรื่องแล้ว กำลังตรวจสอบข้อมูลเพิ่มเติมค่ะ ห้องนี้ยังคงเปิดให้สมาชิกทุกคนช่วยแจ้งหรือแก้ไขข้อมูลได้",
         color: input.status === "ปิดแล้ว" ? 0x22c55e : 0xf59e0b,
         fields: [
           { name: "เลขที่รายงาน", value: `#${input.reportId}`, inline: true },

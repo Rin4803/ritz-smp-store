@@ -8,6 +8,7 @@ import {
   buildReportEditDetailsModalResponse,
   deferredEphemeralResponse,
   finishDeferredMinecraftPlayersInteraction,
+  finishDeferredReportStatusInteraction,
   finishDeferredReportOpenInteraction,
   buildVerificationCodeMessage,
   identifyRitzSmpInteractionAction,
@@ -281,6 +282,46 @@ describe("Discord interaction endpoint helpers", () => {
       type: 5,
       data: { flags: 64 },
     });
+  });
+
+  it("completes a deferred claim only after updating the case and leaves the room as its record", async () => {
+    const events: string[] = [];
+    await finishDeferredReportStatusInteraction(
+      { application_id: "123456789012345678", token: "interaction-token" },
+      {
+        reportId: 90001,
+        status: "กำลังตรวจสอบ",
+        handledByDiscordId: "123456789012345679",
+        handledByDisplayName: "Staff Ritz",
+      },
+      {
+        updateStatus: async () => {
+          events.push("database");
+          return {
+            id: 90001,
+            reporterDiscordId: "123456789012345680",
+            caseChannelId: "123456789012345681",
+            status: "กำลังตรวจสอบ",
+            handledByDisplayName: "Staff Ritz",
+          } as never;
+        },
+        notifyReporter: async () => {
+          events.push("dm");
+          return true;
+        },
+        notifyCase: async () => {
+          events.push("case-channel");
+          return true;
+        },
+        editResponse: async ({ content }) => {
+          events.push(`edit:${content}`);
+          return true;
+        },
+      },
+    );
+
+    expect(events.slice(0, 3)).toEqual(expect.arrayContaining(["database", "dm", "case-channel"]));
+    expect(events.at(-1)).toContain("ห้องเคสของรายงานนี้ยังคงอยู่จนกว่าจะปิดเคส");
   });
 
   it("reports zero players when Minecraft status is offline", () => {

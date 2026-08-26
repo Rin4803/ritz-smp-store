@@ -146,7 +146,7 @@ describe("Discord REST member helper", () => {
 });
 
 describe("Discord player report case channel helper", () => {
-  it("creates a private case channel under the report channel category and denies the reported player", async () => {
+  it("creates a public member discussion channel under the report channel category", async () => {
     const requests: Array<{ url: string; init?: RequestInit }> = [];
     const result = await createDiscordPlayerReportCaseChannel({
       guildId: "1525527108854481007",
@@ -171,12 +171,15 @@ describe("Discord player report case channel helper", () => {
     expect(requests[1].url).toBe("https://discord.com/api/v10/guilds/1525527108854481007/channels");
     expect(requests[1].init?.method).toBe("POST");
     const body = JSON.parse(String(requests[1].init?.body));
-    expect(body).toMatchObject({ name: "report-90001", type: 0, parent_id: "1525527108854481012" });
+    expect(body).toMatchObject({
+      name: "report-90001",
+      type: 0,
+      parent_id: "1525527108854481012",
+      topic: expect.stringContaining("สมาชิกทุกคน"),
+    });
     expect(body.permission_overwrites).toEqual([
-      { id: "1525527108854481007", type: 0, allow: "0", deny: "3072" },
+      { id: "1525527108854481007", type: 0, allow: "117760", deny: "0" },
       { id: "1525527108854481011", type: 0, allow: "117760", deny: "0" },
-      { id: "1525527108854481009", type: 1, allow: "117760", deny: "0" },
-      { id: "1525527108854481010", type: 1, allow: "0", deny: "3072" },
     ]);
   });
 

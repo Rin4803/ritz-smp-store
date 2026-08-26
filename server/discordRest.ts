@@ -157,7 +157,6 @@ const READ_MESSAGE_HISTORY = "65536";
 const ATTACH_FILES = "32768";
 const EMBED_LINKS = "16384";
 const CASE_ALLOW = "117760";
-const CASE_DENY = "3072";
 
 export async function createDiscordPlayerReportCaseChannel(input: {
   guildId: string;
@@ -194,14 +193,13 @@ export async function createDiscordPlayerReportCaseChannel(input: {
       return { kind: "unavailable", reason: `report channel lookup failed (${parentResponse.status})` };
     }
     const parent = (await parentResponse.json().catch(() => ({}))) as DiscordChannelLookup;
+    // A report room is a durable, per-case discussion record. It is public to
+    // members of this guild so anyone can correct or add information. Claim and
+    // close buttons remain staff-only in the signed interaction handler.
     const permissionOverwrites = [
-      { id: input.guildId, type: 0, allow: "0", deny: CASE_DENY },
+      { id: input.guildId, type: 0, allow: CASE_ALLOW, deny: "0" },
       { id: input.adminRoleId, type: 0, allow: CASE_ALLOW, deny: "0" },
-      { id: input.reporterDiscordId, type: 1, allow: CASE_ALLOW, deny: "0" },
     ];
-    if (input.targetDiscordId && isDiscordSnowflake(input.targetDiscordId) && input.targetDiscordId !== input.reporterDiscordId) {
-      permissionOverwrites.push({ id: input.targetDiscordId, type: 1, allow: "0", deny: CASE_DENY });
-    }
     const response = await fetcher(`${DISCORD_API_BASE}/guilds/${input.guildId}/channels`, {
       method: "POST",
       headers: {
@@ -213,7 +211,7 @@ export async function createDiscordPlayerReportCaseChannel(input: {
         type: 0,
         ...(parent.parent_id ? { parent_id: parent.parent_id } : {}),
         permission_overwrites: permissionOverwrites,
-        topic: `RitzSMP Player Report #${input.reportId} • ห้องพูดคุยระหว่างผู้รายงานและทีมงาน`,
+        topic: `RitzSMP Player Report #${input.reportId} • ห้องบันทึกและพูดคุยของสมาชิกทุกคน`,
       }),
       signal: AbortSignal.timeout(8_000),
     });
