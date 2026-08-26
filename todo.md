@@ -887,9 +887,9 @@
 - [x] แก้ recovery path ของ `admin.updateOrderStatus` ให้การอนุมัติออเดอร์ยศส่งคำสั่งเพิ่มเหรียญตาม rank เดียวกับ `purchaseRank` และเพิ่ม regression tests เพื่อป้องกันเติมยศได้แต่เหรียญไม่เข้า
 - [x] ปรับ Discord player report ให้เลือกหมวดหมู่ผ่าน select menu ก่อนเปิด modal รายละเอียด และเพิ่ม regression tests สำหรับ custom id/flow
 - [x] แก้บั๊ก production: ช่อง `#report-รายงานผู้เล่น` แสดงข้อความต้อนรับแต่ไม่แสดงปุ่มเริ่มรายงาน/ปุ่มยกเลิก ให้ตรวจและทำให้ข้อความเริ่มต้นโพสต์ components ครบ
-- [ ] ตรวจต่อจากหลักฐาน production: หลังรีสตาร์ตบอท ช่อง `#report-รายงานผู้เล่น` ยังไม่มีปุ่ม ต้องยืนยัน channel target, สิทธิ์ และเส้นทาง startup reconcile ก่อนปิดบั๊ก
-- [ ] แก้บั๊ก production: ปุ่มในแผงรายงานตอบว่าไม่รองรับผ่าน HTTP Interaction ต้องทำให้กดรายงานได้จริงโดยไม่ให้ผู้ใช้รัน `/setup panel` เอง
-- [ ] แก้บั๊ก production: หลังเลือกหมวดหมู่รายงาน ระบบ timeout เพราะรอ AI ต้องเปิด modal รายละเอียดแบบ deterministic โดยไม่บล็อกด้วย AI
+- [x] ตรวจต่อจากหลักฐาน production: หลังรีสตาร์ตบอท ช่อง `#report-รายงานผู้เล่น` ยังไม่มีปุ่ม ต้องยืนยัน channel target, สิทธิ์ และเส้นทาง startup reconcile ก่อนปิดบั๊ก
+- [x] แก้บั๊ก production: ปุ่มในแผงรายงานตอบว่าไม่รองรับผ่าน HTTP Interaction ต้องทำให้กดรายงานได้จริงโดยไม่ให้ผู้ใช้รัน `/setup panel` เอง
+- [x] แก้บั๊ก production: หลังเลือกหมวดหมู่รายงาน ระบบ timeout เพราะรอ AI ต้องเปิด modal รายละเอียดแบบ deterministic โดยไม่บล็อกด้วย AI
 
 - [x] แก้ Discord Player Report: หลังเลือกหมวดหมู่ต้องเปิด modal รายละเอียดทันทีภายใน interaction deadline โดยไม่รอ AI หรือ dependency ที่ไม่จำเป็น
 - [x] เพิ่ม regression test ยืนยัน category interaction ส่ง response type modal และไม่เรียกกระบวนการ AI
