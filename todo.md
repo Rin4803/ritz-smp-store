@@ -920,3 +920,5 @@
 - [x] ตรวจและแก้ production report picker ที่ยังแสดงเฉพาะผู้เล่น Discord เชื่อมแล้ว แม้โค้ดรุ่นล่าสุดควรรวมผู้เล่น Minecraft ออนไลน์
 
 - [x] แก้ runtime export mismatch: discordInteractions เรียก postDiscordSetupSystemPanel แต่ discordNotifications ไม่มี export ดังกล่าว
+
+- [x] เพิ่มอิโมจิและคำอธิบายสั้นในตัวเลือกหมวดหมู่ Player Report โดยคง category key สั้นและ mapping เดิม

@@ -365,7 +365,23 @@ const REPORT_CATEGORY_IDS = ["cat_1", "cat_2", "cat_3", "cat_4", "cat_5", "cat_6
 const REPORT_CATEGORY_BY_ID: Record<(typeof REPORT_CATEGORY_IDS)[number], (typeof REPORT_CATEGORIES)[number]> = Object.fromEntries(
   REPORT_CATEGORY_IDS.map((id, index) => [id, REPORT_CATEGORIES[index]]),
 ) as Record<(typeof REPORT_CATEGORY_IDS)[number], (typeof REPORT_CATEGORIES)[number]>;
-
+const REPORT_CATEGORY_PRESENTATION: Record<(typeof REPORT_CATEGORIES)[number], { emoji: string; description: string }> = {
+  "โกงหรือใช้โปรแกรมช่วยเล่น": { emoji: "🛡️", description: "พบการโกงหรือใช้โปรแกรมช่วยเล่น" },
+  "ทำร้ายหรือก่อกวนผู้เล่น": { emoji: "⚔️", description: "รบกวนหรือทำให้ผู้เล่นอื่นเดือดร้อน" },
+  "แชตไม่เหมาะสม/สแปม": { emoji: "💬", description: "ข้อความไม่เหมาะสมหรือส่งข้อความซ้ำ" },
+  "ใช้บั๊กหรือช่องโหว่": { emoji: "🐛", description: "ใช้บั๊กหรือช่องโหว่ของเซิร์ฟเวอร์" },
+  "ชื่อหรือสกินไม่เหมาะสม": { emoji: "🎭", description: "ชื่อหรือสกินไม่เหมาะสม" },
+  "อื่น ๆ": { emoji: "📌", description: "เรื่องอื่นที่ต้องการแจ้งทีมงาน" },
+};
+function reportCategoryOption(category: (typeof REPORT_CATEGORIES)[number], isDefault = false) {
+  const presentation = REPORT_CATEGORY_PRESENTATION[category];
+  return {
+    label: `${presentation.emoji} ${category}`.slice(0, 100),
+    value: reportCategoryId(category) ?? "cat_6",
+    description: presentation.description.slice(0, 100),
+    ...(isDefault ? { default: true } : {}),
+  };
+}
 function reportCategoryId(category: string): (typeof REPORT_CATEGORY_IDS)[number] | null {
   const index = REPORT_CATEGORIES.indexOf(category as (typeof REPORT_CATEGORIES)[number]);
   return index >= 0 ? REPORT_CATEGORY_IDS[index] : null;
@@ -441,12 +457,7 @@ export function buildReportEditCategoryResponse(reportId: number, currentCategor
             placeholder: "เลือกหมวดหมู่รายงาน",
             min_values: 1,
             max_values: 1,
-            options: REPORT_CATEGORIES.map((category) => ({
-              label: category,
-              value: reportCategoryId(category) ?? "cat_6",
-              description: "เลือกหมวดหมู่ใหม่สำหรับรายงาน".slice(0, 100),
-              ...(reportCategoryId(category) === currentId ? { default: true } : {}),
-            })),
+            options: REPORT_CATEGORIES.map((category) => reportCategoryOption(category, reportCategoryId(category) === currentId)),
           }],
         },
         { type: 1, components: [{ type: 2, style: 2, label: "ยกเลิก", custom_id: "ritz_report_cancel" }] },
@@ -478,7 +489,7 @@ export function buildReportCategoryResponse(targetId: string) {
             placeholder: "เลือกหมวดหมู่รายงาน",
             min_values: 1,
             max_values: 1,
-            options: REPORT_CATEGORIES.map((category) => ({ label: category, value: reportCategoryId(category) ?? "cat_6", description: "เลือกหมวดหมู่นี้สำหรับรายงาน".slice(0, 100) })),
+            options: REPORT_CATEGORIES.map((category) => reportCategoryOption(category)),
           }],
         },
         { type: 1, components: [{ type: 2, style: 2, label: "ยกเลิก", custom_id: "ritz_report_cancel" }] },
