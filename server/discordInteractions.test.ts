@@ -107,25 +107,54 @@ describe("Discord interaction endpoint helpers", () => {
     });
   });
 
-  it("builds the report category menu directly from the selected target", () => {
+  it("builds the report category menu with short stable transport values", () => {
     const response = buildReportCategoryResponse("discord-target-1");
+    const select = response.data.components[0].components[0];
 
     expect(response.type).toBe(4);
-    expect(response.data.components[0].components[0].custom_id).toBe("ritz_report_category:discord-target-1");
-    expect(response.data.components[0].components[0].options).toHaveLength(6);
+    expect(select.custom_id).toBe("ritz_report_category:discord-target-1");
+    expect(select.options).toHaveLength(6);
+    expect(select.options.map((option) => option.value)).toEqual([
+      "cat_1",
+      "cat_2",
+      "cat_3",
+      "cat_4",
+      "cat_5",
+      "cat_6",
+    ]);
+    expect(select.options.map((option) => option.label)).toEqual([
+      "โกงหรือใช้โปรแกรมช่วยเล่น",
+      "ทำร้ายหรือก่อกวนผู้เล่น",
+      "แชตไม่เหมาะสม/สแปม",
+      "ใช้บั๊กหรือช่องโหว่",
+      "ชื่อหรือสกินไม่เหมาะสม",
+      "อื่น ๆ",
+    ]);
   });
 
-  it("builds the report details modal immediately from the selected target and category", () => {
-    const response = buildPlayerReportDetailsModalResponse(
-      "discord-target-1",
+  it("builds a short valid report modal custom_id for every category", () => {
+    const categories = [
       "โกงหรือใช้โปรแกรมช่วยเล่น",
-    );
+      "ทำร้ายหรือก่อกวนผู้เล่น",
+      "แชตไม่เหมาะสม/สแปม",
+      "ใช้บั๊กหรือช่องโหว่",
+      "ชื่อหรือสกินไม่เหมาะสม",
+      "อื่น ๆ",
+    ];
 
-    expect(response.type).toBe(9);
-    expect(response.data.custom_id).toBe(
-      "ritz_report_modal:discord-target-1:%E0%B9%82%E0%B8%81%E0%B8%87%E0%B8%AB%E0%B8%A3%E0%B8%B7%E0%B8%AD%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B9%82%E0%B8%9B%E0%B8%A3%E0%B9%81%E0%B8%81%E0%B8%A3%E0%B8%A1%E0%B8%8A%E0%B9%88%E0%B8%A7%E0%B8%A2%E0%B9%80%E0%B8%A5%E0%B9%88%E0%B8%99");
-    expect(response.data.components).toHaveLength(1);
-    expect(response.data.components[0].components[0].custom_id).toBe("details");
+    categories.forEach((category, index) => {
+      const response = buildPlayerReportDetailsModalResponse(
+        "discord-target-1",
+        category,
+      );
+
+      expect(response.type).toBe(9);
+      expect(response.data.custom_id).toBe(
+        `ritz_report_modal:discord-target-1:cat_${index + 1}`,
+      );
+      expect(response.data.custom_id.length).toBeLessThanOrEqual(100);
+      expect(response.data.components[0].components[0].custom_id).toBe("details");
+    });
   });
 
   it("routes all registered /setup subcommands through HTTP interactions", () => {

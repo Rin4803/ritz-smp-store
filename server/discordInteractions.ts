@@ -353,6 +353,26 @@ const REPORT_CATEGORIES = [
   "ชื่อหรือสกินไม่เหมาะสม",
   "อื่น ๆ",
 ] as const;
+
+// Discord limits component custom_id/value fields to 100 characters. Keep
+// transport identifiers short and stable; Thai labels remain user-facing and
+// are mapped back to the canonical values before validation/storage.
+const REPORT_CATEGORY_IDS = ["cat_1", "cat_2", "cat_3", "cat_4", "cat_5", "cat_6"] as const;
+const REPORT_CATEGORY_BY_ID: Record<(typeof REPORT_CATEGORY_IDS)[number], (typeof REPORT_CATEGORIES)[number]> = Object.fromEntries(
+  REPORT_CATEGORY_IDS.map((id, index) => [id, REPORT_CATEGORIES[index]]),
+) as Record<(typeof REPORT_CATEGORY_IDS)[number], (typeof REPORT_CATEGORIES)[number]>;
+
+function reportCategoryId(category: string): (typeof REPORT_CATEGORY_IDS)[number] | null {
+  const index = REPORT_CATEGORIES.indexOf(category as (typeof REPORT_CATEGORIES)[number]);
+  return index >= 0 ? REPORT_CATEGORY_IDS[index] : null;
+}
+
+function reportCategoryFromId(id: string): (typeof REPORT_CATEGORIES)[number] | null {
+  return Object.prototype.hasOwnProperty.call(REPORT_CATEGORY_BY_ID, id)
+    ? REPORT_CATEGORY_BY_ID[id as (typeof REPORT_CATEGORY_IDS)[number]]
+    : null;
+}
+
 const REPORT_COOLDOWN_DEFAULT_MS = 0;
 
 export function validatePlayerReportInput(input: { category: string; details: string }): boolean {
@@ -415,7 +435,7 @@ export function buildReportCategoryResponse(targetId: string) {
             placeholder: "เลือกหมวดหมู่รายงาน",
             min_values: 1,
             max_values: 1,
-            options: REPORT_CATEGORIES.map((category) => ({ label: category, value: category, description: "เลือกหมวดหมู่นี้สำหรับรายงาน".slice(0, 100) })),
+            options: REPORT_CATEGORIES.map((category) => ({ label: category, value: reportCategoryId(category) ?? "cat_6", description: "เลือกหมวดหมู่นี้สำหรับรายงาน".slice(0, 100) })),
           }],
         },
         { type: 1, components: [{ type: 2, style: 2, label: "ยกเลิก", custom_id: "ritz_report_cancel" }] },
@@ -425,8 +445,9 @@ export function buildReportCategoryResponse(targetId: string) {
 }
 
 export function buildPlayerReportDetailsModalResponse(targetId: string, category: string) {
+  const categoryId = reportCategoryId(category);
   return reportDetailsModalResponse(
-    `ritz_report_modal:${targetId}:${encodeURIComponent(category)}`,
+    `ritz_report_modal:${targetId}:${categoryId ?? "cat_6"}`,
     "รายงานผู้เล่น RitzSMP",
   );
 }
@@ -648,11 +669,12 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
         if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("ระบบรายงานใช้ได้เฉพาะใน Discord RitzSMP ที่ตั้งค่าไว้ค่ะ"));
         const customId = interaction.data?.custom_id ?? "";
         const targetId = customId.slice("ritz_report_category:".length).trim();
-        const category = interaction.data?.values?.[0] ?? "";
+        const categoryId = interaction.data?.values?.[0] ?? "";
+        const category = reportCategoryFromId(categoryId);
         // A category select must be acknowledged within Discord's interaction
         // deadline. The target came from the signed panel response, while the
         // authoritative linked-account check remains in report-submit.
-        if (!targetId || !REPORT_CATEGORIES.includes(category as (typeof REPORT_CATEGORIES)[number])) {
+        if (!targetId || !category) {
           return res.status(200).json(ephemeralResponse("ไม่พบผู้เล่นหรือหมวดหมู่ที่เลือกค่ะ กรุณาเปิดเมนูรายงานใหม่แล้วลองอีกครั้ง"));
         }
         return res.status(200).json(buildPlayerReportDetailsModalResponse(targetId, category));
@@ -660,13 +682,16 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
       case "report-submit": {
         if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("ระบบรายงานใช้ได้เฉพาะใน Discord RitzSMP ที่ตั้งค่าไว้ค่ะ"));
         const customId = interaction.data?.custom_id ?? "";
-        const [, targetId, encodedCategory] = customId.split(":");
+        const [, targetId, categoryId] = customId.split(":");
         const linked = (await getLinkedDiscordVerifications()).find((item) => item.discordUserId === targetId);
         const fields = modalFieldValues(interaction);
-        const category = encodedCategory ? decodeURIComponent(encodedCategory) : "";
+        const category = categoryId ? reportCategoryFromId(categoryId) : null;
         const details = fields.details ?? "";
-        if (!linked || !validatePlayerReportInput({ category, details })) {
-          return res.status(200).json(ephemeralResponse("ข้อมูลรายงานไม่ครบถ้วนค่ะ กรุณาเลือกหมวดหมู่และใส่รายละเอียดอย่างน้อย 10 ตัวอักษร"));
+        if (!linked || !category) {
+          return res.status(200).json(ephemeralResponse("ข้อมูลรายงานไม่ครบถ้วนค่ะ กรุณาเลือกหมวดหมู่และใส่รายละเอียดอย่างน้อย 1 ตัวอักษร"));
+        }
+        if (!validatePlayerReportInput({ category, details })) {
+          return res.status(200).json(ephemeralResponse("ข้อมูลรายงานไม่ครบถ้วนค่ะ กรุณาเลือกหมวดหมู่และใส่รายละเอียดอย่างน้อย 1 ตัวอักษร"));
         }
         const latest = await getLatestPlayerReportByReporter(userId);
         const cooldown = reportCooldownMs();
