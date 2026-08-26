@@ -400,7 +400,7 @@ function reportModalResponse(customId: string, title: string, defaults?: { categ
     },
   };
 }
-function buildReportCategoryResponse(targetId: string) {
+export function buildReportCategoryResponse(targetId: string) {
   return {
     type: DISCORD_RESPONSE_CHANNEL_MESSAGE,
     data: {
@@ -603,10 +603,12 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
       }
       case "report-target": {
         if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("ระบบรายงานใช้ได้เฉพาะใน Discord RitzSMP ที่ตั้งค่าไว้ค่ะ"));
-        const targetId = interaction.data?.values?.[0];
-        const linked = targetId ? (await getLinkedDiscordVerifications()).find((item) => item.discordUserId === targetId) : undefined;
-        if (!linked) return res.status(200).json(ephemeralResponse("ไม่พบผู้เล่นที่เลือกหรือบัญชีนี้ไม่ได้เชื่อมอยู่ค่ะ กรุณาเปิดเมนูใหม่แล้วลองอีกครั้ง"));
-        return res.status(200).json(buildReportCategoryResponse(linked.discordUserId));
+        const targetId = interaction.data?.values?.[0]?.trim();
+        // The value came from the signed report panel. Avoid a second database
+        // lookup here so Discord receives the next menu before its deadline;
+        // report-submit performs the authoritative linked-account check.
+        if (!targetId) return res.status(200).json(ephemeralResponse("ไม่พบผู้เล่นที่เลือกค่ะ กรุณาเปิดเมนูรายงานใหม่แล้วลองอีกครั้ง"));
+        return res.status(200).json(buildReportCategoryResponse(targetId));
       }
       case "report-category": {
         if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("ระบบรายงานใช้ได้เฉพาะใน Discord RitzSMP ที่ตั้งค่าไว้ค่ะ"));
@@ -645,7 +647,9 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
           reporterDiscordId: userId,
           reporterDisplayName: getInteractionDisplayName(interaction),
           targetDiscordId: linked.discordUserId,
-          targetDiscordName: linked.minecraftIGN,
+          // Discord renders this mention as the member's current display name,
+          // while the linked record remains the authoritative Minecraft identity.
+          targetDiscordName: `<@${linked.discordUserId}>`,
           targetMinecraftIGN: linked.minecraftIGN,
           category,
           details,

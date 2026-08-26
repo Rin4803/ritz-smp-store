@@ -897,3 +897,7 @@
 
 - [x] แก้ production bug: `/setup welcome` ผ่าน HTTP Interaction ตอบว่าไม่รองรับ ทั้งที่คำสั่งถูกลงทะเบียนไว้
 - [x] ตรวจสอบและทำให้ `/setup leave` และ `/setup panel` ใช้เส้นทาง HTTP Interaction เดียวกันได้ พร้อมตรวจ permission และข้อความตอบกลับภาษาไทย
+
+- [x] แก้ player report interaction ที่ผู้ใช้กดแล้วไม่สามารถดำเนินการรายงานได้ครบทุกขั้นตอน
+- [x] ปรับข้อมูล Embed รายงานให้แสดงชื่อ Discord และชื่อผู้เล่น Minecraft ของเป้าหมาย พร้อมระบุกรณียังไม่ได้เชื่อมบัญชีอย่างชัดเจน
+- [x] เพิ่ม regression tests สำหรับ report button routing และการแสดง Discord/Minecraft identity

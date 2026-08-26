@@ -225,5 +225,11 @@ describe("Discord web-store notifications", () => {
         headers: expect.objectContaining({ Authorization: "Bot unit-test-ai-token" }),
       }),
     );
+    const [, request] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const payload = JSON.parse(String(request.body)) as { embeds?: Array<{ fields?: Array<{ name: string; value: string }> }> };
+    expect(payload.embeds?.[0]?.fields).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "ผู้ถูกรายงาน (Discord)", value: "ผู้ถูกรายงาน" }),
+      expect.objectContaining({ name: "ชื่อผู้เล่นในเกม (Minecraft)", value: "`RitzPlayer`" }),
+    ]));
   });
 });
