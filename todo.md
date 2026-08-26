@@ -885,3 +885,4 @@
 - [x] บันทึกผลการแก้ Economy และหลักฐานการตรวจไฟล์แยกจากผล unit testไว้ใน `docs/economy-audit-2026-08-26.md`; หลักฐาน production จริงยัง pending
 
 - [x] แก้ recovery path ของ `admin.updateOrderStatus` ให้การอนุมัติออเดอร์ยศส่งคำสั่งเพิ่มเหรียญตาม rank เดียวกับ `purchaseRank` และเพิ่ม regression tests เพื่อป้องกันเติมยศได้แต่เหรียญไม่เข้า
+- [x] ปรับ Discord player report ให้เลือกหมวดหมู่ผ่าน select menu ก่อนเปิด modal รายละเอียด และเพิ่ม regression tests สำหรับ custom id/flow

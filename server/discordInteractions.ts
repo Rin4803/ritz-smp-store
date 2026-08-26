@@ -74,6 +74,7 @@ export type RitzSmpInteractionAction =
   | "report-open"
   | "report-cancel"
   | "report-target"
+  | "report-category"
   | "report-submit"
   | "report-edit-open"
   | "report-edit-submit"
@@ -100,6 +101,7 @@ export function identifyRitzSmpInteractionAction(
   if (customId === "ritz_report_button") return "report-open";
   if (customId === "ritz_report_cancel") return "report-cancel";
   if (customId === "ritz_report_target") return "report-target";
+  if (customId?.startsWith("ritz_report_category:")) return "report-category";
   if (customId?.startsWith("ritz_report_modal:")) return "report-submit";
   if (customId?.startsWith("ritz_report_edit:")) return "report-edit-open";
   if (customId?.startsWith("ritz_report_edit_modal:")) return "report-edit-submit";
@@ -374,6 +376,44 @@ function reportModalResponse(customId: string, title: string, defaults?: { categ
     },
   };
 }
+function buildReportCategoryResponse(targetId: string) {
+  return {
+    type: DISCORD_RESPONSE_CHANNEL_MESSAGE,
+    data: {
+      content: "เลือกหมวดหมู่ของรายงาน แล้วกรอกรายละเอียดเพิ่มเติมได้เลยค่ะ",
+      flags: EPHEMERAL_MESSAGE_FLAG,
+      components: [
+        {
+          type: 1,
+          components: [{
+            type: 3,
+            custom_id: `ritz_report_category:${targetId}`,
+            placeholder: "เลือกหมวดหมู่รายงาน",
+            min_values: 1,
+            max_values: 1,
+            options: REPORT_CATEGORIES.map((category) => ({ label: category, value: category, description: "เลือกหมวดหมู่นี้สำหรับรายงาน".slice(0, 100) })),
+          }],
+        },
+        { type: 1, components: [{ type: 2, style: 2, label: "ยกเลิก", custom_id: "ritz_report_cancel" }] },
+      ],
+    },
+  };
+}
+
+function reportDetailsModalResponse(customId: string, title: string) {
+  return {
+    type: 9,
+    data: {
+      custom_id: customId,
+      title,
+      components: [{
+        type: 1,
+        components: [{ type: 4, custom_id: "details", label: "รายละเอียด", style: 2, required: true, min_length: 10, max_length: 1000 }],
+      }],
+    },
+  };
+}
+
 function buildReportTargetResponse(verifications: Awaited<ReturnType<typeof getLinkedDiscordVerifications>>) {
   const options = verifications.slice(0, 25).map((verification) => ({
     label: `${verification.minecraftIGN} • Discord เชื่อมแล้ว`.slice(0, 100),
@@ -534,15 +574,24 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
         const targetId = interaction.data?.values?.[0];
         const linked = targetId ? (await getLinkedDiscordVerifications()).find((item) => item.discordUserId === targetId) : undefined;
         if (!linked) return res.status(200).json(ephemeralResponse("ไม่พบผู้เล่นที่เลือกหรือบัญชีนี้ไม่ได้เชื่อมอยู่ค่ะ กรุณาเปิดเมนูใหม่แล้วลองอีกครั้ง"));
-        return res.status(200).json(reportModalResponse(`ritz_report_modal:${linked.discordUserId}`, "รายงานผู้เล่น RitzSMP"));
+        return res.status(200).json(buildReportCategoryResponse(linked.discordUserId));
+      }
+      case "report-category": {
+        if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("ระบบรายงานใช้ได้เฉพาะใน Discord RitzSMP ที่ตั้งค่าไว้ค่ะ"));
+        const customId = interaction.data?.custom_id ?? "";
+        const targetId = customId.slice("ritz_report_category:".length);
+        const category = interaction.data?.values?.[0] ?? "";
+        const linked = targetId ? (await getLinkedDiscordVerifications()).find((item) => item.discordUserId === targetId) : undefined;
+        if (!linked || !REPORT_CATEGORIES.includes(category as (typeof REPORT_CATEGORIES)[number])) return res.status(200).json(ephemeralResponse("ไม่พบผู้เล่นหรือหมวดหมู่ที่เลือกค่ะ กรุณาเปิดเมนูรายงานใหม่แล้วลองอีกครั้ง"));
+        return res.status(200).json(reportDetailsModalResponse(`ritz_report_modal:${linked.discordUserId}:${encodeURIComponent(category)}`, "รายงานผู้เล่น RitzSMP"));
       }
       case "report-submit": {
         if (!isConfiguredGuildInteraction(interaction)) return res.status(200).json(ephemeralResponse("ระบบรายงานใช้ได้เฉพาะใน Discord RitzSMP ที่ตั้งค่าไว้ค่ะ"));
         const customId = interaction.data?.custom_id ?? "";
-        const targetId = customId.slice("ritz_report_modal:".length);
+        const [, targetId, encodedCategory] = customId.split(":");
         const linked = (await getLinkedDiscordVerifications()).find((item) => item.discordUserId === targetId);
         const fields = modalFieldValues(interaction);
-        const category = fields.category ?? "";
+        const category = encodedCategory ? decodeURIComponent(encodedCategory) : "";
         const details = fields.details ?? "";
         if (!linked || !validatePlayerReportInput({ category, details })) {
           return res.status(200).json(ephemeralResponse("ข้อมูลรายงานไม่ครบถ้วนค่ะ กรุณาเลือกหมวดหมู่และใส่รายละเอียดอย่างน้อย 10 ตัวอักษร"));

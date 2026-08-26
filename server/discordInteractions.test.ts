@@ -67,6 +67,18 @@ describe("Discord interaction endpoint helpers", () => {
         data: { custom_id: "ritz_report_cancel" },
       }),
     ).toBe("report-cancel");
+    expect(
+      identifyRitzSmpInteractionAction({
+        type: 3,
+        data: { custom_id: "ritz_report_category:discord-target-1" },
+      }),
+    ).toBe("report-category");
+    expect(
+      identifyRitzSmpInteractionAction({
+        type: 3,
+        data: { custom_id: "ritz_report_modal:discord-target-1:%E0%B9%82%E0%B8%81%E0%B8%87" },
+      }),
+    ).toBe("report-submit");
   });
 
   it("routes the /verify command to the same verification-code flow", () => {
