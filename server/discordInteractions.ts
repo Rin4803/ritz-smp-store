@@ -571,6 +571,7 @@ export async function finishDeferredReportOpenInteraction(
   dependencies: {
     getLinked?: typeof getLinkedDiscordVerifications;
     getPresence?: typeof getMinecraftPresenceState;
+    fetchStatus?: typeof fetchMinecraftServerStatus;
     editResponse?: typeof editDiscordOriginalInteractionResponse;
   } = {},
 ): Promise<void> {
@@ -580,11 +581,26 @@ export async function finishDeferredReportOpenInteraction(
 
   const getLinked = dependencies.getLinked ?? getLinkedDiscordVerifications;
   const getPresence = dependencies.getPresence ?? getMinecraftPresenceState;
+  const fetchStatus = dependencies.fetchStatus ?? fetchMinecraftServerStatus;
   const editResponse =
     dependencies.editResponse ?? editDiscordOriginalInteractionResponse;
-  const [linked, presence] = await Promise.all([getLinked(), getPresence()]);
-  const response = linked.length || parseCachedPresenceNames(presence).length
-    ? buildReportTargetResponse(linked, presence)
+  const [linked, presence, liveStatus] = await Promise.all([
+    getLinked(),
+    getPresence(),
+    fetchStatus({ timeoutMs: 2_200 }),
+  ]);
+  const livePresence = liveStatus.online && liveStatus.playerListKnown && liveStatus.playerNames.length > 0
+    ? {
+        id: 0,
+        lastOnline: 1,
+        playerListKnown: 1,
+        lastPlayerNames: JSON.stringify(liveStatus.playerNames),
+        lastCheckedAt: new Date(),
+        scheduleCronTaskUid: null,
+      } as Awaited<ReturnType<typeof getMinecraftPresenceState>>
+    : presence;
+  const response = linked.length || parseCachedPresenceNames(livePresence).length
+    ? buildReportTargetResponse(linked, livePresence)
     : ephemeralResponse("ยังไม่พบผู้เล่น Minecraft ออนไลน์หรือบัญชีที่เชื่อมกับ Discord ให้เลือกค่ะ");
   await editResponse({
     applicationId,

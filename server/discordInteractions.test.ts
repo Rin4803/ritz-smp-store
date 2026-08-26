@@ -104,9 +104,19 @@ describe("Discord interaction endpoint helpers", () => {
           id: 1,
           lastOnline: 1,
           playerListKnown: 1,
-          lastPlayerNames: JSON.stringify(["RitzPlayer", "OnlineOnly"]),
+          lastPlayerNames: JSON.stringify(["RitzPlayer"]),
           lastCheckedAt: new Date(),
           scheduleCronTaskUid: null,
+        }),
+        fetchStatus: async () => ({
+          online: true,
+          players: 2,
+          maxPlayers: 20,
+          playerNames: ["RitzPlayer", "OnlineOnly"],
+          playerListKnown: true,
+          version: "1.21",
+          latency: 20,
+          motd: "RitzSMP",
         }),
         editResponse: async (input) => {
           edits.push({ content: input.content, components: input.components });

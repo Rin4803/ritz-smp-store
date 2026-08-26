@@ -916,3 +916,7 @@
 - [x] แก้ฟอร์มแก้ไข Player Report ให้หมวดหมู่เป็นเมนูเลือกภาษาไทยแทนช่องพิมพ์เอง โดยยังแก้ไขได้เพียงครั้งเดียว
 
 - [x] ปรับเมนูเลือกผู้เล่นใน Player Report ให้รวมผู้เล่น Minecraft ที่ออนไลน์ แม้ยังไม่เชื่อม Discord และแสดง Minecraft IGN พร้อม Discord identity เมื่อเชื่อมแล้ว
+
+- [x] ตรวจและแก้ production report picker ที่ยังแสดงเฉพาะผู้เล่น Discord เชื่อมแล้ว แม้โค้ดรุ่นล่าสุดควรรวมผู้เล่น Minecraft ออนไลน์
+
+- [x] แก้ runtime export mismatch: discordInteractions เรียก postDiscordSetupSystemPanel แต่ discordNotifications ไม่มี export ดังกล่าว
