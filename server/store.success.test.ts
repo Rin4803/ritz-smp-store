@@ -160,7 +160,8 @@ describe("RitzSMP Order Success Path & Admin Workflow", () => {
     expect(result.discordNotification).toMatchObject({ sent: true, channelId: "support" });
   });
 
-  it("allows an admin to update an order status without a database write", async () => {
+  it("allows an admin to approve a rank order and fulfills both rank and coins", async () => {
+    vi.mocked(Rcon.connect).mockClear();
     const adminCaller = appRouter.createCaller(createTestContext("admin"));
     const updated = await adminCaller.admin.updateOrderStatus({
       id: 5001,
@@ -172,6 +173,10 @@ describe("RitzSMP Order Success Path & Admin Workflow", () => {
       status: "สำเร็จ",
       adminNotes: expect.stringContaining("ตรวจสอบสลิปเรียบร้อย มอบยศในเกมแล้ว"),
     });
+    expect(Rcon.connect).toHaveBeenCalledTimes(1);
+    const connection = await vi.mocked(Rcon.connect).mock.results[0]?.value;
+    expect(connection.send).toHaveBeenNthCalledWith(1, "lp user RitzWarrior parent add test-elite");
+    expect(connection.send).toHaveBeenNthCalledWith(2, "points give RitzWarrior 1500");
   });
 
   it("verifies wallet balance procedure execution", async () => {

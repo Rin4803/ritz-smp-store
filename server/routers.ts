@@ -42,6 +42,8 @@ import { fetchMinecraftServerStatus } from "./minecraftIntegration";
 
 const allowedSlipTypes = ["image/jpeg", "image/png", "image/webp"] as const;
 const orderStatus = z.enum(["รอตรวจสอบ", "สำเร็จ", "ยกเลิก"]);
+const coinRewards = [100, 250, 450, 700, 1000, 1200, 1350, 1420, 1470, 1500] as const;
+const getCoinRewardForRank = (rankId: number) => coinRewards[Math.min(Math.max(rankId - 1, 0), coinRewards.length - 1)] ?? 100;
 
 /** รายการสาธารณะหลักของ RitzSMP ใช้เฉพาะเมื่อ owner ยังไม่ได้สร้าง registry row */
 const PUBLIC_RITZSMP_DIRECTORY_ENTRY = {
@@ -345,9 +347,7 @@ export const appRouter = router({
         // Execute RCON immediately for both rank and points (เหรียญ)
         const rankCmd = `lp user ${input.minecraftIGN} parent add ${rank.name.toLowerCase()}`;
         // Determine coin/points reward amount based on rank price or rank level
-        const rankIndex = rank.id;
-        const coinRewards = [100, 250, 450, 700, 1000, 1200, 1350, 1420, 1470, 1500];
-        const coinAmount = coinRewards[Math.min(Math.max(rankIndex - 1, 0), coinRewards.length - 1)] ?? 100;
+        const coinAmount = getCoinRewardForRank(rank.id);
         const pointsCmd = `points give ${input.minecraftIGN} ${coinAmount}`;
 
         let rconDetail = "ยังไม่ได้ตั้งค่า RCON จึงรอตรวจสอบการเติมยศ";
@@ -493,6 +493,8 @@ export const appRouter = router({
               throw new TRPCError({ code: "NOT_FOUND", message: "ไม่พบยศของออเดอร์นี้" });
             }
             const cmd = `lp user ${existing.minecraftIGN} parent add ${rank.name.toLowerCase()}`;
+            const coinAmount = getCoinRewardForRank(rank.id);
+            const pointsCmd = `points give ${existing.minecraftIGN} ${coinAmount}`;
             if (!ENV.rconHost || !ENV.rconPort || !ENV.rconPassword) {
               throw new TRPCError({
                 code: "PRECONDITION_FAILED",
@@ -502,9 +504,10 @@ export const appRouter = router({
             let rcon: Rcon | undefined;
             try {
               rcon = await Rcon.connect({ host: ENV.rconHost, port: ENV.rconPort, password: ENV.rconPassword });
-              const res = await rcon.send(cmd);
+              const rankResult = await rcon.send(cmd);
+              const pointsResult = await rcon.send(pointsCmd);
               rconExecuted = true;
-              rconDetail = res || "RCON มอบยศสำเร็จ";
+              rconDetail = `${rankResult || "RCON มอบยศสำเร็จ"} | ${pointsResult || `เพิ่มเหรียญ ${coinAmount} แต้มสำเร็จ`}`;
             } catch (err: any) {
               throw new TRPCError({ code: "PRECONDITION_FAILED", message: `RCON มอบยศไม่สำเร็จ: ${err?.message ?? String(err)}` });
             } finally {

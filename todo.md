@@ -883,3 +883,5 @@
 - [x] restart/reload production หลังแพตช์สำเร็จ; MCSV กลับมา `active/running` และ startup `failed: []`
 - [ ] ทดสอบ production ด้วยบัญชีควบคุม โดยตรวจจำนวน item, เงินก่อน/หลัง และไม่กระทบผู้เล่นอื่น
 - [x] บันทึกผลการแก้ Economy และหลักฐานการตรวจไฟล์แยกจากผล unit testไว้ใน `docs/economy-audit-2026-08-26.md`; หลักฐาน production จริงยัง pending
+
+- [x] แก้ recovery path ของ `admin.updateOrderStatus` ให้การอนุมัติออเดอร์ยศส่งคำสั่งเพิ่มเหรียญตาม rank เดียวกับ `purchaseRank` และเพิ่ม regression tests เพื่อป้องกันเติมยศได้แต่เหรียญไม่เข้า
