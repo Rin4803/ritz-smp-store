@@ -3,6 +3,7 @@ import {
   buildDiscordMembersMessage,
   editDiscordOriginalInteractionResponse,
   fetchDiscordGuildMembers,
+  createDiscordPlayerReportCaseChannel,
 } from "./discordRest.js";
 
 describe("Discord REST interaction helper", () => {
@@ -141,5 +142,60 @@ describe("Discord REST member helper", () => {
     });
 
     expect(result).toEqual({ kind: "unavailable" });
+  });
+});
+
+describe("Discord player report case channel helper", () => {
+  it("creates a private case channel under the report channel category and denies the reported player", async () => {
+    const requests: Array<{ url: string; init?: RequestInit }> = [];
+    const result = await createDiscordPlayerReportCaseChannel({
+      guildId: "1525527108854481007",
+      reportChannelId: "1525527108854481008",
+      reportId: 90001,
+      reporterDiscordId: "1525527108854481009",
+      targetDiscordId: "1525527108854481010",
+      adminRoleId: "1525527108854481011",
+      botToken: "test-token",
+      fetchImpl: (async (input, init) => {
+        requests.push({ url: String(input), init });
+        if (requests.length === 1) {
+          return new Response(JSON.stringify({ id: "1525527108854481008", parent_id: "1525527108854481012" }), { status: 200 });
+        }
+        return new Response(JSON.stringify({ id: "1525527108854481013" }), { status: 201 });
+      }) as typeof fetch,
+    });
+
+    expect(result).toEqual({ kind: "ok", channelId: "1525527108854481013" });
+    expect(requests).toHaveLength(2);
+    expect(requests[0].url).toBe("https://discord.com/api/v10/channels/1525527108854481008");
+    expect(requests[1].url).toBe("https://discord.com/api/v10/guilds/1525527108854481007/channels");
+    expect(requests[1].init?.method).toBe("POST");
+    const body = JSON.parse(String(requests[1].init?.body));
+    expect(body).toMatchObject({ name: "report-90001", type: 0, parent_id: "1525527108854481012" });
+    expect(body.permission_overwrites).toEqual([
+      { id: "1525527108854481007", type: 0, allow: "0", deny: "3072" },
+      { id: "1525527108854481011", type: 0, allow: "117760", deny: "0" },
+      { id: "1525527108854481009", type: 1, allow: "117760", deny: "0" },
+      { id: "1525527108854481010", type: 1, allow: "0", deny: "3072" },
+    ]);
+  });
+
+  it("rejects invalid case configuration without calling Discord", async () => {
+    let called = false;
+    const result = await createDiscordPlayerReportCaseChannel({
+      guildId: "bad",
+      reportChannelId: "1525527108854481008",
+      reportId: 1,
+      reporterDiscordId: "1525527108854481009",
+      adminRoleId: "1525527108854481011",
+      botToken: "test-token",
+      fetchImpl: (async () => {
+        called = true;
+        return new Response(null, { status: 200 });
+      }) as typeof fetch,
+    });
+
+    expect(result).toEqual({ kind: "unavailable", reason: "invalid case channel configuration" });
+    expect(called).toBe(false);
   });
 });

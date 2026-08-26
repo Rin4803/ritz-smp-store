@@ -1,6 +1,10 @@
 import { ENV } from "./_core/env";
 import { storageGetSignedUrl } from "./storage";
 import { getMinecraftStatusChannelId } from "./discordMinecraftStatusChannel";
+import {
+  createDiscordPlayerReportCaseChannel,
+  postDiscordChannelPayload,
+} from "./discordRest.js";
 
 type DiscordEmbedField = {
   name: string;
@@ -295,6 +299,64 @@ export async function notifyPlayerReport(input: {
   });
 }
 
+export async function createPlayerReportCase(input: {
+  reportId: number;
+  guildId: string;
+  reporterDiscordId: string;
+  targetDiscordId?: string | null;
+  reporterDisplayName: string;
+  targetDiscordName: string;
+  targetMinecraftIGN?: string | null;
+  category: string;
+  details: string;
+  createdAt?: Date | string | number;
+}): Promise<DiscordNotificationResult> {
+  const token = getDiscordToken();
+  const reportChannelId = process.env.DISCORD_REPORT_CHANNEL_ID?.trim() || ENV.discordReportChannelId.trim();
+  const adminRoleId = process.env.DISCORD_ADMIN_ROLE_ID?.trim() || ENV.discordAdminRoleId.trim();
+  const channel = await createDiscordPlayerReportCaseChannel({
+    guildId: input.guildId,
+    reportChannelId,
+    reportId: input.reportId,
+    reporterDiscordId: input.reporterDiscordId,
+    adminRoleId,
+    botToken: token,
+    targetDiscordId: input.targetDiscordId,
+  });
+  if (channel.kind !== "ok") return { sent: false, reason: channel.reason };
+
+  const posted = await postDiscordChannelPayload({
+    channelId: channel.channelId,
+    botToken: token,
+    payload: {
+      embeds: [{
+        title: `🔒 ห้องเคสรายงาน #${input.reportId}`,
+        description: "ห้องนี้ใช้พูดคุยระหว่างผู้รายงานกับทีมงาน RitzSMP เท่านั้นค่ะ",
+        color: 0xef4444,
+        fields: [
+          { name: "ผู้รายงาน", value: input.reporterDisplayName.slice(0, 1024) || "ไม่ระบุชื่อ", inline: true },
+          { name: "ผู้ถูกรายงาน (Discord)", value: input.targetDiscordName.slice(0, 1024), inline: true },
+          { name: "ชื่อในเกม (Minecraft)", value: input.targetMinecraftIGN ? `\`${input.targetMinecraftIGN.slice(0, 1000)}\`` : "ไม่พบชื่อ Minecraft", inline: true },
+          { name: "หมวดหมู่", value: input.category.slice(0, 1024), inline: true },
+          { name: "รายละเอียด", value: input.details.slice(0, 1024), inline: false },
+        ],
+        footer: { text: `RitzSMP • เคส #${input.reportId} • สถานะ: ใหม่` },
+        timestamp: formatTimestamp(input.createdAt),
+      }],
+      components: [{
+        type: 1,
+        components: [
+          { type: 2, style: 1, label: "🔎 รับเรื่อง", custom_id: `ritz_report_claim:${input.reportId}` },
+          { type: 2, style: 4, label: "✅ ปิดเคส", custom_id: `ritz_report_close:${input.reportId}` },
+        ],
+      }],
+    },
+  });
+  return posted
+    ? { sent: true, channelId: channel.channelId }
+    : { sent: false, channelId: channel.channelId, reason: "case channel message failed" };
+}
+
 export async function notifyPlayerReportStatus(input: {
   reporterDiscordId: string;
   reportId: number;
@@ -404,3 +466,31 @@ export const discordNotificationInternals = {
   postDiscordMessage,
   notifyMinecraftPresence,
 };
+
+export async function notifyPlayerReportCaseStatus(input: {
+  caseChannelId?: string | null;
+  reportId: number;
+  status: "กำลังตรวจสอบ" | "ปิดแล้ว";
+  handledByDisplayName: string;
+}): Promise<boolean> {
+  if (!input.caseChannelId) return false;
+  return postDiscordChannelPayload({
+    channelId: input.caseChannelId,
+    botToken: getDiscordToken(),
+    payload: {
+      embeds: [{
+        title: input.status === "ปิดแล้ว" ? "✅ ปิดเคสรายงานแล้ว" : "🔎 รับเคสรายงานแล้ว",
+        description: input.status === "ปิดแล้ว"
+          ? "ทีมงานดำเนินการกับรายงานนี้เสร็จแล้ว หากมีข้อมูลเพิ่มเติมสามารถแจ้งในห้องนี้ได้ค่ะ"
+          : "ทีมงานรับเรื่องแล้ว กำลังตรวจสอบข้อมูลเพิ่มเติมค่ะ",
+        color: input.status === "ปิดแล้ว" ? 0x22c55e : 0xf59e0b,
+        fields: [
+          { name: "เลขที่รายงาน", value: `#${input.reportId}`, inline: true },
+          { name: "ผู้ดำเนินการ", value: input.handledByDisplayName.slice(0, 1024) || "Staff", inline: true },
+        ],
+        footer: { text: `RitzSMP • สถานะปัจจุบัน: ${input.status}` },
+        timestamp: new Date().toISOString(),
+      }],
+    },
+  });
+}

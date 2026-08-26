@@ -143,3 +143,114 @@ export async function fetchDiscordGuildMembers(input: {
     return { kind: "unavailable" };
   }
 }
+
+export type DiscordCaseChannelResult =
+  | { kind: "ok"; channelId: string }
+  | { kind: "unavailable"; reason: string };
+
+type DiscordChannelLookup = { id?: string; parent_id?: string | null };
+
+const DISCORD_API_BASE = "https://discord.com/api/v10";
+const VIEW_CHANNEL = "1024";
+const SEND_MESSAGES = "2048";
+const READ_MESSAGE_HISTORY = "65536";
+const ATTACH_FILES = "32768";
+const EMBED_LINKS = "16384";
+const CASE_ALLOW = "117760";
+const CASE_DENY = "3072";
+
+export async function createDiscordPlayerReportCaseChannel(input: {
+  guildId: string;
+  reportChannelId: string;
+  reportId: number;
+  reporterDiscordId: string;
+  adminRoleId: string;
+  botToken: string;
+  targetDiscordId?: string | null;
+  fetchImpl?: FetchLike;
+}): Promise<DiscordCaseChannelResult> {
+  const fetcher = input.fetchImpl ?? fetch;
+  if (
+    !isDiscordSnowflake(input.guildId) ||
+    !isDiscordSnowflake(input.reportChannelId) ||
+    !isDiscordSnowflake(input.reporterDiscordId) ||
+    !isDiscordSnowflake(input.adminRoleId) ||
+    !input.botToken.trim() ||
+    !Number.isInteger(input.reportId) ||
+    input.reportId <= 0
+  ) {
+    return { kind: "unavailable", reason: "invalid case channel configuration" };
+  }
+
+  try {
+    const parentResponse = await fetcher(
+      `${DISCORD_API_BASE}/channels/${input.reportChannelId}`,
+      {
+        headers: { Authorization: `Bot ${input.botToken}` },
+        signal: AbortSignal.timeout(4_000),
+      },
+    );
+    if (!parentResponse.ok) {
+      return { kind: "unavailable", reason: `report channel lookup failed (${parentResponse.status})` };
+    }
+    const parent = (await parentResponse.json().catch(() => ({}))) as DiscordChannelLookup;
+    const permissionOverwrites = [
+      { id: input.guildId, type: 0, allow: "0", deny: CASE_DENY },
+      { id: input.adminRoleId, type: 0, allow: CASE_ALLOW, deny: "0" },
+      { id: input.reporterDiscordId, type: 1, allow: CASE_ALLOW, deny: "0" },
+    ];
+    if (input.targetDiscordId && isDiscordSnowflake(input.targetDiscordId) && input.targetDiscordId !== input.reporterDiscordId) {
+      permissionOverwrites.push({ id: input.targetDiscordId, type: 1, allow: "0", deny: CASE_DENY });
+    }
+    const response = await fetcher(`${DISCORD_API_BASE}/guilds/${input.guildId}/channels`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bot ${input.botToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: `report-${input.reportId}`,
+        type: 0,
+        ...(parent.parent_id ? { parent_id: parent.parent_id } : {}),
+        permission_overwrites: permissionOverwrites,
+        topic: `RitzSMP Player Report #${input.reportId} • ห้องพูดคุยระหว่างผู้รายงานและทีมงาน`,
+      }),
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!response.ok) {
+      return { kind: "unavailable", reason: `case channel creation failed (${response.status})` };
+    }
+    const channel = (await response.json().catch(() => ({}))) as { id?: string };
+    return channel.id && isDiscordSnowflake(channel.id)
+      ? { kind: "ok", channelId: channel.id }
+      : { kind: "unavailable", reason: "Discord returned no channel ID" };
+  } catch {
+    return { kind: "unavailable", reason: "case channel request failed" };
+  }
+}
+
+export async function postDiscordChannelPayload(input: {
+  channelId: string;
+  botToken: string;
+  payload: Record<string, unknown>;
+  fetchImpl?: FetchLike;
+}): Promise<boolean> {
+  if (!isDiscordSnowflake(input.channelId) || !input.botToken.trim()) return false;
+  try {
+    const response = await (input.fetchImpl ?? fetch)(
+      `${DISCORD_API_BASE}/channels/${input.channelId}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bot ${input.botToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(input.payload),
+        signal: AbortSignal.timeout(8_000),
+      },
+    );
+    return response.ok;
+  } catch {
+    return false;
+  }
+}

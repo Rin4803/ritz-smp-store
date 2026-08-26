@@ -229,6 +229,7 @@ export const playerReports = mysqlTable("player_reports", {
   closedAt: timestamp("closedAt"),
   editCount: int("editCount").default(0).notNull(),
   discordMessageId: varchar("discordMessageId", { length: 64 }),
+  caseChannelId: varchar("caseChannelId", { length: 64 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

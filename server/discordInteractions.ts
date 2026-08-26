@@ -10,6 +10,7 @@ import {
   getMinecraftPresenceState,
   getPlayerReportById,
   unlinkDiscordVerification,
+  updatePlayerReportCaseChannel,
   updatePlayerReportOnce,
   updatePlayerReportStatus,
 } from "./db.js";
@@ -21,7 +22,9 @@ import {
   type MinecraftServerStatus,
 } from "./minecraftIntegration.js";
 import {
+  createPlayerReportCase,
   notifyPlayerReport,
+  notifyPlayerReportCaseStatus,
   notifyPlayerReportStatus,
   postDiscordReportPanel,
   postDiscordSetupSystemPanel,
@@ -835,6 +838,23 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
         response.data.components = reportEditButton(report.id);
         void Promise.allSettled([
           notifyPlayerReport({ reportId: report.id, guildId: report.guildId, reporterDisplayName: report.reporterDisplayName, targetDiscordName: report.targetDiscordName, targetMinecraftIGN: report.targetMinecraftIGN, category: report.category, details: report.details, createdAt: report.createdAt }),
+          (async () => {
+            const caseResult = await createPlayerReportCase({
+              reportId: report.id,
+              guildId: report.guildId,
+              reporterDiscordId: report.reporterDiscordId,
+              targetDiscordId: report.targetDiscordId,
+              reporterDisplayName: report.reporterDisplayName,
+              targetDiscordName: report.targetDiscordName,
+              targetMinecraftIGN: report.targetMinecraftIGN,
+              category: report.category,
+              details: report.details,
+              createdAt: report.createdAt,
+            });
+            if (caseResult.sent && caseResult.channelId) {
+              await updatePlayerReportCaseChannel({ id: report.id, caseChannelId: caseResult.channelId });
+            }
+          })(),
           announceMinecraftPlayerReport({ reportId: report.id, targetName: report.targetMinecraftIGN ?? report.targetDiscordName }),
         ]);
         return res.status(200).json(response);
@@ -879,6 +899,12 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
           reporterDiscordId: report.reporterDiscordId,
           reportId: report.id,
           status: report.status as "กำลังตรวจสอบ" | "ปิดแล้ว",
+        });
+        const caseUpdated = await notifyPlayerReportCaseStatus({
+          caseChannelId: report.caseChannelId,
+          reportId: report.id,
+          status: report.status as "กำลังตรวจสอบ" | "ปิดแล้ว",
+          handledByDisplayName: report.handledByDisplayName ?? getInteractionDisplayName(interaction),
         });
         return res.status(200).json(ephemeralResponse(
           action === "report-claim"
