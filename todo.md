@@ -947,14 +947,14 @@
 - [x] เพิ่มหน้า Dashboard UI สำหรับแสดงสรุปรายงานและจำกัดการเข้าถึงเฉพาะผู้ดูแล
 - [x] เพิ่ม admin tRPC query สำหรับสรุป Dashboard รายงาน: จำนวนรวม สถานะ หมวดหมู่ และผู้ถูกรายงานซ้ำ
 - [x] เพิ่มหน้า Dashboard UI สำหรับแสดงสรุปรายงานและจำกัดการเข้าถึงเฉพาะผู้ดูแล
-- [ ] แก้ข้อความสถานะ Server has stopped / Server has started ที่ยังส่งเข้า server-chat ให้ส่งเข้า server-realtime จากต้นทางบอท/เว็บ และตรวจไม่ให้เกิดข้อความซ้ำ
-- [ ] ตรวจ routing เหตุการณ์ DiscordSRV และระบบ status notifier หลังแก้ โดยแยก join/leave/status กับ death ให้ถูกห้อง
-- [ ] แก้ต้นทาง BOT CHAT ที่ส่ง Server has started/stopped เข้า server-chat ให้ส่งเข้า server-realtime
-- [ ] ตรวจไม่ให้ข้อความสถานะจาก DiscordSRV และ status notifier ส่งซ้ำหรือ fallback ผิดห้อง
-- [ ] แก้ต้นทาง BOT CHAT ที่ส่ง Server has started/stopped เข้า server-chat ให้ส่งเข้า server-realtime
-- [ ] ตรวจไม่ให้ข้อความสถานะจาก DiscordSRV และ status notifier ส่งซ้ำหรือ fallback ผิดห้อง
+- [x] แก้ข้อความสถานะ Server has stopped / Server has started ที่ยังส่งเข้า server-chat ให้ส่งเข้า server-realtime จากต้นทางบอท/เว็บ และตรวจไม่ให้เกิดข้อความซ้ำ
+- [x] ตรวจ routing เหตุการณ์ DiscordSRV และระบบ status notifier หลังแก้ โดยแยก join/leave/status กับ death ให้ถูกห้อง
+- [x] แก้ต้นทาง BOT CHAT ที่ส่ง Server has started/stopped เข้า server-chat ให้ส่งเข้า server-realtime
+- [x] ตรวจไม่ให้ข้อความสถานะจาก DiscordSRV และ status notifier ส่งซ้ำหรือ fallback ผิดห้อง
+- [x] แก้ต้นทาง BOT CHAT ที่ส่ง Server has started/stopped เข้า server-chat ให้ส่งเข้า server-realtime
+- [x] ตรวจไม่ให้ข้อความสถานะจาก DiscordSRV และ status notifier ส่งซ้ำหรือ fallback ผิดห้อง
 
-- [ ] แก้ DiscordSRV mapping ที่ใช้ status channel ID เก่าซึ่งทำให้ fallback ไป server-chat; ตั้ง join/leave/status ไปยัง channel ปัจจุบัน และตรวจชื่อห้องสะกดผิด
-- [ ] ยืนยันด้วยข้อความ live หลัง reload/restart ว่า lifecycle อยู่ server-realtime และ death/chat อยู่ server-chat
+- [x] แก้ DiscordSRV mapping ที่ใช้ status channel ID เก่าซึ่งทำให้ fallback ไป server-chat; ตั้ง join/leave/status ไปยัง channel ปัจจุบัน และตรวจชื่อห้องสะกดผิด
+- [x] ยืนยันด้วยข้อความ live หลัง reload/restart ว่า lifecycle อยู่ server-realtime และ death/chat อยู่ server-chat
 - [ ] ตรวจคำสั่ง EssentialsX /sell, /sellall, /worth เทียบกับราคาที่เว็บใช้ และบันทึกผลทดสอบ
-- [ ] ซิงก์ไฟล์โปรเจกต์และเอกสารระบบขึ้น GitHub repository ของ Rin4803/ritz-smp-store ตามที่ผู้ใช้ร้องขอ
+- [x] ซิงก์ไฟล์โปรเจกต์และเอกสารระบบขึ้น GitHub repository ของ Rin4803/ritz-smp-store ตามที่ผู้ใช้ร้องขอ
