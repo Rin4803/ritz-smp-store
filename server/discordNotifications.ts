@@ -397,6 +397,33 @@ export async function createPlayerReportCase(input: {
     : { sent: false, channelId: channel.channelId, caseCategoryId: channel.caseCategoryId, reason: "case channel message failed" };
 }
 
+export async function notifyPlayerReportCaseClosingCountdown(input: {
+  caseChannelId?: string | null;
+  reportId: number;
+}): Promise<boolean> {
+  const token = getPlayerReportBotToken();
+  if (!token || !/^\d{17,20}$/.test(input.caseChannelId ?? "")) return false;
+
+  for (let seconds = 5; seconds >= 1; seconds -= 1) {
+    const posted = await postDiscordChannelPayload({
+      channelId: input.caseChannelId!,
+      botToken: token,
+      payload: {
+        embeds: [{
+          title: "⏳ กำลังลบห้องเคส",
+          description: `เคส #${input.reportId} ปิดแล้ว ห้องนี้จะถูกลบใน **${seconds} วินาที**`,
+          color: 0xf59e0b,
+          footer: { text: "RitzSMP • ระบบจะลบห้องหลังนับถอยหลังครบ" },
+        }],
+      },
+    });
+    if (!posted) return false;
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+  }
+
+  return true;
+}
+
 export async function removePlayerReportCase(input: {
   guildId: string;
   caseChannelId?: string | null;

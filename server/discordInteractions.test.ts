@@ -442,6 +442,10 @@ describe("Discord interaction endpoint helpers", () => {
           events.push("case-status-should-not-run");
           return true;
         },
+        notifyClosingCountdown: async (input) => {
+          events.push(`countdown:${input.reportId}:${input.caseChannelId}`);
+          return true;
+        },
         deleteCase: async (input) => {
           events.push(`delete:${input.caseChannelId}:${input.caseCategoryId}`);
           return { caseChannelDeleted: true, caseCategoryDeleted: false };
@@ -456,6 +460,7 @@ describe("Discord interaction endpoint helpers", () => {
     expect(events).toEqual([
       "database",
       "dm",
+      "countdown:90002:123456789012345681",
       "delete:123456789012345681:123456789012345682",
       expect.stringContaining("ลบห้องเคสนี้แล้ว"),
     ]);

@@ -23,6 +23,7 @@ import {
 } from "./minecraftIntegration.js";
 import {
   createPlayerReportCase,
+  notifyPlayerReportCaseClosingCountdown,
   notifyPlayerReportCaseStatus,
   notifyPlayerReportStatus,
   postDiscordReportPanel,
@@ -370,6 +371,7 @@ export async function finishDeferredReportStatusInteraction(
     updateStatus?: typeof updatePlayerReportStatus;
     notifyReporter?: typeof notifyPlayerReportStatus;
     notifyCase?: typeof notifyPlayerReportCaseStatus;
+    notifyClosingCountdown?: typeof notifyPlayerReportCaseClosingCountdown;
     deleteCase?: typeof removePlayerReportCase;
     editResponse?: typeof editDiscordOriginalInteractionResponse;
   } = {},
@@ -381,6 +383,8 @@ export async function finishDeferredReportStatusInteraction(
   const updateStatus = dependencies.updateStatus ?? updatePlayerReportStatus;
   const notifyReporter = dependencies.notifyReporter ?? notifyPlayerReportStatus;
   const notifyCase = dependencies.notifyCase ?? notifyPlayerReportCaseStatus;
+  const notifyClosingCountdown =
+    dependencies.notifyClosingCountdown ?? notifyPlayerReportCaseClosingCountdown;
   const deleteCase = dependencies.deleteCase ?? removePlayerReportCase;
   const editResponse = dependencies.editResponse ?? editDiscordOriginalInteractionResponse;
   const isClaim = input.status === "กำลังตรวจสอบ";
@@ -406,6 +410,10 @@ export async function finishDeferredReportStatusInteraction(
         reporterDiscordId: report.reporterDiscordId,
         reportId: report.id,
         status: report.status as "กำลังตรวจสอบ" | "ปิดแล้ว",
+      });
+      await notifyClosingCountdown({
+        caseChannelId: report.caseChannelId,
+        reportId: report.id,
       });
       const deletion = await deleteCase({
         guildId: report.guildId,
