@@ -160,7 +160,7 @@ describe("Discord player report case channel helper", () => {
         requests.push({ url: String(input), init });
         if (requests.length === 1) {
           return new Response(JSON.stringify([
-            { id: "1525527108854481014", type: 4, name: "Community", position: 2 },
+            { id: "1525527108854481014", type: 4, name: "📢│ INFORMATION", position: 2 },
             { id: "1525527108854481015", type: 0, name: "🚫│report-รายงานผู้เล่น", parent_id: "1525527108854481014" },
             { id: "1525527108854481016", type: 4, name: "RITZ SMP • REAL-TIME", position: 4 },
           ]), { status: 200 });
@@ -220,7 +220,7 @@ describe("Discord player report case channel helper", () => {
         if (requests.length === 1) {
           return new Response(JSON.stringify([
             { id: "1525527108854481012", type: 4, name: "💢┃player-report-log-บันทึกรายงานผู้เล่น", position: 9 },
-            { id: "1525527108854481014", type: 4, name: "Community", position: 2 },
+            { id: "1525527108854481014", type: 4, name: "📢 INFORMATION", position: 2 },
             { id: "1525527108854481015", type: 0, name: "🚫┃report-รายงานผู้เล่น", parent_id: "1525527108854481014" },
             { id: "1525527108854481016", type: 4, name: "RITZ SMP • REAL-TIME", position: 4 },
           ]), { status: 200 });

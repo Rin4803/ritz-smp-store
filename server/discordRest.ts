@@ -170,12 +170,15 @@ const ATTACH_FILES = "32768";
 const EMBED_LINKS = "16384";
 const CASE_ALLOW = "117760";
 const RITZSMP_REPORT_CASE_CATEGORY_NAME = "💢┃player-report-log-บันทึกรายงานผู้เล่น";
-const RITZSMP_REPORT_PANEL_CHANNEL_NAMES = new Set([
-  "🚫┃report-รายงานผู้เล่น",
-  "🚫│report-รายงานผู้เล่น",
+const RITZSMP_INFORMATION_CATEGORY_NAMES = new Set([
+  "📢 INFORMATION",
+  "📢┃INFORMATION",
+  "📢│INFORMATION",
+  "📢┃ INFORMATION",
+  "📢│ INFORMATION",
 ]);
 
-function getCaseCategoryPositionBelowReportSection(
+function getCaseCategoryPositionBelowInformationCategory(
   panelCategory: DiscordGuildChannel | undefined,
 ): number | undefined {
   const panelCategoryPosition = panelCategory?.position;
@@ -188,25 +191,16 @@ function getCaseCategoryPositionBelowReportSection(
 
   // Categories are top-level Discord channels and cannot be nested. Moving
   // only our bot-managed category to the immediately following position keeps
-  // it visually beneath the Community section that contains the report panel.
+  // it visually beneath the INFORMATION section.
   return panelCategoryPosition + 1;
 }
 
-function findRitzSmpReportPanelCategory(channels: unknown[]): DiscordGuildChannel | undefined {
-  const panel = channels.find((channel): channel is DiscordGuildChannel =>
-    typeof channel === "object" &&
-    channel !== null &&
-    (channel as DiscordGuildChannel).type === 0 &&
-    RITZSMP_REPORT_PANEL_CHANNEL_NAMES.has((channel as DiscordGuildChannel).name ?? "") &&
-    isDiscordSnowflake((channel as DiscordGuildChannel).parent_id ?? ""),
-  );
-  if (!panel?.parent_id) return undefined;
-
+function findRitzSmpInformationCategory(channels: unknown[]): DiscordGuildChannel | undefined {
   return channels.find((channel): channel is DiscordGuildChannel =>
     typeof channel === "object" &&
     channel !== null &&
-    (channel as DiscordGuildChannel).id === panel.parent_id &&
     (channel as DiscordGuildChannel).type === 4 &&
+    RITZSMP_INFORMATION_CATEGORY_NAMES.has((channel as DiscordGuildChannel).name ?? "") &&
     Number.isInteger((channel as DiscordGuildChannel).position),
   );
 }
@@ -218,7 +212,7 @@ async function positionRitzSmpReportCaseCategory(input: {
   botToken: string;
   fetchImpl?: FetchLike;
 }): Promise<{ kind: "ok" } | { kind: "unavailable"; reason: string }> {
-  const desiredPosition = getCaseCategoryPositionBelowReportSection(input.panelCategory);
+  const desiredPosition = getCaseCategoryPositionBelowInformationCategory(input.panelCategory);
   if (desiredPosition === undefined) {
     // If a server owner renamed or moved the report panel, retain normal case
     // creation rather than risking a move of an unrelated Discord category.
@@ -266,7 +260,7 @@ async function findOrCreateRitzSmpReportCaseCategory(input: {
     if (!Array.isArray(channels)) {
       return { kind: "unavailable", reason: "case category lookup returned an invalid payload" };
     }
-    const panelCategory = findRitzSmpReportPanelCategory(channels);
+    const panelCategory = findRitzSmpInformationCategory(channels);
     const existing = channels.find((channel): channel is DiscordGuildChannel =>
       typeof channel === "object" &&
       channel !== null &&
@@ -296,8 +290,8 @@ async function findOrCreateRitzSmpReportCaseCategory(input: {
       body: JSON.stringify({
         name: RITZSMP_REPORT_CASE_CATEGORY_NAME,
         type: 4,
-        ...(getCaseCategoryPositionBelowReportSection(panelCategory) !== undefined
-          ? { position: getCaseCategoryPositionBelowReportSection(panelCategory) }
+        ...(getCaseCategoryPositionBelowInformationCategory(panelCategory) !== undefined
+          ? { position: getCaseCategoryPositionBelowInformationCategory(panelCategory) }
           : {}),
         permission_overwrites: [
           { id: input.guildId, type: 0, allow: CASE_ALLOW, deny: "0" },
