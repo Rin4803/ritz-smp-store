@@ -159,6 +159,7 @@ type DiscordGuildChannel = {
   type?: number;
   name?: string;
   parent_id?: string | null;
+  position?: number;
 };
 
 const DISCORD_API_BASE = "https://discord.com/api/v10";
@@ -169,6 +170,83 @@ const ATTACH_FILES = "32768";
 const EMBED_LINKS = "16384";
 const CASE_ALLOW = "117760";
 const RITZSMP_REPORT_CASE_CATEGORY_NAME = "💢┃player-report-log-บันทึกรายงานผู้เล่น";
+const RITZSMP_REPORT_PANEL_CHANNEL_NAMES = new Set([
+  "🚫┃report-รายงานผู้เล่น",
+  "🚫│report-รายงานผู้เล่น",
+]);
+
+function getCaseCategoryPositionBelowReportSection(
+  panelCategory: DiscordGuildChannel | undefined,
+): number | undefined {
+  const panelCategoryPosition = panelCategory?.position;
+  if (
+    typeof panelCategoryPosition !== "number" ||
+    !Number.isInteger(panelCategoryPosition)
+  ) {
+    return undefined;
+  }
+
+  // Categories are top-level Discord channels and cannot be nested. Moving
+  // only our bot-managed category to the immediately following position keeps
+  // it visually beneath the Community section that contains the report panel.
+  return panelCategoryPosition + 1;
+}
+
+function findRitzSmpReportPanelCategory(channels: unknown[]): DiscordGuildChannel | undefined {
+  const panel = channels.find((channel): channel is DiscordGuildChannel =>
+    typeof channel === "object" &&
+    channel !== null &&
+    (channel as DiscordGuildChannel).type === 0 &&
+    RITZSMP_REPORT_PANEL_CHANNEL_NAMES.has((channel as DiscordGuildChannel).name ?? "") &&
+    isDiscordSnowflake((channel as DiscordGuildChannel).parent_id ?? ""),
+  );
+  if (!panel?.parent_id) return undefined;
+
+  return channels.find((channel): channel is DiscordGuildChannel =>
+    typeof channel === "object" &&
+    channel !== null &&
+    (channel as DiscordGuildChannel).id === panel.parent_id &&
+    (channel as DiscordGuildChannel).type === 4 &&
+    Number.isInteger((channel as DiscordGuildChannel).position),
+  );
+}
+
+async function positionRitzSmpReportCaseCategory(input: {
+  guildId: string;
+  categoryId: string;
+  panelCategory: DiscordGuildChannel | undefined;
+  botToken: string;
+  fetchImpl?: FetchLike;
+}): Promise<{ kind: "ok" } | { kind: "unavailable"; reason: string }> {
+  const desiredPosition = getCaseCategoryPositionBelowReportSection(input.panelCategory);
+  if (desiredPosition === undefined) {
+    // If a server owner renamed or moved the report panel, retain normal case
+    // creation rather than risking a move of an unrelated Discord category.
+    return { kind: "ok" };
+  }
+
+  try {
+    const response = await (input.fetchImpl ?? fetch)(
+      `${DISCORD_API_BASE}/guilds/${input.guildId}/channels`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bot ${input.botToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify([
+          { id: input.categoryId, position: desiredPosition },
+        ]),
+        signal: AbortSignal.timeout(8_000),
+      },
+    );
+    return response.ok
+      ? { kind: "ok" }
+      : { kind: "unavailable", reason: `case category placement failed (${response.status})` };
+  } catch {
+    return { kind: "unavailable", reason: "case category placement request failed" };
+  }
+}
 
 async function findOrCreateRitzSmpReportCaseCategory(input: {
   guildId: string;
@@ -188,6 +266,7 @@ async function findOrCreateRitzSmpReportCaseCategory(input: {
     if (!Array.isArray(channels)) {
       return { kind: "unavailable", reason: "case category lookup returned an invalid payload" };
     }
+    const panelCategory = findRitzSmpReportPanelCategory(channels);
     const existing = channels.find((channel): channel is DiscordGuildChannel =>
       typeof channel === "object" &&
       channel !== null &&
@@ -195,7 +274,18 @@ async function findOrCreateRitzSmpReportCaseCategory(input: {
       (channel as DiscordGuildChannel).name === RITZSMP_REPORT_CASE_CATEGORY_NAME &&
       isDiscordSnowflake((channel as DiscordGuildChannel).id ?? ""),
     );
-    if (existing?.id) return { kind: "ok", categoryId: existing.id };
+    if (existing?.id) {
+      const placement = await positionRitzSmpReportCaseCategory({
+        guildId: input.guildId,
+        categoryId: existing.id,
+        panelCategory,
+        botToken: input.botToken,
+        fetchImpl: input.fetchImpl,
+      });
+      return placement.kind === "ok"
+        ? { kind: "ok", categoryId: existing.id }
+        : placement;
+    }
 
     const createResponse = await fetcher(`${DISCORD_API_BASE}/guilds/${input.guildId}/channels`, {
       method: "POST",
@@ -206,6 +296,9 @@ async function findOrCreateRitzSmpReportCaseCategory(input: {
       body: JSON.stringify({
         name: RITZSMP_REPORT_CASE_CATEGORY_NAME,
         type: 4,
+        ...(getCaseCategoryPositionBelowReportSection(panelCategory) !== undefined
+          ? { position: getCaseCategoryPositionBelowReportSection(panelCategory) }
+          : {}),
         permission_overwrites: [
           { id: input.guildId, type: 0, allow: CASE_ALLOW, deny: "0" },
         ],
@@ -216,9 +309,19 @@ async function findOrCreateRitzSmpReportCaseCategory(input: {
       return { kind: "unavailable", reason: `case category creation failed (${createResponse.status})` };
     }
     const category = (await createResponse.json().catch(() => ({}))) as DiscordGuildChannel;
-    return category.id && isDiscordSnowflake(category.id) && category.type === 4
+    if (!category.id || !isDiscordSnowflake(category.id) || category.type !== 4) {
+      return { kind: "unavailable", reason: "Discord returned no case category ID" };
+    }
+    const placement = await positionRitzSmpReportCaseCategory({
+      guildId: input.guildId,
+      categoryId: category.id,
+      panelCategory,
+      botToken: input.botToken,
+      fetchImpl: input.fetchImpl,
+    });
+    return placement.kind === "ok"
       ? { kind: "ok", categoryId: category.id }
-      : { kind: "unavailable", reason: "Discord returned no case category ID" };
+      : placement;
   } catch {
     return { kind: "unavailable", reason: "case category request failed" };
   }
