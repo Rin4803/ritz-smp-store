@@ -1107,3 +1107,16 @@
 - [x] เมื่อตรวจพบการยกเลิกรายการขาย ให้ลบข้อความประกาศรายการนั้นออกจาก Discord
 - [x] ป้องกันการลบผิดรายการและรองรับกรณีข้อความถูกลบไปแล้วหรือไม่พบ mapping
 - [x] เพิ่ม regression tests สำหรับ sell/buy/cancel และตรวจ live TransactionLogger โดยไม่สร้างข้อมูลซื้อขายปลอม
+
+
+## Full remediation continuation — 2026-08-28
+
+- [ ] ตรวจและแก้ Night Vision ให้คงอยู่ระหว่าง break/place/attack โดยไม่ทำให้ effect flicker
+- [ ] ยืนยัน Bedrock bypass และออกแบบ/ติดตั้ง Java GUI login/register ที่รองรับ Paper/AuthMe รุ่นจริง หรือบันทึกข้อจำกัดพร้อมทางเลือกที่ปลอดภัย
+- [ ] ตรวจ GrimAC auto-click/movement checks และปรับเฉพาะค่าที่ plugin รองรับจริง
+- [ ] ตรวจ Paper Anti-Xray ทุกโลก Survival/Nether/End หลังเปลี่ยน engine mode และไม่ทำให้โลกเสียหาย
+- [ ] เก็บข้อมูล world loading/performance และปรับค่าที่มีหลักฐานรองรับ
+- [ ] ยืนยัน scoreboard rank ตรงกับ chat rank ผ่าน LuckPerms prefix ในเกมจริง
+- [ ] ทดสอบ AuctionHouse sell/buy/cancel จากรายการจริงและตรวจการลบข้อความ Discord
+- [ ] ตรวจสถานะ Discord/MCSV/plugin logs หลัง remediation ทั้งหมด
+- [ ] ทำ validation, backup และ sync GitHub หลังแต่ละกลุ่มงานที่ยืนยันแล้ว

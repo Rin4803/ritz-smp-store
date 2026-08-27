@@ -35,3 +35,33 @@ Release notes ทางการของ AuthMeReloaded 6.0.0 ระบุว�
 แหล่งอ้างอิง: [AuthMeReloaded releases](https://github.com/AuthMe/AuthMeReloaded/releases) (อ่านเมื่อ 2026-08-28) ซึ่งระบุข้อกำหนด Paper/Folia 1.21.11+ สำหรับ Dialog และ Java 21 สำหรับ platform รุ่นใหม่.
 
 จาก boot log ล่าสุด: AuthMe 5.7.0-FORK-b53, Geyser 2.11.2-SNAPSHOT, Floodgate 2.2.5-SNAPSHOT, GrimAC 2.3.74 และ Skript 2.16.1 โหลดสำเร็จ; Essentials แจ้ง unsupported server version และ Grim แจ้ง SLF4J provider ไม่พบ แต่ไม่มี plugin failed/disabled. AuthMe config เปิด `bedrockAutoLogin: true` และ Floodgate hook อยู่แล้ว.
+
+
+## Paper Anti-Xray evidence — 2026-08-28
+
+อ้างอิงเอกสารทางการของ Paper: https://docs.papermc.io/paper/anti-xray/
+
+เอกสารระบุว่า `engine-mode: 1` ซ่อนเฉพาะบล็อกที่ถูกบังด้วยบล็อกทึบ ขณะที่ `engine-mode: 2` และ `engine-mode: 3` ใช้การสุ่มบล็อกหลอกเพื่อป้องกัน X-ray ได้ดีกว่า โดย mode 3 สุ่มต่อชั้นของ chunk และช่วยลด network load/ช่วยการบีบอัด packet ตอนผู้เล่นเข้าโลกได้ประมาณหนึ่ง แต่ยังไม่ใช่การรับประกันป้องกัน X-ray ทุกกรณี และแร่ที่เปิดสู่ air/transparent blocks อาจยังมองเห็นได้ตามข้อจำกัดของ Paper
+
+สถานะที่ตรวจพบก่อนแก้: `/config/paper-world-defaults.yml` เปิด Anti-Xray อยู่แล้ว แต่ใช้ `engine-mode: 1`, `max-block-height: -1`, `update-radius: 2`, `use-permission: false` และมีรายการ hidden/replacement blocks ของเซิร์ฟเวอร์อยู่แล้ว จึงเปลี่ยนเฉพาะ `engine-mode` เป็น `3` หลังสร้าง backup เพื่อเพิ่มความยากในการใช้ X-ray โดยไม่ทับรายการบล็อกเดิม
+
+หลัง restart log ดิบยืนยันว่าเซิร์ฟเวอร์ Paper `26.2-71-main@5563e58` เริ่มโหลด plugin ตามปกติ และพบ GrimAC warning เรื่อง SLF4J provider ซึ่งไม่เกี่ยวกับการ parse Paper Anti-Xray โดยตรง; ผล `logs_startup` ที่รายงาน plugin จำนวนมากว่าไม่ถึงขั้น enable เป็น partial scan ระหว่าง boot ไม่ใช่หลักฐานว่า plugin ทั้งหมดล้มเหลว เพราะ log ดิบแสดงการ Loading/Enabling ต่อเนื่อง
+
+
+## Remediation continuation — 2026-08-28
+
+อ่านไฟล์จริง `/plugins/Skript/scripts/nightvision-gui.sk` พบว่าเดิมมี fallback เติม effect ทุก 2 วินาทีและไม่มี interaction recovery handler. ได้เพิ่ม handler หลัง `break`, `place`, `left click` และ `right click` โดยรอ 2 ticks แล้วตรวจว่าผู้เล่นยังเปิด `{nv.enabled::UUID}` และไม่มี night vision จึงค่อยเติมกลับ ระยะเวลายังคง 999999 วินาที และไม่สร้าง loop ทุก tick. คำสั่ง `skript reload nightvision-gui` ตอบสำเร็จจาก console แล้ว แต่ผลว่าหาย flicker/ไม่ดับต้องทดสอบด้วยผู้เล่นจริงหลัง action หลายแบบ จึงยังไม่ถือว่ายืนยันสมบูรณ์.
+
+AuthMe audit ยืนยัน `bedrockAutoLogin: true`, `Hooks.floodgate: true` และ `ignoreBedrockNameCheck: true` อยู่แล้ว. เซิร์ฟเวอร์ใช้ AuthMe 5.7.0-FORK-b53 และ Paper game version 26.2; ยังไม่เปลี่ยนเป็น AuthMe 6 native dialog เพราะแหล่งทางการที่ตรวจไว้ระบุข้อกำหนด platform รุ่นใหม่และการเปลี่ยน dependency/ฐานข้อมูลที่ต้องวางแผน migration ก่อน. Java login จึงยังใช้ flow AuthMe เดิมจนกว่าจะยืนยัน Paper build ที่รองรับและมี rollback/test plan.
+
+
+## Boot verification after remediation — 2026-08-28
+
+ผล `logs_startup` หลัง restart รายงาน `boot_completed: false` ที่บรรทัด 14 จึงเป็นการอ่านช่วงต้นของ startup และยังไม่ควรใช้เป็นข้อสรุปว่า plugin หลักล้มเหลว. รายงานมี LuckPerms อยู่ในรายการ enabled แล้ว และพบเฉพาะ GrimAC SLF4J provider warning; รายชื่อ plugin อื่นที่ถูกจัดเป็น `โหลดแล้วแต่ไม่ถึงขั้น enable` ไม่มี `error_lines` และต้องอ่าน `logs/latest.log` ต่อจน boot จบก่อนวินิจฉัย. ขั้นตอนนี้จึงถือเป็น pending verification ไม่ใช่ plugin failure.
+
+
+## Completed boot verification — 2026-08-28
+
+อ่านท้าย `logs/latest.log` หลัง restart พบ `Done (22.333s)!` และยืนยันว่า Skript, AuctionHouse, DonutScoreboard, GrimAC, AuthMe, Geyser-Spigot และ RitzAuctionBridge enable สำเร็จ. AuthMe รายงาน `AuthMeReReloaded is enabled successfully!`; Geyser รายงาน `Done`; AuctionHouse รายงาน `AuctionHouse enabled`; DonutScoreboard รายงาน enabled บน Bukkit 26.2; RitzAuctionBridge รายงาน enabling โดยไม่พบ error ในช่วงท้าย log. GrimAC ยังมีเพียง warning เรื่อง SLF4J provider/deprecated listener ไม่ใช่การ disable plugin.
+
+หลังแก้ `prevent-moving-into-unloaded-chunks: true` ได้ restart และ boot สำเร็จใน 22.333 วินาที. ค่านี้ช่วยป้องกันผู้เล่นเดินเข้า chunk ที่ยังไม่โหลดและลดผลกระทบจาก chunk stall แต่ยังต้องทดสอบความรู้สึกการเดินทางจริงก่อนสรุปว่าแก้ปัญหา world loading ได้สมบูรณ์.
