@@ -1137,3 +1137,5 @@
 - [x] หลังยืนยันจากผู้ใช้ สำรองข้อมูลเต็มและลบเฉพาะโลก `Lobby_nether` กับ `Lobby_the_end` แบบถาวรแล้ว โดยตรวจยืนยันว่า 5 โลกที่อนุรักษ์ไว้ยังอยู่ครบ
 - [x] เปลี่ยน mapping มิติเป็น `survival_nether = NETHER` และ `survival_the_end = THE_END` และลบการอ้างอิงโลกเก่าออกจาก Skript/config ที่เกี่ยวข้อง
 - [x] ลบรายการ world registry ของ `Lobby_nether`/`Lobby_the_end` จาก Multiverse หลังพบว่า Paper สร้าง dimension เก่ากลับมาเมื่อเริ่มเซิร์ฟเวอร์ แม้ลบ storage แล้ว
+- [ ] ลด Night Vision flicker โดยถอด recovery handlers ที่ผูกกับ break/place/click ซึ่งเติม effect หลัง interaction และใช้ recovery แบบไม่ก่อช่องว่างเท่าที่ทำได้ พร้อมบันทึกข้อจำกัดหากปลั๊กอินอื่นเป็นผู้ล้าง effect
+- [ ] ตรวจและติดตั้ง GUI login สำหรับ Java แบบ non-destructive ต่อฐานข้อมูล AuthMe โดยยืนยัน compatibility กับ AuthMe fork และคง Floodgate Bedrock bypass; หากยังยืนยันไม่ได้ให้หยุดก่อนติดตั้ง
