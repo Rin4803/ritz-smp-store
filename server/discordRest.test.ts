@@ -161,8 +161,9 @@ describe("Discord player report case channel helper", () => {
         if (requests.length === 1) {
           return new Response(JSON.stringify([
             { id: "1525527108854481014", type: 4, name: "📢│ INFORMATION", position: 2 },
-            { id: "1525527108854481015", type: 0, name: "🚫│report-รายงานผู้เล่น", parent_id: "1525527108854481014" },
-            { id: "1525527108854481016", type: 4, name: "RITZ SMP • REAL-TIME", position: 4 },
+            { id: "1525527108854481015", type: 0, name: "🚫│report-รายงานผู้เล่น", parent_id: "1525527108854481014", position: 3 },
+            { id: "1525527108854481017", type: 0, name: "📌│ข้อมูลเซิร์ฟเวอร์", parent_id: "1525527108854481014", position: 4 },
+            { id: "1525527108854481016", type: 4, name: "COMMUNITY", position: 5 },
           ]), { status: 200 });
         }
         if (requests.length === 2) {
@@ -182,12 +183,12 @@ describe("Discord player report case channel helper", () => {
     expect(JSON.parse(String(requests[1].init?.body))).toMatchObject({
       name: "💢┃player-report-log-บันทึกรายงานผู้เล่น",
       type: 4,
-      position: 3,
+      position: 5,
     });
     expect(requests[2].url).toBe("https://discord.com/api/v10/guilds/1525527108854481007/channels");
     expect(requests[2].init?.method).toBe("PATCH");
     expect(JSON.parse(String(requests[2].init?.body))).toEqual([
-      { id: "1525527108854481012", position: 3 },
+      { id: "1525527108854481012", position: 5 },
     ]);
     expect(requests[3].url).toBe("https://discord.com/api/v10/guilds/1525527108854481007/channels");
     expect(requests[3].init?.method).toBe("POST");
@@ -204,7 +205,7 @@ describe("Discord player report case channel helper", () => {
     ]);
     expect(requests[4].init?.method).toBe("PATCH");
     expect(JSON.parse(String(requests[4].init?.body))).toEqual([
-      { id: "1525527108854481012", position: 3 },
+      { id: "1525527108854481012", position: 5 },
     ]);
   });
 
@@ -221,8 +222,8 @@ describe("Discord player report case channel helper", () => {
           return new Response(JSON.stringify([
             { id: "1525527108854481012", type: 4, name: "💢┃player-report-log-บันทึกรายงานผู้เล่น", position: 9 },
             { id: "1525527108854481014", type: 4, name: "📢 INFORMATION", position: 2 },
-            { id: "1525527108854481015", type: 0, name: "🚫┃report-รายงานผู้เล่น", parent_id: "1525527108854481014" },
-            { id: "1525527108854481016", type: 4, name: "RITZ SMP • REAL-TIME", position: 4 },
+            { id: "1525527108854481015", type: 0, name: "🚫┃report-รายงานผู้เล่น", parent_id: "1525527108854481014", position: 8 },
+            { id: "1525527108854481016", type: 4, name: "COMMUNITY", position: 9 },
           ]), { status: 200 });
         }
         if (requests.length === 2) return new Response(null, { status: 200 });
@@ -234,11 +235,11 @@ describe("Discord player report case channel helper", () => {
 
     expect(result).toEqual({ kind: "ok", channelId: "1525527108854481013", caseCategoryId: "1525527108854481012" });
     expect(JSON.parse(String(requests[1].init?.body))).toEqual([
-      { id: "1525527108854481012", position: 3 },
+      { id: "1525527108854481012", position: 9 },
     ]);
     expect(requests[3].init?.method).toBe("PATCH");
     expect(JSON.parse(String(requests[3].init?.body))).toEqual([
-      { id: "1525527108854481012", position: 3 },
+      { id: "1525527108854481012", position: 9 },
     ]);
     const body = JSON.parse(String(requests[2].init?.body));
     expect(body.permission_overwrites).toEqual([

@@ -180,6 +180,7 @@ const RITZSMP_INFORMATION_CATEGORY_NAMES = new Set([
 
 function getCaseCategoryPositionBelowInformationCategory(
   panelCategory: DiscordGuildChannel | undefined,
+  informationSectionEndPosition?: number,
 ): number | undefined {
   const panelCategoryPosition = panelCategory?.position;
   if (
@@ -189,10 +190,15 @@ function getCaseCategoryPositionBelowInformationCategory(
     return undefined;
   }
 
-  // Categories are top-level Discord channels and cannot be nested. Moving
-  // only our bot-managed category to the immediately following position keeps
-  // it visually beneath the INFORMATION section.
-  return panelCategoryPosition + 1;
+  // Discord uses one global position list for category headers and child
+  // channels. The header position is not the end of the visible section, so
+  // place the bot-owned category after the last INFORMATION child channel.
+  const sectionEnd =
+    typeof informationSectionEndPosition === "number" &&
+    Number.isInteger(informationSectionEndPosition)
+      ? Math.max(panelCategoryPosition, informationSectionEndPosition)
+      : panelCategoryPosition;
+  return sectionEnd + 1;
 }
 
 function findRitzSmpInformationCategory(channels: unknown[]): DiscordGuildChannel | undefined {
@@ -209,10 +215,14 @@ async function positionRitzSmpReportCaseCategory(input: {
   guildId: string;
   categoryId: string;
   panelCategory: DiscordGuildChannel | undefined;
+  informationSectionEndPosition?: number;
   botToken: string;
   fetchImpl?: FetchLike;
 }): Promise<{ kind: "ok" } | { kind: "unavailable"; reason: string }> {
-  const desiredPosition = getCaseCategoryPositionBelowInformationCategory(input.panelCategory);
+  const desiredPosition = getCaseCategoryPositionBelowInformationCategory(
+    input.panelCategory,
+    input.informationSectionEndPosition,
+  );
   if (desiredPosition === undefined) {
     // If a server owner renamed or moved the report panel, retain normal case
     // creation rather than risking a move of an unrelated Discord category.
@@ -246,7 +256,15 @@ async function findOrCreateRitzSmpReportCaseCategory(input: {
   guildId: string;
   botToken: string;
   fetchImpl?: FetchLike;
-}): Promise<{ kind: "ok"; categoryId: string; panelCategory?: DiscordGuildChannel } | { kind: "unavailable"; reason: string }> {
+}): Promise<
+  | {
+      kind: "ok";
+      categoryId: string;
+      panelCategory?: DiscordGuildChannel;
+      informationSectionEndPosition?: number;
+    }
+  | { kind: "unavailable"; reason: string }
+> {
   const fetcher = input.fetchImpl ?? fetch;
   try {
     const listResponse = await fetcher(`${DISCORD_API_BASE}/guilds/${input.guildId}/channels`, {
@@ -261,6 +279,21 @@ async function findOrCreateRitzSmpReportCaseCategory(input: {
       return { kind: "unavailable", reason: "case category lookup returned an invalid payload" };
     }
     const panelCategory = findRitzSmpInformationCategory(channels);
+    const informationSectionEndPosition = panelCategory
+      ? channels
+          .filter(
+            (channel): channel is DiscordGuildChannel =>
+              typeof channel === "object" &&
+              channel !== null &&
+              (channel as DiscordGuildChannel).parent_id === panelCategory.id &&
+              Number.isInteger((channel as DiscordGuildChannel).position),
+          )
+          .reduce(
+            (maxPosition, channel) =>
+              Math.max(maxPosition, channel.position as number),
+            panelCategory.position as number,
+          )
+      : undefined;
     const existing = channels.find((channel): channel is DiscordGuildChannel =>
       typeof channel === "object" &&
       channel !== null &&
@@ -273,11 +306,17 @@ async function findOrCreateRitzSmpReportCaseCategory(input: {
         guildId: input.guildId,
         categoryId: existing.id,
         panelCategory,
+        informationSectionEndPosition,
         botToken: input.botToken,
         fetchImpl: input.fetchImpl,
       });
       return placement.kind === "ok"
-        ? { kind: "ok", categoryId: existing.id, panelCategory }
+        ? {
+            kind: "ok",
+            categoryId: existing.id,
+            panelCategory,
+            informationSectionEndPosition,
+          }
         : placement;
     }
 
@@ -290,8 +329,16 @@ async function findOrCreateRitzSmpReportCaseCategory(input: {
       body: JSON.stringify({
         name: RITZSMP_REPORT_CASE_CATEGORY_NAME,
         type: 4,
-        ...(getCaseCategoryPositionBelowInformationCategory(panelCategory) !== undefined
-          ? { position: getCaseCategoryPositionBelowInformationCategory(panelCategory) }
+        ...(getCaseCategoryPositionBelowInformationCategory(
+          panelCategory,
+          informationSectionEndPosition,
+        ) !== undefined
+          ? {
+              position: getCaseCategoryPositionBelowInformationCategory(
+                panelCategory,
+                informationSectionEndPosition,
+              ),
+            }
           : {}),
         permission_overwrites: [
           { id: input.guildId, type: 0, allow: CASE_ALLOW, deny: "0" },
@@ -310,11 +357,17 @@ async function findOrCreateRitzSmpReportCaseCategory(input: {
       guildId: input.guildId,
       categoryId: category.id,
       panelCategory,
+      informationSectionEndPosition,
       botToken: input.botToken,
       fetchImpl: input.fetchImpl,
     });
     return placement.kind === "ok"
-      ? { kind: "ok", categoryId: category.id, panelCategory }
+      ? {
+          kind: "ok",
+          categoryId: category.id,
+          panelCategory,
+          informationSectionEndPosition,
+        }
       : placement;
   } catch {
     return { kind: "unavailable", reason: "case category request failed" };
@@ -384,8 +437,9 @@ export async function createDiscordPlayerReportCaseChannel(input: {
     const finalPlacement = await positionRitzSmpReportCaseCategory({
       guildId: input.guildId,
       categoryId: category.categoryId,
-      panelCategory: category.panelCategory,
-      botToken: input.botToken,
+        panelCategory: category.panelCategory,
+        informationSectionEndPosition: category.informationSectionEndPosition,
+        botToken: input.botToken,
       fetchImpl: input.fetchImpl,
     });
     return finalPlacement.kind === "ok"
