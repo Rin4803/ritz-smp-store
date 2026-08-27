@@ -174,6 +174,10 @@ const RITZSMP_REPORT_PANEL_CHANNEL_NAMES = new Set([
   "🚫┃report-รายงานผู้เล่น",
   "report-รายงานผู้เล่น",
   "⛔│report-รายงานผู้เล่น",
+  "🆘┃ᴛɪᴄᴋᴇᴛ-ติดต่อช่วยเหลือ",
+  "🆘│ᴛɪᴄᴋᴇᴛ-ติดต่อช่วยเหลือ",
+  "🆘┃ticket-ติดต่อช่วยเหลือ",
+  "🆘│ticket-ติดต่อช่วยเหลือ",
 ]);
 const RITZSMP_INFORMATION_CATEGORY_NAMES = new Set([
   "📢 INFORMATION",
@@ -207,9 +211,9 @@ async function findRitzSmpReportPanelParent(input: {
     const channels = (await response.json().catch(() => [])) as unknown;
     if (!Array.isArray(channels)) return { kind: "unavailable", reason: "report panel lookup returned an invalid payload" };
     const panel = findRitzSmpReportPanelChannel(channels);
-    if (!panel) return { kind: "unavailable", reason: "report panel channel was not found" };
+    if (!panel) return { kind: "unavailable", reason: "report anchor channel was not found" };
     if (!isDiscordSnowflake(panel.parent_id ?? "")) {
-      return { kind: "unavailable", reason: "report panel channel has no parent category" };
+      return { kind: "unavailable", reason: "report anchor channel has no parent category" };
     }
     return { kind: "ok", parentId: panel.parent_id! };
   } catch {

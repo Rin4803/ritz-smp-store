@@ -148,7 +148,7 @@ describe("Discord REST member helper", () => {
 
 
 describe("Discord player report case channel helper", () => {
-  it("creates only a case channel under the existing report panel category", async () => {
+  it("creates only a case channel under the existing Ticket category", async () => {
     const requests: Array<{ url: string; init?: RequestInit }> = [];
     const result = await createDiscordPlayerReportCaseChannel({
       guildId: "1525527108854481007",
@@ -162,7 +162,7 @@ describe("Discord player report case channel helper", () => {
         if (requests.length === 1) {
           return new Response(JSON.stringify([
             { id: "1525527108854481014", type: 4, name: "📢 INFORMATION", position: 2 },
-            { id: "1525527108854481015", type: 0, name: "🚫│report-รายงานผู้เล่น", parent_id: "1525527108854481014", position: 3 },
+            { id: "1525527108854481015", type: 0, name: "🆘┃ᴛɪᴄᴋᴇᴛ-ติดต่อช่วยเหลือ", parent_id: "1525527108854481014", position: 3 },
             { id: "1525527108854481017", type: 0, name: "📌│ข้อมูลเซิร์ฟเวอร์", parent_id: "1525527108854481014", position: 4 },
             { id: "1525527108854481016", type: 4, name: "COMMUNITY", position: 5 },
           ]), { status: 200 });
@@ -203,7 +203,7 @@ describe("Discord player report case channel helper", () => {
       }) as typeof fetch,
     });
 
-    expect(result).toEqual({ kind: "unavailable", reason: "report panel channel was not found" });
+    expect(result).toEqual({ kind: "unavailable", reason: "report anchor channel was not found" });
     expect(requestCount).toBe(1);
   });
 
