@@ -107,3 +107,19 @@ AuthMe config ปัจจุบันยืนยัน `bedrockAutoLogin: true
 หลังผู้ใช้ยืนยัน ได้สร้าง full MCSV backup ก่อนดำเนินการลบ และหยุดเซิร์ฟเวอร์ก่อนลบ storage ของ `Lobby_nether` กับ `Lobby_the_end` จากนั้นลบ world registry ของทั้งสองโลกผ่าน Multiverse เพื่อป้องกันการถูกสร้างกลับมาเมื่อเซิร์ฟเวอร์เริ่มใหม่ ผล `mv list` หลัง cleanup ยืนยันว่าเหลือเฉพาะ `Survival` (NORMAL), `Lobby` (NORMAL), `afk` (NORMAL), `survival_nether` (NETHER) และ `survival_the_end` (THE_END)
 
 ได้อัปเดตและ reload `save-location.sk`, `travel.sk` และ `lobby.sk` แยกทีละไฟล์สำเร็จ โดย mapping ปัจจุบันคือ `survival_nether` สำหรับ NETHER และ `survival_the_end` สำหรับ THE_END ไม่พบ syntax error จากการ reload รอบนี้ การกลับตำแหน่งเดิมเมื่อออกเกม/กลับเข้าเกมหรือใช้ `/play` ยังต้องทดสอบด้วยผู้เล่นจริงในแต่ละโลกก่อนสรุปว่า live flow เสร็จสมบูรณ์
+
+## Video evidence: Night Vision flicker — 2026-08-28
+
+วิดีโอ `video_20260828_032557.mp4` แสดงว่า GUI เปิดได้และ Night Vision ติดในช่วงต้น จากนั้นเมื่อผู้เล่นตีอากาศ หน้าจอมืดลงชั่วครู่แล้วกลับมาสว่าง และเกิดซ้ำหลายรอบ จึงยืนยันว่าเป็น intermittent flicker ระหว่าง interaction ไม่ใช่ GUI เปิดไม่ได้หรือเอฟเฟกต์ดับถาวร. วิดีโอยังไม่แสดงการทุบบล็อกหรือวางบล็อกอย่างชัดเจน จึงยังไม่สรุปว่าทั้งสอง interaction มีพฤติกรรมเหมือนกัน.
+
+## Skript event reference — 2026-08-28
+
+เอกสาร Skript 2.16.1 ระบุว่าสามารถกำหนด event priority เป็น lowest/low/normal/high/highest/monitor ได้เฉพาะ event ที่รองรับ และควรตรวจ parser บนเซิร์ฟเวอร์จริงก่อนใช้ [1]. เอกสารเดียวกันระบุ event `entity potion effect modification` ตั้งแต่ Skript 2.10 และรองรับ action เช่น added/removed ตั้งแต่ 2.14 พร้อมตัวอย่าง `on entity potion effect of night vision removed` [1]. หน้าดัชนี SkDocs ของ `entity_potion_effect` ไม่มี syntax ตัวอย่างเพิ่มเติมที่เพียงพอ จึงยึดเอกสาร Skript ทางการและจะทดสอบ parser ก่อนเปิดใช้จริง [2].
+
+[1]: https://docs.skriptlang.org/events.html "Skript Documentation 2.16.1 — Events"
+[2]: https://skdocs.org/docs?id=entity_potion_effect "SkDocs — Entity Potion Effect"
+
+ข้อสรุป: log เดิมไม่เก็บการเปลี่ยน Potion Effect ของผู้เล่น จึงยังชี้ GrimAC หรือ plugin ใดเป็นต้นเหตุไม่ได้โดยตรง. ขั้นตอนที่ปลอดภัยกว่าการเดา patch คือเพิ่ม instrumentation ชั่วคราวด้วย event นี้เพื่อบันทึกเฉพาะกรณี Night Vision ถูก remove แล้วให้ผู้เล่นทดสอบ action ที่ทำให้ flicker.
+
+### Backup ก่อน instrumentation
+สร้าง full MCSV backup สำเร็จก่อนแตะไฟล์ live: `35ce3ef1-cdec-4420-972d-becd3cb4563f` ชื่อ `ก่อนตรวจ Night Vision potion removal 2026-08-28`.

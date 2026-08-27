@@ -1139,3 +1139,55 @@
 - [x] ลบรายการ world registry ของ `Lobby_nether`/`Lobby_the_end` จาก Multiverse หลังพบว่า Paper สร้าง dimension เก่ากลับมาเมื่อเริ่มเซิร์ฟเวอร์ แม้ลบ storage แล้ว
 - [ ] ลด Night Vision flicker โดยถอด recovery handlers ที่ผูกกับ break/place/click ซึ่งเติม effect หลัง interaction และใช้ recovery แบบไม่ก่อช่องว่างเท่าที่ทำได้ พร้อมบันทึกข้อจำกัดหากปลั๊กอินอื่นเป็นผู้ล้าง effect
 - [ ] ตรวจและติดตั้ง GUI login สำหรับ Java แบบ non-destructive ต่อฐานข้อมูล AuthMe โดยยืนยัน compatibility กับ AuthMe fork และคง Floodgate Bedrock bypass; หากยังยืนยันไม่ได้ให้หยุดก่อนติดตั้ง
+- [ ] แก้บั๊ก `/nv` ที่ผู้ใช้ยืนยันว่าไม่ทำงาน โดยตรวจ command registration, permission, effect application และ event ที่ล้าง Night Vision; ต้องทดสอบเปิดใช้และ interaction จริงก่อนทำเครื่องหมายเสร็จ
+- [ ] ตรวจและแก้กรณี `/nv` ติดแล้วถูกล้าง/เติมซ้ำทุกครั้งที่ตีอากาศ ทุบ หรือวางบล็อก โดยค้นหาคำสั่งล้าง potion และ event interaction จากสคริปต์/ปลั๊กอินก่อนปรับกลไก
+
+- [ ] Investigate new live evidence: Night Vision is removed immediately after /nv opens, before air attack, block break, or placement; correlate diagnostic event with join/GUI/plugin timing.
+- [ ] Apply and validate a root-cause fix for immediate Night Vision removal without masking the cause with a periodic reapply loop.
+
+- [ ] Investigate latest live report: Night Vision closes immediately after enabling, before any attack, block break, or placement; correlate /nv GUI flow, potion removal event, and plugin timing.
+- [ ] Replace the current Night Vision enable path with a validated method that remains active without periodic or self-triggered recovery loops.
+
+- [ ] Investigate latest live result: Night Vision remains active after enabling but is removed when air-attacking, breaking, or placing blocks; correlate interaction timestamps with NV-DIAG and plugin logs.
+- [ ] Apply a root-cause fix for interaction-triggered Night Vision removal without periodic reapply or self-triggered recovery.
+
+- [ ] Investigate latest failed mitigation: Night Vision still disappears after air attack, breaking, or placing despite GrimAC attack/item-use reset options being disabled; inspect other plugins and Skript handlers.
+- [ ] Revert or retain GrimAC settings based on final evidence, then apply the actual root-cause fix without weakening unrelated anti-cheat checks.
+
+- [ ] Investigate confirmed external removal: direct vanilla `/effect give` also disappears after air attack, block break, or placement; isolate the responsible interaction listener/plugin using live logs and controlled tests.
+- [ ] Do not disable additional anti-cheat or gameplay plugins without evidence; preserve a rollback path for every live configuration change.
+
+- [x] Audit Paper Anti-Xray settings for Survival, survival_nether, and survival_the_end; global config confirms mode 3 and `max-block-height: -1`; per-world/player visibility test remains required.
+- [x] Apply full-height Anti-Xray configuration with a live backup, reload/restart safely: Paper `engine-mode: 3`, `max-block-height: -1`, `lava-obscures: true`, `use-permission: false`; controlled ore-visibility test remains required.
+
+- [ ] Urgent: investigate why non-OP players can fly and move unusually fast; check effective permissions, flight/speed state, gamemode, Essentials, GrimAC, and Bedrock/Geyser handling.
+- [x] Apply a reversible live safeguard that removes unauthorized flight and abnormal speed without affecting OP/admin permissions or legitimate server mechanics: `server.properties allow-flight=false` and EssentialsX disabled commands `fly`/`speed`; restart completed, live player test still required.
+
+- [ ] Audit available GrimAC/Paper controls for ESP-like cheats, including player/entity visibility, packet exposure, and limitations beyond Anti-Xray.
+- [ ] Add evidence-based ESP mitigations without claiming impossible coverage or disabling unrelated protections.
+
+- [ ] Audit dupe and item-duplication surfaces: inventories, containers, hoppers, trading, AuctionHouse, commands, stack handling, reconnects, and interrupted transactions.
+- [ ] Add evidence-based anti-dupe safeguards with backup and rollback, without deleting legitimate player items or disabling economy systems blindly.
+
+- [ ] Define a complete security-hardening audit covering unauthorized flight/speed, combat automation, reach, movement, X-ray/ESP, packet abuse, inventory/item duplication, economy/AuctionHouse abuse, login bypass, permissions, and Bedrock/Geyser compatibility.
+- [ ] Build an evidence-based risk matrix from live plugin status, configs, permissions, and logs before changing security settings.
+- [x] Apply only reversible hardening changes with a pre-change backup, preserving legitimate gameplay and admin/Bedrock exceptions: backup `pre-flight-speed-hardening-2026-08-28` created before the flight/speed safeguard.
+- [ ] Validate each protection area separately with controlled tests and record limitations where complete prevention is not technically guaranteed.
+- [ ] Urgent security hardening: audit and revoke unauthorized non-OP flight and abnormal speed permissions/settings
+- [ ] Harden GrimAC/Paper against movement cheats, ESP, packet-based cheats, and abnormal combat automation
+- [x] Expand Paper Anti-Xray coverage to the complete configured world height using valid 16-block height boundaries; live config confirms `max-block-height: -1` and mode 3.
+- [ ] Audit AuctionHouse, trading, containers, and item handling for duplication paths and add prevention/monitoring
+- [ ] Finalize Night Vision persistence during attack, break, and block placement interactions
+- [ ] Improve scoreboard smoothness by reducing full redraw/flicker, stabilizing server name rendering, and updating time efficiently
+- [ ] Validate Bedrock auto-login bypass remains intact after security changes
+- [ ] Run live verification, update audit documentation, and sync all changes to private GitHub
+
+- [ ] Fix death drops: verify keepInventory is false in Survival, survival_nether, and survival_the_end, and remove any plugin/Skript suppression of drops
+- [ ] Fix respawn routing: players with a valid bed respawn at that bed; players without a bed respawn at a random safe location in the survival world, never Lobby
+- [ ] Apply death-drop and respawn rules consistently to the Survival world group: `Survival`, `survival_nether`, and `survival_the_end`; no-bed respawn must route safely to `Survival`
+- [ ] Restore CEO rank visibility and consistency across LuckPerms, chat prefix, and scoreboard without changing Owner/Admin protections
+- [ ] Verify and restore both Owner and CEO rank visibility, weights, prefixes, and protections across LuckPerms, chat, and scoreboard; Owner must remain highest priority
+- [ ] Redesign the in-game right-side scoreboard with stable server name/time rendering and complete fields: kills, deaths, money, coins, online players, playtime, ping, rank, and team
+- [ ] Complete all remaining Minecraft remediation work in priority order and prepare a morning verification checklist for the user
+- [ ] Audit RitzSMP AI command registration/help menus, remove redundant or unrelated commands, and present only essential commands with clear Thai descriptions and categories without affecting other bots
+- [ ] Complete every remaining remediation item to a verifiable state, record evidence for each, and prepare a detailed morning test matrix before reporting overall completion percentage
