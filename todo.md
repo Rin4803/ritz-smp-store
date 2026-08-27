@@ -1120,3 +1120,5 @@
 - [ ] ทดสอบ AuctionHouse sell/buy/cancel จากรายการจริงและตรวจการลบข้อความ Discord
 - [x] ตรวจสถานะ Discord/MCSV/plugin logs หลัง remediation ทั้งหมด
 - [x] ทำ validation, backup และ sync GitHub หลังแต่ละกลุ่มงานที่ยืนยันแล้ว
+
+- [x] สร้างเอกสาร live-test matrix แยกผล config/boot audit ออกจากการทดสอบที่ต้องมีผู้เล่นจริง

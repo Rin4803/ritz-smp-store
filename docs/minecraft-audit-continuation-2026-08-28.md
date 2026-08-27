@@ -65,3 +65,12 @@ AuthMe audit ยืนยัน `bedrockAutoLogin: true`, `Hooks.floodgate: true
 อ่านท้าย `logs/latest.log` หลัง restart พบ `Done (22.333s)!` และยืนยันว่า Skript, AuctionHouse, DonutScoreboard, GrimAC, AuthMe, Geyser-Spigot และ RitzAuctionBridge enable สำเร็จ. AuthMe รายงาน `AuthMeReReloaded is enabled successfully!`; Geyser รายงาน `Done`; AuctionHouse รายงาน `AuctionHouse enabled`; DonutScoreboard รายงาน enabled บน Bukkit 26.2; RitzAuctionBridge รายงาน enabling โดยไม่พบ error ในช่วงท้าย log. GrimAC ยังมีเพียง warning เรื่อง SLF4J provider/deprecated listener ไม่ใช่การ disable plugin.
 
 หลังแก้ `prevent-moving-into-unloaded-chunks: true` ได้ restart และ boot สำเร็จใน 22.333 วินาที. ค่านี้ช่วยป้องกันผู้เล่นเดินเข้า chunk ที่ยังไม่โหลดและลดผลกระทบจาก chunk stall แต่ยังต้องทดสอบความรู้สึกการเดินทางจริงก่อนสรุปว่าแก้ปัญหา world loading ได้สมบูรณ์.
+
+
+## AuthMe native dialog verification — 2026-08-28
+
+แหล่งข้อมูลทางการ: [AuthMeReloaded](https://github.com/AuthMe/AuthMeReloaded) และ [releases](https://github.com/AuthMe/AuthMeReloaded/releases) รวมถึงไฟล์เผยแพร่ [AuthMe 6.0.0](https://dev.bukkit.org/projects/authme-reloaded/files/8055464)
+
+AuthMe 6.0.0 ระบุว่ารองรับ graphical login/register dialogs โดยตั้งค่า `settings.registration.dialog.postJoin.enable` หรือ `settings.registration.dialog.preJoin.enable` แยกกันได้ โดย pre-join dialog ต้องใช้ Paper/Folia รุ่นที่รองรับ Dialog สมัยใหม่ เช่น 1.21.11+ ส่วนไฟล์เผยแพร่ระบุการรองรับ Spigot 1.21.6+ และ Paper/Folia 1.21.11+ เป็นหลัก. เซิร์ฟเวอร์ปัจจุบันโหลด `AuthMe 5.7.0-FORK-b53` และยังต้องยืนยัน Paper build/Java runtime ให้ตรงเงื่อนไขก่อนสลับ JAR เพื่อป้องกันผลกระทบต่อฐานข้อมูลบัญชี.
+
+AuthMe config ปัจจุบันยืนยัน `bedrockAutoLogin: true`, `Hooks.floodgate: true`, `Hooks.ignoreBedrockNameCheck: true`, `settings.sessions.enabled: true` และ `settings.registration.type: PASSWORD`; Bedrock bypass จึงเปิดอยู่แล้ว แต่ Java GUI login/register ยังไม่ยืนยันว่าเปิดอยู่. ไม่ควรสร้างระบบเก็บรหัสผ่านใหม่ด้วย Skript และไม่ควรแทนที่ AuthMe 5 ด้วย AuthMe 6 จนกว่าจะมี backup, migration plan และ test/rollback plan.
