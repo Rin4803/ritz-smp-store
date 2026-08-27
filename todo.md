@@ -1081,3 +1081,29 @@
 - [x] ปรับ Player Report ตาม requirement ล่าสุด: ไม่สร้างหมวดใหม่ และให้ช่อง `report-<เลขเคส>` อยู่ใต้หมวดเดียวกับช่อง `report-รายงานผู้เล่น` เดิมโดยตรง; ปิดเคสแล้วลบเฉพาะช่องเคส ไม่ลบหมวดเดิม
 - [x] ข้อกำหนดกระบวนการ: หลังแก้ระบบใหม่ทุกครั้งต้องรัน validation แล้วบันทึก checkpoint และซิงก์การเปลี่ยนแปลงเข้า GitHub ให้ครบสำหรับรอบ Player Report นี้
 - [x] แก้บั๊กล่าสุดจาก live report #570001: รายงานถูกบันทึกแต่สร้างช่องเคสไม่สำเร็จ; ให้ค้นหาหมวดแม่ของ `🆘┃ᴛɪᴄᴋᴇᴛ-ติดต่อช่วยเหลือ` และสร้างช่อง `report-<เลขเคส>` ใต้หมวดนั้นโดยตรง พร้อมแสดง error ที่ตรวจสอบได้หาก Discord ปฏิเสธ
+- [ ] แก้ `/nv`: ตรวจหาต้นเหตุที่ effect ถูกล้างตอนตี/ทุบ/วางบล็อก และทำให้เปิดครั้งเดียวแล้วคงอยู่นานโดยไม่กระพริบ
+- [ ] ปรับ authentication: Bedrock bypass ระบบ login ส่วน Java ต้องมีสมัคร/ล็อกอินผ่านหน้า GUI หลังเข้าเซิร์ฟ โดยต้องตรวจปลั๊กอินเดิมและป้องกันการชนกับข้อมูลบัญชีเดิม
+- [ ] Audit และปรับระบบกันโกง: ตรวจการออโต้ตี การเคลื่อนที่ผิดปกติ และการตรวจ X-ray จาก GrimAC/ปลั๊กอิน/คอนฟิก/บันทึกจริง โดยหลีกเลี่ยง false positive
+- [ ] ตรวจและแก้สาเหตุโลกโหลดช้า โดยวิเคราะห์ world/chunk settings, timings และ log ก่อนเปลี่ยนค่า
+- [ ] ทำให้ยศ/แรงค์ใน scoreboard ตรงกับรูปแบบยศที่แสดงในแชท โดยตรวจแหล่งข้อมูล LuckPerms, TAB, EssentialsX และ PlaceholderAPI
+
+
+## Minecraft remediation continuation — 2026-08-28
+
+- [ ] แยกและยืนยันต้นเหตุ Night Vision ถูกล้างระหว่าง break/place/attack จาก plugin หรือ Skript ที่เกี่ยวข้อง
+- [ ] ทำให้ Night Vision คงอยู่โดยไม่เติม effect ซ้ำจนเกิด flicker และไม่รบกวน action ของผู้เล่น
+- [ ] ยืนยัน Bedrock bypass ผ่าน Floodgate/AuthMe และเตรียม Java GUI login/register ที่เข้ากันได้กับ Paper build จริง
+- [ ] ตรวจสอบและปรับ anti-cheat สำหรับ auto-clicker/movement โดยไม่อ้างความสามารถที่ plugin ไม่มีจริง
+- [ ] ตรวจสอบและปรับ Paper anti-Xray ให้ครอบคลุม Survival/Nether/End
+- [ ] ตรวจสอบ world loading/chunk performance และทดสอบค่าที่เปลี่ยนแบบปลอดภัย
+- [ ] ทำให้ rank บน scoreboard ใช้แหล่งข้อมูลเดียวกับ chat rank ของ LuckPerms
+- [ ] Reload/ตรวจ log และระบุ live tests ที่ยังต้องใช้ผู้เล่นจริง
+- [ ] สำรองไฟล์ MCSV และ sync การเปลี่ยนแปลงที่ยืนยันแล้วเข้า private GitHub
+
+
+## AuctionHouse notification cancellation — 2026-08-28
+
+- [x] ผูก Discord message ID กับ AuctionHouse listing ID สำหรับข้อความประกาศรายการขายใน `order-in-game`
+- [x] เมื่อตรวจพบการยกเลิกรายการขาย ให้ลบข้อความประกาศรายการนั้นออกจาก Discord
+- [x] ป้องกันการลบผิดรายการและรองรับกรณีข้อความถูกลบไปแล้วหรือไม่พบ mapping
+- [x] เพิ่ม regression tests สำหรับ sell/buy/cancel และตรวจ live TransactionLogger โดยไม่สร้างข้อมูลซื้อขายปลอม

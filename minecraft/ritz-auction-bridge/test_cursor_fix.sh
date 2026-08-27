@@ -11,6 +11,12 @@ grep -Fq 'saveCursor();' "$SOURCE"
 grep -Fq 'compareTransactionLogNames' "$SOURCE"
 grep -Fq 'if (cursor.offset != Files.size(file)) return file;' "$SOURCE"
 grep -Fq 'shouldAdvancePastEmptyLog' "$SOURCE"
+# Cancellation regression guards: listing messages must be persisted and removed only by matching fingerprint.
+grep -Fq 'CANCELLATION' "$SOURCE"
+grep -Fq 'forward-cancellations' "$ROOT/src/main/resources/config.yml"
+grep -Fq 'listing-messages.yml' "$SOURCE"
+grep -Fq 'deleteMessageById' "$SOURCE"
+grep -Fq '10008' "$SOURCE"
 
 test -s "$JAR"
 jar tf "$JAR" | grep -Fq 'com/ritzsmp/auctionbridge/RitzAuctionBridge.class'

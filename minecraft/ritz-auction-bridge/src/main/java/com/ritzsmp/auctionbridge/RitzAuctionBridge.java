@@ -17,6 +17,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -24,8 +26,10 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -45,12 +49,17 @@ public final class RitzAuctionBridge extends JavaPlugin {
     private static final Pattern SALE = Pattern.compile(
             "^\\[([^]]+)] Buyer: ([^|]+) \\| Seller: ([^|]+) \\| Item: ([^|]+) \\| Amount: (\\d+) \\| Price: ([^|]+) \\| BID: (true|false)$",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern CANCELLATION = Pattern.compile(
+            "^\\[([^]]+)] Player canceled an auction: ([^|]+) \\| Item: ([^|]+) \\| Amount: (\\d+) \\| Price: ([^|]+) \\| BID: (true|false)$",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern TRANSACTION_LOG_FILE = Pattern.compile("^(.+)-(\\d+)\\.log$");
 
     private final AtomicBoolean pollRunning = new AtomicBoolean(false);
     private BukkitTask pollTask;
     private Path stateFile;
+    private Path listingMessagesFile;
     private Cursor cursor;
+    private final Map<String, List<String>> listingMessages = new HashMap<>();
     private long retryAfterMillis;
 
     @Override
@@ -65,16 +74,19 @@ public final class RitzAuctionBridge extends JavaPlugin {
         }
 
         stateFile = getDataFolder().toPath().resolve("cursor.yml");
+        listingMessagesFile = getDataFolder().toPath().resolve("listing-messages.yml");
         cursor = loadCursor();
+        loadListingMessages();
         long interval = Math.max(20L, getConfig().getLong("poll-interval-ticks", 40L));
         pollTask = Bukkit.getScheduler().runTaskTimerAsynchronously(this, this::pollTransactionLog, 20L, interval);
-        getLogger().info("RitzAuctionBridge เปิดใช้งาน: อ่านเฉพาะรายการลงขาย/ซื้อสำเร็จ และส่งไป order-in-game");
+        getLogger().info("RitzAuctionBridge เปิดใช้งาน: อ่านรายการลงขาย/ซื้อสำเร็จ/ยกเลิก และซิงก์ข้อความไป order-in-game");
     }
 
     @Override
     public void onDisable() {
         if (pollTask != null) pollTask.cancel();
         if (cursor != null) saveCursor();
+        saveListingMessages();
     }
 
     private void pollTransactionLog() {
@@ -113,7 +125,7 @@ public final class RitzAuctionBridge extends JavaPlugin {
 
                 for (LogLine line : lines) {
                     if (line.event != null) {
-                        if (!sendToDiscord(line.event)) {
+                        if (!handleEvent(line.event)) {
                             retryAfterMillis = System.currentTimeMillis() + retryDelayMillis();
                             return;
                         }
@@ -249,6 +261,19 @@ public final class RitzAuctionBridge extends JavaPlugin {
                     clean(sale.group(6)),
                     Boolean.parseBoolean(sale.group(7)));
         }
+
+        Matcher cancellation = CANCELLATION.matcher(line.trim());
+        if (cancellation.matches() && getConfig().getBoolean("forward-cancellations", true)) {
+            return new AuctionEvent(
+                    EventKind.CANCELLED,
+                    parseTime(cancellation.group(1)),
+                    clean(cancellation.group(2)),
+                    null,
+                    clean(cancellation.group(3)),
+                    Integer.parseInt(cancellation.group(4)),
+                    clean(cancellation.group(5)),
+                    Boolean.parseBoolean(cancellation.group(6)));
+        }
         return null;
     }
 
@@ -266,6 +291,12 @@ public final class RitzAuctionBridge extends JavaPlugin {
                 .replace('\n', ' ')
                 .replaceAll("§[0-9A-FK-ORa-fk-or]", "")
                 .trim();
+    }
+
+    private boolean handleEvent(AuctionEvent event) {
+        return event.kind == EventKind.CANCELLED
+                ? deleteListingMessage(event)
+                : sendToDiscord(event);
     }
 
     private boolean sendToDiscord(AuctionEvent event) {
@@ -306,7 +337,12 @@ public final class RitzAuctionBridge extends JavaPlugin {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Throwable> failure = new AtomicReference<>();
         MessageEmbed message = embed.build();
-        channel.sendMessageEmbeds(message).queue(ignored -> latch.countDown(), error -> {
+        channel.sendMessageEmbeds(message).queue(sent -> {
+            if (event.kind == EventKind.LISTED) {
+                addListingMessage(event, sent.getId());
+            }
+            latch.countDown();
+        }, error -> {
             failure.set(error);
             latch.countDown();
         });
@@ -324,6 +360,108 @@ public final class RitzAuctionBridge extends JavaPlugin {
             return false;
         }
         return true;
+    }
+
+    private boolean deleteListingMessage(AuctionEvent event) {
+        String channelId = getConfig().getString("order-in-game-channel-id", "").trim();
+        if (channelId.isEmpty() || !DiscordSRV.isReady || DiscordSRV.getPlugin() == null
+                || DiscordSRV.getPlugin().getJda() == null) {
+            getLogger().warning("ไม่สามารถลบข้อความ AuctionHouse: DiscordSRV ยังไม่พร้อมหรือไม่มี channel ID");
+            return false;
+        }
+        List<String> candidates;
+        String key = listingKey(event);
+        synchronized (listingMessages) {
+            candidates = new ArrayList<>(listingMessages.getOrDefault(key, List.of()));
+        }
+        if (candidates.isEmpty()) {
+            getLogger().info("ไม่พบ mapping ข้อความสำหรับรายการที่ยกเลิก: " + key);
+            return true;
+        }
+
+        TextChannel channel = DiscordSRV.getPlugin().getJda().getTextChannelById(channelId);
+        if (channel == null) return false;
+        String messageId = candidates.get(candidates.size() - 1);
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        channel.deleteMessageById(messageId).queue(ignored -> {
+            removeListingMessage(event, messageId);
+            latch.countDown();
+        }, error -> {
+            // A moderator may have removed the message already; treat Discord's 404 as handled.
+            if (error.getMessage() != null && error.getMessage().contains("10008")) {
+                removeListingMessage(event, messageId);
+            } else {
+                failure.set(error);
+            }
+            latch.countDown();
+        });
+        try {
+            if (!latch.await(8, TimeUnit.SECONDS)) return false;
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+        if (failure.get() != null) {
+            getLogger().warning("ลบข้อความ AuctionHouse ไม่สำเร็จ: " + safeError(failure.get()));
+            return false;
+        }
+        return true;
+    }
+
+    private String listingKey(AuctionEvent event) {
+        String raw = String.join("\\u0000", event.seller, event.item, Integer.toString(event.amount), event.price,
+                Boolean.toString(event.bid)).toLowerCase(Locale.ROOT);
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(raw.getBytes(StandardCharsets.UTF_8));
+            StringBuilder result = new StringBuilder(digest.length * 2);
+            for (byte value : digest) result.append(String.format(Locale.ROOT, "%02x", value));
+            return result.toString();
+        } catch (NoSuchAlgorithmException impossible) {
+            throw new IllegalStateException("SHA-256 ไม่พร้อมใช้งาน", impossible);
+        }
+    }
+
+    private void addListingMessage(AuctionEvent event, String messageId) {
+        synchronized (listingMessages) {
+            listingMessages.computeIfAbsent(listingKey(event), ignored -> new ArrayList<>()).add(messageId);
+            saveListingMessages();
+        }
+    }
+
+    private void removeListingMessage(AuctionEvent event, String messageId) {
+        synchronized (listingMessages) {
+            List<String> ids = listingMessages.get(listingKey(event));
+            if (ids == null) return;
+            ids.remove(messageId);
+            if (ids.isEmpty()) listingMessages.remove(listingKey(event));
+            saveListingMessages();
+        }
+    }
+
+    private void loadListingMessages() {
+        if (listingMessagesFile == null || !Files.isRegularFile(listingMessagesFile)) return;
+        YamlConfiguration state = YamlConfiguration.loadConfiguration(listingMessagesFile.toFile());
+        if (state.getConfigurationSection("listings") == null) return;
+        for (String key : state.getConfigurationSection("listings").getKeys(false)) {
+            List<String> ids = state.getStringList("listings." + key);
+            if (!ids.isEmpty()) listingMessages.put(key, new ArrayList<>(ids));
+        }
+    }
+
+    private void saveListingMessages() {
+        if (listingMessagesFile == null) return;
+        YamlConfiguration state = new YamlConfiguration();
+        synchronized (listingMessages) {
+            for (Map.Entry<String, List<String>> entry : listingMessages.entrySet()) {
+                state.set("listings." + entry.getKey(), new ArrayList<>(entry.getValue()));
+            }
+        }
+        try {
+            state.save(listingMessagesFile.toFile());
+        } catch (IOException error) {
+            getLogger().warning("บันทึก mapping ข้อความ AuctionHouse ไม่สำเร็จ: " + safeError(error));
+        }
     }
 
     private long retryDelayMillis() {
@@ -363,5 +501,5 @@ public final class RitzAuctionBridge extends JavaPlugin {
     private record LogLine(long endOffset, AuctionEvent event) {}
     private record AuctionEvent(EventKind kind, Instant occurredAt, String seller, String buyer, String item,
                                 int amount, String price, boolean bid) {}
-    private enum EventKind { LISTED, SOLD }
+    private enum EventKind { LISTED, SOLD, CANCELLED }
 }

@@ -23,3 +23,16 @@
 ## ข้อควรระวัง
 
 ระหว่างแก้ครั้งแรก Skript ไม่รองรับเงื่อนไข `or` ตามรูปแบบที่เขียนและ reload ไม่สำเร็จ จึงแก้กลับเป็นเงื่อนไขเดี่ยวสามบล็อกทันที การ reload ครั้งล่าสุดสำเร็จ และไม่มี global reload หรือการลบข้อมูลผู้เล่น
+
+
+## รอบตรวจ MCSV เพิ่มเติม — 14:40 UTC
+
+`server_overview` และ `logs_startup` ยืนยันว่าเซิร์ฟเวอร์บูตสำเร็จ และปลั๊กอินหลักที่เกี่ยวข้องถูก enable สำเร็จ ได้แก่ AuctionHouse 1.5.2, DiscordSRV 1.30.5, RitzAuctionBridge 1.0.0, Skript 2.16.1 และชุด Multiverse ที่ใช้งานอยู่ ไม่พบหลักฐานปลั๊กอินเหล่านี้ failed หรือถูก disable ในรอบล่าสุด
+
+พบคำเตือน startup ของ Essentials เรื่อง server version ที่ไม่รองรับ และ GrimAC เรื่องไม่พบ SLF4J provider ซึ่งไม่ใช่หลักฐานว่าระบบ Player Report, AuctionHouse หรือ Night Vision ล้มเหลว
+
+การค้นหา `/nv` พบการเรียกคำสั่งจริงหลายครั้งจากผู้เล่น แต่การค้นคำว่า `effect` ไม่พบหลักฐานตรงว่ามีปลั๊กอินหรือ Skript ล้าง Night Vision หลัง break/place/attack/interact พบเพียง `nightvision-gui.sk` ถูกโหลดใน startup log เก่า และ ClearLag ลบไอเทมบนพื้น ซึ่งยังไม่ใช่หลักฐานการล้าง potion effect
+
+การค้นหา AuctionHouse พบคำสั่งจริง เช่น `/ah sell 1000`, `/ah` และ `/ah sell 5` รวมทั้งยืนยันว่า AuctionHouse และ RitzAuctionBridge โหลดสำเร็จ แต่ยังไม่มีหลักฐานธุรกรรมสดที่ยืนยันการส่งข้อความไปช่อง `order-in-game` ครบเส้นทางในช่วง audit นี้
+
+ยังไม่มีผู้เล่นออนไลน์และไม่มี live event รอบใหม่ จึงยังไม่สรุปว่า `/nv`, AuctionHouse realtime, respawn หรือ last-location ใช้งานถูกต้องครบถ้วน ต้องทดสอบด้วยผู้เล่นจริงก่อนแก้เพิ่มเติม
