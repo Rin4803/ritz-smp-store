@@ -1097,8 +1097,8 @@
 - [ ] ตรวจสอบและปรับ Paper anti-Xray ให้ครอบคลุม Survival/Nether/End
 - [ ] ตรวจสอบ world loading/chunk performance และทดสอบค่าที่เปลี่ยนแบบปลอดภัย
 - [ ] ทำให้ rank บน scoreboard ใช้แหล่งข้อมูลเดียวกับ chat rank ของ LuckPerms
-- [ ] Reload/ตรวจ log และระบุ live tests ที่ยังต้องใช้ผู้เล่นจริง
-- [ ] สำรองไฟล์ MCSV และ sync การเปลี่ยนแปลงที่ยืนยันแล้วเข้า private GitHub
+- [x] Reload/ตรวจ log และระบุ live tests ที่ยังต้องใช้ผู้เล่นจริง
+- [x] สำรองไฟล์ MCSV และ sync การเปลี่ยนแปลงที่ยืนยันแล้วเข้า private GitHub
 
 
 ## AuctionHouse notification cancellation — 2026-08-28
@@ -1118,5 +1118,5 @@
 - [ ] เก็บข้อมูล world loading/performance และปรับค่าที่มีหลักฐานรองรับ
 - [ ] ยืนยัน scoreboard rank ตรงกับ chat rank ผ่าน LuckPerms prefix ในเกมจริง
 - [ ] ทดสอบ AuctionHouse sell/buy/cancel จากรายการจริงและตรวจการลบข้อความ Discord
-- [ ] ตรวจสถานะ Discord/MCSV/plugin logs หลัง remediation ทั้งหมด
-- [ ] ทำ validation, backup และ sync GitHub หลังแต่ละกลุ่มงานที่ยืนยันแล้ว
+- [x] ตรวจสถานะ Discord/MCSV/plugin logs หลัง remediation ทั้งหมด
+- [x] ทำ validation, backup และ sync GitHub หลังแต่ละกลุ่มงานที่ยืนยันแล้ว
