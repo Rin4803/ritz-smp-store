@@ -252,7 +252,7 @@ async function findOrCreateRitzSmpReportCaseCategory(input: {
   guildId: string;
   botToken: string;
   fetchImpl?: FetchLike;
-}): Promise<{ kind: "ok"; categoryId: string } | { kind: "unavailable"; reason: string }> {
+}): Promise<{ kind: "ok"; categoryId: string; panelCategory?: DiscordGuildChannel } | { kind: "unavailable"; reason: string }> {
   const fetcher = input.fetchImpl ?? fetch;
   try {
     const listResponse = await fetcher(`${DISCORD_API_BASE}/guilds/${input.guildId}/channels`, {
@@ -283,7 +283,7 @@ async function findOrCreateRitzSmpReportCaseCategory(input: {
         fetchImpl: input.fetchImpl,
       });
       return placement.kind === "ok"
-        ? { kind: "ok", categoryId: existing.id }
+        ? { kind: "ok", categoryId: existing.id, panelCategory }
         : placement;
     }
 
@@ -320,7 +320,7 @@ async function findOrCreateRitzSmpReportCaseCategory(input: {
       fetchImpl: input.fetchImpl,
     });
     return placement.kind === "ok"
-      ? { kind: "ok", categoryId: category.id }
+      ? { kind: "ok", categoryId: category.id, panelCategory }
       : placement;
   } catch {
     return { kind: "unavailable", reason: "case category request failed" };
@@ -382,9 +382,21 @@ export async function createDiscordPlayerReportCaseChannel(input: {
       return { kind: "unavailable", reason: `case channel creation failed (${response.status})` };
     }
     const channel = (await response.json().catch(() => ({}))) as { id?: string };
-    return channel.id && isDiscordSnowflake(channel.id)
+    if (!channel.id || !isDiscordSnowflake(channel.id)) {
+      return { kind: "unavailable", reason: "Discord returned no channel ID" };
+    }
+    // Discord may apply category ordering asynchronously while the child room
+    // is created. Re-apply the same bot-owned placement after that POST.
+    const finalPlacement = await positionRitzSmpReportCaseCategory({
+      guildId: input.guildId,
+      categoryId: category.categoryId,
+      panelCategory: category.panelCategory,
+      botToken: input.botToken,
+      fetchImpl: input.fetchImpl,
+    });
+    return finalPlacement.kind === "ok"
       ? { kind: "ok", channelId: channel.id, caseCategoryId: category.categoryId }
-      : { kind: "unavailable", reason: "Discord returned no channel ID" };
+      : finalPlacement;
   } catch {
     return { kind: "unavailable", reason: "case channel request failed" };
   }

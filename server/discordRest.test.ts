@@ -169,12 +169,14 @@ describe("Discord player report case channel helper", () => {
           return new Response(JSON.stringify({ id: "1525527108854481012", type: 4 }), { status: 201 });
         }
         if (requests.length === 3) return new Response(null, { status: 200 });
-        return new Response(JSON.stringify({ id: "1525527108854481013" }), { status: 201 });
+        if (requests.length === 4) return new Response(JSON.stringify({ id: "1525527108854481013" }), { status: 201 });
+        if (requests.length === 5) return new Response(null, { status: 200 });
+        return new Response(null, { status: 500 });
       }) as typeof fetch,
     });
 
     expect(result).toEqual({ kind: "ok", channelId: "1525527108854481013", caseCategoryId: "1525527108854481012" });
-    expect(requests).toHaveLength(4);
+    expect(requests).toHaveLength(5);
     expect(requests[0].url).toBe("https://discord.com/api/v10/guilds/1525527108854481007/channels");
     expect(requests[1].init?.method).toBe("POST");
     expect(JSON.parse(String(requests[1].init?.body))).toMatchObject({
@@ -200,6 +202,10 @@ describe("Discord player report case channel helper", () => {
       { id: "1525527108854481007", type: 0, allow: "117760", deny: "0" },
       { id: "1525527108854481011", type: 0, allow: "117760", deny: "0" },
     ]);
+    expect(requests[4].init?.method).toBe("PATCH");
+    expect(JSON.parse(String(requests[4].init?.body))).toEqual([
+      { id: "1525527108854481012", position: 3 },
+    ]);
   });
 
   it("reuses a dedicated bot-managed category and creates a public case room when no administrator role is configured", async () => {
@@ -220,12 +226,18 @@ describe("Discord player report case channel helper", () => {
           ]), { status: 200 });
         }
         if (requests.length === 2) return new Response(null, { status: 200 });
-        return new Response(JSON.stringify({ id: "1525527108854481013" }), { status: 201 });
+        if (requests.length === 3) return new Response(JSON.stringify({ id: "1525527108854481013" }), { status: 201 });
+        if (requests.length === 4) return new Response(null, { status: 200 });
+        return new Response(null, { status: 500 });
       }) as typeof fetch,
     });
 
     expect(result).toEqual({ kind: "ok", channelId: "1525527108854481013", caseCategoryId: "1525527108854481012" });
     expect(JSON.parse(String(requests[1].init?.body))).toEqual([
+      { id: "1525527108854481012", position: 3 },
+    ]);
+    expect(requests[3].init?.method).toBe("PATCH");
+    expect(JSON.parse(String(requests[3].init?.body))).toEqual([
       { id: "1525527108854481012", position: 3 },
     ]);
     const body = JSON.parse(String(requests[2].init?.body));
