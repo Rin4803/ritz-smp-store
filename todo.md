@@ -1191,3 +1191,11 @@
 - [ ] Complete all remaining Minecraft remediation work in priority order and prepare a morning verification checklist for the user
 - [ ] Audit RitzSMP AI command registration/help menus, remove redundant or unrelated commands, and present only essential commands with clear Thai descriptions and categories without affecting other bots
 - [ ] Complete every remaining remediation item to a verifiable state, record evidence for each, and prepare a detailed morning test matrix before reporting overall completion percentage
+
+## Security scan and anti-dupe evidence — 2026-08-28
+
+- [x] Run MCSV server-volume security scan; result `CLEAN`, with zero infected, suspicious, and open findings in the scanned scope.
+- [x] Read AuctionHouse 1.5.2 config and permissions from the live server; no safe transaction-lock or anti-dupe setting was exposed for a blind change.
+- [x] Search live and rotated logs for AuctionHouse, duplicate, dupe, rollback, item loss, and transaction errors; no matches were found in the scanned log set.
+- [ ] Reproduce AuctionHouse sell, cancel, buy, reconnect, and interrupted-transaction flows with disposable test items before declaring anti-dupe protection complete.
+- [ ] Add evidence-based anti-dupe safeguards only after a confirmed reproduction or vendor-documented setting, with backup and rollback.

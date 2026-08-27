@@ -38,3 +38,13 @@ Anti-Xray ไม่ใช่ระบบป้องกัน ESP ทุกช�
 3. ทดสอบ Anti-Xray ด้วยมุมมองปกติและตรวจ ore camouflage ในทั้งสามโลก
 4. ทดสอบ AuctionHouse sell, cancel, buy, reconnect และ interrupted transaction ด้วยไอเทมทดสอบที่ไม่ใช่ข้อมูลผู้เล่นจริง
 5. ตรวจ LuckPerms effective permissions ผ่านวิธีที่ Security Guard อนุญาตหรือ Management UI เท่านั้น
+
+## Security Scan เพิ่มเติม
+
+สแกน server volume ล่าสุดด้วย engine `scan-server-volume` ได้ verdict `CLEAN` โดยไม่พบ infected, suspicious หรือ open findings ในขอบเขตที่ engine ตรวจได้ การตรวจนี้เป็น signature/heuristic scan และไม่ใช่การรับประกันว่า plugin หรือ server ปลอดภัย 100% จึงยังต้องคงการอัปเดตจากแหล่งที่เชื่อถือได้และตรวจ log ต่อเนื่อง
+
+การอ่าน AuctionHouse version 1.5.2 และ log ย้อนหลังเพิ่มเติมยังไม่พบหลักฐาน `duplicate`, `dupe`, rollback, item loss หรือ transaction error ที่ยืนยันได้ จึงยังคงแนวทางไม่ปิด AuctionHouse และไม่แก้ item flow แบบกว้าง ๆ โดยไม่มี controlled reproduction เพื่อป้องกันไอเทมหายหรือธุรกรรมเสียหาย
+
+## สถานะการตรวจรอบนี้
+
+การตรวจคอนฟิกและ scan เสร็จแล้ว แต่ live player click-through สำหรับ flight/speed, Anti-Xray/ESP, AuctionHouse transaction และ LuckPerms effective permissions ยังไม่ถือว่ายืนยันจนกว่าจะมีผู้เล่น Java/Bedrock ทดสอบจริงตาม matrix ในหัวข้อก่อนหน้า
