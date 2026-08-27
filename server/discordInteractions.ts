@@ -739,7 +739,6 @@ export async function finishDeferredPlayerReportSubmitInteraction(
       await updateCaseChannel({
         id: report.id,
         caseChannelId: caseResult.channelId,
-        caseCategoryId: caseResult.caseCategoryId,
       });
     }
 

@@ -31,7 +31,6 @@ type DiscordMessagePayload = {
 type DiscordNotificationResult = {
   sent: boolean;
   channelId?: string;
-  caseCategoryId?: string;
   messageId?: string;
   reason?: string;
 };
@@ -393,8 +392,8 @@ export async function createPlayerReportCase(input: {
     },
   });
   return posted
-    ? { sent: true, channelId: channel.channelId, caseCategoryId: channel.caseCategoryId }
-    : { sent: false, channelId: channel.channelId, caseCategoryId: channel.caseCategoryId, reason: "case channel message failed" };
+    ? { sent: true, channelId: channel.channelId }
+    : { sent: false, channelId: channel.channelId, reason: "case channel message failed" };
 }
 
 export async function notifyPlayerReportCaseClosingCountdown(input: {

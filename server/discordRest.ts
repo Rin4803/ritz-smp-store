@@ -145,7 +145,7 @@ export async function fetchDiscordGuildMembers(input: {
 }
 
 export type DiscordCaseChannelResult =
-  | { kind: "ok"; channelId: string; caseCategoryId: string }
+  | { kind: "ok"; channelId: string; caseCategoryId?: string }
   | { kind: "unavailable"; reason: string };
 
 export type DiscordCaseChannelDeletionResult = {
@@ -169,7 +169,12 @@ const READ_MESSAGE_HISTORY = "65536";
 const ATTACH_FILES = "32768";
 const EMBED_LINKS = "16384";
 const CASE_ALLOW = "117760";
-const RITZSMP_REPORT_CASE_CATEGORY_NAME = "💢┃player-report-log-บันทึกรายงานผู้เล่น";
+const RITZSMP_REPORT_PANEL_CHANNEL_NAMES = new Set([
+  "🚫│report-รายงานผู้เล่น",
+  "🚫┃report-รายงานผู้เล่น",
+  "report-รายงานผู้เล่น",
+  "⛔│report-รายงานผู้เล่น",
+]);
 const RITZSMP_INFORMATION_CATEGORY_NAMES = new Set([
   "📢 INFORMATION",
   "📢┃INFORMATION",
@@ -178,199 +183,37 @@ const RITZSMP_INFORMATION_CATEGORY_NAMES = new Set([
   "📢│ INFORMATION",
 ]);
 
-function getCaseCategoryPositionBelowInformationCategory(
-  panelCategory: DiscordGuildChannel | undefined,
-  informationSectionEndPosition?: number,
-): number | undefined {
-  const panelCategoryPosition = panelCategory?.position;
-  if (
-    typeof panelCategoryPosition !== "number" ||
-    !Number.isInteger(panelCategoryPosition)
-  ) {
-    return undefined;
-  }
-
-  // Discord uses one global position list for category headers and child
-  // channels. The header position is not the end of the visible section, so
-  // place the bot-owned category after the last INFORMATION child channel.
-  const sectionEnd =
-    typeof informationSectionEndPosition === "number" &&
-    Number.isInteger(informationSectionEndPosition)
-      ? Math.max(panelCategoryPosition, informationSectionEndPosition)
-      : panelCategoryPosition;
-  return sectionEnd + 1;
-}
-
-function findRitzSmpInformationCategory(channels: unknown[]): DiscordGuildChannel | undefined {
+function findRitzSmpReportPanelChannel(channels: unknown[]): DiscordGuildChannel | undefined {
   return channels.find((channel): channel is DiscordGuildChannel =>
     typeof channel === "object" &&
     channel !== null &&
-    (channel as DiscordGuildChannel).type === 4 &&
-    RITZSMP_INFORMATION_CATEGORY_NAMES.has((channel as DiscordGuildChannel).name ?? "") &&
-    Number.isInteger((channel as DiscordGuildChannel).position),
+    (channel as DiscordGuildChannel).type === 0 &&
+    RITZSMP_REPORT_PANEL_CHANNEL_NAMES.has((channel as DiscordGuildChannel).name ?? "") &&
+    isDiscordSnowflake((channel as DiscordGuildChannel).id ?? ""),
   );
 }
 
-async function positionRitzSmpReportCaseCategory(input: {
+async function findRitzSmpReportPanelParent(input: {
   guildId: string;
-  categoryId: string;
-  panelCategory: DiscordGuildChannel | undefined;
-  informationSectionEndPosition?: number;
   botToken: string;
   fetchImpl?: FetchLike;
-}): Promise<{ kind: "ok" } | { kind: "unavailable"; reason: string }> {
-  const desiredPosition = getCaseCategoryPositionBelowInformationCategory(
-    input.panelCategory,
-    input.informationSectionEndPosition,
-  );
-  if (desiredPosition === undefined) {
-    // If a server owner renamed or moved the report panel, retain normal case
-    // creation rather than risking a move of an unrelated Discord category.
-    return { kind: "ok" };
-  }
-
+}): Promise<{ kind: "ok"; parentId?: string } | { kind: "unavailable"; reason: string }> {
   try {
     const response = await (input.fetchImpl ?? fetch)(
       `${DISCORD_API_BASE}/guilds/${input.guildId}/channels`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bot ${input.botToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify([
-          { id: input.categoryId, position: desiredPosition },
-        ]),
-        signal: AbortSignal.timeout(8_000),
-      },
+      { headers: { Authorization: `Bot ${input.botToken}` }, signal: AbortSignal.timeout(4_000) },
     );
-    return response.ok
-      ? { kind: "ok" }
-      : { kind: "unavailable", reason: `case category placement failed (${response.status})` };
+    if (!response.ok) return { kind: "unavailable", reason: `report panel lookup failed (${response.status})` };
+    const channels = (await response.json().catch(() => [])) as unknown;
+    if (!Array.isArray(channels)) return { kind: "unavailable", reason: "report panel lookup returned an invalid payload" };
+    const panel = findRitzSmpReportPanelChannel(channels);
+    if (!panel) return { kind: "unavailable", reason: "report panel channel was not found" };
+    if (!isDiscordSnowflake(panel.parent_id ?? "")) {
+      return { kind: "unavailable", reason: "report panel channel has no parent category" };
+    }
+    return { kind: "ok", parentId: panel.parent_id! };
   } catch {
-    return { kind: "unavailable", reason: "case category placement request failed" };
-  }
-}
-
-async function findOrCreateRitzSmpReportCaseCategory(input: {
-  guildId: string;
-  botToken: string;
-  fetchImpl?: FetchLike;
-}): Promise<
-  | {
-      kind: "ok";
-      categoryId: string;
-      panelCategory?: DiscordGuildChannel;
-      informationSectionEndPosition?: number;
-    }
-  | { kind: "unavailable"; reason: string }
-> {
-  const fetcher = input.fetchImpl ?? fetch;
-  try {
-    const listResponse = await fetcher(`${DISCORD_API_BASE}/guilds/${input.guildId}/channels`, {
-      headers: { Authorization: `Bot ${input.botToken}` },
-      signal: AbortSignal.timeout(4_000),
-    });
-    if (!listResponse.ok) {
-      return { kind: "unavailable", reason: `case category lookup failed (${listResponse.status})` };
-    }
-    const channels = (await listResponse.json().catch(() => [])) as unknown;
-    if (!Array.isArray(channels)) {
-      return { kind: "unavailable", reason: "case category lookup returned an invalid payload" };
-    }
-    const panelCategory = findRitzSmpInformationCategory(channels);
-    const informationSectionEndPosition = panelCategory
-      ? channels
-          .filter(
-            (channel): channel is DiscordGuildChannel =>
-              typeof channel === "object" &&
-              channel !== null &&
-              (channel as DiscordGuildChannel).parent_id === panelCategory.id &&
-              Number.isInteger((channel as DiscordGuildChannel).position),
-          )
-          .reduce(
-            (maxPosition, channel) =>
-              Math.max(maxPosition, channel.position as number),
-            panelCategory.position as number,
-          )
-      : undefined;
-    const existing = channels.find((channel): channel is DiscordGuildChannel =>
-      typeof channel === "object" &&
-      channel !== null &&
-      (channel as DiscordGuildChannel).type === 4 &&
-      (channel as DiscordGuildChannel).name === RITZSMP_REPORT_CASE_CATEGORY_NAME &&
-      isDiscordSnowflake((channel as DiscordGuildChannel).id ?? ""),
-    );
-    if (existing?.id) {
-      const placement = await positionRitzSmpReportCaseCategory({
-        guildId: input.guildId,
-        categoryId: existing.id,
-        panelCategory,
-        informationSectionEndPosition,
-        botToken: input.botToken,
-        fetchImpl: input.fetchImpl,
-      });
-      return placement.kind === "ok"
-        ? {
-            kind: "ok",
-            categoryId: existing.id,
-            panelCategory,
-            informationSectionEndPosition,
-          }
-        : placement;
-    }
-
-    const createResponse = await fetcher(`${DISCORD_API_BASE}/guilds/${input.guildId}/channels`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bot ${input.botToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: RITZSMP_REPORT_CASE_CATEGORY_NAME,
-        type: 4,
-        ...(getCaseCategoryPositionBelowInformationCategory(
-          panelCategory,
-          informationSectionEndPosition,
-        ) !== undefined
-          ? {
-              position: getCaseCategoryPositionBelowInformationCategory(
-                panelCategory,
-                informationSectionEndPosition,
-              ),
-            }
-          : {}),
-        permission_overwrites: [
-          { id: input.guildId, type: 0, allow: CASE_ALLOW, deny: "0" },
-        ],
-      }),
-      signal: AbortSignal.timeout(8_000),
-    });
-    if (!createResponse.ok) {
-      return { kind: "unavailable", reason: `case category creation failed (${createResponse.status})` };
-    }
-    const category = (await createResponse.json().catch(() => ({}))) as DiscordGuildChannel;
-    if (!category.id || !isDiscordSnowflake(category.id) || category.type !== 4) {
-      return { kind: "unavailable", reason: "Discord returned no case category ID" };
-    }
-    const placement = await positionRitzSmpReportCaseCategory({
-      guildId: input.guildId,
-      categoryId: category.id,
-      panelCategory,
-      informationSectionEndPosition,
-      botToken: input.botToken,
-      fetchImpl: input.fetchImpl,
-    });
-    return placement.kind === "ok"
-      ? {
-          kind: "ok",
-          categoryId: category.id,
-          panelCategory,
-          informationSectionEndPosition,
-        }
-      : placement;
-  } catch {
-    return { kind: "unavailable", reason: "case category request failed" };
+    return { kind: "unavailable", reason: "report panel lookup request failed" };
   }
 }
 
@@ -394,16 +237,16 @@ export async function createDiscordPlayerReportCaseChannel(input: {
     return { kind: "unavailable", reason: "invalid case channel configuration" };
   }
 
-  const category = await findOrCreateRitzSmpReportCaseCategory({
+  const panelParent = await findRitzSmpReportPanelParent({
     guildId: input.guildId,
     botToken: input.botToken,
     fetchImpl: input.fetchImpl,
   });
-  if (category.kind !== "ok") return category;
+  if (panelParent.kind !== "ok") return panelParent;
 
   try {
-    // The bot creates this dedicated category itself. It must never delete the
-    // configured panel channel or a category that existed before this feature.
+    // Case rooms are created under the existing report panel category. The bot
+    // never creates, moves, or deletes a Discord category for this feature.
     const permissionOverwrites = [
       { id: input.guildId, type: 0, allow: CASE_ALLOW, deny: "0" },
       ...(isDiscordSnowflake(input.adminRoleId ?? "")
@@ -419,7 +262,7 @@ export async function createDiscordPlayerReportCaseChannel(input: {
       body: JSON.stringify({
         name: `report-${input.reportId}`,
         type: 0,
-        parent_id: category.categoryId,
+        ...(panelParent.parentId ? { parent_id: panelParent.parentId } : {}),
         permission_overwrites: permissionOverwrites,
         topic: `RitzSMP Player Report #${input.reportId} • ห้องบันทึกและพูดคุยของสมาชิกทุกคน`,
       }),
@@ -432,19 +275,8 @@ export async function createDiscordPlayerReportCaseChannel(input: {
     if (!channel.id || !isDiscordSnowflake(channel.id)) {
       return { kind: "unavailable", reason: "Discord returned no channel ID" };
     }
-    // Discord may apply category ordering asynchronously while the child room
-    // is created. Re-apply the same bot-owned placement after that POST.
-    const finalPlacement = await positionRitzSmpReportCaseCategory({
-      guildId: input.guildId,
-      categoryId: category.categoryId,
-        panelCategory: category.panelCategory,
-        informationSectionEndPosition: category.informationSectionEndPosition,
-        botToken: input.botToken,
-      fetchImpl: input.fetchImpl,
-    });
-    return finalPlacement.kind === "ok"
-      ? { kind: "ok", channelId: channel.id, caseCategoryId: category.categoryId }
-      : finalPlacement;
+    return { kind: "ok", channelId: channel.id };
+
   } catch {
     return { kind: "unavailable", reason: "case channel request failed" };
   }
@@ -475,52 +307,9 @@ export async function deleteDiscordPlayerReportCaseChannel(input: {
     return { caseChannelDeleted: false, caseCategoryDeleted: false, reason: "case channel deletion request failed" };
   }
 
-  // Legacy case rooms have no stored bot-managed category. Delete only the
-  // individual room; a pre-existing Discord category must never be removed.
-  if (!isDiscordSnowflake(input.caseCategoryId ?? "")) {
-    return { caseChannelDeleted: true, caseCategoryDeleted: false };
-  }
-
-  try {
-    const listResponse = await fetcher(`${DISCORD_API_BASE}/guilds/${input.guildId}/channels`, {
-      headers: { Authorization: `Bot ${input.botToken}` },
-      signal: AbortSignal.timeout(4_000),
-    });
-    if (!listResponse.ok) {
-      return { caseChannelDeleted: true, caseCategoryDeleted: false, reason: `case category recheck failed (${listResponse.status})` };
-    }
-    const channels = (await listResponse.json().catch(() => [])) as unknown;
-    if (!Array.isArray(channels)) {
-      return { caseChannelDeleted: true, caseCategoryDeleted: false, reason: "case category recheck returned an invalid payload" };
-    }
-    const category = channels.find((channel): channel is DiscordGuildChannel =>
-      typeof channel === "object" &&
-      channel !== null &&
-      (channel as DiscordGuildChannel).id === input.caseCategoryId &&
-      (channel as DiscordGuildChannel).type === 4 &&
-      (channel as DiscordGuildChannel).name === RITZSMP_REPORT_CASE_CATEGORY_NAME,
-    );
-    if (!category) {
-      return { caseChannelDeleted: true, caseCategoryDeleted: false, reason: "case category is not bot-managed" };
-    }
-    const hasRemainingChannels = channels.some((channel) =>
-      typeof channel === "object" &&
-      channel !== null &&
-      (channel as DiscordGuildChannel).parent_id === input.caseCategoryId,
-    );
-    if (hasRemainingChannels) return { caseChannelDeleted: true, caseCategoryDeleted: false };
-
-    const categoryResponse = await fetcher(`${DISCORD_API_BASE}/channels/${input.caseCategoryId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bot ${input.botToken}` },
-      signal: AbortSignal.timeout(8_000),
-    });
-    return categoryResponse.ok
-      ? { caseChannelDeleted: true, caseCategoryDeleted: true }
-      : { caseChannelDeleted: true, caseCategoryDeleted: false, reason: `case category deletion failed (${categoryResponse.status})` };
-  } catch {
-    return { caseChannelDeleted: true, caseCategoryDeleted: false, reason: "case category deletion request failed" };
-  }
+  // The report panel category is pre-existing and is never bot-managed.
+  // Closing a case therefore deletes only the dedicated report channel.
+  return { caseChannelDeleted: true, caseCategoryDeleted: false };
 }
 
 export async function postDiscordChannelPayload(input: {

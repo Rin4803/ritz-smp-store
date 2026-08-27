@@ -146,8 +146,9 @@ describe("Discord REST member helper", () => {
   });
 });
 
+
 describe("Discord player report case channel helper", () => {
-  it("creates a public member discussion channel under a dedicated bot-managed case category", async () => {
+  it("creates only a case channel under the existing report panel category", async () => {
     const requests: Array<{ url: string; init?: RequestInit }> = [];
     const result = await createDiscordPlayerReportCaseChannel({
       guildId: "1525527108854481007",
@@ -160,119 +161,69 @@ describe("Discord player report case channel helper", () => {
         requests.push({ url: String(input), init });
         if (requests.length === 1) {
           return new Response(JSON.stringify([
-            { id: "1525527108854481014", type: 4, name: "📢│ INFORMATION", position: 2 },
+            { id: "1525527108854481014", type: 4, name: "📢 INFORMATION", position: 2 },
             { id: "1525527108854481015", type: 0, name: "🚫│report-รายงานผู้เล่น", parent_id: "1525527108854481014", position: 3 },
             { id: "1525527108854481017", type: 0, name: "📌│ข้อมูลเซิร์ฟเวอร์", parent_id: "1525527108854481014", position: 4 },
             { id: "1525527108854481016", type: 4, name: "COMMUNITY", position: 5 },
           ]), { status: 200 });
         }
-        if (requests.length === 2) {
-          return new Response(JSON.stringify({ id: "1525527108854481012", type: 4 }), { status: 201 });
-        }
-        if (requests.length === 3) return new Response(null, { status: 200 });
-        if (requests.length === 4) return new Response(JSON.stringify({ id: "1525527108854481013" }), { status: 201 });
-        if (requests.length === 5) return new Response(null, { status: 200 });
-        return new Response(null, { status: 500 });
+        return new Response(JSON.stringify({ id: "1525527108854481013", type: 0 }), { status: 201 });
       }) as typeof fetch,
     });
 
-    expect(result).toEqual({ kind: "ok", channelId: "1525527108854481013", caseCategoryId: "1525527108854481012" });
-    expect(requests).toHaveLength(5);
-    expect(requests[0].url).toBe("https://discord.com/api/v10/guilds/1525527108854481007/channels");
+    expect(result).toEqual({ kind: "ok", channelId: "1525527108854481013" });
+    expect(requests).toHaveLength(2);
+    expect(requests[0].init?.method).toBeUndefined();
     expect(requests[1].init?.method).toBe("POST");
-    expect(JSON.parse(String(requests[1].init?.body))).toMatchObject({
-      name: "💢┃player-report-log-บันทึกรายงานผู้เล่น",
-      type: 4,
-      position: 5,
-    });
-    expect(requests[2].url).toBe("https://discord.com/api/v10/guilds/1525527108854481007/channels");
-    expect(requests[2].init?.method).toBe("PATCH");
-    expect(JSON.parse(String(requests[2].init?.body))).toEqual([
-      { id: "1525527108854481012", position: 5 },
-    ]);
-    expect(requests[3].url).toBe("https://discord.com/api/v10/guilds/1525527108854481007/channels");
-    expect(requests[3].init?.method).toBe("POST");
-    const body = JSON.parse(String(requests[3].init?.body));
+    const body = JSON.parse(String(requests[1].init?.body));
     expect(body).toMatchObject({
       name: "report-90001",
       type: 0,
-      parent_id: "1525527108854481012",
-      topic: expect.stringContaining("สมาชิกทุกคน"),
+      parent_id: "1525527108854481014",
     });
+    expect(body.name).not.toContain("player-report-log");
     expect(body.permission_overwrites).toEqual([
       { id: "1525527108854481007", type: 0, allow: "117760", deny: "0" },
       { id: "1525527108854481011", type: 0, allow: "117760", deny: "0" },
     ]);
-    expect(requests[4].init?.method).toBe("PATCH");
-    expect(JSON.parse(String(requests[4].init?.body))).toEqual([
-      { id: "1525527108854481012", position: 5 },
-    ]);
   });
 
-  it("reuses a dedicated bot-managed category and creates a public case room when no administrator role is configured", async () => {
-    const requests: Array<{ url: string; init?: RequestInit }> = [];
+  it("does not create a case when the existing report panel cannot be found", async () => {
+    let requestCount = 0;
     const result = await createDiscordPlayerReportCaseChannel({
       guildId: "1525527108854481007",
       reportId: 90002,
       reporterDiscordId: "1525527108854481009",
       botToken: "test-token",
-      fetchImpl: (async (input, init) => {
-        requests.push({ url: String(input), init });
-        if (requests.length === 1) {
-          return new Response(JSON.stringify([
-            { id: "1525527108854481012", type: 4, name: "💢┃player-report-log-บันทึกรายงานผู้เล่น", position: 9 },
-            { id: "1525527108854481014", type: 4, name: "📢 INFORMATION", position: 2 },
-            { id: "1525527108854481015", type: 0, name: "🚫┃report-รายงานผู้เล่น", parent_id: "1525527108854481014", position: 8 },
-            { id: "1525527108854481016", type: 4, name: "COMMUNITY", position: 9 },
-          ]), { status: 200 });
-        }
-        if (requests.length === 2) return new Response(null, { status: 200 });
-        if (requests.length === 3) return new Response(JSON.stringify({ id: "1525527108854481013" }), { status: 201 });
-        if (requests.length === 4) return new Response(null, { status: 200 });
-        return new Response(null, { status: 500 });
+      fetchImpl: (async () => {
+        requestCount += 1;
+        return new Response(JSON.stringify([
+          { id: "1525527108854481016", type: 4, name: "COMMUNITY", position: 5 },
+        ]), { status: 200 });
       }) as typeof fetch,
     });
 
-    expect(result).toEqual({ kind: "ok", channelId: "1525527108854481013", caseCategoryId: "1525527108854481012" });
-    expect(JSON.parse(String(requests[1].init?.body))).toEqual([
-      { id: "1525527108854481012", position: 9 },
-    ]);
-    expect(requests[3].init?.method).toBe("PATCH");
-    expect(JSON.parse(String(requests[3].init?.body))).toEqual([
-      { id: "1525527108854481012", position: 9 },
-    ]);
-    const body = JSON.parse(String(requests[2].init?.body));
-    expect(body.permission_overwrites).toEqual([
-      { id: "1525527108854481007", type: 0, allow: "117760", deny: "0" },
-    ]);
+    expect(result).toEqual({ kind: "unavailable", reason: "report panel channel was not found" });
+    expect(requestCount).toBe(1);
   });
 
-  it("does not reposition a bot-managed category when the report panel anchor is absent", async () => {
+  it("deletes only the case channel and never deletes its existing parent category", async () => {
     const requests: Array<{ url: string; init?: RequestInit }> = [];
-    const result = await createDiscordPlayerReportCaseChannel({
+    const result = await deleteDiscordPlayerReportCaseChannel({
       guildId: "1525527108854481007",
-      reportId: 90003,
-      reporterDiscordId: "1525527108854481009",
+      caseChannelId: "1525527108854481013",
+      caseCategoryId: "1525527108854481014",
       botToken: "test-token",
       fetchImpl: (async (input, init) => {
         requests.push({ url: String(input), init });
-        if (requests.length === 1) {
-          return new Response(JSON.stringify([
-            { id: "1525527108854481012", type: 4, name: "💢┃player-report-log-บันทึกรายงานผู้เล่น", position: 9 },
-            { id: "1525527108854481015", type: 0, name: "ช่องอื่น", parent_id: "1525527108854481014" },
-          ]), { status: 200 });
-        }
-        return new Response(JSON.stringify({ id: "1525527108854481013" }), { status: 201 });
+        return new Response(null, { status: 204 });
       }) as typeof fetch,
     });
 
-    expect(result).toEqual({ kind: "ok", channelId: "1525527108854481013", caseCategoryId: "1525527108854481012" });
-    expect(requests).toHaveLength(2);
-    expect(requests[1].init?.method).toBe("POST");
-    expect(JSON.parse(String(requests[1].init?.body))).toMatchObject({
-      name: "report-90003",
-      parent_id: "1525527108854481012",
-    });
+    expect(result).toEqual({ caseChannelDeleted: true, caseCategoryDeleted: false });
+    expect(requests).toHaveLength(1);
+    expect(requests[0].url).toBe("https://discord.com/api/v10/channels/1525527108854481013");
+    expect(requests[0].init?.method).toBe("DELETE");
   });
 
   it("rejects invalid case configuration without calling Discord", async () => {
@@ -281,7 +232,6 @@ describe("Discord player report case channel helper", () => {
       guildId: "bad",
       reportId: 1,
       reporterDiscordId: "1525527108854481009",
-      adminRoleId: "1525527108854481011",
       botToken: "test-token",
       fetchImpl: (async () => {
         called = true;
@@ -291,53 +241,5 @@ describe("Discord player report case channel helper", () => {
 
     expect(result).toEqual({ kind: "unavailable", reason: "invalid case channel configuration" });
     expect(called).toBe(false);
-  });
-
-  it("deletes the final case room and then its empty bot-managed category only", async () => {
-    const requests: Array<{ url: string; init?: RequestInit }> = [];
-    const result = await deleteDiscordPlayerReportCaseChannel({
-      guildId: "1525527108854481007",
-      caseChannelId: "1525527108854481013",
-      caseCategoryId: "1525527108854481012",
-      botToken: "test-token",
-      fetchImpl: (async (input, init) => {
-        requests.push({ url: String(input), init });
-        if (requests.length === 1) return new Response(null, { status: 204 });
-        if (requests.length === 2) {
-          return new Response(JSON.stringify([
-            { id: "1525527108854481012", type: 4, name: "💢┃player-report-log-บันทึกรายงานผู้เล่น" },
-          ]), { status: 200 });
-        }
-        return new Response(null, { status: 204 });
-      }) as typeof fetch,
-    });
-
-    expect(result).toEqual({ caseChannelDeleted: true, caseCategoryDeleted: true });
-    expect(requests.map(request => [request.url, request.init?.method])).toEqual([
-      ["https://discord.com/api/v10/channels/1525527108854481013", "DELETE"],
-      ["https://discord.com/api/v10/guilds/1525527108854481007/channels", undefined],
-      ["https://discord.com/api/v10/channels/1525527108854481012", "DELETE"],
-    ]);
-  });
-
-  it("keeps a bot-managed category when another case room remains", async () => {
-    const requests: Array<{ url: string; init?: RequestInit }> = [];
-    const result = await deleteDiscordPlayerReportCaseChannel({
-      guildId: "1525527108854481007",
-      caseChannelId: "1525527108854481013",
-      caseCategoryId: "1525527108854481012",
-      botToken: "test-token",
-      fetchImpl: (async (input, init) => {
-        requests.push({ url: String(input), init });
-        if (requests.length === 1) return new Response(null, { status: 204 });
-        return new Response(JSON.stringify([
-          { id: "1525527108854481012", type: 4, name: "💢┃player-report-log-บันทึกรายงานผู้เล่น" },
-          { id: "1525527108854481014", type: 0, parent_id: "1525527108854481012" },
-        ]), { status: 200 });
-      }) as typeof fetch,
-    });
-
-    expect(result).toEqual({ caseChannelDeleted: true, caseCategoryDeleted: false });
-    expect(requests).toHaveLength(2);
   });
 });
