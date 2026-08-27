@@ -81,33 +81,49 @@ public final class RitzAuctionBridge extends JavaPlugin {
         if (!pollRunning.compareAndSet(false, true)) return;
         try {
             if (System.currentTimeMillis() < retryAfterMillis) return;
-            Path log = findNextLog();
-            if (log == null) return;
+            // AuctionHouse creates a separate transaction log on some restarts, even if that
+            // session has no transactions. Skip completed empty intermediate files in this
+            // poll so a later real transaction is not delayed or permanently unreachable.
+            for (int skippedEmptyLogs = 0; skippedEmptyLogs < 100; skippedEmptyLogs++) {
+                Path log = findNextLog();
+                if (log == null) return;
 
-            long start;
-            if (cursor.fileName == null) {
-                start = initialOffset(log);
-                // Persist the initial position even when the file has no new complete lines.
-                // Without this, start-at-end would be recalculated on every poll and skip all
-                // future AuctionHouse events forever when the state file has no file name.
-                cursor = new Cursor(log.getFileName().toString(), start);
-                saveCursor();
-            } else {
-                start = offsetFor(log);
-            }
-            List<LogLine> lines = readCompleteLines(log, start);
-            if (lines.isEmpty()) return;
-
-            for (LogLine line : lines) {
-                if (line.event != null) {
-                    if (!sendToDiscord(line.event)) {
-                        retryAfterMillis = System.currentTimeMillis() + retryDelayMillis();
-                        return;
-                    }
+                long start;
+                if (cursor.fileName == null) {
+                    start = initialOffset(log);
+                    // Persist the initial position even when the file has no new complete lines.
+                    // Without this, start-at-end would be recalculated on every poll and skip all
+                    // future AuctionHouse events forever when the state file has no file name.
+                    cursor = new Cursor(log.getFileName().toString(), start);
+                    saveCursor();
+                } else {
+                    start = offsetFor(log);
                 }
-                cursor = new Cursor(log.getFileName().toString(), line.endOffset);
-                saveCursor();
+                long length = Files.size(log);
+                List<LogLine> lines = readCompleteLines(log, start);
+                if (lines.isEmpty()) {
+                    String fileName = log.getFileName().toString();
+                    if (shouldAdvancePastEmptyLog(cursor.fileName, fileName, start, length)) {
+                        cursor = new Cursor(fileName, start);
+                        saveCursor();
+                        continue;
+                    }
+                    return;
+                }
+
+                for (LogLine line : lines) {
+                    if (line.event != null) {
+                        if (!sendToDiscord(line.event)) {
+                            retryAfterMillis = System.currentTimeMillis() + retryDelayMillis();
+                            return;
+                        }
+                    }
+                    cursor = new Cursor(log.getFileName().toString(), line.endOffset);
+                    saveCursor();
+                }
+                return;
             }
+            getLogger().warning("พบไฟล์ AuctionHouse ว่างต่อเนื่องเกิน 100 ไฟล์; จะอ่านต่อในการตรวจรอบถัดไป");
         } catch (Exception error) {
             retryAfterMillis = System.currentTimeMillis() + retryDelayMillis();
             getLogger().warning("อ่าน AuctionHouse transaction log ไม่สำเร็จ: " + safeError(error));
@@ -157,6 +173,10 @@ public final class RitzAuctionBridge extends JavaPlugin {
         } catch (NumberFormatException ignored) {
             return leftName.compareTo(rightName);
         }
+    }
+
+    static boolean shouldAdvancePastEmptyLog(String cursorFileName, String candidateFileName, long start, long fileLength) {
+        return !candidateFileName.equals(cursorFileName) && start >= fileLength;
     }
 
     private Path resolveLogDirectory() {

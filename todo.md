@@ -1039,3 +1039,15 @@
 - [ ] ผู้เล่นทดสอบ Ender Chest มาตรฐาน: กล่อง Ender Chest ต้องเปิด 27 ช่องตาม vanilla และ aliases ของ `enderchest45.sk` ต้องไม่เปิดเมนู 45 ช่อง
 - [ ] ผู้เล่นทดสอบ Night Vision แบบควบคุม: เปิด `/nv` แล้ว break, place, attack-air และ interact เพื่อเก็บเวลา/โลก/ชนิดไคลเอนต์สำหรับระบุผู้ล้าง effect จริง
 - [ ] ผู้เล่นทดสอบ RitzAuctionBridge รุ่นแก้: ทำ `/ah sell` และซื้อจริง เพื่อตรวจ `order-in-game` มี seller, buyer, item, amount, price ถูกต้องครั้งเดียว และไม่รั่วข้ามห้อง
+
+- [ ] แก้ regression ที่ผู้เล่นยืนยัน: การตายโดยไม่มีเตียงยังไม่สุ่มเกิดใน `Survival`; ตรวจ death/respawn event ordering และการส่งคำสั่ง RTP ของ Skript จาก live log
+- [ ] แก้ regression ที่ผู้เล่นยืนยัน: `/ah sell` ยังไม่แสดงใน `order-in-game`; ตรวจ transaction log ใหม่, cursor, bridge runtime และผลตอบกลับ Discord ก่อนแก้ปลายทาง
+
+- [ ] แก้ regression ที่ผู้เล่นยืนยัน: `/nv` ดับหายหลังผู้เล่นกระทำ ไม่ใช่เพียงอาการกระพริบ; เก็บเวลา/ผู้เล่น/โลกจากเหตุการณ์จริงและระบุตัวลบ effect ก่อนปรับ Skript หรือปลั๊กอิน
+
+- [x] แก้ RitzAuctionBridge cursor ที่ค้างเมื่อไฟล์ TransactionLogger ถัดไปว่าง ทำให้ไม่ไปถึงไฟล์ธุรกรรมใหม่; เพิ่ม regression test และติดตั้งหลังสำรองข้อมูล
+
+- [ ] แก้ Player Report ที่หลังส่งรายงานยังโพสต์ในห้องรวมแทนการสร้างห้องเคสแยก; ตรวจ create-case flow, ตัวแปรตั้งค่า, สิทธิ์ และเพิ่ม regression test จากเหตุการณ์จริง
+
+- [ ] ตรวจและตั้ง `DISCORD_REPORT_CHANNEL_ID` เป็น `1542359748865957908` ตามห้องบันทึกรายงานที่ผู้ใช้เลือก พร้อมยืนยันว่าแต่ละเคสสร้างห้องย่อยใต้หมวดเดียวกัน
+- [x] เปลี่ยน `report-submit` ให้ตอบ Discord แบบ deferred แล้วรอสร้างห้องเคสและบันทึก `caseChannelId` ก่อนแก้ข้อความตอบกลับ โดยไม่โพสต์ Embed รายงานฉบับเต็มในห้องรวม

@@ -23,7 +23,6 @@ import {
 } from "./minecraftIntegration.js";
 import {
   createPlayerReportCase,
-  notifyPlayerReport,
   notifyPlayerReportCaseStatus,
   notifyPlayerReportStatus,
   postDiscordReportPanel,
@@ -660,6 +659,104 @@ function reportEditButton(reportId: number) {
   return [{ type: 1, components: [{ type: 2, style: 2, label: "แก้ไขรายงาน (ได้อีก 1 ครั้ง)", custom_id: `ritz_report_edit:${reportId}` }] }];
 }
 
+/**
+ * Completes a deferred report submit only after the case room has been created
+ * and its ID is durable in the database. The case room is intentionally the
+ * only authoritative destination for the full report; the panel channel is
+ * used solely to start a report.
+ */
+export async function finishDeferredPlayerReportSubmitInteraction(
+  interaction: DiscordInteractionPayload,
+  report: Awaited<ReturnType<typeof createPlayerReport>>,
+  dependencies: {
+    createCase?: typeof createPlayerReportCase;
+    updateCaseChannel?: typeof updatePlayerReportCaseChannel;
+    announceMinecraft?: typeof announceMinecraftPlayerReport;
+    editResponse?: typeof editDiscordOriginalInteractionResponse;
+  } = {},
+): Promise<void> {
+  const applicationId = interaction.application_id;
+  const interactionToken = interaction.token;
+  if (!applicationId || !interactionToken) return;
+
+  const createCase = dependencies.createCase ?? createPlayerReportCase;
+  const updateCaseChannel =
+    dependencies.updateCaseChannel ?? updatePlayerReportCaseChannel;
+  const announceMinecraft =
+    dependencies.announceMinecraft ?? announceMinecraftPlayerReport;
+  const editResponse =
+    dependencies.editResponse ?? editDiscordOriginalInteractionResponse;
+
+  try {
+    const caseResult = await createCase({
+      reportId: report.id,
+      guildId: report.guildId,
+      reporterDiscordId: report.reporterDiscordId,
+      targetDiscordId: report.targetDiscordId,
+      reporterDisplayName: report.reporterDisplayName,
+      targetDiscordName: report.targetDiscordName,
+      targetMinecraftIGN: report.targetMinecraftIGN,
+      category: report.category,
+      details: report.details,
+      createdAt: report.createdAt,
+    });
+
+    // Save a created channel even when its first message failed. This leaves a
+    // durable audit trail and prevents a later retry from silently creating a
+    // second case room for the same report.
+    if (caseResult.channelId) {
+      await updateCaseChannel({
+        id: report.id,
+        caseChannelId: caseResult.channelId,
+      });
+    }
+
+    if (!caseResult.sent || !caseResult.channelId) {
+      console.error(
+        `[DiscordInteractions] Player report #${report.id} case room was not completed: ${caseResult.reason ?? "unknown reason"}`,
+      );
+      await editResponse({
+        applicationId,
+        interactionToken,
+        content: `บันทึกรายงาน #${report.id} แล้ว แต่ยังสร้างห้องเคสไม่สำเร็จค่ะ ทีมงานได้รับข้อมูลในระบบแล้ว โปรดลองแจ้งทีมงานอีกครั้งก่อนส่งรายงานใหม่`,
+        components: reportEditButton(report.id),
+      });
+      return;
+    }
+
+    await editResponse({
+      applicationId,
+      interactionToken,
+      content: `ส่งรายงาน #${report.id} และสร้างห้องเคสแยกเรียบร้อยแล้วค่ะ ทีมงานจะตรวจสอบข้อมูลในห้องเคสของรายงานนี้`,
+      components: reportEditButton(report.id),
+    });
+
+    // The case room is durable before the in-game notice is attempted. A
+    // notification failure must not turn a successfully created case into a
+    // failed report or cause a shared-channel duplicate.
+    try {
+      await announceMinecraft({
+        reportId: report.id,
+        targetName: report.targetMinecraftIGN ?? report.targetDiscordName,
+      });
+    } catch (error) {
+      console.error(
+        `[DiscordInteractions] Minecraft announcement for player report #${report.id} failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  } catch (error) {
+    console.error(
+      `[DiscordInteractions] Player report #${report.id} case room failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    await editResponse({
+      applicationId,
+      interactionToken,
+      content: `บันทึกรายงาน #${report.id} แล้ว แต่ไม่สามารถสร้างห้องเคสได้ในขณะนี้ค่ะ กรุณาแจ้งทีมงานก่อนส่งรายงานใหม่`,
+      components: reportEditButton(report.id),
+    });
+  }
+}
+
 export async function finishDeferredReportOpenInteraction(
   interaction: DiscordInteractionPayload,
   dependencies: {
@@ -894,43 +991,44 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
           const remaining = Math.ceil(remainingMs / 60000);
           return res.status(200).json(ephemeralResponse(`คุณเพิ่งส่งรายงานไปค่ะ กรุณารออีกประมาณ ${remaining} นาทีจึงจะส่งรายงานใหม่ได้`));
         }
-        const report = await createPlayerReport({
-          guildId: interaction.guild_id ?? ENV.discordGuildId,
-          reporterDiscordId: userId,
-          reporterDisplayName: getInteractionDisplayName(interaction),
-          targetDiscordId: linked?.discordUserId ?? null,
-          // Linked targets are rendered as a Discord mention; unlinked online
-          // targets remain explicitly Minecraft-only instead of inventing an ID.
-          targetDiscordName: linked ? `<@${linked.discordUserId}>` : "ยังไม่เชื่อม Discord",
-          targetMinecraftIGN,
-          category,
-          details,
-        });
-        const message = `ส่งรายงาน #${report.id} เรียบร้อยแล้วค่ะ ทีมงานจะตรวจสอบข้อมูลเพิ่มเติมใน Discord`;
-        const response = ephemeralResponse(message);
-        response.data.components = reportEditButton(report.id);
-        void Promise.allSettled([
-          notifyPlayerReport({ reportId: report.id, guildId: report.guildId, reporterDisplayName: report.reporterDisplayName, targetDiscordName: report.targetDiscordName, targetMinecraftIGN: report.targetMinecraftIGN, category: report.category, details: report.details, createdAt: report.createdAt }),
-          (async () => {
-            const caseResult = await createPlayerReportCase({
-              reportId: report.id,
-              guildId: report.guildId,
-              reporterDiscordId: report.reporterDiscordId,
-              targetDiscordId: report.targetDiscordId,
-              reporterDisplayName: report.reporterDisplayName,
-              targetDiscordName: report.targetDiscordName,
-              targetMinecraftIGN: report.targetMinecraftIGN,
-              category: report.category,
-              details: report.details,
-              createdAt: report.createdAt,
+        if (!interaction.application_id || !interaction.token) {
+          return res.status(200).json(ephemeralResponse("ไม่สามารถส่งรายงานได้ในขณะนี้ กรุณาลองใหม่อีกครั้งค่ะ"));
+        }
+
+        // Acknowledge before any DB or Discord REST work. This process remains
+        // alive until the deferred original response is edited below.
+        res.status(200).json(deferredEphemeralResponse());
+        try {
+          const report = await createPlayerReport({
+            guildId: interaction.guild_id ?? ENV.discordGuildId,
+            reporterDiscordId: userId,
+            reporterDisplayName: getInteractionDisplayName(interaction),
+            targetDiscordId: linked?.discordUserId ?? null,
+            // Linked targets are rendered as a Discord mention; unlinked online
+            // targets remain explicitly Minecraft-only instead of inventing an ID.
+            targetDiscordName: linked ? `<@${linked.discordUserId}>` : "ยังไม่เชื่อม Discord",
+            targetMinecraftIGN,
+            category,
+            details,
+          });
+          await finishDeferredPlayerReportSubmitInteraction(interaction, report);
+        } catch (error) {
+          console.error(
+            `[DiscordInteractions] Player report submit failed: ${error instanceof Error ? error.message : String(error)}`,
+          );
+          try {
+            await editDiscordOriginalInteractionResponse({
+              applicationId: interaction.application_id,
+              interactionToken: interaction.token,
+              content: "ไม่สามารถบันทึกรายงานได้ในขณะนี้ กรุณาลองใหม่อีกครั้งค่ะ",
             });
-            if (caseResult.sent && caseResult.channelId) {
-              await updatePlayerReportCaseChannel({ id: report.id, caseChannelId: caseResult.channelId });
-            }
-          })(),
-          announceMinecraftPlayerReport({ reportId: report.id, targetName: report.targetMinecraftIGN ?? report.targetDiscordName }),
-        ]);
-        return res.status(200).json(response);
+          } catch (editError) {
+            console.error(
+              `[DiscordInteractions] Player report submit failure response could not be edited: ${editError instanceof Error ? editError.message : String(editError)}`,
+            );
+          }
+        }
+        return;
       }
       case "report-edit-open": {
         const reportId = Number((interaction.data?.custom_id ?? "").slice("ritz_report_edit:".length));
@@ -1022,6 +1120,7 @@ export const handleRitzSmpDiscordInteraction: RequestHandler = async (
       "[DiscordInteractions] Failed to process interaction:",
       error instanceof Error ? error.message : String(error),
     );
+    if (res.headersSent) return;
     return res.status(200).json(
       ephemeralResponse(
         "ไม่สามารถดำเนินการได้ในขณะนี้ กรุณาลองใหม่อีกครั้งค่ะ",

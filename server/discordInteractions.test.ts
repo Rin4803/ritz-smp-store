@@ -8,6 +8,7 @@ import {
   buildReportEditDetailsModalResponse,
   deferredEphemeralResponse,
   finishDeferredMinecraftPlayersInteraction,
+  finishDeferredPlayerReportSubmitInteraction,
   finishDeferredReportStatusInteraction,
   finishDeferredReportOpenInteraction,
   buildVerificationCodeMessage,
@@ -282,6 +283,93 @@ describe("Discord interaction endpoint helpers", () => {
       type: 5,
       data: { flags: 64 },
     });
+  });
+
+  it("waits for the case room and durable caseChannelId before confirming a submitted report without posting to the shared room", async () => {
+    const events: string[] = [];
+    const sharedRoomPosts: unknown[] = [];
+    await finishDeferredPlayerReportSubmitInteraction(
+      { application_id: "123456789012345678", token: "interaction-token" },
+      {
+        id: 150001,
+        guildId: "123456789012345679",
+        reporterDiscordId: "123456789012345680",
+        reporterDisplayName: "Ritz Reporter",
+        targetDiscordId: "123456789012345681",
+        targetDiscordName: "<@123456789012345681>",
+        targetMinecraftIGN: "RitzTarget",
+        category: "ใช้บั๊กหรือช่องโหว่",
+        details: "รายละเอียดการทดสอบ",
+        createdAt: new Date("2026-08-27T00:00:00.000Z"),
+      } as never,
+      {
+        createCase: async (input) => {
+          events.push(`case:${input.reportId}`);
+          return { sent: true, channelId: "123456789012345682" };
+        },
+        updateCaseChannel: async (input) => {
+          events.push(`database:${input.id}:${input.caseChannelId}`);
+        },
+        announceMinecraft: async () => {
+          events.push("minecraft");
+          return { executed: true, detail: "announced" };
+        },
+        editResponse: async ({ content }) => {
+          events.push(`edit:${content}`);
+          return true;
+        },
+      },
+    );
+
+    expect(events).toEqual([
+      "case:150001",
+      "database:150001:123456789012345682",
+      expect.stringContaining("edit:ส่งรายงาน #150001 และสร้างห้องเคสแยกเรียบร้อยแล้ว"),
+      "minecraft",
+    ]);
+    expect(sharedRoomPosts).toHaveLength(0);
+  });
+
+  it("does not falsely report that a case room was created when Discord case creation fails", async () => {
+    const edits: string[] = [];
+    let persistedCaseChannel = false;
+    let minecraftAnnounced = false;
+    await finishDeferredPlayerReportSubmitInteraction(
+      { application_id: "123456789012345678", token: "interaction-token" },
+      {
+        id: 150002,
+        guildId: "123456789012345679",
+        reporterDiscordId: "123456789012345680",
+        reporterDisplayName: "Ritz Reporter",
+        targetDiscordId: null,
+        targetDiscordName: "ยังไม่เชื่อม Discord",
+        targetMinecraftIGN: "RitzTarget",
+        category: "อื่น ๆ",
+        details: "รายละเอียดการทดสอบ",
+        createdAt: new Date("2026-08-27T00:00:00.000Z"),
+      } as never,
+      {
+        createCase: async () => ({ sent: false, reason: "channel permission failed" }),
+        updateCaseChannel: async () => {
+          persistedCaseChannel = true;
+        },
+        announceMinecraft: async () => {
+          minecraftAnnounced = true;
+          return { executed: true, detail: "announced" };
+        },
+        editResponse: async ({ content }) => {
+          edits.push(content);
+          return true;
+        },
+      },
+    );
+
+    expect(persistedCaseChannel).toBe(false);
+    expect(minecraftAnnounced).toBe(false);
+    expect(edits).toEqual([
+      expect.stringContaining("บันทึกรายงาน #150002 แล้ว แต่ยังสร้างห้องเคสไม่สำเร็จ"),
+    ]);
+    expect(edits[0]).not.toContain("สร้างห้องเคสแยกเรียบร้อยแล้ว");
   });
 
   it("completes a deferred claim only after updating the case and leaves the room as its record", async () => {

@@ -10,6 +10,7 @@ grep -Fq 'cursor = new Cursor(log.getFileName().toString(), start);' "$SOURCE"
 grep -Fq 'saveCursor();' "$SOURCE"
 grep -Fq 'compareTransactionLogNames' "$SOURCE"
 grep -Fq 'if (cursor.offset != Files.size(file)) return file;' "$SOURCE"
+grep -Fq 'shouldAdvancePastEmptyLog' "$SOURCE"
 
 test -s "$JAR"
 jar tf "$JAR" | grep -Fq 'com/ritzsmp/auctionbridge/RitzAuctionBridge.class'
@@ -34,6 +35,18 @@ public final class LogOrderRegression {
         assertBefore("2026-08-26-16.log", "2026-08-27-1.log");
         if (RitzAuctionBridge.compareTransactionLogNames("2026-08-26-10.log", "2026-08-26-10.log") != 0) {
             throw new AssertionError("equal names must compare as equal");
+        }
+        if (!RitzAuctionBridge.shouldAdvancePastEmptyLog(
+                "2026-08-26-9.log", "2026-08-26-10.log", 0L, 0L)) {
+            throw new AssertionError("a newer empty log must advance the cursor");
+        }
+        if (RitzAuctionBridge.shouldAdvancePastEmptyLog(
+                "2026-08-26-10.log", "2026-08-26-10.log", 0L, 0L)) {
+            throw new AssertionError("the active empty log must remain available for future writes");
+        }
+        if (RitzAuctionBridge.shouldAdvancePastEmptyLog(
+                "2026-08-26-9.log", "2026-08-26-10.log", 0L, 1L)) {
+            throw new AssertionError("a partial non-empty log must not be skipped");
         }
     }
 
