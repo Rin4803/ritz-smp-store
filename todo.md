@@ -1122,3 +1122,18 @@
 - [x] ทำ validation, backup และ sync GitHub หลังแต่ละกลุ่มงานที่ยืนยันแล้ว
 
 - [x] สร้างเอกสาร live-test matrix แยกผล config/boot audit ออกจากการทดสอบที่ต้องมีผู้เล่นจริง
+
+
+## User live-test findings — 2026-08-28 continuation
+
+- [ ] แก้ `/nv` ที่ยังถูกล้างชั่วคราวเมื่อผู้เล่นตีอากาศ แม้จะกลับมาเองภายหลัง; ต้องหาต้นเหตุและหยุด flicker ไม่ใช่เติม effect แข่งกัน
+- [x] ยืนยัน AuctionHouse sell notification ใน `order-in-game` ใช้งานได้จากผู้ใช้จริง
+- [x] ยืนยัน AuctionHouse cancellation ลบข้อความ Discord เดิมได้จากผู้ใช้จริง
+- [x] ยืนยัน scoreboard rank ตรงกับ chat rank จากผู้ใช้จริง
+- [ ] แก้ last-location เมื่อผู้เล่นอยู่ Nether/End แล้วไป Lobby หรือออกเกม ให้กลับโลกและพิกัดเดิม ไม่ fallback ไป 0,0 ของ Survival เมื่อเข้าใหม่หรือใช้ `/play`
+- [ ] ออกแบบ Java GUI login/register ที่เข้ากันได้กับ Paper/AuthMe รุ่นจริง โดยคง Bedrock bypass และห้ามเสี่ยงทับข้อมูลบัญชีเดิม
+- [x] ปรับ mapping โลกทั้งหมดให้ใช้ชื่อจริง `survival_nether` และ `survival_the_end` แทน alias `Lobby_nether`/`Lobby_the_end` ใน save-location, travel และ lobby พร้อมตรวจไม่ให้ fallback ไป 0,0
+
+- [x] หลังยืนยันจากผู้ใช้ สำรองข้อมูลเต็มและลบเฉพาะโลก `Lobby_nether` กับ `Lobby_the_end` แบบถาวรแล้ว โดยตรวจยืนยันว่า 5 โลกที่อนุรักษ์ไว้ยังอยู่ครบ
+- [x] เปลี่ยน mapping มิติเป็น `survival_nether = NETHER` และ `survival_the_end = THE_END` และลบการอ้างอิงโลกเก่าออกจาก Skript/config ที่เกี่ยวข้อง
+- [x] ลบรายการ world registry ของ `Lobby_nether`/`Lobby_the_end` จาก Multiverse หลังพบว่า Paper สร้าง dimension เก่ากลับมาเมื่อเริ่มเซิร์ฟเวอร์ แม้ลบ storage แล้ว
