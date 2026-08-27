@@ -183,6 +183,30 @@ describe("Discord player report case channel helper", () => {
     ]);
   });
 
+  it("creates a public case room when no administrator role is configured", async () => {
+    const requests: Array<{ url: string; init?: RequestInit }> = [];
+    const result = await createDiscordPlayerReportCaseChannel({
+      guildId: "1525527108854481007",
+      reportChannelId: "1525527108854481008",
+      reportId: 90002,
+      reporterDiscordId: "1525527108854481009",
+      botToken: "test-token",
+      fetchImpl: (async (input, init) => {
+        requests.push({ url: String(input), init });
+        if (requests.length === 1) {
+          return new Response(JSON.stringify({ parent_id: "1525527108854481012" }), { status: 200 });
+        }
+        return new Response(JSON.stringify({ id: "1525527108854481013" }), { status: 201 });
+      }) as typeof fetch,
+    });
+
+    expect(result).toEqual({ kind: "ok", channelId: "1525527108854481013" });
+    const body = JSON.parse(String(requests[1].init?.body));
+    expect(body.permission_overwrites).toEqual([
+      { id: "1525527108854481007", type: 0, allow: "117760", deny: "0" },
+    ]);
+  });
+
   it("rejects invalid case configuration without calling Discord", async () => {
     let called = false;
     const result = await createDiscordPlayerReportCaseChannel({

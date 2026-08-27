@@ -163,7 +163,7 @@ export async function createDiscordPlayerReportCaseChannel(input: {
   reportChannelId: string;
   reportId: number;
   reporterDiscordId: string;
-  adminRoleId: string;
+  adminRoleId?: string;
   botToken: string;
   targetDiscordId?: string | null;
   fetchImpl?: FetchLike;
@@ -173,7 +173,6 @@ export async function createDiscordPlayerReportCaseChannel(input: {
     !isDiscordSnowflake(input.guildId) ||
     !isDiscordSnowflake(input.reportChannelId) ||
     !isDiscordSnowflake(input.reporterDiscordId) ||
-    !isDiscordSnowflake(input.adminRoleId) ||
     !input.botToken.trim() ||
     !Number.isInteger(input.reportId) ||
     input.reportId <= 0
@@ -198,7 +197,9 @@ export async function createDiscordPlayerReportCaseChannel(input: {
     // close buttons remain staff-only in the signed interaction handler.
     const permissionOverwrites = [
       { id: input.guildId, type: 0, allow: CASE_ALLOW, deny: "0" },
-      { id: input.adminRoleId, type: 0, allow: CASE_ALLOW, deny: "0" },
+      ...(isDiscordSnowflake(input.adminRoleId ?? "")
+        ? [{ id: input.adminRoleId!, type: 0, allow: CASE_ALLOW, deny: "0" }]
+        : []),
     ];
     const response = await fetcher(`${DISCORD_API_BASE}/guilds/${input.guildId}/channels`, {
       method: "POST",
