@@ -1,0 +1,1 @@
+ALTER TABLE `player_reports` ADD `caseCategoryId` varchar(64);

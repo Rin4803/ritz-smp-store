@@ -838,11 +838,19 @@ export async function getPlayerReportDashboardStats(): Promise<PlayerReportDashb
   };
 }
 
-export async function updatePlayerReportCaseChannel(input: { id: number; caseChannelId: string }): Promise<PlayerReport | undefined> {
+export async function updatePlayerReportCaseChannel(input: {
+  id: number;
+  caseChannelId: string;
+  caseCategoryId?: string | null;
+}): Promise<PlayerReport | undefined> {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
   const result = await db.update(playerReports)
-    .set({ caseChannelId: input.caseChannelId.slice(0, 64), updatedAt: new Date() })
+    .set({
+      caseChannelId: input.caseChannelId.slice(0, 64),
+      caseCategoryId: input.caseCategoryId ? input.caseCategoryId.slice(0, 64) : null,
+      updatedAt: new Date(),
+    })
     .where(and(eq(playerReports.id, input.id), sql`${playerReports.caseChannelId} IS NULL`));
   if (!result[0].affectedRows) return getPlayerReportById(input.id);
   return getPlayerReportById(input.id);

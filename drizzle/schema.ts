@@ -230,6 +230,9 @@ export const playerReports = mysqlTable("player_reports", {
   editCount: int("editCount").default(0).notNull(),
   discordMessageId: varchar("discordMessageId", { length: 64 }),
   caseChannelId: varchar("caseChannelId", { length: 64 }),
+  // Only categories created and recorded by the RitzSMP report bot may be
+  // removed automatically after their final case room is closed.
+  caseCategoryId: varchar("caseCategoryId", { length: 64 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

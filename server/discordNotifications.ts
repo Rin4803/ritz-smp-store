@@ -3,6 +3,7 @@ import { storageGetSignedUrl } from "./storage";
 import { getMinecraftStatusChannelId } from "./discordMinecraftStatusChannel";
 import {
   createDiscordPlayerReportCaseChannel,
+  deleteDiscordPlayerReportCaseChannel,
   postDiscordChannelPayload,
 } from "./discordRest.js";
 
@@ -30,6 +31,7 @@ type DiscordMessagePayload = {
 type DiscordNotificationResult = {
   sent: boolean;
   channelId?: string;
+  caseCategoryId?: string;
   messageId?: string;
   reason?: string;
 };
@@ -117,6 +119,18 @@ function formatAmount(value: string | number): string {
 function formatTimestamp(value: Date | string | number | undefined): string {
   const date = value instanceof Date ? value : new Date(value ?? Date.now());
   return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+}
+
+function formatThaiReportTime(value: Date | string | number | undefined): string {
+  const date = new Date(formatTimestamp(value));
+  const ict = new Intl.DateTimeFormat("th-TH-u-ca-gregory", {
+    timeZone: "Asia/Bangkok",
+    dateStyle: "medium",
+    timeStyle: "medium",
+    hour12: false,
+  }).format(date);
+  const discordUnixTimestamp = Math.floor(date.getTime() / 1000);
+  return `${ict} ICT\nDiscord: <t:${discordUnixTimestamp}:F>`;
 }
 
 function getSlipFileName(slipKey: string): string {
@@ -339,11 +353,9 @@ export async function createPlayerReportCase(input: {
   createdAt?: Date | string | number;
 }): Promise<DiscordNotificationResult> {
   const token = getPlayerReportBotToken();
-  const reportChannelId = process.env.DISCORD_REPORT_CHANNEL_ID?.trim() || ENV.discordReportChannelId.trim();
   const adminRoleId = process.env.DISCORD_ADMIN_ROLE_ID?.trim() || ENV.discordAdminRoleId.trim();
   const channel = await createDiscordPlayerReportCaseChannel({
     guildId: input.guildId,
-    reportChannelId,
     reportId: input.reportId,
     reporterDiscordId: input.reporterDiscordId,
     adminRoleId,
@@ -365,6 +377,7 @@ export async function createPlayerReportCase(input: {
           { name: "ผู้ถูกรายงาน (Discord)", value: input.targetDiscordName.slice(0, 1024), inline: true },
           { name: "ชื่อในเกม (Minecraft)", value: input.targetMinecraftIGN ? `\`${input.targetMinecraftIGN.slice(0, 1000)}\`` : "ไม่พบชื่อ Minecraft", inline: true },
           { name: "หมวดหมู่", value: input.category.slice(0, 1024), inline: true },
+          { name: "เวลาที่รายงาน (เวลาไทย)", value: formatThaiReportTime(input.createdAt), inline: false },
           { name: "รายละเอียด", value: input.details.slice(0, 1024), inline: false },
         ],
         footer: { text: `RitzSMP • เคส #${input.reportId} • สถานะ: ใหม่` },
@@ -380,8 +393,21 @@ export async function createPlayerReportCase(input: {
     },
   });
   return posted
-    ? { sent: true, channelId: channel.channelId }
-    : { sent: false, channelId: channel.channelId, reason: "case channel message failed" };
+    ? { sent: true, channelId: channel.channelId, caseCategoryId: channel.caseCategoryId }
+    : { sent: false, channelId: channel.channelId, caseCategoryId: channel.caseCategoryId, reason: "case channel message failed" };
+}
+
+export async function removePlayerReportCase(input: {
+  guildId: string;
+  caseChannelId?: string | null;
+  caseCategoryId?: string | null;
+}) {
+  return deleteDiscordPlayerReportCaseChannel({
+    guildId: input.guildId,
+    caseChannelId: input.caseChannelId,
+    caseCategoryId: input.caseCategoryId,
+    botToken: getPlayerReportBotToken(),
+  });
 }
 
 export async function notifyPlayerReportStatus(input: {
@@ -555,7 +581,7 @@ export async function notifyPlayerReportCaseStatus(input: {
       embeds: [{
         title: input.status === "ปิดแล้ว" ? "✅ ปิดเคสรายงานแล้ว" : "🔎 รับเคสรายงานแล้ว",
         description: input.status === "ปิดแล้ว"
-          ? "ทีมงานดำเนินการกับรายงานนี้เสร็จแล้ว ห้องนี้ยังคงเก็บเป็นบันทึกของเคส และสมาชิกยังสามารถแจ้งข้อมูลเพิ่มเติมได้ค่ะ"
+          ? "ทีมงานดำเนินการกับรายงานนี้เสร็จแล้ว ห้องเคสจะถูกลบหลังจากแจ้งผู้รายงานค่ะ"
           : "ทีมงานรับเรื่องแล้ว กำลังตรวจสอบข้อมูลเพิ่มเติมค่ะ ห้องนี้ยังคงเปิดให้สมาชิกทุกคนช่วยแจ้งหรือแก้ไขข้อมูลได้",
         color: input.status === "ปิดแล้ว" ? 0x22c55e : 0xf59e0b,
         fields: [

@@ -26,6 +26,7 @@ import {
   notifyPurchaseCompleted,
   notifyTopupSubmitted,
   postDiscordSetupSystemPanel,
+  createPlayerReportCase,
 } from "./discordNotifications";
 import { setMinecraftStatusChannelIdForTests } from "./discordMinecraftStatusChannel";
 import { storageGetSignedUrl } from "./storage";
@@ -62,6 +63,38 @@ const order = {
 };
 
 describe("Discord web-store notifications", () => {
+  it("uses the requested case category name and shows the submission time in ICT", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: "1525527108854481012", type: 4 }), { status: 201 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: "1525527108854481013" }), { status: 201 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: "case-message-1" }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await createPlayerReportCase({
+      reportId: 90001,
+      guildId: "1525527108854481007",
+      reporterDiscordId: "1525527108854481009",
+      reporterDisplayName: "ผู้รายงานทดสอบ",
+      targetDiscordName: "ผู้ถูกรายงานทดสอบ",
+      targetMinecraftIGN: "RitzPlayer",
+      category: "ใช้บั๊กหรือช่องโหว่",
+      details: "รายละเอียดทดสอบ",
+      createdAt: new Date("2026-08-27T00:00:00.000Z"),
+    });
+
+    expect(result).toMatchObject({ sent: true, channelId: "1525527108854481013", caseCategoryId: "1525527108854481012" });
+    expect(JSON.parse(String((fetchMock.mock.calls[1]?.[1] as RequestInit).body))).toMatchObject({
+      name: "💢┃player-report-log-บันทึกรายงานผู้เล่น",
+      type: 4,
+    });
+    const casePayload = JSON.parse(String((fetchMock.mock.calls[3]?.[1] as RequestInit).body));
+    expect(casePayload.embeds[0].fields).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "เวลาที่รายงาน (เวลาไทย)", value: expect.stringContaining("07:00:00 ICT") }),
+      expect.objectContaining({ name: "เวลาที่รายงาน (เวลาไทย)", value: expect.stringContaining("<t:1787788800:F>") }),
+    ]));
+  });
+
   it("posts the welcome setup panel with its interactive controls to the requested channel", async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(
       new Response(JSON.stringify({ id: "welcome-panel-1" }), { status: 200 }),

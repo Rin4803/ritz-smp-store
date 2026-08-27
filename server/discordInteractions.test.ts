@@ -372,7 +372,7 @@ describe("Discord interaction endpoint helpers", () => {
     expect(edits[0]).not.toContain("สร้างห้องเคสแยกเรียบร้อยแล้ว");
   });
 
-  it("completes a deferred claim only after updating the case and leaves the room as its record", async () => {
+  it("completes a deferred claim only after updating the case and leaves the room open", async () => {
     const events: string[] = [];
     await finishDeferredReportStatusInteraction(
       { application_id: "123456789012345678", token: "interaction-token" },
@@ -410,6 +410,56 @@ describe("Discord interaction endpoint helpers", () => {
 
     expect(events.slice(0, 3)).toEqual(expect.arrayContaining(["database", "dm", "case-channel"]));
     expect(events.at(-1)).toContain("ห้องเคสของรายงานนี้ยังคงอยู่จนกว่าจะปิดเคส");
+  });
+
+  it("closes the report in the database before deleting only its own case room", async () => {
+    const events: string[] = [];
+    await finishDeferredReportStatusInteraction(
+      { application_id: "123456789012345678", token: "interaction-token" },
+      {
+        reportId: 90002,
+        status: "ปิดแล้ว",
+        handledByDiscordId: "123456789012345679",
+        handledByDisplayName: "Staff Ritz",
+      },
+      {
+        updateStatus: async () => {
+          events.push("database");
+          return {
+            id: 90002,
+            guildId: "123456789012345670",
+            reporterDiscordId: "123456789012345680",
+            caseChannelId: "123456789012345681",
+            caseCategoryId: "123456789012345682",
+            status: "ปิดแล้ว",
+          } as never;
+        },
+        notifyReporter: async () => {
+          events.push("dm");
+          return true;
+        },
+        notifyCase: async () => {
+          events.push("case-status-should-not-run");
+          return true;
+        },
+        deleteCase: async (input) => {
+          events.push(`delete:${input.caseChannelId}:${input.caseCategoryId}`);
+          return { caseChannelDeleted: true, caseCategoryDeleted: false };
+        },
+        editResponse: async ({ content }) => {
+          events.push(`edit:${content}`);
+          return true;
+        },
+      },
+    );
+
+    expect(events).toEqual([
+      "database",
+      "dm",
+      "delete:123456789012345681:123456789012345682",
+      expect.stringContaining("ลบห้องเคสนี้แล้ว"),
+    ]);
+    expect(events).not.toContain("case-status-should-not-run");
   });
 
   it("reports zero players when Minecraft status is offline", () => {

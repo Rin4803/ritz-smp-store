@@ -27,6 +27,7 @@ import {
   notifyPlayerReportStatus,
   postDiscordReportPanel,
   postDiscordSetupSystemPanel,
+  removePlayerReportCase,
 } from "./discordNotifications.js";
 import {
   buildDiscordMembersMessage,
@@ -369,6 +370,7 @@ export async function finishDeferredReportStatusInteraction(
     updateStatus?: typeof updatePlayerReportStatus;
     notifyReporter?: typeof notifyPlayerReportStatus;
     notifyCase?: typeof notifyPlayerReportCaseStatus;
+    deleteCase?: typeof removePlayerReportCase;
     editResponse?: typeof editDiscordOriginalInteractionResponse;
   } = {},
 ): Promise<void> {
@@ -379,6 +381,7 @@ export async function finishDeferredReportStatusInteraction(
   const updateStatus = dependencies.updateStatus ?? updatePlayerReportStatus;
   const notifyReporter = dependencies.notifyReporter ?? notifyPlayerReportStatus;
   const notifyCase = dependencies.notifyCase ?? notifyPlayerReportCaseStatus;
+  const deleteCase = dependencies.deleteCase ?? removePlayerReportCase;
   const editResponse = dependencies.editResponse ?? editDiscordOriginalInteractionResponse;
   const isClaim = input.status === "กำลังตรวจสอบ";
 
@@ -398,6 +401,30 @@ export async function finishDeferredReportStatusInteraction(
       return;
     }
 
+    if (!isClaim) {
+      const notified = await notifyReporter({
+        reporterDiscordId: report.reporterDiscordId,
+        reportId: report.id,
+        status: report.status as "กำลังตรวจสอบ" | "ปิดแล้ว",
+      });
+      const deletion = await deleteCase({
+        guildId: report.guildId,
+        caseChannelId: report.caseChannelId,
+        caseCategoryId: report.caseCategoryId,
+      });
+      const roomText = deletion.caseChannelDeleted
+        ? deletion.caseCategoryDeleted
+          ? " ลบห้องเคสและห้องรวบรวมเคสที่ว่างแล้ว"
+          : " ลบห้องเคสนี้แล้ว"
+        : " ปิดสถานะเคสแล้ว แต่ยังลบห้องเคสไม่สำเร็จ กรุณาตรวจสิทธิ์ Manage Channels ของบอท";
+      await editResponse({
+        applicationId,
+        interactionToken,
+        content: `ปิดรายงาน #${report.id} แล้วค่ะ${notified ? " และแจ้งผู้รายงานทาง DM แล้ว" : " แต่ไม่สามารถส่ง DM แจ้งผู้รายงานได้"}${roomText}`,
+      });
+      return;
+    }
+
     const [notified] = await Promise.all([
       notifyReporter({
         reporterDiscordId: report.reporterDiscordId,
@@ -412,14 +439,10 @@ export async function finishDeferredReportStatusInteraction(
       }),
     ]);
 
-    const actionText = isClaim ? "รับรายงาน" : "ปิดรายงาน";
-    const roomText = isClaim
-      ? " ห้องเคสของรายงานนี้ยังคงอยู่จนกว่าจะปิดเคส"
-      : " ห้องเคสยังคงเก็บไว้เป็นบันทึกของเคสนี้";
     await editResponse({
       applicationId,
       interactionToken,
-      content: `${actionText} #${report.id} แล้วค่ะ${notified ? " และแจ้งผู้รายงานทาง DM แล้ว" : " แต่ไม่สามารถส่ง DM แจ้งผู้รายงานได้"}${roomText}`,
+      content: `รับรายงาน #${report.id} แล้วค่ะ${notified ? " และแจ้งผู้รายงานทาง DM แล้ว" : " แต่ไม่สามารถส่ง DM แจ้งผู้รายงานได้"} ห้องเคสของรายงานนี้ยังคงอยู่จนกว่าจะปิดเคส`,
     });
   } catch {
     await editResponse({
@@ -708,6 +731,7 @@ export async function finishDeferredPlayerReportSubmitInteraction(
       await updateCaseChannel({
         id: report.id,
         caseChannelId: caseResult.channelId,
+        caseCategoryId: caseResult.caseCategoryId,
       });
     }
 
