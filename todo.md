@@ -1223,3 +1223,4 @@
 - [ ] ทดสอบ Bedrock/Floodgate จริง: ต้องเข้าได้โดยไม่เห็น AuthMeUI dialog
 - [x] แก้ parse error ใน `rankgrad copy.sk` (`second of now`) โดยคงชื่อ RitzSMP แบบไล่สีที่เสถียรและไม่เพิ่ม flicker; reload สำเร็จเวลา 11:29:11
 - [x] เพิ่ม delayed one-tick recovery หลัง break/place/left click/right click ใน `nightvision-gui.sk` โดยเติม effect เฉพาะเมื่อหายจริง; MCSV reload สำเร็จเวลา 11:34:14 และยังรอผู้เล่นจริงยืนยันอาการดับระหว่าง interaction
+- [x] ยืนยัน AuthMeUI config บน MCSV: post-join login/register dialog พร้อมใช้งาน, configuration phase ปิด, เคารพ AuthMe sessions; ไม่พบผู้เล่นออนไลน์สำหรับ live click-through จึงยังค้างการทดสอบ Java submit และ Bedrock bypass

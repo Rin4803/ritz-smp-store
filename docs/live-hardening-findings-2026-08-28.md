@@ -55,3 +55,7 @@ Anti-Xray ไม่ใช่ระบบป้องกัน ESP ทุกช�
 - DonutScoreboard config ที่โหลดหลัง restart ใช้ title แบบ static hex gradient `RITZ SMP` และมีเวลา, rank, team, online, kills, deaths, money, coins, ping และ playtime ครบตามรายการที่กำหนด
 - `rankgrad copy.sk` มี parse error เดิมจาก `second of now`; แก้เป็นเฟรม gradient คงที่ที่เสถียรและ reload สำเร็จเวลา 11:29:11 โดยไม่พบ error จากการ reload
 - AuctionHouse logs ที่ค้นพบมีเฉพาะ plugin load/enable/disable และไม่พบหลักฐาน listing, buy, cancel หรือ transaction error ในช่วงข้อมูลที่ตรวจ จึงยังไม่ถือว่า controlled anti-dupe click-through สำเร็จ
+
+## AuthMeUI configuration verification — 2026-08-28
+
+ตรวจ `/plugins/AuthMeUI/config.yml` บน MCSV หลังติดตั้งและ restart แล้วพบว่า `dialogs.use-configuration-phase: false` และ `configuration-phase-respect-authme-sessions: true` คงอยู่ตามแนวทางปลอดภัย ทำให้ flow เป็น post-join native dialog สำหรับ Java โดยไม่บังคับ pre-join dialog กับ Bedrock ก่อน AuthMe/Floodgate auto-login. พบ login/register dialog configuration ครบ และไม่พบการตั้งค่า Floodgate bypass ใน AuthMeUI เอง จึงคงความรับผิดชอบของ `AuthMe` ต่อ Bedrock bypass ไว้เช่นเดิม. ยังไม่มีผู้เล่นออนไลน์ในช่วงตรวจ จึงยังไม่ถือว่า Java dialog submit และ Bedrock bypass ผ่าน live click-through.
