@@ -17,3 +17,9 @@ The latest reload at 11:05:23 reported `Successfully reloaded nightvision-gui.sk
 ผล `logs_search` ค้น `NV-DIAG` จาก MCSV พบเหตุการณ์เก่าจำนวนมากใน `logs/2026-08-28-11.log.gz` ช่วงประมาณ 03:48:39–03:57:36 ซึ่งมีรูปแบบ Night Vision ถูกล้างแล้ว recovery เติมกลับทันทีหลายครั้ง; ตำแหน่งและการเคลื่อนที่ของผู้เล่นใน log สอดคล้องกับการทดสอบก่อนหน้า และเป็นหลักฐานว่าพฤติกรรม flicker เคยเกิดจริง. ผลค้นยังพบไฟล์ `logs/2026-08-28-14.log.gz` ล่าสุดถึงประมาณ 10:19:29 แต่ไม่มีหลักฐานจากผู้เล่นจริงหลัง reload เวลา 11:09:46 ใน console tail.
 
 สรุป: patch ล่าสุด parse/reload สำเร็จ แต่ยังไม่สามารถอ้างว่าแก้ live behavior ได้จนกว่าจะมี Java/Bedrock player ทดสอบ `/nv`, ตีอากาศ, ทุบ และวางบล็อก พร้อมตรวจ log ในช่วงเดียวกัน. ไม่ควรเพิ่ม recovery loop ที่ถี่ขึ้นหรือเปลี่ยน plugin แบบ blind ก่อนมี live evidence.
+
+## 11:34 MCSV follow-up
+
+ตรวจ `nightvision-gui.sk` หลัง patch พบว่า toggle ใช้ state variable ต่อ UUID, ให้ effect อายุยาว และไม่มี handler เดิมที่เติมซ้ำทุก interaction. เพิ่ม delayed one-tick recovery สำหรับ `break`, `place`, `left click` และ `right click` โดยตรวจการหายของ Night Vision ก่อน execute คำสั่ง console จึงไม่ replace effect ที่ยังอยู่. Reload เฉพาะสคริปต์สำเร็จเวลา 11:34:14 โดยไม่พบ parse error ของไฟล์นี้.
+
+สถานะยังไม่ถือว่า live verified เพราะขณะตรวจมีผู้เล่นออนไลน์ 0 คน; ต้องทดสอบ `/nv` จริงทั้งตีอากาศ, ตี entity, ทุบ และวางบล็อก.

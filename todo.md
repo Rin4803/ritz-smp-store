@@ -1222,3 +1222,4 @@
 - [ ] ทดสอบ Java player จริง: post-join Dialog login/register ต้องแทนที่การพิมพ์ `/login` และ `/register` ได้
 - [ ] ทดสอบ Bedrock/Floodgate จริง: ต้องเข้าได้โดยไม่เห็น AuthMeUI dialog
 - [x] แก้ parse error ใน `rankgrad copy.sk` (`second of now`) โดยคงชื่อ RitzSMP แบบไล่สีที่เสถียรและไม่เพิ่ม flicker; reload สำเร็จเวลา 11:29:11
+- [x] เพิ่ม delayed one-tick recovery หลัง break/place/left click/right click ใน `nightvision-gui.sk` โดยเติม effect เฉพาะเมื่อหายจริง; MCSV reload สำเร็จเวลา 11:34:14 และยังรอผู้เล่นจริงยืนยันอาการดับระหว่าง interaction
