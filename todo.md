@@ -1199,3 +1199,26 @@
 - [x] Search live and rotated logs for AuctionHouse, duplicate, dupe, rollback, item loss, and transaction errors; no matches were found in the scanned log set.
 - [ ] Reproduce AuctionHouse sell, cancel, buy, reconnect, and interrupted-transaction flows with disposable test items before declaring anti-dupe protection complete.
 - [ ] Add evidence-based anti-dupe safeguards only after a confirmed reproduction or vendor-documented setting, with backup and rollback.
+
+## User-reported blockers — 2026-08-28
+
+- [ ] Diagnose and fix `/nv` because the command/GUI is currently not usable for players; verify enable state, potion application, interaction persistence, and non-OP behavior.
+- [ ] Diagnose Java AuthMe login flow because players still see `/register` and `/login`; preserve mandatory authentication while evaluating a secure GUI or password-entry screen.
+- [ ] Preserve the existing Bedrock/Floodgate bypass policy and verify Java/Bedrock paths separately after any AuthMe change.
+- [ ] Run live or controlled regression tests for `/nv`, Java registration/login, failed password, reconnect, and unauthenticated command/chat restrictions before checkpoint.
+
+## User-reported blocker — Scoreboard title — 2026-08-28
+
+- [x] Diagnose DonutScoreboard title rendering and identify the supported gradient/animation syntax for the installed version.
+- [x] Apply a smooth, low-flicker animated gradient to the RitzSMP server title while preserving the time, Kills, Deaths, Money, Coins, online count, playtime, ping, rank, and team lines.
+- [x] Verify title rendering and scoreboard stability with a live/reload check before checkpoint and GitHub sync; config loaded after restart and rank placeholder reload succeeded at 11:29:11.
+
+## Regression blocker update — 2026-08-28
+
+- [ ] Re-check `/nv` from the actual player path after the previous direct-toggle/dead-code patch; user confirms it is still unusable.
+- [ ] Capture the exact command response, permission result, Skript runtime error, and active potion state before applying another patch.
+- [x] ปรับ Night Vision recovery loop ให้ตรวจว่าผู้เล่นไม่มี potion effect ก่อนเติมซ้ำ เพื่อลดการ replace effect และ flicker ระหว่างตี/ทุบ/วางบล็อก; MCSV reload สำเร็จเวลา 11:09:46 และยังรอ live click-through กับผู้เล่นจริง
+- [x] ติดตั้ง AuthMeUI 1.3.4 หลังสร้าง backup `pre-authmeui-2026-08-28`; startup ยืนยัน AuthMe/AuthMeUI enable สำเร็จ และคง `dialogs.use-configuration-phase: false` เพื่อรักษา Floodgate/AuthMe Bedrock auto-login
+- [ ] ทดสอบ Java player จริง: post-join Dialog login/register ต้องแทนที่การพิมพ์ `/login` และ `/register` ได้
+- [ ] ทดสอบ Bedrock/Floodgate จริง: ต้องเข้าได้โดยไม่เห็น AuthMeUI dialog
+- [x] แก้ parse error ใน `rankgrad copy.sk` (`second of now`) โดยคงชื่อ RitzSMP แบบไล่สีที่เสถียรและไม่เพิ่ม flicker; reload สำเร็จเวลา 11:29:11

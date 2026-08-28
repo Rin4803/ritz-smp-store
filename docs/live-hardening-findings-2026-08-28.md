@@ -48,3 +48,10 @@ Anti-Xray ไม่ใช่ระบบป้องกัน ESP ทุกช�
 ## สถานะการตรวจรอบนี้
 
 การตรวจคอนฟิกและ scan เสร็จแล้ว แต่ live player click-through สำหรับ flight/speed, Anti-Xray/ESP, AuctionHouse transaction และ LuckPerms effective permissions ยังไม่ถือว่ายืนยันจนกว่าจะมีผู้เล่น Java/Bedrock ทดสอบจริงตาม matrix ในหัวข้อก่อนหน้า
+
+## Follow-up verification — 2026-08-28 11:29
+
+- AuthMeUI 1.3.4 โหลดและ enable สำเร็จในโหมด `In-Game (post-join authentication)`. ยังไม่มีผู้เล่นออนไลน์ในช่วงตรวจ (`0/40`) จึงยังไม่มีหลักฐาน click-through ว่า Java dialog login/register แสดงจริง หรือยืนยัน Floodgate bypass ด้วยผู้เล่น Bedrock จริงได้
+- DonutScoreboard config ที่โหลดหลัง restart ใช้ title แบบ static hex gradient `RITZ SMP` และมีเวลา, rank, team, online, kills, deaths, money, coins, ping และ playtime ครบตามรายการที่กำหนด
+- `rankgrad copy.sk` มี parse error เดิมจาก `second of now`; แก้เป็นเฟรม gradient คงที่ที่เสถียรและ reload สำเร็จเวลา 11:29:11 โดยไม่พบ error จากการ reload
+- AuctionHouse logs ที่ค้นพบมีเฉพาะ plugin load/enable/disable และไม่พบหลักฐาน listing, buy, cancel หรือ transaction error ในช่วงข้อมูลที่ตรวจ จึงยังไม่ถือว่า controlled anti-dupe click-through สำเร็จ
