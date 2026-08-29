@@ -59,3 +59,10 @@ Anti-Xray ไม่ใช่ระบบป้องกัน ESP ทุกช�
 ## AuthMeUI configuration verification — 2026-08-28
 
 ตรวจ `/plugins/AuthMeUI/config.yml` บน MCSV หลังติดตั้งและ restart แล้วพบว่า `dialogs.use-configuration-phase: false` และ `configuration-phase-respect-authme-sessions: true` คงอยู่ตามแนวทางปลอดภัย ทำให้ flow เป็น post-join native dialog สำหรับ Java โดยไม่บังคับ pre-join dialog กับ Bedrock ก่อน AuthMe/Floodgate auto-login. พบ login/register dialog configuration ครบ และไม่พบการตั้งค่า Floodgate bypass ใน AuthMeUI เอง จึงคงความรับผิดชอบของ `AuthMe` ต่อ Bedrock bypass ไว้เช่นเดิม. ยังไม่มีผู้เล่นออนไลน์ในช่วงตรวจ จึงยังไม่ถือว่า Java dialog submit และ Bedrock bypass ผ่าน live click-through.
+
+## Follow-up verification — 2026-08-28 11:40
+- อ่าน `/plugins/DonutScoreboard/config.yml` หลัง restart: title เป็น static hex gradient `RITZ SMP`; ไม่พบ animation interval/refresh ของ title ที่กำลังเปลี่ยนข้อความอยู่ จึงลดสาเหตุ flicker จาก title animation ได้ แต่ยังต้องดูหน้าจอจริงเพื่อยืนยันการเรนเดอร์สีบน client
+- บรรทัด scoreboard ยังคงมีเวลา, rank (`%luckperms_prefix%`), team, online, kills, deaths, money, coins, ping และ playtime ครบตาม requirement ที่ระบุไว้
+- อ่าน `/plugins/AuctionHouse/config.yml`: version `1.5.2`, `auction-setup-time: 30`, `default-max-auctions: 10`, `auto-collect: true`, `partial-selling: false`, รองรับทั้ง BIN และ bid, และประกาศ auction ปิดอยู่ตามค่าปัจจุบัน
+- ค้น logs ล่าสุดด้วยคำค้น AuctionHouse และ transaction/cancel/purchase/duplicate/dupe แล้วพบเฉพาะ load/enable/disable ของ plugin หรือข้อความจาก plugin อื่น ไม่พบ listing, buy, cancel, rollback, item-loss หรือ dupe indicator ที่ยืนยันได้
+- ข้อสรุป: ยังไม่มีหลักฐานให้ทำ blind change ต่อ economy flow; controlled sell/cancel/buy/reconnect test ต้องใช้ผู้เล่นจริงและไอเทมทดสอบแยกจากข้อมูลผู้เล่น

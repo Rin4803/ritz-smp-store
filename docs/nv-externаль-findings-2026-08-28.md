@@ -1,0 +1,3 @@
+
+## Forensic pass รอบล่าสุด
+จาก files_read_many บน MCSV พบ `nightvision-gui.sk` ยังมีทั้ง command toggle, delayed recovery ใน event interaction และ loop ทุก 2 วินาทีที่เติม effect เมื่อ Skript ตรวจว่าไม่มี Night Vision; ไม่พบคำสั่ง clear effect ในไฟล์นี้. พบ `nv-diagnostic.sk` มีเพียง listener บันทึกเมื่อ Night Vision ถูก remove และไม่ได้เติม effect กลับ. พบ `lobby.sk` มี `apply night vision 1 ... 999 days` หลัง teleport เข้า Lobby ซึ่งเป็นการเติม effect แยกจาก `/nv`; ยังไม่พบหลักฐานจากชุดสคริปต์นี้ว่าล้าง effect โดยตรง. ต้องตรวจไฟล์ที่เหลือและ plugin configs/log timing ต่อก่อนถอด `/nv` เพื่อไม่ลบสาเหตุผิดจุด.

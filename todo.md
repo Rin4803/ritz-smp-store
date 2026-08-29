@@ -1224,3 +1224,15 @@
 - [x] แก้ parse error ใน `rankgrad copy.sk` (`second of now`) โดยคงชื่อ RitzSMP แบบไล่สีที่เสถียรและไม่เพิ่ม flicker; reload สำเร็จเวลา 11:29:11
 - [x] เพิ่ม delayed one-tick recovery หลัง break/place/left click/right click ใน `nightvision-gui.sk` โดยเติม effect เฉพาะเมื่อหายจริง; MCSV reload สำเร็จเวลา 11:34:14 และยังรอผู้เล่นจริงยืนยันอาการดับระหว่าง interaction
 - [x] ยืนยัน AuthMeUI config บน MCSV: post-join login/register dialog พร้อมใช้งาน, configuration phase ปิด, เคารพ AuthMe sessions; ไม่พบผู้เล่นออนไลน์สำหรับ live click-through จึงยังค้างการทดสอบ Java submit และ Bedrock bypass
+- [x] ตรวจ DonutScoreboard config หลัง restart: static hex gradient title และข้อมูลเวลา/rank/team/online/kills/deaths/money/coins/ping/playtime ครบ; ยังรอ client click-through ยืนยันการแสดงผลจริง
+- [x] ตรวจ AuctionHouse config 1.5.2 และค้น log ล่าสุดด้วยคำ listing/purchase/cancel/transaction/duplicate/dupe; ไม่พบหลักฐาน dupe หรือ transaction error และไม่ทำ blind change ต่อ economy flow
+- [ ] ทำ controlled AuctionHouse sell/cancel/buy/reconnect test ด้วยผู้เล่นและไอเทมทดสอบที่แยกจากข้อมูลจริง
+- [ ] ทำ forensic audit `/nv` ซ้ำทุกไฟล์ Skript, plugin config และ event ที่เกี่ยวกับ potion/interaction/world change ก่อนตัดสินใจถอดระบบ
+- [ ] ออก `/nv` จากเมนูและคำสั่งที่ผู้ใช้เข้าถึงได้ หากผล audit ยืนยันว่าไม่สามารถทำให้เสถียรได้โดยไม่กระทบระบบอื่น
+- [ ] ตรวจและเตรียม AuthMeUI configuration-phase GUI สำหรับ Java ก่อนเข้าโลก พร้อมพิสูจน์วิธีคง Floodgate/Bedrock bypass โดยไม่บังคับ GUI
+- [ ] ทำ backup และตรวจ startup/log หลังเปลี่ยน `/nv` หรือ AuthMeUI configuration
+
+- [x] ตรวจระบบ Anti-Cheat ที่ติดตั้งจริงและ event/log ที่พร้อมส่งเข้า Discord
+- [x] เชื่อมการแจ้งเตือน Anti-Cheat ไปยัง Discord channel ID `1542991929548214392` โดยไม่ปะปนกับช่องระบบอื่น
+- [x] ทดสอบการตรวจ startup log และปลายทาง Webhook แบบอ่านอย่างเดียว โดยไม่สร้างข้อมูลโกงหรือข้อมูลหลอก; live alert ยังต้องรอเหตุการณ์จริง/staging
+- [x] อัปเดตเอกสารภาษาไทยและซิงก์การเปลี่ยนแปลงขึ้น private GitHub
