@@ -19,8 +19,6 @@ services:
       retries: 12
       start_period: 20s
 
-  # The web service never opens a Discord gateway. It only delivers store
-  # notifications through the AI application's server-side token.
   app:
     build:
       context: .
@@ -114,6 +112,7 @@ services:
       - ritz_net
 
   music-bot:
+    profiles: ["music"]
     build:
       context: .
       dockerfile: Dockerfile
@@ -131,8 +130,6 @@ services:
       FFMPEG_PATH: ${FFMPEG_PATH:-ffmpeg}
       YTDLP_COOKIES_PATH: ${YTDLP_COOKIES_PATH:-/run/ritz-secrets/youtube-cookies.txt}
     volumes:
-      # Optional Netscape cookies file for a VPS that still receives YouTube bot checks.
-      # Never commit this file. Create it on the VPS at ./secrets/youtube-cookies.txt.
       - ./secrets:/run/ritz-secrets:ro
     networks:
       - ritz_net
