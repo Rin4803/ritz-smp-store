@@ -12,29 +12,46 @@ export type RitzAiCommandDefinition = {
 };
 
 /**
- * ทะเบียนคำสั่งที่เป็น source of truth ของ RitzSMP AI โดยเฉพาะ
+ * Source of truth for the commands exposed by the RitzSMP Discord bot.
  *
- * ทะเบียนนี้รับผิดชอบเฉพาะความสามารถของ AI และบริบทเฉพาะผู้ใช้ของ AI bot
- * เท่านั้น ส่วน Music, DiscordSRV, ร้านค้า/การชำระเงิน, การเชื่อมบัญชี,
- * รายงาน และคำสั่งตั้งค่าของแอดมินให้ดูแลผ่านโมดูลหรือบอทที่เป็นเจ้าของระบบนั้น
- * ไม่ลงทะเบียนซ้ำกับ RitzSMP AI
+ * AI commands stay isolated from server/store commands. Music commands are
+ * intentionally not registered here; they belong to the separate Music Bot.
  */
 export const RITZ_AI_COMMAND_CATALOG: readonly RitzAiCommandDefinition[] = [
   { name: "ask", audience: "member", purpose: "ถาม AI เกี่ยวกับ RitzSMP" },
   { name: "status", audience: "member", purpose: "ดูสถานะ RitzSMP AI และเซิร์ฟเวอร์" },
   { name: "profile", audience: "member", purpose: "ดูโปรไฟล์และบริบทส่วนตัวที่เชื่อมไว้" },
-  { name: "help", audience: "member", purpose: "ดูคู่มือคำสั่งของ RitzSMP AI" },
+  { name: "help", audience: "member", purpose: "ดูคู่มือคำสั่งของ RitzSMP" },
 ] as const;
 
-export function buildRitzSmpAdminCommands(): RESTPostAPIChatInputApplicationCommandsJSONBody[] {
+/** Server/account/store commands. Music is intentionally excluded. */
+export function buildRitzSmpSystemCommands(): RESTPostAPIChatInputApplicationCommandsJSONBody[] {
   return [
+    new SlashCommandBuilder()
+      .setName("verify")
+      .setDescription("สร้างรหัสยืนยันบัญชี Minecraft"),
+    new SlashCommandBuilder()
+      .setName("players")
+      .setDescription("ดูผู้เล่นออนไลน์ในเซิร์ฟเวอร์ Minecraft"),
+    new SlashCommandBuilder()
+      .setName("members")
+      .setDescription("ดูรายชื่อสมาชิก Discord ของ RitzSMP"),
+    new SlashCommandBuilder()
+      .setName("store")
+      .setDescription("เปิดเว็บไซต์ร้านค้า RitzSMP"),
+    new SlashCommandBuilder()
+      .setName("ranks")
+      .setDescription("ดูรายการยศและสิทธิประโยชน์"),
+    new SlashCommandBuilder()
+      .setName("topup")
+      .setDescription("ดูวิธีเติมเงินและซื้อยศ RitzSMP"),
     new SlashCommandBuilder()
       .setName("setup")
       .setDescription("ตั้งค่าแผงระบบ Discord ของ RitzSMP")
       .addSubcommand((subcommand) =>
         subcommand
           .setName("panel")
-          .setDescription("สร้างแผงเชื่อมบัญชีและรายงานผู้เล่น"),
+          .setDescription("สร้างแผงเชื่อมบัญชีและรับยศ"),
       )
       .addSubcommand((subcommand) =>
         subcommand
@@ -68,6 +85,6 @@ export function buildRitzSmpAiCommands(): RESTPostAPIChatInputApplicationCommand
       .setDescription("ดูโปรไฟล์ RitzSMP ที่เชื่อมไว้"),
     new SlashCommandBuilder()
       .setName("help")
-      .setDescription("ดูคู่มือคำสั่ง RitzSMP AI"),
+      .setDescription("ดูคู่มือคำสั่ง RitzSMP"),
   ].map((command) => command.toJSON());
 }
