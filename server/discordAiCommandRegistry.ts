@@ -66,6 +66,9 @@ export function buildRitzSmpSystemCommands(): RESTPostAPIChatInputApplicationCom
   ].map((command) => command.toJSON());
 }
 
+// Backward-compatible export for the existing bot bootstrap.
+export const buildRitzSmpAdminCommands = buildRitzSmpSystemCommands;
+
 export function buildRitzSmpAiCommands(): RESTPostAPIChatInputApplicationCommandsJSONBody[] {
   return [
     new SlashCommandBuilder()
