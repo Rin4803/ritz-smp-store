@@ -336,7 +336,7 @@ export default function Home() {
               <div>
                 <div className="eyebrow">01 / RANK CATALOG</div>
                 <h2 className="section-title">ยศทั้งหมด</h2>
-                <p className="section-description">รายการยศและสิทธิประโยชน์โหลดจากข้อมูลร้านค้าโดยตรง ไม่ต้องกรอกข้อมูลซ้ำในหน้าเว็บ</p>
+                <p className="section-description">รายการยศและสิทธิประโยชน์แสดงจากข้อมูลร้านค้าโดยตรง ไม่ต้องกรอกข้อมูลซ้ำในหน้าเว็บ</p>
               </div>
               <div className="catalog-count"><strong>{filteredRanks.length}</strong><span>แพ็กเกจ</span></div>
             </div>
