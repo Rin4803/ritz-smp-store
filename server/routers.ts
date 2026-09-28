@@ -41,7 +41,7 @@ import type { Order } from "../drizzle/schema";
 import { getRitzSmpAiBotStatus } from "./discordAiBot";
 import { getManagedServerRuntimeConfig, runtimeConfigForClient } from "./multiserverRuntime";
 import { notifyPurchaseCompleted, notifyTopupSubmitted } from "./discordNotifications";
-import { fetchMinecraftServerStatus } from "./minecraftIntegration";
+import { fetchMinecraftServerStatus, isValidMinecraftIgn } from "./minecraftIntegration";
 import { createLocalSession, hashPassword, verifyPassword, LOCAL_SESSION_MAX_AGE_MS } from "./_core/localAuth";
 
 const allowedSlipTypes = ["image/jpeg", "image/png", "image/webp"] as const;
@@ -363,7 +363,7 @@ export const appRouter = router({
       .input(
         z.object({
           rankId: z.number().int().positive(),
-          minecraftIGN: z.string().trim().min(3, "กรุณาระบุชื่อในเกม").max(64),
+          minecraftIGN: z.string().trim().refine(isValidMinecraftIgn, "ชื่อ Minecraft ต้องเป็น A-Z, a-z, 0-9 หรือ _ และยาว 3-16 ตัวอักษร"),
         }),
       )
       .mutation(async ({ ctx, input }) => {

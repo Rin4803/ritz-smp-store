@@ -10,7 +10,8 @@
     "start:discord-ai": "NODE_ENV=production node dist/discordAiBotRunner.js",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
-    "test": "vitest run",
+    "test": "vitest run --exclude '**/*.live.test.ts'",
+    "test:live": "RUN_LIVE_DISCORD_TESTS=1 vitest run '**/*.live.test.ts'",
     "loadtest:economy": "node scripts/economy-load-test.mjs",
     "db:push": "drizzle-kit generate && drizzle-kit migrate"
   },

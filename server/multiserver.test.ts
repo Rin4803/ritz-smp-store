@@ -58,6 +58,7 @@ const runtimeMocks = vi.hoisted(() => ({
 }));
 
 const minecraftMocks = vi.hoisted(() => ({
+  isValidMinecraftIgn: (value: string) => /^[A-Za-z0-9_]{3,16}$/.test(value),
   fetchMinecraftServerStatus: vi.fn(async () => ({
     online: true,
     players: 3,

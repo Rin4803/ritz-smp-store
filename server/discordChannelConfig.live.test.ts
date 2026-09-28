@@ -7,9 +7,10 @@ const channelKeys = [
   "DISCORD_ADVANCEMENT_CHANNEL_ID",
   "DISCORD_ORDER_IN_GAME_CHANNEL_ID",
 ] as const;
+const canRunLiveCheck = process.env.RUN_LIVE_DISCORD_TESTS === "1";
 
 describe("configured Discord routing channels", () => {
-  it("validates each configured channel through Discord API", async () => {
+  it.skipIf(!canRunLiveCheck)("validates each configured channel through Discord API", async () => {
     const token = process.env.DISCORD_BOT_TOKEN;
     expect(token, "DISCORD_BOT_TOKEN must be configured").toBeTruthy();
 
@@ -26,7 +27,7 @@ describe("configured Discord routing channels", () => {
   }, 30_000);
 });
 
-it("validates the authenticated bot identity", async () => {
+it.skipIf(!canRunLiveCheck)("validates the authenticated bot identity", async () => {
   const token = process.env.DISCORD_BOT_TOKEN;
   expect(token, "DISCORD_BOT_TOKEN must be configured").toBeTruthy();
 
