@@ -75,3 +75,36 @@ Live Discord tests อาจต้อง network และ secret จริง �
 - ขั้นตอนปฏิบัติการ: `docs/ai-operations-runbook-th.md`
 - กติกาแก้ไข: `CONTRIBUTING.md`
 - ตัวแปรที่ต้องมี: `env.template`
+
+## สถานะปัจจุบันสำหรับ GPT ที่เชื่อม GitHub
+
+เว็บ public ที่เผยแพร่บน Firebase คือผลลัพธ์จากการ build ไม่ใช่ source of truth ให้ใช้ source ใน repository นี้เป็นหลัก ห้ามเดาโครงสร้างจากหน้าเว็บหรือ Firebase หากยังไม่ได้อ่านไฟล์จริง
+
+โค้ดเว็บและ AI Bot อยู่ใน repository `Rin4803/ritz-smp-store` โดยส่วนเว็บอยู่ใน `client/`, `server/`, `shared/` และส่วน Discord AI Bot อยู่ใน `server/discordAiBot.ts` กับ `server/discordAiBotRunner.ts` ระบบ Music Bot ถูกลบแล้วและไม่ควรเพิ่มกลับ
+
+เอกสาร AI ที่ต้องอ่านตามลำดับคือ `AI_CONTEXT_TH.md`, `CONTRIBUTING.md`, `docs/ai-access-matrix-th.md` และ `docs/ai-operations-runbook-th.md` จากนั้นอ่าน `todo.md` และเอกสารเฉพาะระบบที่กำลังแก้
+
+## การแบ่งงานระหว่าง Manus กับ GPT
+
+GPT ช่วยอ่าน source, วิเคราะห์ปัญหา, แก้โค้ด, เพิ่ม test, review diff และเตรียม Pull Request ได้ ส่วน Manus ช่วยตรวจ runtime จริง, MCSV, Minecraft, Discord connector, log, backup และ live click-through ได้ การมี source ใน GitHub ไม่ได้หมายความว่า GPT เข้าถึง MCSV, Discord หรือ secret ได้แล้ว ต้องยืนยัน runtime แยกต่างหาก
+
+งานทุกชิ้นต้องแยกเป็น `โค้ดที่ตรวจแล้ว`, `ระบบที่ตรวจ live แล้ว` และ `สิ่งที่ยังยืนยันไม่ได้` ห้ามรายงานว่า bot หรือเว็บทำงานจริงจากผล build เพียงอย่างเดียว
+
+## Commit สำคัญล่าสุด
+
+- `985270a6`: ลบ Music Bot ออกจาก source, dependency, Docker Compose และ env template; คงเว็บ, AI Bot และ DiscordSRV
+- `fb45cc07`: เพิ่มเอกสารศูนย์กลาง AI และกติกาการทำงานร่วมกัน
+
+การ push ไป GitHub อาจต้องให้เจ้าของบัญชีอนุญาต GitHub App ด้วยสิทธิ์ Contents read/write และ Pull Requests read/write ก่อน หากพบ `403`, ให้หยุดและรายงานสิทธิ์ที่ขาด ห้ามใช้ token ใหม่จากแชตหรือใส่ secret ลง repository
+
+## Prompt เริ่มงานสำหรับ GPT
+
+```text
+อ่าน AI_CONTEXT_TH.md, CONTRIBUTING.md, docs/ai-access-matrix-th.md,
+docs/ai-operations-runbook-th.md และ todo.md ก่อนเริ่ม
+
+ตรวจ source จริงของ RitzSMP แยกเว็บ, Wallet, Discord AI Bot,
+DiscordSRV/Minecraft และ deployment ออกจากกัน ห้ามเดาจาก Firebase URL
+ห้ามขอหรือสร้าง token/password จริง ให้ทำงานผ่าน branch/PR
+สรุปสิ่งที่ตรวจ, สิ่งที่แก้, validation, live evidence และ rollback ทุกครั้ง
+```
