@@ -1,34 +1,13 @@
-import { useState, useMemo } from "react";
-import { startLogin } from "@/const";
+import { useMemo, useState } from "react";
 import { Link } from "wouter";
+import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getRankPresentation } from "@/lib/rankPresentation";
-import confetti from "canvas-confetti";
 import {
-  Activity,
-  ArrowRight,
-  Check,
-  CheckCircle2,
-  Clock3,
-  Copy,
-  CreditCard,
-  Crown,
-  FileCheck2,
-  Loader2,
-  LogIn,
-  Menu,
-  ShieldCheck,
-  Sparkles,
-  Upload,
-  X,
-  AlertCircle,
-  RefreshCcw,
-  Wallet,
-  Search,
-  Users,
-  Wifi,
-  WifiOff,
+  AlertCircle, ArrowRight, Check, CheckCircle2, ChevronRight, Clock3, Copy, Crown,
+  CreditCard, Gamepad2, History, Landmark, Loader2, LogIn, Menu, RefreshCcw,
+  Search, ShieldCheck, ShoppingBag, Users, Wallet, Wifi, WifiOff, X, Zap
 } from "lucide-react";
 
 const paymentAccounts = [
@@ -36,10 +15,22 @@ const paymentAccounts = [
   { label: "PromptPay / TrueMoney", value: "0930286252", detail: "พร้อมเพย์และวอเลทสำหรับการสนับสนุน RitzSMP" },
 ];
 
+type Rank = {
+  id: number;
+  name: string;
+  displayName: string;
+  price: string;
+  duration: string;
+  color: string;
+  badge: string;
+  description: string;
+  features: string;
+};
+
 function parseFeatures(value: string) {
   try {
     const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter(item => typeof item === "string") : [];
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
   } catch {
     return [];
   }
@@ -50,72 +41,66 @@ function formatPrice(value: string | number) {
   return Number.isFinite(number) ? number.toLocaleString("th-TH", { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : "—";
 }
 
-function playCelebrationFanfare() {
+function safeColorClass(value: string) {
+  return value.replace(/[^a-z0-9_-]/gi, "").toLowerCase() || "gold";
+}
+
+function statusLabel(status: string | undefined) {
+  if (status === "สำเร็จ") return "ส่งยศเรียบร้อย";
+  if (status === "รอตรวจสอบ") return "รอดำเนินการ";
+  return status ?? "กำลังตรวจสอบ";
+}
+
+async function copyText(value: string) {
   try {
-    // Respect reduced motion / user preferences if desired
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    
-    // Trigger confetti burst
-    if (!prefersReducedMotion) {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ["#d4af37", "#facc15", "#60a5fa", "#f43f5e", "#ffffff"]
-      });
-    }
-
-    const AudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: typeof window.AudioContext }).webkitAudioContext;
-    if (!AudioContext) return;
-    const ctx = new AudioContext();
-    if (ctx.state === "suspended") {
-      ctx.resume().catch(() => {});
-    }
-
-    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
-    notes.forEach((freq, index) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + index * 0.12);
-
-      gain.gain.setValueAtTime(0, ctx.currentTime + index * 0.12);
-      gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + index * 0.12 + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + index * 0.12 + 0.35);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(ctx.currentTime + index * 0.12);
-      osc.stop(ctx.currentTime + index * 0.12 + 0.4);
-    });
+    await navigator.clipboard.writeText(value);
+    return true;
   } catch {
-    // Ignore audio/confetti restrictions gracefully
+    return false;
   }
-}
-
-function formatDate(value: Date | string | number) {
-  return new Date(value).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" });
-}
-
-function statusBadgeClass(status: string) {
-  if (status === "สำเร็จ") return "success";
-  if (status === "ยกเลิก") return "cancelled";
-  return "pending";
 }
 
 export default function Home() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const ranksQuery = trpc.store.ranks.useQuery();
-  const serverStatusQuery = trpc.servers.status.useQuery(undefined, { refetchInterval: 30_000, staleTime: 15_000 });
+  const serverStatusQuery = trpc.servers.status.useQuery(undefined, {
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
   const ordersQuery = trpc.store.myOrders.useQuery(undefined, { enabled: isAuthenticated });
   const walletQuery = trpc.store.wallet.useQuery(undefined, { enabled: isAuthenticated });
   const utils = trpc.useUtils();
 
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [selectedRank, setSelectedRank] = useState<Rank | null>(null);
+  const [detailsRank, setDetailsRank] = useState<Rank | null>(null);
+  const [isTopupOpen, setIsTopupOpen] = useState(false);
+  const [ign, setIgn] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [priceFilter, setPriceFilter] = useState<"all" | "starter" | "royal" | "legendary">("all");
+  const [topupAmount, setTopupAmount] = useState("");
+  const [topupPaymentMethod, setTopupPaymentMethod] = useState<"ธนาคารออมสิน" | "PromptPay" | "TrueMoney Wallet">("PromptPay");
+  const [slipData, setSlipData] = useState("");
+  const [slipName, setSlipName] = useState("");
+  const [slipType, setSlipType] = useState<"image/jpeg" | "image/png" | "image/webp">("image/png");
+  const [topupResult, setTopupResult] = useState<number | null>(null);
+  const [purchaseResult, setPurchaseResult] = useState<{
+    id: number;
+    rankName: string;
+    amount: string;
+    minecraftIGN: string;
+    status: string;
+    rconExecuted: boolean;
+  } | null>(null);
+  const [toastMessage, setToastMessage] = useState("");
+
+  const ranks = (ranksQuery.data ?? []) as Rank[];
+  const orders = ordersQuery.data ?? [];
+  const walletBalance = Number(walletQuery.data?.balance ?? 0);
+
   const createTopup = trpc.store.createTopup.useMutation({
     onSuccess: result => {
       setTopupResult(result.order.id);
-      setTopupDiscordSent(result.discordNotification?.sent === true);
       setIsTopupOpen(false);
       setTopupAmount("");
       setSlipData("");
@@ -129,57 +114,48 @@ export default function Home() {
     onSuccess: result => {
       setPurchaseResult({
         id: result.order.id,
-        rankName: selectedRank?.displayName ?? "ยศ",
-        amount: selectedRank?.price ?? "0",
+        rankName: result.order.rankName,
+        amount: result.order.amount,
+        minecraftIGN: result.order.minecraftIGN,
+        status: result.order.status,
         rconExecuted: result.rconExecuted === true,
       });
       setSelectedRank(null);
       setIgn("");
-      playCelebrationFanfare();
       utils.store.myOrders.invalidate();
       utils.store.wallet.invalidate();
     },
   });
 
-  const [selectedRank, setSelectedRank] = useState<(typeof ranksQuery.data extends (infer T)[] | undefined ? T : never) | null>(null);
-  const [isTopupOpen, setIsTopupOpen] = useState(false);
-  const [topupAmount, setTopupAmount] = useState("");
-  const [topupPaymentMethod, setTopupPaymentMethod] = useState<"ธนาคารออมสิน" | "PromptPay" | "TrueMoney Wallet">("PromptPay");
-  const [ign, setIgn] = useState("");
-  const [slipData, setSlipData] = useState("");
-  const [slipName, setSlipName] = useState("");
-  const [slipType, setSlipType] = useState<"image/jpeg" | "image/png" | "image/webp">("image/png");
-  const [topupResult, setTopupResult] = useState<number | null>(null);
-  const [topupDiscordSent, setTopupDiscordSent] = useState<boolean | null>(null);
-  const [purchaseResult, setPurchaseResult] = useState<{ id: number; rankName: string; amount: string; rconExecuted: boolean } | null>(null);
-  const [toastMessage, setToastMessage] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [priceFilter, setPriceFilter] = useState<"all" | "budget" | "mid" | "prestige">("all");
-  const [menuOpen, setMenuOpen] = useState(false);
+  const filteredRanks = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return ranks.filter(rank => {
+      const presentation = getRankPresentation(rank.price);
+      const featureText = parseFeatures(rank.features).join(" ").toLowerCase();
+      const haystack = (rank.displayName + " " + rank.description + " " + rank.badge + " " + featureText).toLowerCase();
+      const queryMatch = !query || haystack.includes(query);
+      const filterMatch =
+        priceFilter === "all" ||
+        (priceFilter === "starter" && presentation.tier === "starter") ||
+        (priceFilter === "royal" && presentation.tier === "royal") ||
+        (priceFilter === "legendary" && presentation.tier === "legendary");
+      return queryMatch && filterMatch;
+    });
+  }, [ranks, searchQuery, priceFilter]);
 
-  const ranks = ranksQuery.data ?? [];
-  const rankNotice = useMemo(() => ranks.some(rank => Number(rank.price) <= 0), [ranks]);
-  const featuredRankId = useMemo(() => {
-    const purchasableRanks = ranks.filter(rank => Number(rank.price) > 0);
-    return purchasableRanks.reduce<(typeof ranks)[number] | null>(
-      (highest, rank) => !highest || Number(rank.price) > Number(highest.price) ? rank : highest,
-      null,
-    )?.id ?? null;
-  }, [ranks]);
-  const walletBalance = Number(walletQuery.data?.balance ?? 0);
+  const highestPricedRank = useMemo(
+    () => [...ranks].filter(rank => Number(rank.price) > 0).sort((a, b) => Number(b.price) - Number(a.price))[0] ?? null,
+    [ranks],
+  );
 
-  const copyAccount = async (value: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      setToastMessage(`คัดลอก ${value} เรียบร้อยแล้ว`);
-      window.setTimeout(() => setToastMessage(""), 2000);
-    } catch {
-      setToastMessage(value);
-    }
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    window.setTimeout(() => setToastMessage(""), 2200);
   };
 
-  const openOrder = (rank: (typeof ranks)[number]) => {
+  const openPurchase = (rank: Rank) => {
     setPurchaseResult(null);
+    setDetailsRank(null);
     if (!isAuthenticated) {
       startLogin();
       return;
@@ -187,19 +163,19 @@ export default function Home() {
     setSelectedRank(rank);
   };
 
-  const handleFile = (file?: File) => {
+  const handleSlip = (file?: File) => {
     if (!file) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      setToastMessage("รองรับเฉพาะไฟล์รูปภาพ JPG, PNG หรือ WEBP เท่านั้น");
+      showToast("รองรับเฉพาะ JPG, PNG และ WEBP");
       return;
     }
     if (file.size > 6 * 1024 * 1024) {
-      setToastMessage("ไฟล์สลิปต้องมีขนาดไม่เกิน 6 MB");
+      showToast("ไฟล์สลิปต้องมีขนาดไม่เกิน 6 MB");
       return;
     }
     const reader = new FileReader();
     reader.onload = () => {
-      setSlipData(String(reader.result));
+      setSlipData(String(reader.result ?? ""));
       setSlipName(file.name);
       setSlipType(file.type as "image/jpeg" | "image/png" | "image/webp");
     };
@@ -208,10 +184,10 @@ export default function Home() {
 
   const submitTopup = (event: React.FormEvent) => {
     event.preventDefault();
-    const amountNum = Number(topupAmount);
-    if (!amountNum || amountNum <= 0 || !slipData) return;
+    const amount = Number(topupAmount);
+    if (!Number.isFinite(amount) || amount <= 0 || !slipData) return;
     createTopup.mutate({
-      amount: amountNum,
+      amount,
       paymentMethod: topupPaymentMethod,
       slipData,
       slipName,
@@ -222,178 +198,135 @@ export default function Home() {
   const submitPurchase = (event: React.FormEvent) => {
     event.preventDefault();
     if (!selectedRank || !ign.trim()) return;
-    purchaseRank.mutate({
-      rankId: selectedRank.id,
-      minecraftIGN: ign.trim(),
-    });
+    purchaseRank.mutate({ rankId: selectedRank.id, minecraftIGN: ign.trim() });
+  };
+
+  const copyAccount = async (value: string) => {
+    const ok = await copyText(value);
+    showToast(ok ? "คัดลอกหมายเลขแล้ว" : value);
   };
 
   return (
     <div className="store-shell">
       <div className="noise" aria-hidden="true" />
+      <div className="site-glow site-glow-a" aria-hidden="true" />
+      <div className="site-glow site-glow-b" aria-hidden="true" />
+
       <header className="topbar">
         <div className="container topbar-inner">
-          <button
-            type="button"
-            className="menu-toggle"
-            aria-label={menuOpen ? "ปิดเมนูหลัก" : "เปิดเมนูหลัก"}
-            aria-expanded={menuOpen}
-            aria-controls="mobile-menu"
-            onClick={() => setMenuOpen(open => !open)}
-          >
-            {menuOpen ? <X size={19} /> : <Menu size={19} />}
+          <button type="button" className="menu-toggle" aria-label={menuOpen ? "ปิดเมนู" : "เปิดเมนู"} onClick={() => setMenuOpen(open => !open)}>
+            {menuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
-          <a className="brand" href="#top" aria-label="RitzSMP Web Store" style={{ minWidth: 0, overflow: "hidden" }}>
-            <span className="brand-mark flex-shrink-0"><Crown size={21} strokeWidth={1.8} /></span>
-            <span style={{ minWidth: 0, overflow: "hidden" }}>
-              <span className="brand-name" style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>RITZ<span className="gold-text">SMP</span></span>
-              <span className="brand-sub" style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Realm Official Store</span>
+
+          <Link className="brand" href="/" onClick={() => setMenuOpen(false)}>
+            <span className="brand-mark"><Crown size={20} strokeWidth={1.8} /></span>
+            <span>
+              <span className="brand-name">RITZ<span className="gold-text">SMP</span></span>
+              <span className="brand-sub">OFFICIAL STORE</span>
             </span>
-          </a>
+          </Link>
+
           <nav className="nav desktop-nav" aria-label="เมนูหลัก">
             <a href="#ranks">ยศทั้งหมด</a>
-            <a href="#payment">ช่องทางชำระเงิน</a>
-            <Link href="/servers">เลือกเซิร์ฟเวอร์</Link>
-            <Link href="/account">ประวัติการซื้อ</Link>
-            {user?.role === "admin" && <Link href="/admin" className="gold-text">Admin Dashboard</Link>}
+            <a href="#how-to-buy">วิธีซื้อ</a>
+            <a href="#payment">ชำระเงิน</a>
+            <Link href="/account">บัญชี / ออเดอร์</Link>
+            {user?.role === "admin" && <Link href="/admin" className="gold-text">Admin</Link>}
           </nav>
-          {authLoading ? (
-            <span className="user-chip"><Loader2 size={14} className="animate-spin" /> กำลังตรวจสอบ</span>
-          ) : isAuthenticated ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <button
-                type="button"
-                className="ghost-btn compact-btn"
-                style={{ borderColor: "rgba(212,175,55,0.4)", color: "#d4af37", display: "inline-flex", alignItems: "center", gap: 6 }}
-                onClick={() => {
-                  setTopupResult(null);
-                  setSlipData("");
-                  setSlipName("");
-                  setTopupAmount("");
-                  setIsTopupOpen(true);
-                }}
-              >
-                <Wallet size={14} /> เติมเงิน ({formatPrice(walletBalance)} ฿)
-              </button>
-              <Link href="/account" className="user-chip"><ShieldCheck size={14} className="gold-text" /> {user?.name ?? "ผู้เล่น"} <span className="account-link-label">บัญชี</span></Link>
-            </div>
-          ) : (
-            <button className="ghost-btn compact-btn" onClick={() => startLogin()}>
-              <LogIn size={14} /> เข้าสู่ระบบ
-            </button>
-          )}
-        </div>
-        {menuOpen && (
-          <nav id="mobile-menu" className="mobile-menu" aria-label="เมนูหลักบนมือถือ">
-            {isAuthenticated && (
-              <div className="wallet-summary" aria-live="polite" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span className="wallet-summary-label"><CreditCard size={15} /> ยอดเงินคงเหลือ</span>
-                  <strong>{walletQuery.isLoading ? "กำลังโหลด…" : `${formatPrice(walletBalance)} ฿`}</strong>
-                </div>
-                <button
-                  type="button"
-                  className="primary-btn compact-btn"
-                  style={{ width: "100%", justifyContent: "center" }}
-                  onClick={() => {
-                    setMenuOpen(false);
-                    setTopupResult(null);
-                    setSlipData("");
-                    setSlipName("");
-                    setTopupAmount("");
-                    setIsTopupOpen(true);
-                  }}
-                >
-                  <Wallet size={14} /> เติมเงินเข้ากระเป๋า
+
+          <div className="topbar-actions">
+            {authLoading ? (
+              <span className="user-chip"><Loader2 size={14} className="animate-spin" /> กำลังตรวจสอบ</span>
+            ) : isAuthenticated ? (
+              <>
+                <button type="button" className="wallet-pill" onClick={() => { setTopupResult(null); setIsTopupOpen(true); }}>
+                  <Wallet size={14} /><span>Wallet</span><strong>{formatPrice(walletBalance)} ฿</strong>
                 </button>
-              </div>
-            )}
-            <a href="#ranks" onClick={() => setMenuOpen(false)}>ยศทั้งหมด</a>
-            <a href="#payment" onClick={() => setMenuOpen(false)}>ช่องทางชำระเงิน</a>
-            <Link href="/servers" onClick={() => setMenuOpen(false)}>เลือกเซิร์ฟเวอร์</Link>
-            <Link href="/account" onClick={() => setMenuOpen(false)}>ประวัติการซื้อและยอดคงเหลือ</Link>
-            {user?.role === "admin" && <Link href="/admin" className="gold-text" onClick={() => setMenuOpen(false)}>Admin Dashboard</Link>}
-            {!authLoading && (isAuthenticated ? (
-              <Link href="/account" className="mobile-menu-login" onClick={() => setMenuOpen(false)}><ShieldCheck size={15} /> บัญชีของฉัน</Link>
+                <Link href="/account" className="user-chip"><ShieldCheck size={13} /> {user?.name ?? "ผู้เล่น"}</Link>
+              </>
             ) : (
-              <button type="button" className="mobile-menu-login" onClick={() => { setMenuOpen(false); startLogin(); }}><LogIn size={15} /> เข้าสู่ระบบ</button>
-            ))}
+              <button type="button" className="ghost-btn compact-btn" onClick={() => startLogin()}><LogIn size={14} /> เข้าสู่ระบบ</button>
+            )}
+          </div>
+        </div>
+
+        {menuOpen && (
+          <nav className="mobile-menu" aria-label="เมนูมือถือ">
+            <a href="#ranks" onClick={() => setMenuOpen(false)}>ยศทั้งหมด</a>
+            <a href="#how-to-buy" onClick={() => setMenuOpen(false)}>วิธีซื้อ</a>
+            <a href="#payment" onClick={() => setMenuOpen(false)}>ชำระเงิน</a>
+            <Link href="/account" onClick={() => setMenuOpen(false)}>บัญชี / ออเดอร์</Link>
+            {user?.role === "admin" && <Link href="/admin" onClick={() => setMenuOpen(false)}>Admin Dashboard</Link>}
+            {isAuthenticated ? (
+              <button type="button" className="mobile-wallet-btn" onClick={() => { setMenuOpen(false); setIsTopupOpen(true); }}>
+                <Wallet size={15} /> เติม Wallet • {formatPrice(walletBalance)} ฿
+              </button>
+            ) : (
+              <button type="button" className="mobile-wallet-btn" onClick={() => { setMenuOpen(false); startLogin(); }}>
+                <LogIn size={15} /> เข้าสู่ระบบ
+              </button>
+            )}
           </nav>
         )}
       </header>
 
-      <main id="top">
+      <main>
         <section className="hero">
           <div className="container hero-grid">
-            <div>
-              <div className="eyebrow">RitzSMP / Official Realm Sanctuary</div>
-              <h1>ยกระดับการเล่นเกมของคุณ<span>ในอาณาจักรที่เป็นของคุณ</span></h1>
-              <p className="hero-lead">สนับสนุนเซิร์ฟเวอร์ RitzSMP พร้อมปลดล็อกยศและสถานะพิเศษ เติมเงินเข้ากระเป๋าด้วยสลิปโอนเงิน แล้วใช้ยอดเงินในกระเป๋าซื้อยศได้ทันทีโดยไม่ต้องแนบสลิปซ้ำ</p>
+            <div className="hero-copy">
+              <div className="eyebrow"><span className="live-dot" /> RITZSMP / OFFICIAL STORE</div>
+              <h1>ยศของคุณ<br /><span>สิทธิ์ในเกมของคุณ</span></h1>
+              <p className="hero-lead">ร้านยศอย่างเป็นทางการของ RitzSMP เลือกแพ็กเกจ เติม Wallet และส่งคำขอซื้อยศด้วยชื่อในเกมจากหน้าเว็บเดียว</p>
+
               <div className="hero-actions">
-                <a className="primary-btn" href="#ranks">เลือกยศสนับสนุน <ArrowRight size={16} /></a>
-                {isAuthenticated ? (
-                  <button
-                    type="button"
-                    className="ghost-btn"
-                    onClick={() => {
-                      setTopupResult(null);
-                      setSlipData("");
-                      setSlipName("");
-                      setTopupAmount("");
-                      setIsTopupOpen(true);
-                    }}
-                  >
-                    <Wallet size={16} /> เติมเงินเข้ากระเป๋า ({formatPrice(walletBalance)} ฿)
-                  </button>
-                ) : (
-                  <button className="ghost-btn" onClick={() => startLogin()}><CreditCard size={16} /> เข้าสู่ระบบเพื่อเติมเงิน</button>
-                )}
+                <a href="#ranks" className="primary-btn"><ShoppingBag size={16} /> ดูยศทั้งหมด <ArrowRight size={15} /></a>
+                <a href="#how-to-buy" className="ghost-btn"><Gamepad2 size={16} /> วิธีซื้อ</a>
               </div>
-              <div className="hero-note">
-                <Sparkles size={14} className="gold-text" /> เติมเงินแนบสลิปครั้งเดียว ซื้อยศหักกระเป๋าออโต้ส่งเข้าเซิร์ฟเวอร์ทันที
-              </div>
-              <div className="hero-note" style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14, borderColor: serverStatusQuery.data?.online ? "rgba(52, 211, 153, 0.35)" : "rgba(248, 113, 113, 0.3)" }} aria-live="polite">
-                {serverStatusQuery.data?.online ? <Wifi size={15} style={{ color: "#34d399" }} /> : <WifiOff size={15} style={{ color: "#f87171" }} />}
-                <span>
-                  <strong style={{ color: serverStatusQuery.data?.online ? "#6ee7b7" : "#fca5a5" }}>{serverStatusQuery.isLoading ? "กำลังตรวจสอบเซิร์ฟเวอร์" : serverStatusQuery.data?.online ? "เซิร์ฟเวอร์ออนไลน์" : "เซิร์ฟเวอร์ออฟไลน์หรือยังตรวจไม่ได้"}</strong>
-                  {serverStatusQuery.data && <small style={{ display: "block", color: "rgba(255,255,255,0.62)", marginTop: 3 }}><Users size={12} style={{ verticalAlign: "-2px", marginRight: 4 }} />{serverStatusQuery.data.players}/{serverStatusQuery.data.maxPlayers || "—"} คน · {serverStatusQuery.data.version} · latency {serverStatusQuery.data.latency == null ? "—" : `${serverStatusQuery.data.latency} ms`}</small>}
-                </span>
-                <button type="button" className="ghost-btn compact-btn" style={{ marginLeft: "auto", padding: "6px 9px" }} onClick={() => serverStatusQuery.refetch()} disabled={serverStatusQuery.isFetching} aria-label="รีเฟรชสถานะเซิร์ฟเวอร์"><Activity size={13} /></button>
-              </div>
-              <ol className="realm-journey" aria-label="ขั้นตอนการซื้อยศ">
-                <li><span>01</span><div><strong>เติม Wallet</strong><small>แนบสลิปเพียงครั้งเดียว</small></div></li>
-                <li><span>02</span><div><strong>เลือกยศ</strong><small>ดูสิทธิประโยชน์ก่อนตัดสินใจ</small></div></li>
-                <li><span>03</span><div><strong>รับสถานะ</strong><small>ติดตามคำสั่งซื้อได้ในบัญชี</small></div></li>
-              </ol>
-            </div>
-            <div className="hero-art" aria-hidden="true">
-              <div className="float-badge one"><CheckCircle2 size={15} className="gold-text" /> ระบบ Wallet สะดวก</div>
-              <div className="hero-card">
-                <div className="hero-card-inner">
-                  <div className="crown"><Crown size={48} strokeWidth={1.25} /></div>
-                  <div>
-                    <div className="hero-card-label">Realm Prestige</div>
-                    <div className="hero-card-title">Ritz Royal</div>
-                    <div className="hero-card-price">Ultimate Tier</div>
-                  </div>
+
+              <div className="hero-status-card">
+                <div className={"status-marker " + (serverStatusQuery.data?.online ? "online" : "offline")} />
+                <div className="status-copy">
+                  <strong>
+                    {serverStatusQuery.isLoading ? "กำลังตรวจสอบเซิร์ฟเวอร์" : serverStatusQuery.data?.online ? "RitzSMP Online" : "ยังตรวจสถานะไม่ได้"}
+                  </strong>
+                  <span>
+                    {serverStatusQuery.data ? String(serverStatusQuery.data.players) + "/" + String(serverStatusQuery.data.maxPlayers || "—") + " คน" : "ลองใหม่อีกครั้ง"}
+                    {serverStatusQuery.data?.version ? " · " + serverStatusQuery.data.version : ""}
+                  </span>
                 </div>
+                <button type="button" className="icon-btn" onClick={() => serverStatusQuery.refetch()} disabled={serverStatusQuery.isFetching} aria-label="รีเฟรชสถานะเซิร์ฟเวอร์">
+                  <RefreshCcw size={14} className={serverStatusQuery.isFetching ? "spin" : ""} />
+                </button>
               </div>
-              <div className="float-badge two"><ShieldCheck size={15} className="gold-text" /> สิทธิ์พิเศษในเกม</div>
+
+              <div className="hero-metrics">
+                <div><span>LOGIN</span><strong>ผ่านบัญชี</strong></div>
+                <div><span>PAY</span><strong>Wallet</strong></div>
+                <div><span>DELIVERY</span><strong>RCON</strong></div>
+              </div>
+            </div>
+
+            <div className="hero-panel">
+              <div className="royal-card">
+                <div className="royal-top"><span>RITZ ROYAL</span><Crown size={18} /></div>
+                <div className="royal-seal"><Crown size={50} strokeWidth={1.25} /></div>
+                <div className="royal-label">OFFICIAL RANK STORE</div>
+                <div className="royal-title">เลือกยศที่เข้ากับสไตล์การเล่น</div>
+                <div className="royal-price">
+                  {highestPricedRank ? formatPrice(highestPricedRank.price) + " ฿" : "—"}
+                  <span>ระดับราคาสูงสุดที่เปิดขาย</span>
+                </div>
+                <div className="royal-divider" />
+                <div className="royal-foot"><span>ดูข้อมูลก่อนซื้อ</span><ChevronRight size={15} /></div>
+              </div>
+              <div className="hero-side-note"><Zap size={14} /><span>กรอก IGN ตอน Checkout แล้วตรวจสอบให้ถูกต้องก่อนยืนยัน</span></div>
             </div>
           </div>
         </section>
 
-        <section className="journey-band" aria-labelledby="journey-title">
-          <div className="container journey-band-grid">
-            <div>
-              <div className="eyebrow">The RitzSMP Journey</div>
-              <h2 id="journey-title">เลือกยศอย่างมั่นใจ<br /><span>รู้ทุกขั้นตอนก่อนเริ่ม</span></h2>
-            </div>
-            <div className="journey-checkpoints">
-              <div className="checkpoint"><span className="checkpoint-index">1</span><div><strong>เติมเครดิต</strong><small>แจ้งยอดและแนบสลิปผ่านบัญชีของคุณ</small></div></div>
-              <div className="checkpoint"><span className="checkpoint-index">2</span><div><strong>เลือกสิทธิ์</strong><small>เทียบราคา ระยะเวลา และสิทธิพิเศษของแต่ละยศ</small></div></div>
-              <div className="checkpoint"><span className="checkpoint-index">3</span><div><strong>ติดตามผล</strong><small>ตรวจสอบสถานะคำสั่งซื้อได้จากประวัติของคุณ</small></div></div>
-            </div>
+        <section className="ticker" aria-label="จุดเด่น">
+          <div className="ticker-inner">
+            <span>RITZSMP</span><i /><span>RANK STORE</span><i /><span>WALLET</span><i /><span>RCON DELIVERY</span><i /><span>JAVA + BEDROCK</span>
           </div>
         </section>
 
@@ -401,543 +334,247 @@ export default function Home() {
           <div className="container">
             <div className="section-head">
               <div>
-                <div className="eyebrow">Realm Ranks Catalog</div>
-                <h2 className="section-title">ยศและสถานะผู้สนับสนุน</h2>
+                <div className="eyebrow">01 / RANK CATALOG</div>
+                <h2 className="section-title">ยศทั้งหมด</h2>
+                <p className="section-description">รายการยศและสิทธิประโยชน์โหลดจากข้อมูลร้านค้าโดยตรง ไม่ต้องกรอกข้อมูลซ้ำในหน้าเว็บ</p>
               </div>
-              <p className="section-description">เลือกยศที่คุณต้องการเพื่อสนับสนุนการพัฒนาเซิร์ฟเวอร์ RitzSMP ระบบจะหักยอดเงินจากกระเป๋าของคุณอัตโนมัติทันที</p>
+              <div className="catalog-count"><strong>{filteredRanks.length}</strong><span>แพ็กเกจ</span></div>
             </div>
 
-            <div className="catalog-toolbar">
-              <div className="rank-search">
-                <span className="rank-search-icon">
-                  <Search size={16} />
-                </span>
-                <input
-                  type="text"
-                  placeholder="ค้นหายศ, สิทธิพิเศษ หรือคำอธิบาย..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="rank-search-input"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery("")}
-                    className="rank-search-clear"
-                    aria-label="ล้างคำค้นหา"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
+            <div className="catalog-tools">
+              <div className="search-box">
+                <Search size={15} />
+                <input value={searchQuery} onChange={event => setSearchQuery(event.target.value)} placeholder="ค้นหายศหรือสิทธิพิเศษ..." aria-label="ค้นหายศ" />
+                {searchQuery && <button type="button" onClick={() => setSearchQuery("")} aria-label="ล้างการค้นหา"><X size={14} /></button>}
               </div>
-
-              <div className="rank-filters" aria-label="ตัวกรองช่วงราคา">
-                <button
-                  type="button"
-                  className={`ghost-btn compact-btn ${priceFilter === "all" ? "active-filter" : ""}`}
-                  onClick={() => setPriceFilter("all")}
-                >
-                  ทั้งหมด
-                </button>
-                <button
-                  type="button"
-                  className={`ghost-btn compact-btn ${priceFilter === "budget" ? "active-filter" : ""}`}
-                  onClick={() => setPriceFilter("budget")}
-                >
-                  &le; 500 ฿
-                </button>
-                <button
-                  type="button"
-                  className={`ghost-btn compact-btn ${priceFilter === "mid" ? "active-filter" : ""}`}
-                  onClick={() => setPriceFilter("mid")}
-                >
-                  501 - 1,500 ฿
-                </button>
-                <button
-                  type="button"
-                  className={`ghost-btn compact-btn ${priceFilter === "prestige" ? "active-filter" : ""}`}
-                  onClick={() => setPriceFilter("prestige")}
-                >
-                  &gt; 1,500 ฿
-                </button>
+              <div className="filter-row">
+                {([
+                  ["all", "ทั้งหมด"],
+                  ["starter", "เริ่มต้น"],
+                  ["royal", "Royal"],
+                  ["legendary", "Legendary"],
+                ] as const).map(([value, label]) => (
+                  <button key={value} type="button" className={"filter-btn " + (priceFilter === value ? "active" : "")} onClick={() => setPriceFilter(value)}>{label}</button>
+                ))}
               </div>
             </div>
 
             {ranksQuery.isLoading ? (
-              <div className="loading"><Loader2 className="animate-spin" size={24} /> กำลังโหลดรายการยศ...</div>
+              <div className="loading"><Loader2 size={20} className="animate-spin" /> กำลังโหลดรายการยศ...</div>
             ) : ranksQuery.isError ? (
-              <div className="empty-box" style={{ borderColor: "rgba(181,77,82,.3)" }}>
-                <AlertCircle size={24} style={{ color: "#ff9a94", marginBottom: 8 }} />
-                <p>ไม่สามารถโหลดรายการยศได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง</p>
-                <button className="ghost-btn compact-btn" style={{ marginTop: 12 }} onClick={() => ranksQuery.refetch()}>
-                  <RefreshCcw size={14} /> โหลดใหม่
-                </button>
-              </div>
-            ) : (() => {
-              const filteredRanks = ranks.filter(rank => {
-                const query = searchQuery.toLowerCase().trim();
-                const matchesQuery = !query || rank.displayName.toLowerCase().includes(query) || rank.description.toLowerCase().includes(query) || rank.badge.toLowerCase().includes(query) || rank.features.toLowerCase().includes(query);
-                const priceNum = Number(rank.price);
-                const matchesPrice =
-                  priceFilter === "all" ? true :
-                  priceFilter === "budget" ? priceNum <= 500 :
-                  priceFilter === "mid" ? priceNum > 500 && priceNum <= 1500 :
-                  priceFilter === "prestige" ? priceNum > 1500 : true;
-                return matchesQuery && matchesPrice;
-              });
-
-              if (filteredRanks.length === 0) {
-                return (
-                  <div className="empty-box" style={{ padding: "48px 24px", textAlign: "center" }}>
-                    <Search size={32} style={{ color: "#d4af37", marginBottom: 12, opacity: 0.8 }} />
-                    <h3 style={{ fontSize: "18px", fontWeight: 700, margin: "0 0 8px", color: "#f8fafc" }}>ไม่พบยศที่ตรงกับการค้นหา</h3>
-                    <p className="subtle" style={{ margin: "0 0 16px" }}>ลองเปลี่ยนคำค้นหาหรือตัวกรองราคาใหม่อีกครั้ง</p>
-                    <button
-                      type="button"
-                      className="ghost-btn compact-btn"
-                      onClick={() => { setSearchQuery(""); setPriceFilter("all"); }}
-                    >
-                      ล้างตัวกรองทั้งหมด
-                    </button>
-                  </div>
-                );
-              }
-
-              return (
-                <>
-                  <div className="catalog-result" aria-live="polite">
-                    <span><Sparkles size={14} /> พบ <strong>{filteredRanks.length}</strong> ยศที่เลือกได้</span>
-                    <span>เลือกระดับที่เหมาะกับการผจญภัยของคุณ</span>
-                  </div>
-                  <div className="rank-grid">
-                  {filteredRanks.map(rank => {
-                    const features = parseFeatures(rank.features);
-                    const isFreeTemplate = Number(rank.price) <= 0;
-                    const presentation = getRankPresentation(rank.price);
-                    const isFeatured = rank.id === featuredRankId && !searchQuery && priceFilter === "all";
-                    return (
-                      <article key={rank.id} className={`rank-card ${rank.color} tier-${presentation.tier} ${isFeatured ? "featured" : ""}`}>
-                        <div className="rank-card-topline">
-                          <span className="rank-tier-label">{presentation.label}</span>
-                          <span className="rank-level">LEVEL {presentation.level || "—"}</span>
-                        </div>
-                        <span className="rank-ribbon">{rank.badge || "Ritz Rank"}</span>
-                        <div className="rank-icon"><Crown size={23} strokeWidth={1.7} /></div>
-                        <div className="rank-tier-copy">{presentation.subtitle}</div>
-                        <div className="rank-name">{rank.displayName}</div>
-                        <p className="rank-description">{rank.description}</p>
-                        <ul className="feature-list">
-                          {features.map(feature => (
-                            <li key={feature}><Check size={14} /> <span>{feature}</span></li>
-                          ))}
-                        </ul>
-                        <div className="rank-bottom">
-                          <div className="price">
-                            {!isFreeTemplate ? `${formatPrice(rank.price)} ฿` : "รอกำหนดราคา"}
-                            <small>{rank.duration}</small>
-                          </div>
-                          <button
-                            className="primary-btn compact-btn"
-                            onClick={() => openOrder(rank)}
-                            disabled={isFreeTemplate}
-                          >
-                            {!isFreeTemplate ? "ปลดล็อกยศ" : "รอเปิดใช้งาน"} <ArrowRight size={14} />
+              <div className="empty-box"><AlertCircle size={20} className="gold-text" /><strong>ไม่สามารถโหลดรายการยศได้</strong><button type="button" className="ghost-btn compact-btn" onClick={() => ranksQuery.refetch()}>ลองใหม่</button></div>
+            ) : filteredRanks.length === 0 ? (
+              <div className="empty-box"><Search size={20} className="gold-text" /><strong>ไม่พบยศที่ตรงกับการค้นหา</strong><span>ลองเปลี่ยนคำค้นหาหรือตัวกรอง</span></div>
+            ) : (
+              <div className="rank-grid">
+                {filteredRanks.map(rank => {
+                  const features = parseFeatures(rank.features);
+                  const presentation = getRankPresentation(rank.price);
+                  const isFeatured = highestPricedRank?.id === rank.id;
+                  return (
+                    <article key={rank.id} className={"rank-card tier-" + presentation.tier + " color-" + safeColorClass(rank.color) + (isFeatured ? " featured" : "")}>
+                      {isFeatured && <div className="rank-featured">HIGHEST TIER</div>}
+                      <div className="rank-card-top">
+                        <div><span className="rank-tier-label">{presentation.label}</span><span className="rank-level">LEVEL {presentation.level || "—"}</span></div>
+                        <span className="rank-badge">{rank.badge || "RITZ RANK"}</span>
+                      </div>
+                      <div className="rank-emblem"><Crown size={22} /></div>
+                      <div className="rank-name">{rank.displayName}</div>
+                      <div className="rank-duration">{rank.duration}</div>
+                      <p className="rank-description">{rank.description}</p>
+                      <ul className="feature-list">
+                        {features.slice(0, 7).map(feature => <li key={feature}><Check size={13} /><span>{feature}</span></li>)}
+                      </ul>
+                      {features.length > 7 && <div className="feature-more">+ อีก {features.length - 7} สิทธิ์</div>}
+                      <div className="rank-card-bottom">
+                        <div><span className="price-label">ราคา</span><strong>{Number(rank.price) > 0 ? formatPrice(rank.price) + " ฿" : "รอกำหนดราคา"}</strong></div>
+                        <div className="rank-actions">
+                          <button type="button" className="mini-btn" onClick={() => setDetailsRank(rank)}>ดูรายละเอียด</button>
+                          <button type="button" className="primary-btn compact-btn" disabled={Number(rank.price) <= 0} onClick={() => openPurchase(rank)}>
+                            {Number(rank.price) > 0 ? "ซื้อยศ" : "ยังไม่เปิดขาย"} <ArrowRight size={13} />
                           </button>
                         </div>
-                      </article>
-                    );
-                  })}
-                  </div>
-                </>
-              );
-            })()}
-
-            {rankNotice && (
-              <div className="hero-note" style={{ marginTop: 28 }}>
-                <Sparkles size={14} className="gold-text" /> หมายเหตุ: ยศบางรายการอยู่ในสถานะ Template แอดมินสามารถกำหนดราคาจริงได้ทันที
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
+          </div>
+        </section>
+
+        <section className="section dark-band" id="how-to-buy">
+          <div className="container">
+            <div className="section-head">
+              <div>
+                <div className="eyebrow">02 / HOW TO BUY</div>
+                <h2 className="section-title">ซื้อยังไง</h2>
+                <p className="section-description">ระบบแยกการเติม Wallet กับการซื้อยศออกจากกัน เพื่อให้ยอดเงินและออเดอร์ตรวจสอบได้ง่าย</p>
+              </div>
+            </div>
+            <div className="steps-grid">
+              <article className="step-card"><span>01</span><Wallet size={19} /><h3>เติม Wallet</h3><p>โอนเงินตามช่องทางที่กำหนด แล้วส่งสลิปผ่านหน้าเว็บเพื่อรอตรวจสอบ</p></article>
+              <article className="step-card"><span>02</span><ShoppingBag size={19} /><h3>เลือกยศ</h3><p>เปิดรายละเอียดแพ็กเกจ ตรวจสิทธิประโยชน์และราคาก่อนซื้อ</p></article>
+              <article className="step-card"><span>03</span><Gamepad2 size={19} /><h3>กรอก IGN</h3><p>ใส่ชื่อในเกมที่ต้องการรับยศ แล้วตรวจสอบตัวสะกดก่อนยืนยัน</p></article>
+              <article className="step-card"><span>04</span><CheckCircle2 size={19} /><h3>ติดตามผล</h3><p>เก็บเลขออเดอร์และเปิดหน้า Account เพื่อตรวจสอบสถานะได้ตลอด</p></article>
+            </div>
+            <div className="warning-line"><AlertCircle size={15} /><span>กรุณาตรวจสอบ Minecraft IGN ให้ถูกต้องก่อนชำระ เพราะระบบใช้ชื่อนี้ในการส่งคำสั่งมอบยศ</span></div>
           </div>
         </section>
 
         <section className="section" id="payment">
           <div className="container">
-            <div className="payment-strip">
+            <div className="section-head">
               <div>
-                <div className="payment-heading">
-                  <span className="payment-heading-icon"><CreditCard size={18} /></span>
-                  <span>ช่องทางการโอนเงินเพื่อเติมเข้ากระเป๋า</span>
-                </div>
-                <p className="payment-sub">โอนเงินผ่านบัญชีธนาคารหรือพร้อมเพย์ด้านล่าง จากนั้นกดปุ่ม "เติมเงิน" ด้านบนเพื่อระบุยอดและแนบสลิป เมื่อแอดมินตรวจสอบแล้วยอดเงินจะเข้ากระเป๋าอัตโนมัติ</p>
+                <div className="eyebrow">03 / PAYMENT</div>
+                <h2 className="section-title">ช่องทางเติม Wallet</h2>
+                <p className="section-description">โอนตามช่องทางด้านล่าง จากนั้นกดเติม Wallet และแนบสลิปในหน้าเว็บ</p>
               </div>
-              <div className="payment-options">
-                {paymentAccounts.map(account => (
-                  <button type="button" className="payment-chip" key={account.label} onClick={() => copyAccount(account.value)}>
-                    <strong>{account.label}</strong>
-                    <span>{account.value}</span>
-                    <small>{account.detail}</small>
-                    <span className="subtle" style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, fontSize: 10 }}>
-                      <Copy size={11} /> คลิกเพื่อคัดลอก
-                    </span>
-                  </button>
-                ))}
-              </div>
+              <div className="payment-lock"><ShieldCheck size={15} /> ตรวจสลิปก่อนเพิ่มยอด</div>
+            </div>
+            <div className="payment-grid">
+              {paymentAccounts.map(account => (
+                <article className="payment-card" key={account.label}>
+                  <div className="payment-icon"><Landmark size={18} /></div>
+                  <div className="payment-content"><span>{account.label}</span><strong>{account.value}</strong><small>{account.detail}</small></div>
+                  <button type="button" className="icon-btn" onClick={() => void copyAccount(account.value)} aria-label={"คัดลอก " + account.label}><Copy size={14} /></button>
+                </article>
+              ))}
+            </div>
+            <div className="payment-actions">
+              {isAuthenticated ? (
+                <button type="button" className="primary-btn" onClick={() => setIsTopupOpen(true)}><Wallet size={16} /> เติม Wallet ตอนนี้</button>
+              ) : (
+                <button type="button" className="primary-btn" onClick={() => startLogin()}><LogIn size={16} /> เข้าสู่ระบบเพื่อเติม Wallet</button>
+              )}
+              <span>แนบสลิปตอนเติมเงินเท่านั้น การซื้อยศใช้ยอด Wallet</span>
             </div>
           </div>
         </section>
 
-        <section className="section" id="orders">
-          <div className="container">
-            <div className="section-head">
-              <div>
-                <div className="eyebrow">Player Orders History</div>
-                <h2 className="section-title">ประวัติออเดอร์ของคุณ</h2>
+        {isAuthenticated && (
+          <section className="section account-preview">
+            <div className="container">
+              <div className="account-preview-head">
+                <div><div className="eyebrow">04 / YOUR STORE</div><h2 className="section-title">บัญชีของคุณ</h2></div>
+                <Link href="/account" className="ghost-btn compact-btn">เปิดบัญชี <ArrowRight size={13} /></Link>
               </div>
-              {!isAuthenticated && (
-                <button className="ghost-btn compact-btn" onClick={() => startLogin()}>
-                  <LogIn size={14} /> เข้าสู่ระบบเพื่อดูประวัติ
-                </button>
-              )}
+              <div className="account-preview-grid">
+                <div className="quick-balance"><span>ยอด Wallet</span><strong>{formatPrice(walletBalance)} ฿</strong><small>ยอดพร้อมใช้สำหรับซื้อยศ</small></div>
+                <div className="quick-orders">
+                  <div className="quick-orders-head"><span><History size={14} /> ออเดอร์ล่าสุด</span><strong>{orders.length}</strong></div>
+                  {orders.slice(0, 3).map(order => (
+                    <div className="quick-order-row" key={order.id}>
+                      <div><strong>#{order.id}</strong><span>{order.rankName}</span></div>
+                      <span className={"status " + (order.status === "สำเร็จ" ? "success" : order.status === "ยกเลิก" ? "cancelled" : "pending")}>{statusLabel(order.status)}</span>
+                    </div>
+                  ))}
+                  {orders.length === 0 && <div className="quick-empty">ยังไม่มีออเดอร์</div>}
+                </div>
+              </div>
             </div>
+          </section>
+        )}
 
-            {!isAuthenticated ? (
-              <div className="empty-box">
-                <LogIn size={22} className="gold-text" style={{ marginBottom: 8 }} />
-                <p>กรุณาเข้าสู่ระบบด้วยบัญชีของคุณเพื่อตรวจสอบสถานะออเดอร์และการจัดส่งยศ</p>
-              </div>
-            ) : ordersQuery.isLoading ? (
-              <div className="loading"><Loader2 className="animate-spin" size={24} /> กำลังโหลดประวัติออเดอร์ของคุณ...</div>
-            ) : ordersQuery.isError ? (
-              <div className="empty-box" style={{ borderColor: "rgba(181,77,82,.3)" }}>
-                <AlertCircle size={24} style={{ color: "#ff9a94", marginBottom: 8 }} />
-                <p>ไม่สามารถดึงข้อมูลประวัติออเดอร์ได้ กรุณาลองใหม่อีกครั้ง</p>
-                <button className="ghost-btn compact-btn" style={{ marginTop: 12 }} onClick={() => ordersQuery.refetch()}>
-                  <RefreshCcw size={14} /> โหลดใหม่
-                </button>
-              </div>
-            ) : ordersQuery.data?.length ? (
-              <div className="order-list">
-                {ordersQuery.data.map(order => (
-                  <div className="order-row" key={order.id}>
-                    <div>
-                      <strong>#{order.id} · {order.rankName}</strong>
-                      <span>IGN: {order.minecraftIGN}</span>
-                    </div>
-                    <div>
-                      <strong>{formatPrice(order.amount)} ฿</strong>
-                      <span>{order.paymentMethod}</span>
-                    </div>
-                    <div>
-                      <span className={`status ${statusBadgeClass(order.status)}`}>{order.status}</span>
-                    </div>
-                    <div>
-                      <span>{formatDate(order.createdAt)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="empty-box">
-                <p>ยังไม่มีประวัติการสั่งซื้อ เติมเงินเข้ากระเป๋าและเลือกซื้อยศที่คุณต้องการได้เลย</p>
-              </div>
-            )}
+        <section className="section final-cta">
+          <div className="container final-box">
+            <div><div className="eyebrow">RITZSMP / READY</div><h2>เลือกยศ แล้วกลับเข้าเกม</h2><p>ออเดอร์ทุกใบมีเลขอ้างอิงและสถานะให้ตรวจสอบจากบัญชีของคุณ</p></div>
+            <a href="#ranks" className="primary-btn">เลือกยศ <ArrowRight size={15} /></a>
           </div>
         </section>
       </main>
 
       <footer className="footer">
         <div className="container footer-inner">
-          <strong>RITZ<span className="gold-text">SMP</span> · Official Realm Sanctuary</strong>
-          <span>ระบบร้านค้าออนไลน์อย่างเป็นทางการ เติมเงินและซื้อยศอัตโนมัติผ่าน RCON และ Wallet</span>
+          <div><strong>RITZ<span className="gold-text">SMP</span></strong><span>Official Realm Store</span></div>
+          <div className="footer-links"><a href="#ranks">ยศ</a><a href="#payment">ชำระเงิน</a><Link href="/account">บัญชี</Link><a href="https://discord.gg/ZrChjhseS" target="_blank" rel="noopener">Discord ↗</a></div>
         </div>
       </footer>
 
-      {toastMessage && (
-        <div className="modal-backdrop" style={{ background: "transparent", pointerEvents: "none" }}>
-          <div className="user-chip" style={{ pointerEvents: "auto", position: "fixed", bottom: 28, zIndex: 100 }}>
-            {toastMessage}
+      {toastMessage && <div className="store-toast" role="status">{toastMessage}</div>}
+
+      {topupResult !== null && (
+        <div className="modal-backdrop" role="presentation">
+          <div className="modal compact-modal" role="dialog" aria-modal="true">
+            <div className="success-icon"><CheckCircle2 size={25} /></div>
+            <div className="eyebrow">TOPUP SUBMITTED</div>
+            <h2 className="modal-title">ส่งคำขอเติม Wallet แล้ว</h2>
+            <p className="subtle">เลขออเดอร์ <strong>#{topupResult}</strong> ถูกบันทึกไว้แล้ว หลังตรวจสอบสลิปยอดจะเข้ากระเป๋าของคุณ</p>
+            <div className="modal-actions"><Link href="/account" className="primary-btn compact-btn" onClick={() => setTopupResult(null)}>ดูออเดอร์</Link><button type="button" className="ghost-btn compact-btn" onClick={() => setTopupResult(null)}>ปิด</button></div>
           </div>
         </div>
       )}
 
-      {/* Topup Modal */}
-      {isTopupOpen && (
-        <div className="modal-backdrop" role="presentation">
+      {detailsRank && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setDetailsRank(null); }}>
+          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="rank-detail-title">
+            <div className="modal-head">
+              <div><div className="eyebrow">{getRankPresentation(detailsRank.price).label}</div><h2 className="modal-title" id="rank-detail-title">{detailsRank.displayName}</h2><p className="subtle">{detailsRank.description}</p></div>
+              <button type="button" className="close-btn" onClick={() => setDetailsRank(null)} aria-label="ปิด"><X size={17} /></button>
+            </div>
+            <div className="detail-price">{formatPrice(detailsRank.price)} ฿ <span>{detailsRank.duration}</span></div>
+            <div className="detail-list">{parseFeatures(detailsRank.features).map(feature => <div key={feature}><Check size={14} /><span>{feature}</span></div>)}</div>
+            <div className="modal-actions">
+              <button type="button" className="ghost-btn compact-btn" onClick={() => setDetailsRank(null)}>กลับ</button>
+              <button type="button" className="primary-btn compact-btn" disabled={Number(detailsRank.price) <= 0} onClick={() => openPurchase(detailsRank)}>ซื้อยศนี้ <ArrowRight size={14} /></button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isTopupOpen && isAuthenticated && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setIsTopupOpen(false); }}>
           <div className="modal" role="dialog" aria-modal="true" aria-labelledby="topup-title">
             <div className="modal-head">
-              <div>
-                <div className="eyebrow">Wallet Top-up</div>
-                <h2 className="modal-title" id="topup-title">เติมเงินเข้ากระเป๋า RitzSMP</h2>
-                <p className="subtle" style={{ margin: "7px 0 0", fontSize: 12 }}>ยอดเงินคงเหลือปัจจุบัน: {formatPrice(walletBalance)} บาท</p>
-              </div>
-              <button className="close-btn" type="button" onClick={() => setIsTopupOpen(false)} aria-label="ปิด">
-                <X size={17} />
-              </button>
+              <div><div className="eyebrow">WALLET TOP-UP</div><h2 className="modal-title" id="topup-title">เติมเงินเข้ากระเป๋า</h2><p className="subtle">ยอดคงเหลือปัจจุบัน <strong>{formatPrice(walletBalance)} ฿</strong></p></div>
+              <button type="button" className="close-btn" onClick={() => setIsTopupOpen(false)} aria-label="ปิด"><X size={17} /></button>
             </div>
             <form className="form-grid" onSubmit={submitTopup}>
-              <div className="checkout-steps" aria-label="ขั้นตอนเติมเงิน">
-                <span className="checkout-step is-active"><b>1</b> โอนเงิน</span>
-                <span className="checkout-step"><b>2</b> แนบสลิป</span>
-                <span className="checkout-step"><b>3</b> รอตรวจสอบ</span>
+              <div className="checkout-steps"><span className="is-active"><b>1</b> โอน</span><span className="is-active"><b>2</b> แนบสลิป</span><span><b>3</b> รอตรวจสอบ</span></div>
+              <label className="form-label">จำนวนเงิน<input className="form-control" type="number" min="1" step="1" value={topupAmount} onChange={event => setTopupAmount(event.target.value)} placeholder="เช่น 100" /></label>
+              <label className="form-label">ช่องทาง<select className="form-control" value={topupPaymentMethod} onChange={event => setTopupPaymentMethod(event.target.value as typeof topupPaymentMethod)}><option value="PromptPay">PromptPay</option><option value="TrueMoney Wallet">TrueMoney Wallet</option><option value="ธนาคารออมสิน">ธนาคารออมสิน</option></select></label>
+              <div className="payment-mini">
+                {paymentAccounts.map(account => <button type="button" key={account.value} onClick={() => void copyAccount(account.value)} className="payment-mini-row"><span>{account.label}</span><strong>{account.value}</strong><Copy size={13} /></button>)}
               </div>
-              <label className="form-label">
-                จำนวนเงินที่ต้องการเติม (บาท)
-                <input
-                  type="number"
-                  step="1"
-                  min="1"
-                  max="100000"
-                  className="form-control"
-                  value={topupAmount}
-                  onChange={event => setTopupAmount(event.target.value)}
-                  placeholder="เช่น 100"
-                  required
-                />
-              </label>
-
-              <label className="form-label">
-                เลือกช่องทางที่โอนเงิน
-                <select
-                  className="form-control"
-                  value={topupPaymentMethod}
-                  onChange={event => setTopupPaymentMethod(event.target.value as typeof topupPaymentMethod)}
-                >
-                  <option value="PromptPay">PromptPay / TrueMoney (0930286252)</option>
-                  <option value="ธนาคารออมสิน">ธนาคารออมสิน (020391511886)</option>
-                </select>
-              </label>
-              <div className="form-help">
-                บัญชีออมสิน: 020391511886 · พร้อมเพย์/วอเลท: 0930286252
-              </div>
-
-              <label className="form-label">
-                อัปโหลดสลิปหลักฐานการโอนเงิน
-                <div className="file-drop">
-                  <Upload size={22} className="gold-text" style={{ marginBottom: 6 }} />
-                  <span>{slipName || "คลิกหรือลากไฟล์สลิปมาวางที่นี่"}</span>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={event => handleFile(event.target.files?.[0])}
-                    required
-                  />
-                </div>
-              </label>
-
-              {createTopup.error && (
-                <div className="form-error">
-                  <AlertCircle size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />
-                  {createTopup.error.message}
-                </div>
-              )}
-
-              <div className="form-help">
-                <FileCheck2 size={13} style={{ verticalAlign: "-2px", marginRight: 5 }} />
-                เมื่อแอดมินตรวจสอบสลิปเรียบร้อย ยอดเงินจะถูกเติมเข้ากระเป๋าของคุณทันที
-              </div>
-
-              <div className="modal-actions">
-                <button className="ghost-btn compact-btn" type="button" onClick={() => setIsTopupOpen(false)}>
-                  ยกเลิก
-                </button>
-                <button className="primary-btn compact-btn" type="submit" disabled={createTopup.isPending || !slipData || !topupAmount}>
-                  {createTopup.isPending ? <Loader2 size={14} className="animate-spin" /> : <Wallet size={14} />}
-                  ยืนยันแจ้งเติมเงิน
-                </button>
-              </div>
+              <label className="file-drop"><CreditCard size={22} className="gold-text" /><span>{slipName ? "เลือกแล้ว: " + slipName : "เลือกไฟล์สลิป JPG / PNG / WEBP"}</span><input type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" onChange={event => handleSlip(event.target.files?.[0])} /></label>
+              {createTopup.error && <div className="form-error"><AlertCircle size={14} /> {createTopup.error.message}</div>}
+              <div className="form-help"><ShieldCheck size={13} /> หลังทีมงานตรวจสอบสลิป ยอดเงินจะเข้า Wallet ของบัญชีนี้</div>
+              <div className="modal-actions"><button type="button" className="ghost-btn compact-btn" onClick={() => setIsTopupOpen(false)}>ยกเลิก</button><button type="submit" className="primary-btn compact-btn" disabled={createTopup.isPending || !topupAmount || !slipData}>{createTopup.isPending ? <Loader2 size={14} className="spin" /> : <Wallet size={14} />} ยืนยันเติม Wallet</button></div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Rank Purchase Modal (Wallet Deduction without Slip) */}
-      {selectedRank && (
-        <div className="modal-backdrop" role="presentation">
-          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="order-title">
+      {selectedRank && isAuthenticated && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setSelectedRank(null); }}>
+          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="purchase-title">
             <div className="modal-head">
-              <div>
-                <div className="eyebrow">Wallet Realm Purchase</div>
-                <h2 className="modal-title" id="order-title">ซื้อยศ {selectedRank.displayName}</h2>
-                <p className="subtle" style={{ margin: "7px 0 0", fontSize: 12 }}>
-                  ราคา {formatPrice(selectedRank.price)} บาท · กระเป๋าของคุณ: <strong style={{ color: walletBalance >= Number(selectedRank.price) ? "#4ade80" : "#f87171" }}>{formatPrice(walletBalance)} ฿</strong>
-                </p>
-              </div>
-              <button className="close-btn" type="button" onClick={() => setSelectedRank(null)} aria-label="ปิด">
-                <X size={17} />
-              </button>
+              <div><div className="eyebrow">{getRankPresentation(selectedRank.price).label}</div><h2 className="modal-title" id="purchase-title">ซื้อ {selectedRank.displayName}</h2><p className="subtle">ระบบจะหัก Wallet ตามราคายศที่แสดงในรายการ</p></div>
+              <button type="button" className="close-btn" onClick={() => setSelectedRank(null)} aria-label="ปิด"><X size={17} /></button>
             </div>
+            <div className="purchase-summary"><div><span>ราคา</span><strong>{formatPrice(selectedRank.price)} ฿</strong></div><div><span>Wallet</span><strong className={walletBalance >= Number(selectedRank.price) ? "positive" : "negative"}>{formatPrice(walletBalance)} ฿</strong></div></div>
+            <div className="checkout-steps"><span className="is-active"><b>1</b> เลือกยศ</span><span className="is-active"><b>2</b> กรอก IGN</span><span><b>3</b> ส่งคำสั่ง</span></div>
             <form className="form-grid" onSubmit={submitPurchase}>
-              <div className="checkout-steps" aria-label="ขั้นตอนซื้อยศ">
-                <span className="checkout-step is-active"><b>1</b> ระบุชื่อในเกม</span>
-                <span className="checkout-step is-active"><b>2</b> ยืนยันยอด</span>
-                <span className="checkout-step"><b>3</b> ส่งคำขอยศ</span>
-              </div>
-              <label className="form-label">
-                ชื่อในเกม (Minecraft IGN)
-                <input
-                  className="form-control"
-                  value={ign}
-                  onChange={event => setIgn(event.target.value)}
-                  placeholder="เช่น RitzPlayer"
-                  minLength={3}
-                  maxLength={64}
-                  required
-                />
-              </label>
-
-              <div className="form-help" style={{ background: "rgba(212,175,55,0.08)", padding: "10px 12px", borderRadius: "8px", border: "1px solid rgba(212,175,55,0.2)" }}>
-                <Sparkles size={14} className="gold-text" style={{ verticalAlign: "-2px", marginRight: 5 }} />
-                ระบบจะหักเงินจากกระเป๋าของคุณทันที <strong>{formatPrice(selectedRank.price)} ฿</strong> โดย<strong>ไม่ต้องแนบสลิป</strong> และส่งยศเข้าเซิร์ฟเวอร์เกมผ่าน RCON อัตโนมัติ
-              </div>
-
-              {walletBalance < Number(selectedRank.price) && (
-                <div className="form-error" style={{ background: "rgba(239, 68, 68, 0.15)", borderColor: "rgba(239, 68, 68, 0.4)", color: "#f87171" }}>
-                  <AlertCircle size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />
-                  ยอดเงินในกระเป๋าของคุณไม่พอ กรุณากดปุ่มเติมเงินด้านบนก่อนซื้อยศ
-                </div>
-              )}
-
-              {purchaseRank.error && (
-                <div className="form-error">
-                  <AlertCircle size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />
-                  {purchaseRank.error.message}
-                </div>
-              )}
-
-              <div className="modal-actions">
-                <button className="ghost-btn compact-btn" type="button" onClick={() => setSelectedRank(null)}>
-                  ยกเลิก
-                </button>
-                <button
-                  className="primary-btn compact-btn"
-                  type="submit"
-                  disabled={purchaseRank.isPending || !ign.trim() || walletBalance < Number(selectedRank.price)}
-                >
-                  {purchaseRank.isPending ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                  ยืนยันซื้อยศ (หักกระเป๋า)
-                </button>
-              </div>
+              <label className="form-label">Minecraft IGN<input className="form-control" value={ign} onChange={event => setIgn(event.target.value)} placeholder="เช่น RitzPlayer" minLength={3} maxLength={64} autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
+              <div className="purchase-note"><Zap size={14} /><span>ตรวจสอบชื่อในเกมให้ถูกต้องก่อนยืนยัน ระบบจะส่งคำสั่งมอบยศผ่าน RCON</span></div>
+              {walletBalance < Number(selectedRank.price) && <div className="form-error"><AlertCircle size={14} /> Wallet ไม่พอ ต้องการอีก {formatPrice(Number(selectedRank.price) - walletBalance)} ฿</div>}
+              {purchaseRank.error && <div className="form-error"><AlertCircle size={14} /> {purchaseRank.error.message}</div>}
+              <div className="modal-actions"><button type="button" className="ghost-btn compact-btn" onClick={() => setSelectedRank(null)}>ยกเลิก</button><button type="submit" className="primary-btn compact-btn" disabled={purchaseRank.isPending || !ign.trim() || walletBalance < Number(selectedRank.price)}>{purchaseRank.isPending ? <Loader2 size={14} className="spin" /> : <CheckCircle2 size={14} />} ยืนยันซื้อ {formatPrice(selectedRank.price)} ฿</button></div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Topup Success Modal */}
-      {topupResult && (
-        <div className="modal-backdrop" role="presentation">
-          <div className="modal" role="dialog" aria-modal="true">
-            <div className="form-success" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <CheckCircle2 size={20} className="gold-text" />
-              <strong>แจ้งเติมเงินออเดอร์ #{topupResult} สำเร็จแล้ว</strong>
-            </div>
-            <div className={topupDiscordSent ? "success-status-line" : "form-error"}>
-              {topupDiscordSent ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
-              {topupDiscordSent ? "แจ้งแอดมินใน Discord แล้ว" : "บันทึกคำขอแล้ว แต่แจ้งเตือน Discord ไม่สำเร็จ"}
-              <span>•</span> ขั้นถัดไป: แอดมินตรวจสลิป
-            </div>
-            <p className="subtle" style={{ margin: "14px 0", lineHeight: 1.8, fontSize: 13 }}>
-              {topupDiscordSent
-                ? "ระบบได้ส่งสลิปและบันทึกคำขอเติมเงินของคุณไปยังแอดมินเรียบร้อยแล้ว เมื่อแอดมินตรวจสอบการโอนเงินเรียบร้อย ยอดเงินจะเข้าสู่กระเป๋าของคุณทันที"
-                : "ระบบบันทึกคำขอเติมเงินแล้ว แต่ไม่สามารถแจ้งเตือน Discord อัตโนมัติได้ กรุณาแจ้งทีมงานพร้อมเลขออเดอร์นี้เพื่อให้ตรวจสอบจากหน้าแอดมิน เมื่อยืนยันการโอนเงินแล้ว ยอดเงินจะเข้าสู่กระเป๋าของคุณทันที"}
-            </p>
-            <div className="modal-actions">
-              <button className="primary-btn compact-btn" onClick={() => setTopupResult(null)}>
-                รับทราบและปิดหน้าต่าง
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-
-      {/* Glassmorphism Purchase Success Modal with Neon Glow and Ambient Effects */}
       {purchaseResult && (
-        <div className="modal-backdrop animate-fade-in" role="presentation" style={{ backdropFilter: "blur(12px)", background: "rgba(10, 10, 15, 0.75)" }}>
-          <div className="modal glass-modal" role="dialog" aria-modal="true" style={{
-            background: "linear-gradient(135deg, rgba(20, 20, 30, 0.85) 0%, rgba(15, 15, 25, 0.95) 100%)",
-            border: "1px solid rgba(212, 175, 55, 0.35)",
-            boxShadow: "0 0 40px rgba(212, 175, 55, 0.2), 0 20px 40px rgba(0, 0, 0, 0.6)",
-            borderRadius: "16px",
-            padding: "28px",
-            position: "relative",
-            overflow: "hidden"
-          }}>
-            {/* Ambient glow accent */}
-            <div style={{
-              position: "absolute",
-              top: "-50px",
-              right: "-50px",
-              width: "150px",
-              height: "150px",
-              background: "radial-gradient(circle, rgba(212,175,55,0.25) 0%, transparent 70%)",
-              borderRadius: "50%",
-              pointerEvents: "none"
-            }} />
-
-            <div style={{ textAlign: "center", marginBottom: 20 }}>
-              <div style={{
-                width: "64px",
-                height: "64px",
-                margin: "0 auto 16px",
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, rgba(212,175,55,0.2) 0%, rgba(212,175,55,0.05) 100%)",
-                border: "2px solid rgba(212,175,55,0.6)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 0 20px rgba(212,175,55,0.4)",
-                animation: "pulse 2s infinite"
-              }}>
-                <Crown size={32} className="gold-text" />
-              </div>
-              <div className="eyebrow" style={{ color: "#d4af37", letterSpacing: "2px", fontSize: "11px", marginBottom: "4px" }}>RITZSMP REALM REWARD</div>
-              <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", margin: 0 }}>ซื้อยศ {purchaseResult.rankName} สำเร็จ!</h3>
-              <p className="subtle" style={{ margin: "6px 0 0", fontSize: "12px" }}>เลขออเดอร์ธุรกรรม: #{purchaseResult.id}</p>
-            </div>
-
-            <div style={{
-              background: "rgba(255, 255, 255, 0.03)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "12px",
-              padding: "16px",
-              marginBottom: "20px"
-            }}>
-              <div style={{ display: "flex", justifyContent: "between", marginBottom: "8px", fontSize: "13px" }}>
-                <span style={{ color: "#94a3b8" }}>ยอดเงินหักจากกระเป๋า:</span>
-                <strong style={{ color: "#f87171" }}>-{formatPrice(purchaseResult.amount)} ฿</strong>
-              </div>
-                <div style={{ display: "flex", justifyContent: "between", fontSize: "13px" }}>
-                <span style={{ color: "#94a3b8" }}>สถานะการส่งยศเข้าเซิร์ฟเวอร์:</span>
-                <strong style={{ color: purchaseResult.rconExecuted ? "#4ade80" : "#fbbf24", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                  {purchaseResult.rconExecuted ? <CheckCircle2 size={13} /> : <Clock3 size={13} />}
-                  {purchaseResult.rconExecuted ? "สำเร็จอัตโนมัติผ่าน RCON" : "รอดำเนินการตรวจสอบ/ส่งคำสั่งซ้ำ"}
-                </strong>
-              </div>
-            </div>
-
-            <p className="subtle" style={{ margin: "0 0 24px", lineHeight: "1.7", fontSize: "13px", textAlign: "center" }}>
-              {purchaseResult.rconExecuted
-                ? "ระบบได้ส่งคำสั่งอัปเกรดตัวละครของคุณในเกม RitzSMP เรียบร้อยแล้ว สามารถเข้าเกมและตรวจสอบยศใหม่ของคุณได้ทันที"
-                : "ระบบบันทึกรายการซื้อแล้ว แต่ยังส่งคำสั่งอัปเกรดเข้าเกมไม่สำเร็จ ทีมงานจะตรวจสอบและดำเนินการให้จากหน้าแอดมิน"}
-            </p>
-
-            <div className="modal-actions" style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-              <button
-                className="ghost-btn compact-btn"
-                onClick={() => setPurchaseResult(null)}
-                style={{ flex: 1 }}
-              >
-                ปิดหน้าต่าง
-              </button>
-              <button
-                className="primary-btn compact-btn"
-                onClick={() => { setPurchaseResult(null); }}
-                style={{ flex: 1, background: "linear-gradient(135deg, #d4af37 0%, #aa820a 100%)", color: "#000", fontWeight: 700 }}
-              >
-                <Sparkles size={14} style={{ marginRight: 4 }} /> ไปสนุกในเกมกันเลย!
-              </button>
-            </div>
+        <div className="modal-backdrop" role="presentation">
+          <div className="modal compact-modal" role="dialog" aria-modal="true" aria-labelledby="purchase-result-title">
+            <div className={"success-icon " + (purchaseResult.rconExecuted ? "done" : "pending-icon")}>{purchaseResult.rconExecuted ? <CheckCircle2 size={25} /> : <Clock3 size={25} />}</div>
+            <div className="eyebrow">{purchaseResult.rconExecuted ? "PURCHASE COMPLETE" : "PURCHASE RECEIVED"}</div>
+            <h2 className="modal-title" id="purchase-result-title">{purchaseResult.rconExecuted ? "ส่งยศเข้าเกมแล้ว" : "รับคำสั่งซื้อแล้ว"}</h2>
+            <p className="subtle">ออเดอร์ <strong>#{purchaseResult.id}</strong> · {purchaseResult.rankName} · IGN <strong>{purchaseResult.minecraftIGN}</strong></p>
+            <div className="result-status"><span>สถานะ</span><strong>{statusLabel(purchaseResult.status)}</strong></div>
+            {!purchaseResult.rconExecuted && <div className="form-help"><AlertCircle size={13} /> ระบบส่งคำสั่งเข้าเซิร์ฟเวอร์ไม่สำเร็จในรอบนี้ จึงบันทึกออเดอร์ไว้ให้ทีมงานดำเนินการต่อ</div>}
+            <div className="modal-actions"><Link href="/account" className="primary-btn compact-btn" onClick={() => setPurchaseResult(null)}>ดูออเดอร์</Link><button type="button" className="ghost-btn compact-btn" onClick={() => setPurchaseResult(null)}>ปิด</button></div>
           </div>
         </div>
       )}
