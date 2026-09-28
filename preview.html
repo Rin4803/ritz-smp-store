@@ -44,6 +44,32 @@ url("preview-bg.svg") center top/cover no-repeat fixed}
 .checkout{display:grid;grid-template-columns:1.05fr .95fr;gap:12px}.panel{padding:22px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(155deg,#101319,#090a0e)}.panel h3{margin:0 0 17px;font-size:18px}.row{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:10px}.row span{color:#7f828a}.field label{display:block;color:#83868e;font-size:9px}.field input{width:100%;height:42px;background:#07090c;border:1px solid #252932;color:#eee;border-radius:9px;padding:0 11px;margin:7px 0 15px}.statusBox{margin-top:14px;padding:13px;border:1px solid rgba(96,207,138,.18);background:rgba(96,207,138,.05);border-radius:10px;color:#82dba0;font-size:9px;line-height:1.65}
 .footer{padding:29px 0 43px;border-top:1px solid rgba(255,255,255,.08);background:#040507;color:#6f7178;font-size:9px}.footerTop{display:flex;justify-content:space-between;gap:20px}.footerLinks{display:flex;gap:15px;color:#898b93}
 .modal{position:fixed;inset:0;display:none;place-items:center;z-index:100;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);padding:16px}.modal.show{display:grid}.modalBox{width:min(520px,100%);background:#0b0d12;border:1px solid rgba(232,173,61,.28);border-radius:17px;padding:21px;box-shadow:0 35px 100px rgba(0,0,0,.7)}.modalTop{display:flex;justify-content:space-between;align-items:start}.close{border:0;background:none;color:#9699a0;font-size:23px}.modalBox h3{font-size:24px;margin:5px 0}.modalBox p{color:#81848c;font-size:9px}.modalBox .primary{width:100%;margin-top:15px}
+
+.authModal{width:min(470px,100%);padding:0;overflow:hidden}
+.authHead{padding:25px 24px 19px;border-bottom:1px solid rgba(255,255,255,.07);background:linear-gradient(180deg,#11141a,#0b0d12)}
+.authBrand{display:flex;align-items:center;gap:10px}
+.authMiniMark{width:34px;height:34px;border:1px solid var(--lineGold);border-radius:9px;display:grid;place-items:center;color:var(--gold2);font-weight:950;background:#e8ad3d10}
+.authBrand b{font-size:12px}.authBrand span{display:block;color:#747780;font-size:8px;letter-spacing:.12em;margin-top:2px}
+.authHead h3{font-size:25px;margin:18px 0 6px;letter-spacing:-.035em}
+.authHead p{font-size:10px;line-height:1.7;color:#858891;margin:0;max-width:390px}
+.authBody{padding:22px 24px 24px}
+.authBody .field input{height:46px;margin-bottom:8px}
+.authHint{font-size:9px;color:#6f727a;line-height:1.65;margin:0 0 14px}
+.authPrimary{width:100%;height:44px}
+.authSecondary{width:100%;margin-top:8px}
+.authFoot{padding-top:14px;margin-top:17px;border-top:1px solid rgba(255,255,255,.06);font-size:8px;color:#686b73;line-height:1.7}
+.authSuccess{display:none}
+.authSuccess.show{display:block}
+.authLogin.hide{display:none}
+.profileMini{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px;border:1px solid rgba(232,173,61,.2);background:#e8ad3d08;border-radius:11px;margin-bottom:14px}
+.profileMini strong{display:block;font-size:12px}.profileMini span{display:block;color:#777a82;font-size:8px;margin-top:2px}
+.profileDot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px rgba(96,207,138,.5)}
+.authSuccessBox{padding:14px;border:1px solid rgba(96,207,138,.18);background:rgba(96,207,138,.05);border-radius:11px;color:#91d9a8;font-size:9px;line-height:1.7}
+.walletPreview{display:flex;gap:8px;margin-top:10px}.walletPreview div{flex:1;padding:11px;border:1px solid rgba(255,255,255,.07);background:#07090c;border-radius:9px}.walletPreview small{display:block;color:#6f7279;font-size:8px}.walletPreview b{display:block;font-size:13px;margin-top:3px;color:#eee6da}
+.accountAction{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.userChip{display:none;align-items:center;gap:8px;padding:8px 10px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:#080a0d;font-size:9px;color:#d9d6ce}
+.userChip.show{display:flex}.userChip .dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+
 @media(max-width:1000px){.navlinks{display:none}.heroArt{right:-110px;opacity:.66}.quickBar{grid-template-columns:1fr 1fr}.quickItem:nth-child(3){border-right:0}.quickLead{grid-column:1/3;border-bottom:1px solid rgba(255,255,255,.08)}.storeLayout{grid-template-columns:150px 1fr}.strip{grid-template-columns:1fr 1fr}.checkout{grid-template-columns:1fr}}
 @media(max-width:680px){.shell{width:calc(100% - 22px)}.header{height:68px}.nav{height:68px}.logo{min-width:auto}.logoText span{font-size:7px}.navright .serverState{display:none}.hero{min-height:600px}.heroInner{min-height:600px;padding:45px 0 155px}.heroCopy{max-width:100%}.brandBig{font-size:54px}.heroSub{font-size:17px}.heroBody{font-size:11px}.heroArt{right:-160px;bottom:0;transform:scale(.82);opacity:.48}.quickBar{grid-template-columns:1fr}.quickLead{grid-column:auto;border-bottom:1px solid rgba(255,255,255,.08)}.quickItem{border-left:0;border-bottom:1px solid rgba(255,255,255,.08)}.quickItem:last-child{border-bottom:0}.storeLayout{grid-template-columns:1fr}.side{display:flex;gap:5px;overflow:auto}.side h3,.sideNote{display:none}.side button{width:auto;white-space:nowrap;text-align:center;margin:0}.productGrid{grid-template-columns:1fr}.categories{grid-template-columns:1fr}.strip{grid-template-columns:1fr}.section{padding:54px 0}.sectionHead{display:block}.sectionHead .btn{margin-top:12px}.footerTop{display:block}.footerLinks{margin-top:12px;flex-wrap:wrap}}
 </style>
@@ -102,14 +128,119 @@ url("preview-bg.svg") center top/cover no-repeat fixed}
 <footer class="footer"><div class="shell footerTop"><span>RitzSMP Store · Official Store Preview</span><div class="footerLinks"><a href="#store">ร้านค้า</a><a href="#process">เติมเงิน</a><a href="#activity">กิจกรรม</a><a href="#account">บัญชี</a></div><span>© 2026</span></div></footer>
 </div>
 
-<div class="modal" id="modal"><div class="modalBox"><div class="modalTop"><div><div class="eyebrow">RITZ SMP</div><h3 id="mTitle">เข้าสู่ระบบ</h3></div><button class="close" onclick="closeModal()">×</button></div><p>ตัวอย่างหน้าต่างที่ใช้กับเว็บจริง</p><div class="field"><label>Minecraft IGN / Username</label><input value="Mimi_123"></div><button class="btn primary" onclick="closeModal();toast('Preview: ระบบจริงจะโหลดบัญชีและ Wallet')">ดำเนินการต่อ</button></div></div>
-<script>
+<div class="modal" id="modal">
+  <div class="modalBox authModal">
+    <div class="authLogin" id="authLogin">
+      <div class="authHead">
+        <div class="authBrand">
+          <div class="authMiniMark">R</div>
+          <div><b>RitzSMP</b><span>PLAYER ACCOUNT</span></div>
+        </div>
+        <h3>เข้าสู่ระบบร้านค้า</h3>
+        <p>ใช้ชื่อ Minecraft ของคุณเพื่อเปิดบัญชีร้านค้า ไม่ต้องตั้งรหัสผ่านเพิ่มให้วุ่นวาย</p>
+      </div>
+      <div class="authBody">
+        <div class="field">
+          <label>Minecraft IGN / Username</label>
+          <input id="loginIgn" placeholder="เช่น Mimi_123" autocomplete="off">
+        </div>
+        <p class="authHint">การใช้งานจริงจะยืนยันเจ้าของบัญชีจากในเซิร์ฟเวอร์ครั้งแรกเท่านั้น หลังจากเชื่อมบัญชีแล้วกลับมาเปิดร้านครั้งต่อไปได้เร็วขึ้น</p>
+        <button class="btn primary authPrimary" onclick="submitLogin()">ดำเนินการต่อ</button>
+        <button class="btn authSecondary" onclick="closeModal()">ไว้ทีหลัง</button>
+        <div class="authFoot">บัญชีใช้สำหรับ Wallet, คำสั่งซื้อ และประวัติการซื้อของคุณเท่านั้น</div>
+      </div>
+    </div>
+
+    <div class="authSuccess" id="authSuccess">
+      <div class="authHead">
+        <div class="authBrand">
+          <div class="authMiniMark">R</div>
+          <div><b>RitzSMP</b><span>PLAYER ACCOUNT</span></div>
+        </div>
+        <h3>เข้าสู่ระบบแล้ว</h3>
+        <p>บัญชีผู้เล่นถูกเลือกสำหรับร้านค้านี้</p>
+      </div>
+      <div class="authBody">
+        <div class="profileMini">
+          <div><strong id="loggedIgn">Mimi_123</strong><span>Minecraft account</span></div>
+          <i class="profileDot"></i>
+        </div>
+        <div class="authSuccessBox">พร้อมใช้งานสำหรับดู Wallet, ซื้อสินค้า และติดตาม Order ในบัญชีเดียว</div>
+        <div class="walletPreview">
+          <div><small>Wallet</small><b>฿520</b></div>
+          <div><small>คำสั่งซื้อ</small><b>0 รายการ</b></div>
+        </div>
+        <div class="accountAction">
+          <button class="btn primary" onclick="closeModal();document.querySelector('#account').scrollIntoView({behavior:'smooth'});toast('Preview: เปิดหน้าบัญชี')">เข้าหน้าบัญชี</button>
+          <button class="btn" onclick="logoutPreview()">เปลี่ยนบัญชี</button>
+        </div>
+        <div class="authFoot">หน้า Preview นี้จำชื่อผู้เล่นไว้ในอุปกรณ์เพื่อให้เห็น flow แบบร้านจริงเท่านั้น</div>
+      </div>
+    </div>
+  </div>
+</div><script>
 const modal=document.getElementById('modal');
-function openRank(name,price){document.getElementById('mTitle').textContent=name+' · ฿'+price.toLocaleString();modal.classList.add('show');document.body.style.overflow='hidden'}
-function openLogin(){document.getElementById('mTitle').textContent='เข้าสู่ระบบ';modal.classList.add('show');document.body.style.overflow='hidden'}
+const authLogin=document.getElementById('authLogin');
+const authSuccess=document.getElementById('authSuccess');
+const loginIgn=document.getElementById('loginIgn');
+const loggedIgn=document.getElementById('loggedIgn');
+const userChip=document.createElement('div');
+userChip.className='userChip';
+userChip.innerHTML='<span class="dot"></span><span id="chipName"></span>';
+document.querySelector('.navright').insertBefore(userChip, document.querySelector('.navright .btn'));
+
+function openRank(name,price){
+  document.getElementById('mTitle')?.remove();
+  authLogin.classList.remove('hide');authSuccess.classList.remove('show');
+  loginIgn.value=localStorage.getItem('ritzPreviewIgn')||'';
+  modal.classList.add('show');document.body.style.overflow='hidden';
+}
+function openLogin(){
+  const saved=localStorage.getItem('ritzPreviewIgn');
+  if(saved){
+    loggedIgn.textContent=saved;
+    authLogin.classList.add('hide');
+    authSuccess.classList.add('show');
+  }else{
+    authLogin.classList.remove('hide');
+    authSuccess.classList.remove('show');
+    loginIgn.value='';
+  }
+  modal.classList.add('show');document.body.style.overflow='hidden';
+  setTimeout(()=>loginIgn.focus(),80);
+}
+function submitLogin(){
+  const ign=loginIgn.value.trim();
+  if(!/^[A-Za-z0-9_]{3,16}$/.test(ign)){
+    toast('กรุณากรอก Minecraft IGN ให้ถูกต้อง');
+    loginIgn.focus();return;
+  }
+  localStorage.setItem('ritzPreviewIgn',ign);
+  loggedIgn.textContent=ign;
+  document.getElementById('chipName').textContent=ign;
+  userChip.classList.add('show');
+  authLogin.classList.add('hide');
+  authSuccess.classList.add('show');
+  toast('เข้าสู่ระบบแล้ว · '+ign);
+}
+function logoutPreview(){
+  localStorage.removeItem('ritzPreviewIgn');
+  userChip.classList.remove('show');
+  authSuccess.classList.remove('show');
+  authLogin.classList.remove('hide');
+  loginIgn.value='';
+  setTimeout(()=>loginIgn.focus(),80);
+}
 function closeModal(){modal.classList.remove('show');document.body.style.overflow=''}
-function toast(t){const e=document.createElement('div');e.textContent=t;e.style='position:fixed;right:16px;bottom:16px;z-index:120;padding:12px 14px;border-radius:10px;background:#0c1510;color:#8be0a7;border:1px solid #57d58a44;font-size:10px';document.body.appendChild(e);setTimeout(()=>e.remove(),2400)}
+function toast(t){
+  const e=document.createElement('div');
+  e.textContent=t;
+  e.style='position:fixed;right:16px;bottom:16px;z-index:120;padding:12px 14px;border-radius:10px;background:#0c1510;color:#8be0a7;border:1px solid #57d58a44;font-size:10px';
+  document.body.appendChild(e);setTimeout(()=>e.remove(),2400)
+}
 modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
+const savedIgn=localStorage.getItem('ritzPreviewIgn');
+if(savedIgn){document.getElementById('chipName').textContent=savedIgn;userChip.classList.add('show')}
 </script>
 </body>
 </html>
