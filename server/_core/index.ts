@@ -40,6 +40,9 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  app.get("/healthz", (_req, res) => {
+    res.status(200).json({ ok: true, service: "ritz-smp-store" });
+  });
   // Discord signs the exact raw request body. This route must be registered
   // before JSON parsing and before tRPC itself so account-link buttons can
   // work on autoscale hosting.
@@ -106,14 +109,14 @@ async function startServer() {
   }
 
   const preferredPort = parseInt(process.env.PORT || "3000");
-  const port = await findAvailablePort(preferredPort);
+  const port = process.env.NODE_ENV === "production" ? preferredPort : await findAvailablePort(preferredPort);
 
   if (port !== preferredPort) {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+  server.listen(port, "0.0.0.0", () => {
+    console.log(`Server running on http://0.0.0.0:${port}/`);
   });
 
   // Autoscale must not open a long-lived Discord Gateway. Reserved Hosting (or a
