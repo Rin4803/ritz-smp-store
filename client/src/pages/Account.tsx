@@ -99,13 +99,7 @@ export default function Account() {
                 )}
                 <p className="subtle" style={{ margin: 0, fontSize: "0.85rem" }}>ยอดเงินคงเหลือสำหรับซื้อยศและบริการในเซิร์ฟเวอร์</p>
               </div>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                {user?.role === "admin" && (
-                  <Link href="/admin" className="ghost-btn compact-btn" style={{ borderColor: "#d4af37", color: "#d4af37" }}>
-                    <ShieldAlert size={15} /> Admin
-                  </Link>
-                )}
-              </div>
+              <div aria-hidden="true" />
             </div>
           </section>
 

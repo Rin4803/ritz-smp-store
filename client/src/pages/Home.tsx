@@ -26,9 +26,6 @@ import {
   RefreshCcw,
   Wallet,
   Search,
-  Users,
-  Wifi,
-  WifiOff,
 } from "lucide-react";
 
 const paymentAccounts = [
@@ -107,7 +104,6 @@ function statusBadgeClass(status: string) {
 export default function Home() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const ranksQuery = trpc.store.ranks.useQuery();
-  const serverStatusQuery = trpc.servers.status.useQuery(undefined, { refetchInterval: 30_000, staleTime: 15_000 });
   const ordersQuery = trpc.store.myOrders.useQuery(undefined, { enabled: isAuthenticated });
   const walletQuery = trpc.store.wallet.useQuery(undefined, { enabled: isAuthenticated });
   const utils = trpc.useUtils();
@@ -253,9 +249,7 @@ export default function Home() {
           <nav className="nav desktop-nav" aria-label="เมนูหลัก">
             <a href="#ranks">ยศทั้งหมด</a>
             <a href="#payment">ช่องทางชำระเงิน</a>
-            <Link href="/servers">เลือกเซิร์ฟเวอร์</Link>
             <Link href="/account">ประวัติการซื้อ</Link>
-            {user?.role === "admin" && <Link href="/admin" className="gold-text">Admin Dashboard</Link>}
           </nav>
           {authLoading ? (
             <span className="user-chip"><Loader2 size={14} className="animate-spin" /> กำลังตรวจสอบ</span>
@@ -310,9 +304,7 @@ export default function Home() {
             )}
             <a href="#ranks" onClick={() => setMenuOpen(false)}>ยศทั้งหมด</a>
             <a href="#payment" onClick={() => setMenuOpen(false)}>ช่องทางชำระเงิน</a>
-            <Link href="/servers" onClick={() => setMenuOpen(false)}>เลือกเซิร์ฟเวอร์</Link>
             <Link href="/account" onClick={() => setMenuOpen(false)}>ประวัติการซื้อและยอดคงเหลือ</Link>
-            {user?.role === "admin" && <Link href="/admin" className="gold-text" onClick={() => setMenuOpen(false)}>Admin Dashboard</Link>}
             {!authLoading && (isAuthenticated ? (
               <Link href="/account" className="mobile-menu-login" onClick={() => setMenuOpen(false)}><ShieldCheck size={15} /> บัญชีของฉัน</Link>
             ) : (
@@ -351,14 +343,6 @@ export default function Home() {
               </div>
               <div className="hero-note">
                 <Sparkles size={14} className="gold-text" /> เติมเงินแนบสลิปครั้งเดียว ซื้อยศหักกระเป๋าออโต้ส่งเข้าเซิร์ฟเวอร์ทันที
-              </div>
-              <div className="hero-note" style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14, borderColor: serverStatusQuery.data?.online ? "rgba(52, 211, 153, 0.35)" : "rgba(248, 113, 113, 0.3)" }} aria-live="polite">
-                {serverStatusQuery.data?.online ? <Wifi size={15} style={{ color: "#34d399" }} /> : <WifiOff size={15} style={{ color: "#f87171" }} />}
-                <span>
-                  <strong style={{ color: serverStatusQuery.data?.online ? "#6ee7b7" : "#fca5a5" }}>{serverStatusQuery.isLoading ? "กำลังตรวจสอบเซิร์ฟเวอร์" : serverStatusQuery.data?.online ? "เซิร์ฟเวอร์ออนไลน์" : "เซิร์ฟเวอร์ออฟไลน์หรือยังตรวจไม่ได้"}</strong>
-                  {serverStatusQuery.data && <small style={{ display: "block", color: "rgba(255,255,255,0.62)", marginTop: 3 }}><Users size={12} style={{ verticalAlign: "-2px", marginRight: 4 }} />{serverStatusQuery.data.players}/{serverStatusQuery.data.maxPlayers || "—"} คน · {serverStatusQuery.data.version} · latency {serverStatusQuery.data.latency == null ? "—" : `${serverStatusQuery.data.latency} ms`}</small>}
-                </span>
-                <button type="button" className="ghost-btn compact-btn" style={{ marginLeft: "auto", padding: "6px 9px" }} onClick={() => serverStatusQuery.refetch()} disabled={serverStatusQuery.isFetching} aria-label="รีเฟรชสถานะเซิร์ฟเวอร์"><Activity size={13} /></button>
               </div>
               <ol className="realm-journey" aria-label="ขั้นตอนการซื้อยศ">
                 <li><span>01</span><div><strong>เติม Wallet</strong><small>แนบสลิปเพียงครั้งเดียว</small></div></li>
