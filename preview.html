@@ -184,6 +184,7 @@ const authLogin=document.getElementById('authLogin');
 const authSuccess=document.getElementById('authSuccess');
 const loginIgn=document.getElementById('loginIgn');
 const loggedIgn=document.getElementById('loggedIgn');
+const loginBtn=document.querySelector('.navright .btn.primary');
 const userChip=document.createElement('div');
 userChip.className='userChip';
 userChip.innerHTML='<span class="dot"></span><span id="chipName"></span>';
@@ -219,6 +220,8 @@ function submitLogin(){
   loggedIgn.textContent=ign;
   document.getElementById('chipName').textContent=ign;
   userChip.classList.add('show');
+  loginBtn.textContent='บัญชี';
+  loginBtn.onclick=openLogin;
   authLogin.classList.add('hide');
   authSuccess.classList.add('show');
   toast('เข้าสู่ระบบแล้ว · '+ign);
@@ -226,6 +229,8 @@ function submitLogin(){
 function logoutPreview(){
   localStorage.removeItem('ritzPreviewIgn');
   userChip.classList.remove('show');
+  loginBtn.textContent='เข้าสู่ระบบ';
+  loginBtn.onclick=openLogin;
   authSuccess.classList.remove('show');
   authLogin.classList.remove('hide');
   loginIgn.value='';
@@ -240,7 +245,12 @@ function toast(t){
 }
 modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
 const savedIgn=localStorage.getItem('ritzPreviewIgn');
-if(savedIgn){document.getElementById('chipName').textContent=savedIgn;userChip.classList.add('show')}
+if(savedIgn){
+  document.getElementById('chipName').textContent=savedIgn;
+  userChip.classList.add('show');
+  loginBtn.textContent='บัญชี';
+  loginBtn.onclick=openLogin;
+}
 </script>
 </body>
 </html>
