@@ -1,127 +1,79 @@
 <!doctype html>
-<html lang="th">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>RitzSMP Store</title>
 <style>
-:root{--gold:#ffb42f;--gold2:#ffd96d;--red:#e64a38;--bg:#050509;--text:#fff8ea;--muted:#bdb7bd}
-*{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Noto Sans Thai",Arial,sans-serif}
-a{text-decoration:none;color:inherit}button{font:inherit;cursor:pointer}
-.page{min-height:100vh;background:#050509}
-.hero{position:relative;min-height:690px;overflow:hidden;background:
-linear-gradient(180deg,rgba(2,3,8,.18) 0%,rgba(3,3,7,.12) 40%,rgba(3,3,7,.72) 100%),
-url("preview-bg.svg") center top/cover no-repeat}
-.hero:after{content:"";position:absolute;inset:auto 0 0;height:190px;background:linear-gradient(180deg,transparent,#050509)}
-.nav{position:relative;z-index:5;height:82px;background:rgba(3,4,8,.78);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,183,45,.18)}
-.navIn{width:min(1280px,calc(100% - 36px));height:100%;margin:auto;display:flex;align-items:center}
-.logo{display:flex;align-items:center;gap:10px;min-width:240px}
-.logoBadge{width:54px;height:54px;display:grid;place-items:center;border-radius:16px;background:linear-gradient(145deg,#ffcf4e,#ff6d1d);color:#2a1200;font-size:26px;font-weight:1000;box-shadow:0 12px 40px rgba(255,112,23,.3)}
-.logoText strong{display:block;font-size:20px;letter-spacing:.03em;text-shadow:0 2px 18px rgba(255,170,40,.3)}
-.logoText span{display:block;font-size:8px;color:#ddd;letter-spacing:.2em;margin-top:3px}
-.navLinks{display:flex;gap:4px;align-items:center}
-.navLinks a{padding:14px 15px;color:#e6e0e2;font-size:13px;font-weight:900;border-bottom:2px solid transparent}
-.navLinks a:hover,.navLinks a.active{color:#ffd673;border-bottom-color:#ffb42f}
-.navRight{margin-left:auto;display:flex;gap:10px;align-items:center}
-.statusPill{padding:10px 13px;border:1px solid rgba(255,188,47,.18);border-radius:12px;background:rgba(0,0,0,.26);font-size:10px;color:#eee}
-.statusPill b{color:#6be38f}
-.btn{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.04);color:#fff;border-radius:11px;padding:12px 17px;font-size:11px;font-weight:1000}
-.btn.primary{background:linear-gradient(135deg,#ffc94a,#ff851d);color:#271300;border-color:#ffc34e;box-shadow:0 12px 35px rgba(255,107,17,.25)}
-.heroContent{position:relative;z-index:2;width:min(1280px,calc(100% - 36px));margin:auto;min-height:608px;display:flex;align-items:center}
-.heroCopy{max-width:700px;padding:20px 0 80px}
-.storeLogo{font-weight:1000;font-size:clamp(54px,7vw,92px);line-height:.85;letter-spacing:-.07em;color:#ffb72f;text-shadow:0 4px 0 #9c2d10,0 8px 35px rgba(0,0,0,.45)}
-.storeLogo small{display:block;font-size:clamp(19px,2.5vw,30px);letter-spacing:.09em;color:#fff;margin-top:11px;text-shadow:0 3px 16px rgba(0,0,0,.65)}
-.heroCopy h1{margin:22px 0 8px;font-size:26px}
-.heroCopy h1 em{font-style:normal;color:#ffd36b}
-.heroCopy p{margin:0;color:#e2d8dc;font-size:14px;line-height:1.85;max-width:560px}
-.heroBtns{display:flex;gap:10px;margin-top:24px}
-.tagRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}.tag{padding:9px 12px;border-radius:999px;background:rgba(5,7,12,.5);border:1px solid rgba(255,255,255,.14);font-size:9px;color:#ddd}
-.featureBar{position:relative;z-index:4;width:min(1120px,calc(100% - 34px));margin:-70px auto 0;display:grid;grid-template-columns:repeat(4,1fr);background:rgba(7,7,12,.91);backdrop-filter:blur(14px);border:1px solid rgba(255,177,39,.34);border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.45);overflow:hidden}
-.feature{padding:18px 20px;display:flex;gap:12px;align-items:center;border-right:1px solid rgba(255,255,255,.08)}
-.feature:last-child{border-right:0}
-.featureIcon{width:40px;height:40px;border:1px solid rgba(255,191,55,.32);border-radius:50%;display:grid;place-items:center;color:#ffc44a;font-size:17px;background:rgba(255,177,36,.07)}
-.feature b{display:block;font-size:11px;color:#ffca4c}.feature span{display:block;color:#aaa3a8;font-size:9px;margin-top:4px}
-.section{padding:75px 0;background:#050509}.wrap{width:min(1120px,calc(100% - 34px));margin:auto}
-.sectionHead{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:22px}
-.sectionHead h2{margin:5px 0 0;font-size:30px}.sectionHead p{margin:5px 0 0;color:#8e8790;font-size:10px}
-.eyebrow{font-size:9px;letter-spacing:.18em;color:#ffbf47;font-weight:1000}
-.categories{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
-.category{position:relative;min-height:170px;padding:16px;border-radius:16px;border:1px solid rgba(255,255,255,.12);overflow:hidden;background:linear-gradient(145deg,#171115,#08090e)}
-.category:after{content:"";position:absolute;inset:auto -20px -65px;height:110px;background:radial-gradient(circle,rgba(255,174,45,.22),transparent 70%)}
-.category:nth-child(2){background:linear-gradient(145deg,#171020,#09090f);border-color:rgba(173,75,255,.42)}.category:nth-child(3){background:linear-gradient(145deg,#07181c,#09090f);border-color:rgba(76,225,255,.34)}.category:nth-child(4){background:linear-gradient(145deg,#0b1120,#09090f);border-color:rgba(82,129,255,.38)}.category:nth-child(5){background:linear-gradient(145deg,#17130d,#09090f);border-color:rgba(255,185,50,.34)}
-.categoryIcon{font-size:30px;display:block;margin-bottom:22px}.category h3{margin:0;font-size:13px}.category p{margin:5px 0 0;color:#858089;font-size:9px;line-height:1.6}.arrow{position:absolute;right:14px;bottom:14px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(255,194,54,.42);color:#ffc44d;font-weight:900}
-.reason{margin-top:26px;display:grid;grid-template-columns:1.15fr .85fr;border:1px solid rgba(255,178,39,.2);border-radius:18px;overflow:hidden;background:linear-gradient(120deg,rgba(255,167,37,.08),rgba(10,10,15,.95))}
-.reasonCopy{padding:28px}.reasonCopy h2{margin:7px 0 8px;font-size:26px}.reasonCopy p{margin:0;color:#969099;font-size:10px;line-height:1.75}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-left:1px solid rgba(255,255,255,.06)}
-.stat{padding:26px 20px;border-left:1px solid rgba(255,255,255,.06)}.stat:first-child{border-left:0}.stat strong{display:block;color:#ffca50;font-size:21px}.stat span{display:block;color:#79727b;font-size:9px;margin-top:5px}
-.ranks{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.rank{padding:18px;border:1px solid rgba(255,255,255,.09);border-radius:15px;background:linear-gradient(145deg,#111219,#08090d);position:relative}.rank.popular{border-color:rgba(255,190,51,.48);box-shadow:0 12px 35px rgba(255,157,34,.08)}.rank .num{font-size:8px;color:#6f737c}.rank h3{font-size:18px;margin:12px 0 4px}.rank .price{font-size:20px;color:#ffd66e;font-weight:1000;margin-bottom:10px}.rank ul{list-style:none;padding:0;margin:0;color:#98919a;font-size:9px;line-height:1.9}.rank li:before{content:"•";color:#ffbf49;margin-right:6px}.rank button{width:100%;margin-top:14px}
-.footer{padding:26px 0 40px;border-top:1px solid rgba(255,255,255,.08);background:#040408;color:#6f6971;font-size:9px}.footerIn{width:min(1120px,calc(100% - 34px));margin:auto;display:flex;justify-content:space-between;gap:18px}
-.modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.78);backdrop-filter:blur(12px);z-index:99;padding:18px}.modal.show{display:grid}.modalBox{width:min(500px,100%);padding:22px;border-radius:18px;border:1px solid rgba(255,190,50,.28);background:#0b0d12;box-shadow:0 35px 100px rgba(0,0,0,.65)}.modalTop{display:flex;justify-content:space-between}.close{border:0;background:none;color:#aaa;font-size:23px}.modalBox h3{margin:3px 0;font-size:25px}.modalBox p{color:#8e8790;font-size:10px}.field label{display:block;color:#8e8790;font-size:9px}.field input{width:100%;height:43px;margin:7px 0 13px;border:1px solid #292e37;border-radius:9px;background:#07090d;color:#fff;padding:0 11px}.sum{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:10px}.modalBox .primary{width:100%;margin-top:14px}
-@media(max-width:900px){.navLinks{display:none}.logo{min-width:auto}.featureBar{grid-template-columns:1fr 1fr}.feature:nth-child(2){border-right:0}.feature:nth-child(-n+2){border-bottom:1px solid rgba(255,255,255,.08)}.hero{min-height:620px}.heroContent{min-height:540px}.categories{grid-template-columns:repeat(3,1fr)}.reason{grid-template-columns:1fr}.stats{border-left:0}.stat{border-left:0;border-top:1px solid rgba(255,255,255,.06)}}
-@media(max-width:600px){.nav{height:68px}.logoText strong{font-size:16px}.logoBadge{width:44px;height:44px}.navRight .statusPill{display:none}.hero{min-height:610px}.heroContent{min-height:540px}.storeLogo{font-size:51px}.heroCopy h1{font-size:20px}.heroCopy p{font-size:12px}.heroBtns{flex-direction:column}.featureBar{grid-template-columns:1fr;margin-top:-62px}.feature{border-right:0!important;border-bottom:1px solid rgba(255,255,255,.08)}.feature:last-child{border-bottom:0}.categories{grid-template-columns:1fr 1fr}.ranks{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.section{padding:55px 0}.footerIn{display:block;line-height:1.8}}
-</style>
-</head>
+:root{--gold:#ffb62f;--gold2:#ffe07a;--orange:#ff6d18;--bg:#050509;--ink:#fff8eb;--muted:#a49da6;--line:#ffffff14}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Noto Sans Thai",Arial,sans-serif}button,a{font:inherit}button{cursor:pointer}
+.site{min-height:100vh;background:linear-gradient(180deg,transparent 0,rgba(5,5,9,.02) 45%,#050509 76%),url("preview-bg.svg") center top/cover fixed no-repeat}
+.site:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(circle at 70% 10%,rgba(255,104,22,.13),transparent 27%),radial-gradient(circle at 25% 22%,rgba(111,54,160,.12),transparent 24%)}
+.wrap{width:min(1200px,calc(100% - 34px));margin:auto;position:relative;z-index:1}
+.topLine{height:2px;background:linear-gradient(90deg,transparent,var(--gold),var(--orange),var(--gold),transparent)}
+header{position:sticky;top:0;z-index:20;background:rgba(3,4,8,.76);backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,190,57,.13)}
+.nav{height:78px;display:flex;align-items:center;gap:22px}.brand{display:flex;align-items:center;gap:11px;min-width:220px;text-decoration:none}.brandMark{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#ffc94a,#f26018);color:#231100;font-weight:1000;font-size:27px;box-shadow:0 12px 38px rgba(255,104,24,.28)}.brandText strong{display:block;font-size:18px;letter-spacing:.05em;color:#fff}.brandText span{display:block;font-size:8px;letter-spacing:.24em;color:#a7a0a9;margin-top:4px}
+.links{display:flex;align-items:center;gap:2px}.links a{color:#ded7dd;font-size:12px;font-weight:900;padding:13px 14px;border-bottom:2px solid transparent}.links a:hover,.links a.active{color:#ffd875;border-bottom-color:var(--gold)}
+.navRight{margin-left:auto;display:flex;align-items:center;gap:10px}.online{padding:9px 12px;border:1px solid rgba(255,190,54,.16);border-radius:11px;background:rgba(0,0,0,.23);font-size:10px}.online b{color:#68de8b}.btn{border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;border-radius:11px;padding:11px 15px;font-size:11px;font-weight:1000;transition:.2s}.btn:hover{transform:translateY(-2px);border-color:rgba(255,193,64,.45)}.btn.primary{background:linear-gradient(135deg,#ffc94d,#ff821b);border-color:#ffcb55;color:#251300;box-shadow:0 12px 30px rgba(255,109,24,.2)}
+.hero{min-height:610px;display:flex;align-items:center}.heroCopy{max-width:690px;padding:55px 0 92px}.miniLogo{font-weight:1000;font-size:clamp(64px,8vw,100px);line-height:.78;letter-spacing:-.07em;color:#ffc34b;text-shadow:0 3px 0 #8b2b12,0 12px 35px #0009}.miniLogo span{display:block;font-size:clamp(24px,3vw,36px);letter-spacing:.05em;color:#fff;margin-top:16px;text-shadow:0 3px 15px #000a}.heroCopy h1{font-size:25px;margin:24px 0 8px}.heroCopy h1 em{font-style:normal;color:#ffcf60}.heroCopy p{max-width:560px;color:#eadfe3;font-size:13px;line-height:1.85;margin:0}.actions{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap}.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}.tag{padding:8px 11px;border-radius:999px;background:rgba(5,7,13,.48);border:1px solid rgba(255,255,255,.14);font-size:9px;color:#e0d7dc}
+.benefits{position:relative;z-index:4;width:min(1120px,calc(100% - 34px));margin:-42px auto 0;display:grid;grid-template-columns:repeat(4,1fr);border:1px solid rgba(255,183,43,.34);border-radius:18px;overflow:hidden;background:rgba(6,7,12,.92);backdrop-filter:blur(14px);box-shadow:0 20px 65px #0008}.benefit{min-height:86px;padding:16px 18px;display:flex;gap:11px;align-items:center;border-right:1px solid #ffffff0d}.benefit:last-child{border-right:0}.bi{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(255,195,64,.35);color:#ffc44d;background:#ffba3508;font-size:18px}.benefit b{display:block;color:#ffca4c;font-size:11px}.benefit span{display:block;color:#a19aa1;font-size:9px;margin-top:3px}
+.section{padding:68px 0}.head{display:flex;justify-content:space-between;align-items:end;margin-bottom:20px}.eyebrow{color:#ffbf47;font-size:9px;letter-spacing:.2em;font-weight:1000}.head h2{font-size:30px;margin:6px 0 0}.head p{font-size:10px;color:#8e8790;margin:6px 0 0}
+.categories{display:grid;grid-template-columns:repeat(5,1fr);gap:13px}.cat{height:160px;position:relative;overflow:hidden;border-radius:16px;border:1px solid #ffffff17;background:#0b0d13 center/cover no-repeat;isolation:isolate}.cat:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.86));z-index:-1}.cat:nth-child(1){background-image:url("preview-bg.svg");background-position:8% 72%}.cat:nth-child(2){background-image:url("preview-bg.svg");background-position:36% 60%;border-color:#9d4dff62}.cat:nth-child(3){background-image:url("preview-bg.svg");background-position:58% 58%;border-color:#38d9ff52}.cat:nth-child(4){background-image:url("preview-bg.svg");background-position:80% 55%;border-color:#557eff5a}.cat:nth-child(5){background-image:url("preview-bg.svg");background-position:96% 61%;border-color:#ffb33555}.catContent{position:absolute;left:15px;right:15px;bottom:14px}.catIcon{font-size:26px;margin-bottom:8px}.cat h3{margin:0;font-size:13px}.cat p{margin:4px 0 0;color:#d1c7cd;font-size:9px}.arrow{position:absolute;right:12px;bottom:12px;width:29px;height:29px;border-radius:50%;border:1px solid #ffc14a55;background:#04050899;display:grid;place-items:center;color:#ffca53}
+.reason{display:grid;grid-template-columns:1.25fr .75fr;overflow:hidden;margin-top:26px;border:1px solid rgba(255,180,44,.18);border-radius:18px;background:linear-gradient(115deg,rgba(255,170,37,.10),rgba(9,9,14,.93))}.reasonText{padding:25px 28px}.reasonText h2{margin:6px 0 8px;font-size:24px}.reasonText p{margin:0;color:#97909a;font-size:10px;line-height:1.8}.stats{display:grid;grid-template-columns:repeat(3,1fr);align-items:stretch}.stat{display:flex;flex-direction:column;justify-content:center;padding:20px;border-left:1px solid #ffffff0b;text-align:center}.stat strong{font-size:19px;color:#ffc84f}.stat span{font-size:9px;color:#817a83;margin-top:4px}
+#ranks{background:#07080d}.ranks{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.rank{padding:18px;border:1px solid #ffffff10;border-radius:14px;background:linear-gradient(150deg,#12141b,#08090d)}.rank.popular{border-color:#ffc54e66;box-shadow:0 15px 40px #ff9d2c0b}.rankNum{color:#6e727b;font-size:8px}.rank h3{font-size:18px;margin:12px 0 4px}.price{color:#ffd56a;font-weight:1000;font-size:20px}.rank ul{list-style:none;padding:0;margin:10px 0 0;color:#99919c;font-size:9px;line-height:1.9}.rank li:before{content:"•";color:#ffc348;margin-right:6px}.rank .btn{width:100%;margin-top:13px}
+.footer{border-top:1px solid #ffffff0b;background:#040407;padding:28px 0 40px;color:#6e6870;font-size:9px}.footerIn{display:flex;justify-content:space-between;gap:18px}
+.modal{position:fixed;inset:0;background:#000c;backdrop-filter:blur(9px);display:none;place-items:center;z-index:50;padding:18px}.modal.show{display:grid}.dialog{width:min(500px,100%);border:1px solid #ffc24a45;background:#0b0d12;border-radius:18px;padding:22px;box-shadow:0 35px 100px #000b}.dialogTop{display:flex;justify-content:space-between}.close{border:0;background:transparent;color:#aaa;font-size:24px}.dialog h3{margin:0;font-size:25px}.dialog p{color:#8e8790;font-size:10px}.dialog label{display:block;color:#8e8790;font-size:9px}.input{width:100%;height:44px;margin:7px 0 14px;border-radius:9px;border:1px solid #272c35;background:#07090d;color:#fff;padding:0 11px}.sum{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #ffffff09;font-size:10px}.dialog .primary{width:100%;margin-top:14px}
+@media(max-width:980px){.links{display:none}.categories{grid-template-columns:repeat(3,1fr)}.hero{min-height:570px}.benefits{grid-template-columns:1fr 1fr}.benefit:nth-child(2){border-right:0}.benefit:nth-child(-n+2){border-bottom:1px solid #ffffff0d}.reason{grid-template-columns:1fr}.stats{border-top:1px solid #ffffff08}.stat{border-left:0;border-right:1px solid #ffffff08}.stat:last-child{border-right:0}}
+@media(max-width:620px){.wrap{width:calc(100% - 24px)}.nav{height:68px}.brand{min-width:0}.brandText strong{font-size:16px}.brandMark{width:44px;height:44px}.navRight .online{display:none}.navRight .btn{padding:10px 12px}.hero{min-height:575px}.heroCopy{padding-top:42px}.miniLogo{font-size:56px}.miniLogo span{font-size:23px}.heroCopy h1{font-size:20px}.heroCopy p{font-size:12px}.actions{flex-direction:column}.actions .btn{width:100%}.benefits{grid-template-columns:1fr;margin-top:-28px}.benefit{border-right:0!important;border-bottom:1px solid #ffffff0d}.benefit:last-child{border-bottom:0}.categories{grid-template-columns:1fr 1fr}.cat{height:145px}.reasonText{padding:22px}.stats{grid-template-columns:1fr}.stat{border-right:0;border-top:1px solid #ffffff08;padding:16px}.ranks{grid-template-columns:1fr}.head{display:block}.footerIn{display:block;line-height:2}}
+</style></head>
 <body>
-<div class="page">
-<section class="hero" id="top">
-<header class="nav"><div class="navIn">
-<a class="logo" href="#top"><div class="logoBadge">R</div><div class="logoText"><strong>RitzSMP</strong><span>OFFICIAL STORE</span></div></a>
-<nav class="navLinks"><a class="active" href="#top">หน้าหลัก</a><a href="#store">ร้านค้า</a><a href="#process">เติมเงิน</a><a href="#activity">กิจกรรม</a><a href="#account">กฎและข้อมูล</a></nav>
-<div class="navRight"><div class="statusPill">● <b>ออนไลน์</b>　1,248 ผู้เล่น</div><button class="btn primary" onclick="openModal('login')">เข้าสู่ระบบ</button></div>
+<div class="site"><div class="topLine"></div>
+<header><div class="wrap nav">
+<a class="brand" href="#top"><div class="brandMark">R</div><div class="brandText"><strong>RitzSMP</strong><span>OFFICIAL STORE</span></div></a>
+<nav class="links"><a class="active" href="#top">หน้าหลัก</a><a href="#store">ร้านค้า</a><a href="#process">เติมเงิน</a><a href="#activity">กิจกรรม</a><a href="#account">กฎและข้อมูล</a></nav>
+<div class="navRight"><div class="online">● <b>ออนไลน์</b>　1,248 ผู้เล่น</div><button class="btn primary" onclick="openModal('login')">เข้าสู่ระบบ</button></div>
 </div></header>
-<div class="heroContent"><div class="heroCopy">
-<div class="storeLogo">RitzSMP<small>STORE ◆</small></div>
-<h1>เติมความสนุกให้การเล่น <em>ได้มากกว่าเดิม</em></h1>
-<p>ร้านค้าอย่างเป็นทางการของ RitzSMP สำหรับยศ ไอเทม และสิทธิพิเศษภายในเซิร์ฟเวอร์ ดูรายละเอียดก่อนซื้อ พร้อมระบบบัญชีและ Wallet ในหน้าเดียว</p>
-<div class="heroBtns"><button class="btn primary" onclick="document.querySelector('#store').scrollIntoView({behavior:'smooth'})">🛒 เข้าสู่ร้านค้า</button><button class="btn" onclick="document.querySelector('#process').scrollIntoView({behavior:'smooth'})">▣ ดูข้อมูลเพิ่มเติม</button></div>
-<div class="tagRow"><span class="tag">● เซิร์ฟเวอร์ออนไลน์</span><span class="tag">play.ritzsmp.net</span><span class="tag">Minecraft Java + Bedrock</span></div>
-</div></div>
+<main id="top">
+<section class="hero"><div class="wrap"><div class="heroCopy">
+<div class="miniLogo">RitzSMP<span>STORE</span></div>
+<h1>เติมเงินง่าย ใช้ได้ <em>ปลอดภัย 100%</em></h1>
+<p>เสริมการเล่นของคุณให้สนุกกว่าเดิม ด้วยยศ ไอเทม และสิทธิพิเศษจากร้านค้าอย่างเป็นทางการของ RitzSMP</p>
+<div class="actions"><button class="btn primary" onclick="document.querySelector('#store').scrollIntoView({behavior:'smooth'})">🛒 เข้าสู่ร้านค้า</button><button class="btn" onclick="document.querySelector('#process').scrollIntoView({behavior:'smooth'})">▣ ดูข้อมูลเพิ่มเติม</button></div>
+<div class="tags"><span class="tag">● เซิร์ฟเวอร์ออนไลน์</span><span class="tag">play.ritzsmp.net</span><span class="tag">Minecraft Java + Bedrock</span></div>
+</div></div></section>
+<section class="benefits">
+<div class="benefit"><div class="bi">ϟ</div><div><b>เติมเงินรวดเร็ว</b><span>ระบบพร้อมใช้งาน</span></div></div>
+<div class="benefit"><div class="bi">◇</div><div><b>ปลอดภัย 100%</b><span>ตรวจสอบรายการทุกขั้นตอน</span></div></div>
+<div class="benefit"><div class="bi">◆</div><div><b>ราคาชัดเจน</b><span>ดูสิทธิ์ก่อนตัดสินใจ</span></div></div>
+<div class="benefit"><div class="bi">◉</div><div><b>ทีมซัพพอร์ต</b><span>พร้อมช่วยเหลือผู้เล่น</span></div></div>
 </section>
 
-<div class="featureBar">
-<div class="feature"><div class="featureIcon">ϟ</div><div><b>เติมเงินรวดเร็ว</b><span>ระบบพร้อมใช้งาน</span></div></div>
-<div class="feature"><div class="featureIcon">◇</div><div><b>ปลอดภัย</b><span>ตรวจสอบรายการก่อนซื้อ</span></div></div>
-<div class="feature"><div class="featureIcon">✦</div><div><b>ราคาชัดเจน</b><span>ดูสิทธิ์ก่อนตัดสินใจ</span></div></div>
-<div class="feature"><div class="featureIcon">◉</div><div><b>ทีมซัพพอร์ต</b><span>พร้อมช่วยเหลือ</span></div></div>
-</div>
-
-<section class="section" id="store"><div class="wrap">
-<div class="sectionHead"><div><div class="eyebrow">STORE CATEGORIES</div><h2>หมวดหมู่สินค้า</h2><p>เลือกซื้อไอเทมที่คุณต้องการได้เลย</p></div><button class="btn" onclick="toast('Preview: เปิดหน้าสินค้าทั้งหมด')">ดูทั้งหมด →</button></div>
+<section class="section" id="store"><div class="wrap"><div class="head"><div><div class="eyebrow">STORE CATEGORIES</div><h2>หมวดหมู่สินค้า</h2><p>เลือกซื้อไอเทมที่คุณต้องการได้เลย</p></div><button class="btn" onclick="document.querySelector('#ranks').scrollIntoView({behavior:'smooth'})">ดูทั้งหมด →</button></div>
 <div class="categories">
-<div class="category"><span class="categoryIcon">◆</span><h3>ของใช้ / ไอเทมทั่วไป</h3><p>อุปกรณ์และของจำเป็น</p><div class="arrow">→</div></div>
-<div class="category"><span class="categoryIcon">⚔</span><h3>อาวุธ / ชุดเกราะ</h3><p>เพิ่มพลังให้การต่อสู้</p><div class="arrow">→</div></div>
-<div class="category"><span class="categoryIcon">◇</span><h3>ไอเทมพิเศษ</h3><p>ของหายากและของสะสม</p><div class="arrow">→</div></div>
-<div class="category"><span class="categoryIcon">☄</span><h3>สัตว์เลี้ยง / มอนสเตอร์</h3><p>หมวดพิเศษจากเซิร์ฟเวอร์</p><div class="arrow">→</div></div>
-<div class="category"><span class="categoryIcon">⌂</span><h3>บริการ / อื่น ๆ</h3><p>sethome / warp และบริการเสริม</p><div class="arrow">→</div></div>
+<div class="cat"><div class="catContent"><div class="catIcon">◆</div><h3>ของใช้ / ไอเทมทั่วไป</h3><p>อุปกรณ์ / ของจำเป็น</p></div><div class="arrow">→</div></div>
+<div class="cat"><div class="catContent"><div class="catIcon">⚔</div><h3>อาวุธ / ชุดเกราะ</h3><p>เพิ่มพลังในการต่อสู้</p></div><div class="arrow">→</div></div>
+<div class="cat"><div class="catContent"><div class="catIcon">◇</div><h3>ไอเทมพิเศษ</h3><p>ของหายาก / ของสะสม</p></div><div class="arrow">→</div></div>
+<div class="cat"><div class="catContent"><div class="catIcon">☄</div><h3>สัตว์เลี้ยง / มอนสเตอร์</h3><p>เพิ่มความสนุกในเซิร์ฟเวอร์</p></div><div class="arrow">→</div></div>
+<div class="cat"><div class="catContent"><div class="catIcon">⌂</div><h3>บริการ / อื่น ๆ</h3><p>sethome / warp</p></div><div class="arrow">→</div></div>
 </div>
-<div class="reason"><div class="reasonCopy"><div class="eyebrow">WHY RITZ SMP STORE?</div><h2>ร้านเดียวสำหรับทุกอย่างใน RitzSMP</h2><p>ออกแบบประสบการณ์ให้ดูเป็นร้านเซิร์ฟเวอร์จริง เข้าถึงสินค้าเร็ว และรองรับการใช้งานบนมือถือ</p></div><div class="stats"><div class="stat"><strong>1,248+</strong><span>ผู้เล่นที่เข้าร่วม</span></div><div class="stat"><strong>50,000+</strong><span>รายการทำสำเร็จ</span></div><div class="stat"><strong>4.9/5</strong><span>คะแนนความพอใจ</span></div></div></div>
+<div class="reason"><div class="reasonText"><div class="eyebrow">WHY RITZ SMP STORE?</div><h2>ร้านค้าเดียวสำหรับ RitzSMP</h2><p>เลือกของ ดูรายละเอียด เติม Wallet และติดตามคำสั่งซื้อจากพื้นที่เดียว พร้อมดีไซน์ที่เน้นภาพลักษณ์ของเซิร์ฟเวอร์</p></div><div class="stats"><div class="stat"><strong>1,248+</strong><span>ผู้เล่นที่เข้าร่วม</span></div><div class="stat"><strong>50,000+</strong><span>รายการสำเร็จ</span></div><div class="stat"><strong>4.9/5</strong><span>คะแนนความพอใจ</span></div></div></div>
 </div></section>
 
-<section class="section" id="ranks" style="background:#07080d"><div class="wrap">
-<div class="sectionHead"><div><div class="eyebrow">RANK STORE</div><h2>ยศแนะนำ</h2><p>ตัวอย่างการจัดวางยศในหน้าร้าน</p></div></div>
-<div class="ranks">
-<article class="rank "><div class="num">RANK 01</div><h3>VIP</h3><div class="price">฿39</div><ul><li>Prefix VIP</li><li>/hat /craft</li><li>3 Homes</li><li>Common Key ×3</li></ul><button class="btn " onclick="openRank('VIP',39)">ดูรายละเอียด</button></article><article class="rank "><div class="num">RANK 02</div><h3>VIP+</h3><div class="price">฿79</div><ul><li>สิทธิ์จาก VIP</li><li>/enderchest /feed</li><li>5 Homes</li><li>Rare Key ×1</li></ul><button class="btn " onclick="openRank('VIP+',79)">ดูรายละเอียด</button></article><article class="rank "><div class="num">RANK 03</div><h3>Knight</h3><div class="price">฿149</div><ul><li>สิทธิ์จาก VIP+</li><li>/ptime /pweather</li><li>8 Homes</li><li>Rare Key ×3</li></ul><button class="btn " onclick="openRank('Knight',149)">ดูรายละเอียด</button></article><article class="rank "><div class="num">RANK 04</div><h3>Elite</h3><div class="price">฿249</div><ul><li>/repair /anvil</li><li>10 Homes</li><li>Rare Key ×5</li><li>Epic Key ×2</li></ul><button class="btn " onclick="openRank('Elite',249)">ดูรายละเอียด</button></article><article class="rank popular"><div class="num">RANK 05</div><h3>Noble</h3><div class="price">฿399</div><ul><li>/back</li><li>Backpack Lv.1</li><li>15 Homes</li><li>Rare Key ×8</li><li>Epic Key ×5</li></ul><button class="btn primary" onclick="openRank('Noble',399)">ซื้อ Noble</button></article><article class="rank "><div class="num">RANK 06</div><h3>Lord</h3><div class="price">฿599</div><ul><li>สิทธิ์จาก Noble</li><li>Fly ที่ Spawn</li><li>Chat Color</li><li>สิทธิ์พิเศษ</li></ul><button class="btn " onclick="openRank('Lord',599)">ดูรายละเอียด</button></article>
+<section class="section" id="ranks"><div class="wrap"><div class="head"><div><div class="eyebrow">RANK STORE</div><h2>ยศทั้งหมด</h2><p>ตัวอย่างรายการยศในหน้าร้าน</p></div></div><div class="ranks">
+<article class="rank "><div class="rankNum">RANK 01</div><h3>VIP</h3><div class="price">฿39</div><ul><li>Prefix VIP</li><li>/hat /craft</li><li>3 Homes</li><li>Common Key ×3</li></ul><button class="btn " onclick="openRank('VIP',39)">ดูรายละเอียด</button></article><article class="rank "><div class="rankNum">RANK 02</div><h3>VIP+</h3><div class="price">฿79</div><ul><li>สิทธิ์จาก VIP</li><li>/enderchest /feed</li><li>5 Homes</li><li>Rare Key ×1</li></ul><button class="btn " onclick="openRank('VIP+',79)">ดูรายละเอียด</button></article><article class="rank "><div class="rankNum">RANK 03</div><h3>Knight</h3><div class="price">฿149</div><ul><li>สิทธิ์จาก VIP+</li><li>/ptime /pweather</li><li>8 Homes</li><li>Rare Key ×3</li></ul><button class="btn " onclick="openRank('Knight',149)">ดูรายละเอียด</button></article><article class="rank "><div class="rankNum">RANK 04</div><h3>Elite</h3><div class="price">฿249</div><ul><li>/repair /anvil</li><li>10 Homes</li><li>Rare Key ×5</li><li>Epic Key ×2</li></ul><button class="btn " onclick="openRank('Elite',249)">ดูรายละเอียด</button></article><article class="rank popular"><div class="rankNum">RANK 05</div><h3>Noble</h3><div class="price">฿399</div><ul><li>/back</li><li>Backpack Lv.1</li><li>15 Homes</li><li>Rare Key ×8</li><li>Epic Key ×5</li></ul><button class="btn primary" onclick="openRank('Noble',399)">ซื้อ Noble</button></article><article class="rank "><div class="rankNum">RANK 06</div><h3>Lord</h3><div class="price">฿599</div><ul><li>สิทธิ์จาก Noble</li><li>Fly ที่ Spawn</li><li>Chat Color</li><li>สิทธิ์พิเศษ</li></ul><button class="btn " onclick="openRank('Lord',599)">ดูรายละเอียด</button></article>
 </div></div></section>
 
-<section class="section" id="process"><div class="wrap"><div class="sectionHead"><div><div class="eyebrow">PURCHASE FLOW</div><h2>ซื้อแล้วเข้าเกม</h2><p>ขั้นตอนที่หน้าเว็บจริงสามารถแสดงได้</p></div></div><div class="categories" style="grid-template-columns:repeat(4,1fr)"><div class="category"><span class="categoryIcon">01</span><h3>เข้าสู่ระบบ</h3><p>ตรวจสอบบัญชีและ Wallet</p></div><div class="category"><span class="categoryIcon">02</span><h3>เลือกสินค้า</h3><p>ดูราคาและสิทธิ์ทั้งหมด</p></div><div class="category"><span class="categoryIcon">03</span><h3>ยืนยันคำสั่งซื้อ</h3><p>กรอก Minecraft IGN</p></div><div class="category"><span class="categoryIcon">04</span><h3>รับสิทธิ์ในเกม</h3><p>ติดตามสถานะคำสั่งซื้อ</p></div></div></div></section>
-<section class="section" id="activity"><div class="wrap"><div class="reason"><div class="reasonCopy"><div class="eyebrow">LIVE STORE</div><h2>สถานะร้านค้า</h2><p>ตัวอย่างพื้นที่สำหรับ Server Status, Wallet, Orders และการส่งยศเข้า Minecraft</p></div><div class="stats"><div class="stat"><strong style="color:#66dc8d">ONLINE</strong><span>เซิร์ฟเวอร์พร้อม</span></div><div class="stat"><strong>WALLET</strong><span>ตรวจยอดก่อนซื้อ</span></div><div class="stat"><strong>RCON</strong><span>ส่งสิทธิ์เข้าเกม</span></div></div></div></div></section>
-<section class="section" id="account"><div class="wrap"><div class="sectionHead"><div><div class="eyebrow">ACCOUNT</div><h2>บัญชีของฉัน</h2><p>Wallet และประวัติคำสั่งซื้อในหน้าเดียว</p></div><button class="btn primary" onclick="openModal('account')">เปิดบัญชี</button></div></div></section>
-<footer class="footer"><div class="footerIn"><span>RitzSMP Store Preview · © 2026</span><span>ร้านค้า　เติมเงิน　กิจกรรม　กฎและข้อมูล　Discord</span></div></footer>
+<section class="section" id="process" style="background:#06070b"><div class="wrap"><div class="head"><div><div class="eyebrow">PURCHASE FLOW</div><h2>ซื้อแล้วเข้าเกม</h2><p>ขั้นตอนง่าย ๆ ของร้านค้า</p></div></div><div class="categories" style="grid-template-columns:repeat(4,1fr)"><div class="cat"><div class="catContent"><div class="catIcon">01</div><h3>เข้าสู่ระบบ</h3><p>ตรวจสอบบัญชีและ Wallet</p></div></div><div class="cat"><div class="catContent"><div class="catIcon">02</div><h3>เลือกสินค้า</h3><p>ดูราคาและสิทธิ์</p></div></div><div class="cat"><div class="catContent"><div class="catIcon">03</div><h3>ยืนยัน</h3><p>ใส่ Minecraft IGN</p></div></div><div class="cat"><div class="catContent"><div class="catIcon">04</div><h3>รับสิทธิ์</h3><p>ติดตามสถานะ Order</p></div></div></div></div></section>
+<section class="section" id="activity"><div class="wrap"><div class="reason"><div class="reasonText"><div class="eyebrow">LIVE STORE</div><h2>สถานะร้านค้า</h2><p>พื้นที่สำหรับ Server Status, Wallet และระบบคำสั่งซื้อแบบเรียลไทม์</p></div><div class="stats"><div class="stat"><strong style="color:#65dc8d">ONLINE</strong><span>เซิร์ฟเวอร์พร้อม</span></div><div class="stat"><strong>WALLET</strong><span>ตรวจยอดก่อนซื้อ</span></div><div class="stat"><strong>RCON</strong><span>ส่งสิทธิ์เข้าเกม</span></div></div></div></div></section>
+<section class="section" id="account"><div class="wrap"><div class="head"><div><div class="eyebrow">ACCOUNT</div><h2>บัญชีของฉัน</h2><p>Wallet และประวัติคำสั่งซื้อ</p></div><button class="btn primary" onclick="openModal('account')">เปิดบัญชี</button></div></div></section>
+</main>
+<footer class="footer"><div class="wrap footerIn"><span>RitzSMP Store · © 2026</span><span>หน้าหลัก　ร้านค้า　เติมเงิน　กิจกรรม　กฎและข้อมูล　Discord</span></div></footer>
 
-<div class="modal" id="modal"><div class="modalBox">
-<div class="modalTop"><div><div class="eyebrow">CHECKOUT PREVIEW</div><h3 id="mTitle">Noble</h3><div id="mPrice" style="color:#ffd66e;font-weight:1000">฿399</div></div><button class="close" onclick="closeModal()">×</button></div>
-<p>ตัวอย่างหน้าต่างสั่งซื้อยศ</p><div class="field"><label>Minecraft IGN</label><input value="Mimi_123"></div><div class="sum"><span>Wallet</span><b>฿520</b></div><div class="sum"><span>ราคาสินค้า</span><b id="mSum">฿399</b></div><div class="sum"><span>คงเหลือ</span><b style="color:#69da91" id="mRemain">฿121</b></div><button class="btn primary" onclick="finish()">ยืนยันคำสั่งซื้อ</button>
-</div></div>
+<div class="modal" id="modal"><div class="dialog"><div class="dialogTop"><div><div class="eyebrow">CHECKOUT PREVIEW</div><h3 id="mTitle">Noble</h3><div id="mPrice" style="color:#ffd66e;font-weight:1000">฿399</div></div><button class="close" onclick="closeModal()">×</button></div><p>ตัวอย่างหน้าต่างสั่งซื้อ</p><label>Minecraft IGN</label><input class="input" value="Mimi_123"><div class="sum"><span>Wallet</span><b>฿520</b></div><div class="sum"><span>ราคาสินค้า</span><b id="mSum">฿399</b></div><div class="sum"><span>คงเหลือ</span><b id="mRemain" style="color:#69dc92">฿121</b></div><button class="btn primary" onclick="finish()">ยืนยันคำสั่งซื้อ</button></div></div>
 </div>
 <script>
-const modal=document.getElementById('modal');let selected=399;
-function openRank(name,price){selected=price;document.getElementById('mTitle').textContent=name;document.getElementById('mPrice').textContent='฿'+price.toLocaleString();document.getElementById('mSum').textContent='฿'+price.toLocaleString();document.getElementById('mRemain').textContent='฿'+Math.max(0,520-price).toLocaleString();modal.classList.add('show');document.body.style.overflow='hidden'}
+const modal=document.getElementById('modal');
+function openRank(name,price){document.getElementById('mTitle').textContent=name;document.getElementById('mPrice').textContent='฿'+price.toLocaleString();document.getElementById('mSum').textContent='฿'+price.toLocaleString();document.getElementById('mRemain').textContent='฿'+Math.max(0,520-price).toLocaleString();modal.classList.add('show');document.body.style.overflow='hidden'}
 function openModal(){openRank('บัญชีของฉัน',0)}
 function closeModal(){modal.classList.remove('show');document.body.style.overflow=''}
-function finish(){closeModal();toast('นี่คือ Preview — ระบบจริงจะเชื่อม Wallet และ RCON')}
-function toast(t){let e=document.createElement('div');e.style='position:fixed;right:18px;bottom:18px;z-index:100;padding:13px 16px;border-radius:11px;background:#0b1510;color:#8fe1ab;border:1px solid #57d58a44;font-size:10px';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),2600)}
+function finish(){closeModal();alert('นี่คือ Preview — ระบบจริงจะเชื่อม Wallet และ RCON')}
 modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
 </script>
-</body>
-</html>
+</body></html>
