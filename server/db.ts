@@ -103,7 +103,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
   const values: InsertUser = { openId: user.openId };
   const updateSet: Record<string, unknown> = {};
-  const textFields = ["name", "email", "loginMethod"] as const;
+  const textFields = ["name", "email", "passwordHash", "loginMethod"] as const;
 
   for (const field of textFields) {
     if (user[field] !== undefined) {

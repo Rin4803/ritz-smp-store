@@ -262,7 +262,27 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .order-slip:hover { text-decoration: underline; }
 .account-link-label { color: #e6c06b; font-size: 10px; }
 .empty-box a { text-decoration: none; }
-
+.local-auth-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: rgba(4, 5, 9, .78); backdrop-filter: blur(12px); }
+.local-auth-dialog { position: relative; width: min(100%, 460px); max-height: min(720px, calc(100vh - 40px)); overflow: auto; padding: 30px; border: 1px solid rgba(230,192,107,.28); border-radius: 22px; background: linear-gradient(145deg, #19171b, #0e1015); box-shadow: 0 24px 100px rgba(0,0,0,.55); }
+.local-auth-close { position: absolute; top: 16px; right: 16px; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(255,255,255,.12); border-radius: 50%; color: #c5c7ce; background: transparent; cursor: pointer; }
+.local-auth-icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 18px; border: 1px solid rgba(230,192,107,.32); border-radius: 15px; color: #e6c06b; background: rgba(230,192,107,.1); }
+.local-auth-dialog h2 { margin: 8px 0 6px; font-size: 28px; letter-spacing: -.045em; }
+.local-auth-dialog > .subtle { margin: 0 0 22px; line-height: 1.7; }
+.local-auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 4px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; background: rgba(255,255,255,.035); }
+.local-auth-tabs button { padding: 10px; border: 0; border-radius: 9px; color: #9598a2; background: transparent; cursor: pointer; font: inherit; font-size: 12px; }
+.local-auth-tabs button.active { color: #f7e4b2; background: rgba(230,192,107,.14); }
+.local-auth-form { display: grid; gap: 14px; }
+.local-auth-form label { display: grid; gap: 7px; color: #d9dbe2; font-size: 12px; font-weight: 650; }
+.local-auth-form input { width: 100%; box-sizing: border-box; padding: 12px 13px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; outline: none; color: #f7f7f7; background: rgba(0,0,0,.22); font: inherit; }
+.local-auth-form input:focus { border-color: rgba(230,192,107,.75); box-shadow: 0 0 0 3px rgba(230,192,107,.1); }
+.local-auth-password { position: relative; }
+.local-auth-password input { padding-right: 43px; }
+.local-auth-password button { position: absolute; top: 0; right: 0; display: grid; place-items: center; width: 42px; height: 100%; border: 0; color: #9fa2ac; background: transparent; cursor: pointer; }
+.local-auth-feedback { display: flex; align-items: flex-start; gap: 7px; padding: 10px 12px; border-radius: 10px; font-size: 12px; line-height: 1.5; }
+.local-auth-feedback.error { color: #ffb4ad; border: 1px solid rgba(181,77,82,.35); background: rgba(181,77,82,.12); }
+.local-auth-feedback.success { color: #b9f6c5; border: 1px solid rgba(74,222,128,.25); background: rgba(74,222,128,.1); }
+.local-auth-submit { width: 100%; justify-content: center; margin-top: 3px; }
+.local-auth-footnote { display: block; margin-top: 18px; text-align: center; font-size: 10px; }
 @media (max-width: 760px) {
   .nav { display: none; }
   .account-link-label { display: none; }
@@ -272,3 +292,4 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .account-order-row { grid-template-columns: 1fr 1fr; }
   .account-order-row .order-slip { justify-self: start; }
 }
+@media (max-width: 520px) { .local-auth-dialog { padding: 24px 18px; } .local-auth-dialog h2 { font-size: 24px; } }

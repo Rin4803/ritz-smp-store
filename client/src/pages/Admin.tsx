@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
-import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { LocalAuthDialog } from "@/components/LocalAuthDialog";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -29,6 +29,7 @@ function statusClass(status: string) {
 
 export default function Admin() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const isAdmin = user?.role === "admin";
   const ordersQuery = trpc.admin.orders.useQuery(undefined, { enabled: isAdmin });
   const reportDashboardQuery = trpc.admin.playerReportDashboard.useQuery(undefined, { enabled: isAdmin, refetchInterval: 30_000 });
@@ -98,7 +99,7 @@ export default function Admin() {
   }), [orders]);
 
   if (authLoading) return <div className="store-shell"><div className="loading"><Loader2 size={20} className="animate-spin" /></div></div>;
-  if (!isAuthenticated) return <div className="store-shell"><div className="admin-shell"><div className="container empty-box"><LogIn size={22} className="gold-text" /><p>กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแล</p><button className="primary-btn compact-btn" onClick={() => startLogin()}>เข้าสู่ระบบ</button></div></div></div>;
+  if (!isAuthenticated) return <div className="store-shell"><div className="admin-shell"><div className="container empty-box"><LogIn size={22} className="gold-text" /><p>กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแล</p><button className="primary-btn compact-btn" onClick={() => setAuthDialogOpen(true)}>เข้าสู่ระบบ</button></div></div><LocalAuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} /></div>;
   if (!isAdmin) return <div className="store-shell"><div className="admin-shell"><div className="container empty-box"><ShieldAlert size={24} className="gold-text" /><p>บัญชีนี้ไม่มีสิทธิ์เข้าถึง Dashboard แอดมิน</p><Link className="ghost-btn compact-btn" href="/">กลับหน้าร้าน</Link></div></div></div>;
 
   return (

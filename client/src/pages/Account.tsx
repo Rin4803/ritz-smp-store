@@ -1,8 +1,9 @@
 import { Link } from "wouter";
 import { ArrowLeft, CheckCircle2, Clock3, Crown, ExternalLink, Loader2, LogIn, LogOut, ShieldAlert, UserCircle } from "lucide-react";
-import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { LocalAuthDialog } from "@/components/LocalAuthDialog";
+import { useState } from "react";
 
 function formatPrice(value: string | number) {
   const number = Number(value);
@@ -21,6 +22,7 @@ function statusClass(status: string) {
 
 export default function Account() {
   const { user, loading: authLoading, isAuthenticated, logout } = useAuth();
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const ordersQuery = trpc.store.myOrders.useQuery(undefined, { enabled: isAuthenticated });
   const walletQuery = trpc.store.wallet.useQuery(undefined, { enabled: isAuthenticated });
   const orders = ordersQuery.data ?? [];
@@ -44,9 +46,10 @@ export default function Account() {
                 <h1 className="account-title">เข้าสู่ระบบเพื่อดูบัญชีของคุณ</h1>
                 <p className="subtle">ตรวจสอบประวัติการซื้อ สถานะออเดอร์ และข้อมูลการมอบยศได้จากหน้านี้</p>
               </div>
-              <button className="primary-btn" onClick={() => startLogin()}><LogIn size={16} /> เข้าสู่ระบบ</button>
+              <button className="primary-btn" onClick={() => setAuthDialogOpen(true)}><LogIn size={16} /> เข้าสู่ระบบ</button>
             </div>
           </div>
+          <LocalAuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
         </main>
       </div>
     );

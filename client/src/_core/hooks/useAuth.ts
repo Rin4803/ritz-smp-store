@@ -1,4 +1,3 @@
-import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
@@ -9,10 +8,8 @@ type UseAuthOptions = {
 };
 
 export function useAuth(options?: UseAuthOptions) {
-  // Login is started via startLogin() in the effect below, only when we actually
-  // navigate — never during render. startLogin() mints a one-time nonce + writes
-  // the state cookie, so calling it per render would overwrite the cookie and
-  // desync it from an in-flight login's `state`.
+  // The store owns the login UI. This hook only observes the current session and
+  // optionally navigates to a caller-provided local route.
   const { redirectOnUnauthenticated = false, redirectPath } = options ?? {};
   const utils = trpc.useUtils();
 
@@ -76,12 +73,9 @@ export function useAuth(options?: UseAuthOptions) {
     if (typeof window === "undefined") return;
     if (redirectPath && window.location.pathname === redirectPath) return;
 
-    // Navigate at this moment only. startLogin() mints the nonce + cookie itself.
-    if (redirectPath) {
-      window.location.href = redirectPath;
-    } else {
-      startLogin();
-    }
+    // Local store authentication owns the login UI. Protected callers may
+    // provide a route such as /account rather than forcing an external OAuth page.
+    if (redirectPath) window.location.href = redirectPath;
   }, [
     redirectOnUnauthenticated,
     redirectPath,

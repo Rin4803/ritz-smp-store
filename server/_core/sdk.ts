@@ -7,6 +7,7 @@ import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
+import { getLocalSessionToken, verifyLocalSession } from "./localAuth";
 import type {
   ExchangeTokenRequest,
   ExchangeTokenResponse,
@@ -259,6 +260,15 @@ class SDKServer {
     // 1. Prefer the session cookie (regular OAuth login).
     const cookies = this.parseCookies(req.headers.cookie);
     let sessionToken = cookies.get(COOKIE_NAME);
+
+    const localSession = verifyLocalSession(getLocalSessionToken(req));
+    if (localSession) {
+      const localUser = await db.getUserById(localSession.userId);
+      if (localUser?.passwordHash) {
+        await db.upsertUser({ openId: localUser.openId, lastSignedIn: new Date() });
+        return localUser;
+      }
+    }
 
     // 2. Fallback to the Authorization header (Preview auto-login via
     //    sessionStorage), used when the browser blocks iframe cookies such as

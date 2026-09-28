@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
-import { startLogin } from "@/const";
 import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { LocalAuthDialog } from "@/components/LocalAuthDialog";
 import { getRankPresentation } from "@/lib/rankPresentation";
 import confetti from "canvas-confetti";
 import {
@@ -153,6 +153,7 @@ export default function Home() {
   const [priceFilter, setPriceFilter] = useState<"all" | "budget" | "mid" | "prestige">("all");
   const [menuOpen, setMenuOpen] = useState(false);
   const [catalogTimedOut, setCatalogTimedOut] = useState(false);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!ranksQuery.isLoading) {
@@ -187,7 +188,7 @@ export default function Home() {
   const openOrder = (rank: (typeof ranks)[number]) => {
     setPurchaseResult(null);
     if (!isAuthenticated) {
-      startLogin();
+      setAuthDialogOpen(true);
       return;
     }
     setSelectedRank(rank);
@@ -282,7 +283,7 @@ export default function Home() {
               <Link href="/account" className="user-chip"><ShieldCheck size={14} className="gold-text" /> {user?.name ?? "ผู้เล่น"} <span className="account-link-label">บัญชี</span></Link>
             </div>
           ) : (
-            <button className="ghost-btn compact-btn" onClick={() => startLogin()}>
+            <button className="ghost-btn compact-btn" onClick={() => setAuthDialogOpen(true)}>
               <LogIn size={14} /> เข้าสู่ระบบ
             </button>
           )}
@@ -318,7 +319,7 @@ export default function Home() {
             {!authLoading && (isAuthenticated ? (
               <Link href="/account" className="mobile-menu-login" onClick={() => setMenuOpen(false)}><ShieldCheck size={15} /> บัญชีของฉัน</Link>
             ) : (
-              <button type="button" className="mobile-menu-login" onClick={() => { setMenuOpen(false); startLogin(); }}><LogIn size={15} /> เข้าสู่ระบบ</button>
+              <button type="button" className="mobile-menu-login" onClick={() => { setMenuOpen(false); setAuthDialogOpen(true); }}><LogIn size={15} /> เข้าสู่ระบบ</button>
             ))}
           </nav>
         )}
@@ -348,7 +349,7 @@ export default function Home() {
                     <Wallet size={16} /> เติมเงินเข้ากระเป๋า ({formatPrice(walletBalance)} ฿)
                   </button>
                 ) : (
-                  <button className="ghost-btn" onClick={() => startLogin()}><CreditCard size={16} /> เข้าสู่ระบบเพื่อเติมเงิน</button>
+                  <button className="ghost-btn" onClick={() => setAuthDialogOpen(true)}><CreditCard size={16} /> เข้าสู่ระบบเพื่อเติมเงิน</button>
                 )}
               </div>
               <div className="hero-note">
@@ -589,7 +590,7 @@ export default function Home() {
                 <h2 className="section-title">ประวัติออเดอร์ของคุณ</h2>
               </div>
               {!isAuthenticated && (
-                <button className="ghost-btn compact-btn" onClick={() => startLogin()}>
+                <button className="ghost-btn compact-btn" onClick={() => setAuthDialogOpen(true)}>
                   <LogIn size={14} /> เข้าสู่ระบบเพื่อดูประวัติ
                 </button>
               )}
@@ -936,6 +937,7 @@ export default function Home() {
           </div>
         </div>
       )}
+      <LocalAuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
     </div>
   );
 }

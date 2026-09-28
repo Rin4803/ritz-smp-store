@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import type { TrpcContext } from "./_core/context";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { notifyOwner } from "./_core/notification";
 import { adminProcedure, ownerProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -16,6 +17,7 @@ import {
   getRanks,
   getUserById,
   getUserByEmail,
+  upsertUser,
   getAllUsers,
   updateUserRole,
   updateOrder,
@@ -40,11 +42,17 @@ import { getRitzSmpAiBotStatus } from "./discordAiBot";
 import { getManagedServerRuntimeConfig, runtimeConfigForClient } from "./multiserverRuntime";
 import { notifyPurchaseCompleted, notifyTopupSubmitted } from "./discordNotifications";
 import { fetchMinecraftServerStatus } from "./minecraftIntegration";
+import { createLocalSession, hashPassword, verifyPassword, LOCAL_SESSION_MAX_AGE_MS } from "./_core/localAuth";
 
 const allowedSlipTypes = ["image/jpeg", "image/png", "image/webp"] as const;
 const orderStatus = z.enum(["รอตรวจสอบ", "สำเร็จ", "ยกเลิก"]);
 const coinRewards = [100, 250, 450, 700, 1000, 1200, 1350, 1420, 1470, 1500] as const;
 const getCoinRewardForRank = (rankId: number) => coinRewards[Math.min(Math.max(rankId - 1, 0), coinRewards.length - 1)] ?? 100;
+const publicUser = (user: NonNullable<TrpcContext["user"]> | null) => {
+  if (!user) return null;
+  const { passwordHash: _passwordHash, ...safeUser } = user;
+  return safeUser;
+};
 
 /** รายการสาธารณะหลักของ RitzSMP ใช้เฉพาะเมื่อ owner ยังไม่ได้สร้าง registry row */
 const PUBLIC_RITZSMP_DIRECTORY_ENTRY = {
@@ -98,7 +106,49 @@ export const appRouter = router({
     }),
   }),
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: publicProcedure.query(opts => publicUser(opts.ctx.user)),
+    register: publicProcedure
+      .input(z.object({
+        name: z.string().trim().min(2, "กรุณากรอกชื่ออย่างน้อย 2 ตัวอักษร").max(64),
+        email: z.string().trim().toLowerCase().email("รูปแบบอีเมลไม่ถูกต้อง").max(320),
+        password: z.string().min(8, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร").max(128),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const normalizedEmail = input.email.trim().toLowerCase();
+        if (await getUserByEmail(normalizedEmail)) {
+          throw new TRPCError({ code: "CONFLICT", message: "อีเมลนี้มีบัญชีอยู่แล้ว กรุณาเข้าสู่ระบบ" });
+        }
+        await upsertUser({
+          openId: `local_${randomUUID()}`,
+          name: input.name.trim(),
+          email: normalizedEmail,
+          passwordHash: hashPassword(input.password),
+          loginMethod: "local",
+          role: normalizedEmail === ENV.ownerEmail ? "admin" : "user",
+          lastSignedIn: new Date(),
+        });
+        const user = await getUserByEmail(normalizedEmail);
+        if (!user) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "สร้างบัญชีไม่สำเร็จ" });
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, createLocalSession(user.id), { ...cookieOptions, sameSite: "lax", maxAge: LOCAL_SESSION_MAX_AGE_MS });
+        return publicUser(user);
+      }),
+    login: publicProcedure
+      .input(z.object({
+        email: z.string().trim().toLowerCase().email("รูปแบบอีเมลไม่ถูกต้อง").max(320),
+        password: z.string().min(1, "กรุณากรอกรหัสผ่าน").max(128),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const user = await getUserByEmail(input.email.trim().toLowerCase());
+        if (!user?.passwordHash || !verifyPassword(input.password, user.passwordHash)) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
+        }
+        await upsertUser({ openId: user.openId, lastSignedIn: new Date() });
+        const refreshedUser = await getUserByEmail(input.email.trim().toLowerCase());
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, createLocalSession(user.id), { ...cookieOptions, sameSite: "lax", maxAge: LOCAL_SESSION_MAX_AGE_MS });
+        return publicUser(refreshedUser ?? user);
+      }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
