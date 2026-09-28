@@ -16,9 +16,14 @@ html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Noto Sans Thai",Arial,sans-serif}
 button,input{font:inherit}button{cursor:pointer}a{text-decoration:none;color:inherit}
 .page{min-height:100vh;background:
-linear-gradient(180deg,rgba(3,4,8,.04) 0,rgba(3,4,8,.14) 24%,#07080a 71%,#07080a 100%),
-url("preview-bg.svg") center top/cover no-repeat fixed}
-.page:after{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,.54),transparent 34%,transparent 69%,rgba(0,0,0,.38));z-index:0}
+radial-gradient(900px 480px at 74% 8%,rgba(125,76,28,.10),transparent 58%),
+radial-gradient(700px 420px at 18% 16%,rgba(98,52,28,.07),transparent 62%),
+#07080a;
+position:relative}
+.page:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.34;background:
+repeating-linear-gradient(0deg,transparent 0,transparent 31px,rgba(255,255,255,.018) 32px),
+repeating-linear-gradient(90deg,transparent 0,transparent 31px,rgba(255,255,255,.012) 32px)}
+.page:after{content:"";position:absolute;left:0;right:0;top:0;height:520px;pointer-events:none;background:linear-gradient(180deg,rgba(232,173,61,.055),transparent 72%);z-index:0}
 .shell{width:min(var(--max),calc(100% - 36px));margin:auto;position:relative;z-index:1}
 .topline{height:2px;background:linear-gradient(90deg,transparent,#d58b2e 25%,#ffcf6a 50%,#d58b2e 75%,transparent)}
 .header{position:sticky;top:0;z-index:30;background:rgba(6,7,10,.84);backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,.07)}
@@ -30,11 +35,20 @@ url("preview-bg.svg") center top/cover no-repeat fixed}
 .navright{margin-left:auto;display:flex;gap:9px;align-items:center}
 .serverState{color:#bfc0c5;font-size:10px;padding:9px 11px;border:1px solid var(--line);background:#07080c88;border-radius:10px}.serverState i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 10px rgba(96,207,138,.6);margin-right:5px}
 .btn{border:1px solid rgba(255,255,255,.13);background:#ffffff05;color:#eee6d8;padding:11px 15px;border-radius:10px;font-size:10px;font-weight:850;transition:.18s}.btn:hover{transform:translateY(-2px);border-color:var(--lineGold)}.btn.primary{background:linear-gradient(135deg,#f2bf54,#df8d2f);border-color:#f6c861;color:#261707;box-shadow:0 10px 26px rgba(210,126,30,.18)}
-.hero{min-height:620px;position:relative;overflow:hidden}.heroInner{min-height:620px;display:flex;align-items:center;padding:56px 0 95px}.heroCopy{max-width:640px}.kicker{font-size:9px;letter-spacing:.22em;color:#d6b067;font-weight:900}.heroTitle{margin:15px 0 5px;font-size:clamp(52px,7vw,88px);line-height:.88;letter-spacing:-.065em;font-weight:1000;text-shadow:0 4px 30px rgba(0,0,0,.55)}
-.heroTitle em{display:block;font-style:normal;color:var(--gold2)}.heroSub{font-size:18px;line-height:1.55;margin:0 0 11px;color:#f7f0e5;font-weight:700}.heroBody{max-width:560px;color:#c2bec2;font-size:12px;line-height:1.85;margin:0}.heroActions{display:flex;gap:9px;margin-top:24px}.heroMeta{display:flex;gap:20px;flex-wrap:wrap;margin-top:22px}.meta{font-size:9px;color:#aaa8ae}.meta b{color:#e7e1d8;font-size:11px;display:block;margin-bottom:3px}
-.heroArt{position:absolute;right:-40px;bottom:5px;width:600px;height:530px;pointer-events:none}.heroArt:before{content:"";position:absolute;inset:40px 40px 20px 60px;background:radial-gradient(circle at 50% 45%,rgba(156,69,255,.27),transparent 27%),radial-gradient(circle at 50% 74%,rgba(255,106,22,.22),transparent 31%);filter:blur(8px)}
-.portal{position:absolute;left:45%;top:26%;width:175px;height:260px;border:7px solid #8132e7;border-radius:48% 48% 22% 22%;background:radial-gradient(circle at 50% 45%,#efc7ff 0,#a232ff 34%,#1a0632 70%);box-shadow:0 0 32px #9e3dff,0 0 100px rgba(153,56,255,.5);opacity:.86}
-.fighter{position:absolute;right:5%;bottom:18px;width:185px;height:310px}.fighter .chest{position:absolute;right:28px;bottom:0;width:137px;height:205px;background:linear-gradient(145deg,#2c3036,#090a0e);border:6px solid #45404a;border-radius:18px}.fighter .head{position:absolute;right:46px;bottom:176px;width:92px;height:82px;background:#1b1d22;border:6px solid #4b454e;border-radius:14px;box-shadow:inset 0 0 0 14px #090a0e}.fighter .eye{position:absolute;top:25px;width:13px;height:7px;background:#ffb43b;box-shadow:0 0 13px #ffb43b}.fighter .eye.a{right:24px}.fighter .eye.b{right:50px}.fighter .cape{position:absolute;right:-2px;bottom:28px;width:156px;height:180px;background:linear-gradient(140deg,#9a292d,#4b1017);clip-path:polygon(10% 0,100% 24%,80% 94%,0 65%)}.fighter .blade{position:absolute;right:122px;bottom:18px;width:7px;height:222px;background:#ffe9a5;box-shadow:0 0 16px #ff861d;transform:rotate(28deg);border-radius:5px}
+.hero{min-height:620px;position:relative;overflow:hidden}.heroInner{min-height:620px;display:flex;align-items:center;padding:56px 0 95px;position:relative}.heroCopy{max-width:600px;padding-right:30px}.kicker{font-size:9px;letter-spacing:.22em;color:#d6b067;font-weight:900}.heroTitle{margin:15px 0 5px;font-size:clamp(52px,7vw,88px);line-height:.88;letter-spacing:-.065em;font-weight:1000;text-shadow:0 4px 30px rgba(0,0,0,.55)}
+.heroTitle em{display:block;font-style:normal;color:var(--gold2)}.heroSub{font-size:18px;line-height:1.55;margin:0 0 11px;color:#f7f0e5;font-weight:700}.heroBody{max-width:510px;color:#c2bec2;font-size:12px;line-height:1.85;margin:0}.heroActions{display:flex;gap:9px;margin-top:24px}.heroMeta{display:flex;gap:18px;flex-wrap:wrap;margin-top:22px}.meta{font-size:9px;color:#aaa8ae}.meta b{color:#e7e1d8;font-size:11px;display:block;margin-bottom:3px}
+
+.heroVisual{position:absolute;right:0;top:50%;transform:translateY(-50%);width:430px;min-height:350px;padding:26px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(10,12,16,.82);box-shadow:0 24px 70px rgba(0,0,0,.34)}
+.heroVisual:before{content:"";position:absolute;left:26px;right:26px;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,173,61,.65),transparent)}
+.heroVisualHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.heroVisualHead b{font-size:11px;letter-spacing:.05em}.live{font-size:8px;color:#82d99d;border:1px solid rgba(96,207,138,.2);padding:6px 8px;border-radius:7px}
+.heroServer{padding:15px 0;border-top:1px solid rgba(255,255,255,.06)}
+.heroServer:first-of-type{border-top:0;padding-top:0}
+.heroServer .label{font-size:8px;color:#6f737b;letter-spacing:.1em}.heroServer strong{display:block;font-size:20px;margin-top:6px}.heroServer p{margin:4px 0 0;color:#858891;font-size:9px;line-height:1.65}
+.heroDivider{height:1px;background:rgba(255,255,255,.06);margin:14px 0}
+.heroMiniGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.heroMini{padding:11px;border:1px solid rgba(255,255,255,.06);background:#080a0e;border-radius:9px}.heroMini small{display:block;color:#6d7078;font-size:8px}.heroMini b{display:block;margin-top:4px;font-size:11px}
+@media(max-width:1000px){.heroVisual{right:-80px;opacity:.78}}
+
 .quickBar{margin-top:-64px;position:relative;z-index:3;border:1px solid rgba(232,173,61,.25);background:rgba(7,8,11,.95);display:grid;grid-template-columns:1.25fr repeat(3,1fr);border-radius:15px;box-shadow:0 20px 55px rgba(0,0,0,.45);overflow:hidden}.quickLead{padding:17px 18px}.quickLead b{display:block;font-size:12px}.quickLead span{color:#7f8088;font-size:9px}.quickItem{padding:17px 18px;border-left:1px solid rgba(255,255,255,.08)}.quickItem strong{display:block;color:#edc361;font-size:10px}.quickItem span{display:block;color:#8f9097;font-size:9px;margin-top:3px}
 .section{padding:72px 0;background:linear-gradient(180deg,rgba(7,8,10,.96),#07080a)}
 .sectionHead{display:flex;justify-content:space-between;align-items:end;gap:18px;margin-bottom:24px}.sectionHead h2{margin:6px 0 0;font-size:32px;letter-spacing:-.04em}.sectionHead p{margin:5px 0 0;color:#85878f;font-size:10px}
@@ -70,8 +84,8 @@ url("preview-bg.svg") center top/cover no-repeat fixed}
 .userChip{display:none;align-items:center;gap:8px;padding:8px 10px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:#080a0d;font-size:9px;color:#d9d6ce}
 .userChip.show{display:flex}.userChip .dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
 
-@media(max-width:1000px){.navlinks{display:none}.heroArt{right:-110px;opacity:.66}.quickBar{grid-template-columns:1fr 1fr}.quickItem:nth-child(3){border-right:0}.quickLead{grid-column:1/3;border-bottom:1px solid rgba(255,255,255,.08)}.storeLayout{grid-template-columns:150px 1fr}.strip{grid-template-columns:1fr 1fr}.checkout{grid-template-columns:1fr}}
-@media(max-width:680px){.shell{width:calc(100% - 22px)}.header{height:68px}.nav{height:68px}.logo{min-width:auto}.logoText span{font-size:7px}.navright .serverState{display:none}.hero{min-height:600px}.heroInner{min-height:600px;padding:45px 0 155px}.heroCopy{max-width:100%}.brandBig{font-size:54px}.heroSub{font-size:17px}.heroBody{font-size:11px}.heroArt{right:-160px;bottom:0;transform:scale(.82);opacity:.48}.quickBar{grid-template-columns:1fr}.quickLead{grid-column:auto;border-bottom:1px solid rgba(255,255,255,.08)}.quickItem{border-left:0;border-bottom:1px solid rgba(255,255,255,.08)}.quickItem:last-child{border-bottom:0}.storeLayout{grid-template-columns:1fr}.side{display:flex;gap:5px;overflow:auto}.side h3,.sideNote{display:none}.side button{width:auto;white-space:nowrap;text-align:center;margin:0}.productGrid{grid-template-columns:1fr}.categories{grid-template-columns:1fr}.strip{grid-template-columns:1fr}.section{padding:54px 0}.sectionHead{display:block}.sectionHead .btn{margin-top:12px}.footerTop{display:block}.footerLinks{margin-top:12px;flex-wrap:wrap}}
+@media(max-width:1000px){.navlinks{display:none}.heroVisual{right:-80px;opacity:.78}.quickBar{grid-template-columns:1fr 1fr}.quickItem:nth-child(3){border-right:0}.quickLead{grid-column:1/3;border-bottom:1px solid rgba(255,255,255,.08)}.storeLayout{grid-template-columns:150px 1fr}.strip{grid-template-columns:1fr 1fr}.checkout{grid-template-columns:1fr}}
+@media(max-width:680px){.shell{width:calc(100% - 22px)}.header{height:68px}.nav{height:68px}.logo{min-width:auto}.logoText span{font-size:7px}.navright .serverState{display:none}.hero{min-height:580px}.heroInner{min-height:600px;padding:45px 0 155px}.heroCopy{max-width:100%}.brandBig{font-size:54px}.heroSub{font-size:17px}.heroBody{font-size:11px}.heroVisual{position:relative;right:auto;top:auto;transform:none;width:100%;margin-top:18px;min-height:0}.heroInner{display:block;padding-bottom:115px}.heroCopy{padding-right:0}.quickBar{grid-template-columns:1fr}.quickLead{grid-column:auto;border-bottom:1px solid rgba(255,255,255,.08)}.quickItem{border-left:0;border-bottom:1px solid rgba(255,255,255,.08)}.quickItem:last-child{border-bottom:0}.storeLayout{grid-template-columns:1fr}.side{display:flex;gap:5px;overflow:auto}.side h3,.sideNote{display:none}.side button{width:auto;white-space:nowrap;text-align:center;margin:0}.productGrid{grid-template-columns:1fr}.categories{grid-template-columns:1fr}.strip{grid-template-columns:1fr}.section{padding:54px 0}.sectionHead{display:block}.sectionHead .btn{margin-top:12px}.footerTop{display:block}.footerLinks{margin-top:12px;flex-wrap:wrap}}
 </style>
 </head>
 <body>
@@ -92,7 +106,17 @@ url("preview-bg.svg") center top/cover no-repeat fixed}
 <div class="heroActions"><button class="btn primary" onclick="document.querySelector('#store').scrollIntoView({behavior:'smooth'})">เข้าสู่ร้านค้า</button><button class="btn" onclick="document.querySelector('#process').scrollIntoView({behavior:'smooth'})">วิธีซื้อ</button></div>
 <div class="heroMeta"><div class="meta"><b>play.ritzsmp.net</b>ที่อยู่เซิร์ฟเวอร์</div><div class="meta"><b>Java + Bedrock</b>รองรับสองระบบ</div><div class="meta"><b>Wallet</b>ชำระเงินภายในร้าน</div></div>
 </div>
-<div class="heroArt"><div class="portal"></div><div class="fighter"><div class="chest"></div><div class="head"><i class="eye a"></i><i class="eye b"></i></div><div class="cape"></div><div class="blade"></div></div></div>
+<div class="heroVisual">
+  <div class="heroVisualHead"><b>RitzSMP</b><span class="live">เซิร์ฟเวอร์ออนไลน์</span></div>
+  <div class="heroServer"><div class="label">SERVER ADDRESS</div><strong>play.ritzsmp.net</strong><p>เข้าเล่นได้ทั้ง Java Edition และ Bedrock Edition</p></div>
+  <div class="heroDivider"></div>
+  <div class="heroServer"><div class="label">STORE ACCOUNT</div><strong>Wallet + Order</strong><p>เติมเงิน ซื้อสินค้า และติดตามสถานะจากบัญชีเดียว</p></div>
+  <div class="heroDivider"></div>
+  <div class="heroMiniGrid">
+    <div class="heroMini"><small>ยืนยันตัวตน</small><b>บัญชีผู้เล่น RitzSMP</b></div>
+    <div class="heroMini"><small>การส่งของ</small><b>อัตโนมัติผ่านเซิร์ฟเวอร์</b></div>
+  </div>
+</div>
 </div></section>
 
 <div class="shell quickBar">
@@ -103,7 +127,7 @@ url("preview-bg.svg") center top/cover no-repeat fixed}
 </div>
 
 <section class="section" id="store"><div class="shell">
-<div class="sectionHead"><div><div class="eyebrow">STORE</div><h2>เลือกของจากที่นี่</h2><p>โครงสร้างร้านแบบเรียบแต่มีรายละเอียดพอให้ตัดสินใจก่อนซื้อ</p></div><button class="btn" onclick="toast('Preview: หน้าร้านทั้งหมด')">ดูสินค้าทั้งหมด →</button></div>
+<div class="sectionHead"><div><div class="eyebrow">STORE</div><h2>เลือกของจากที่นี่</h2><p>เลือกสินค้า ดูสิทธิ์และราคา แล้วสั่งซื้อจากบัญชีของคุณ</p></div><button class="btn" onclick="toast('Preview: หน้าร้านทั้งหมด')">ดูสินค้าทั้งหมด →</button></div>
 <div class="storeLayout">
 <aside class="side"><h3>หมวดหมู่</h3><button class="active">ทั้งหมด</button><button>ยศ</button><button>ไอเทม</button><button>บริการ</button><button>พิเศษ</button><div class="sideNote"><b>เซิร์ฟเวอร์</b>play.ritzsmp.net<br>Java + Bedrock</div></aside>
 <div class="productGrid">
@@ -113,13 +137,13 @@ url("preview-bg.svg") center top/cover no-repeat fixed}
 </div></section>
 
 <section class="section" id="process" style="background:#090a0d"><div class="shell">
-<div class="sectionHead"><div><div class="eyebrow">CHECKOUT</div><h2>ภาพรวมก่อนกดยืนยัน</h2><p>ตัวอย่าง flow ของหน้าเว็บจริง</p></div></div>
+<div class="sectionHead"><div><div class="eyebrow">CHECKOUT</div><h2>ภาพรวมก่อนกดยืนยัน</h2><p>ขั้นตอนการสั่งซื้อในร้าน</p></div></div>
 <div class="checkout"><div class="panel"><h3>สั่งซื้อ Noble</h3><div class="field"><label>Minecraft IGN</label><input value="Mimi_123"></div><div class="row"><span>สินค้า</span><b>Noble</b></div><div class="row"><span>ราคา</span><b style="color:#ffd46b">฿399</b></div><div class="row"><span>Wallet</span><b>฿520</b></div><div class="row"><span>คงเหลือหลังซื้อ</span><b style="color:#6bdc92">฿121</b></div><button class="btn primary" style="width:100%;margin-top:14px" onclick="toast('Preview: ส่งคำสั่งซื้อ')">ยืนยันคำสั่งซื้อ</button></div>
 <div class="panel"><h3>หลังยืนยัน</h3><div class="statusBox">ระบบจะตรวจสอบยอด Wallet → สร้าง Order → ส่งคำสั่งเข้า Minecraft → แสดงสถานะรายการบนบัญชี</div><div class="row"><span>Order</span><b>#RZ-PREVIEW</b></div><div class="row"><span>IGN</span><b>Mimi_123</b></div><div class="row"><span>สถานะตัวอย่าง</span><b style="color:#6bdc92">สำเร็จ</b></div></div></div>
 </div></section>
 
 <section class="section" id="activity"><div class="shell">
-<div class="sectionHead"><div><div class="eyebrow">SERVER</div><h2>RitzSMP อยู่ตรงนี้</h2><p>ข้อมูลสั้น ๆ ที่จำเป็นสำหรับผู้เล่น</p></div></div>
+<div class="sectionHead"><div><div class="eyebrow">SERVER</div><h2>RitzSMP อยู่ตรงนี้</h2><p>ข้อมูลสำหรับเข้าเล่นและติดต่อร้านค้า</p></div></div>
 <div class="strip"><div class="stripCard"><div class="num">SERVER ADDRESS</div><h3>play.ritzsmp.net</h3><p>ที่อยู่หลักสำหรับเข้าเล่น</p></div><div class="stripCard"><div class="num">PLATFORM</div><h3>Java + Bedrock</h3><p>เข้าจากทั้ง Java Edition และ Bedrock Edition</p></div><div class="stripCard"><div class="num">SUPPORT</div><h3>Discord / ร้านค้า</h3><p>ใช้ช่องทางหลักเพื่อติดตามข้อมูลและติดต่อทีมงาน</p></div></div>
 </div></section>
 
