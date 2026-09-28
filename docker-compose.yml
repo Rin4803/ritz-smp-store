@@ -113,29 +113,6 @@ services:
     networks:
       - ritz_net
 
-  music-bot:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: ritz_music_bot
-    command: ["node", "dist/discordMusicBotRunner.js"]
-    restart: unless-stopped
-    init: true
-    stop_grace_period: 30s
-    environment:
-      NODE_ENV: production
-      DISCORD_MUSIC_BOT_TOKEN: ${DISCORD_MUSIC_BOT_TOKEN}
-      DISCORD_GUILD_ID: ${DISCORD_GUILD_ID}
-      DISCORD_MUSIC_CHANNEL_ID: ${DISCORD_MUSIC_CHANNEL_ID:-}
-      YTDLP_PATH: ${YTDLP_PATH:-yt-dlp}
-      FFMPEG_PATH: ${FFMPEG_PATH:-ffmpeg}
-      YTDLP_COOKIES_PATH: ${YTDLP_COOKIES_PATH:-/run/ritz-secrets/youtube-cookies.txt}
-    volumes:
-      # Optional Netscape cookies file for a VPS that still receives YouTube bot checks.
-      # Never commit this file. Create it on the VPS at ./secrets/youtube-cookies.txt.
-      - ./secrets:/run/ritz-secrets:ro
-    networks:
-      - ritz_net
 
 volumes:
   mariadb_data:
