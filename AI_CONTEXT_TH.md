@@ -1,0 +1,77 @@
+# RitzSMP AI Context — ศูนย์กลางข้อมูลสำหรับ AI
+
+อัปเดตล่าสุด: 29 กันยายน 2026
+
+## วัตถุประสงค์
+
+เอกสารนี้เป็นจุดเริ่มต้นสำหรับ AI หรือผู้ดูแลคนใหม่ที่ต้องเข้ามาตรวจ แก้ ทดสอบ และดูแลระบบ RitzSMP โดยต้องอ่านไฟล์นี้ก่อนแก้ไขใด ๆ
+
+## กฎความปลอดภัยที่ห้ามละเมิด
+
+1. ห้ามขอให้ผู้ใช้ส่ง token, password, webhook URL, RCON password, database URL หรือ private key ในแชต
+2. ห้าม commit ค่า secret จริงลง GitHub แม้ repository จะเป็น Private
+3. ให้ใช้ชื่อ environment variable แทนค่าจริง เช่น `DISCORD_AI_BOT_TOKEN`
+4. ก่อนแก้ระบบ live ต้องอ่าน backup, สถานะ runtime และ log ล่าสุดก่อน
+5. การลบข้อมูล, ลบโลก, reset token, เปลี่ยนสิทธิ์, เปลี่ยน billing หรือเปลี่ยน repository visibility ต้องหยุดและขออนุมัติเฉพาะเจาะจง
+6. หลังแก้ต้องรัน typecheck, tests, build และ diff check พร้อมบันทึกผล
+7. ทุกการแก้ production ต้องมี rollback plan และบันทึกใน `todo.md` หรือ `docs/`
+
+## แผนผังระบบ
+
+```text
+ผู้เล่น
+  ├─ เว็บร้านค้า RitzSMP
+  │    ├─ Frontend React/Vite
+  │    ├─ Express/tRPC backend
+  │    ├─ Wallet / เติมเงิน / ซื้อยศ / ประวัติคำสั่งซื้อ
+  │    └─ Discord REST notification + RCON
+  ├─ Minecraft Java/Bedrock
+  │    └─ Paper + Geyser/Floodgate + DiscordSRV บน MCSV
+  └─ Discord
+       ├─ RitzSMP AI Bot: คำสั่ง AI/ดูแลระบบ/แจ้งเตือนร้านค้า
+       └─ BOT CHAT: DiscordSRV bridge จาก Minecraft
+```
+
+## ตำแหน่งระบบ
+
+| ส่วน | ตำแหน่ง/ไฟล์ | สถานะที่ต้องยืนยันก่อนรายงาน |
+|---|---|---|
+| เว็บสโตร์ source | `client/`, `server/`, `shared/` | ดู branch และ commit ล่าสุด |
+| AI Bot | `server/discordAiBot.ts`, `server/discordAiBotRunner.ts` | ต้องมี runtime ถาวรและ secret ครบ |
+| Discord bridge | MCSV `/plugins/DiscordSRV/` | ตรวจ server overview และ startup log |
+| Minecraft config | MCSV `/plugins/`, Skript และ world data | สำรองก่อนเขียนทุกครั้ง |
+| Deployment blueprint | `docker-compose.yml`, `Dockerfile`, `VPS_DEPLOYMENT.md` | ใช้เป็นแบบติดตั้ง ไม่ใช่หลักฐานว่ากำลังรัน |
+| Secret names | `env.template` และ Secret Manager | ห้ามใส่ค่าจริง |
+
+## ระบบที่ถูกยกเลิก
+
+Music Bot ถูกลบออกจาก source, runner, tests, package scripts, dependency, Docker Compose, env template และ Dockerfile แล้ว ห้ามสร้างกลับโดยอัตโนมัติ
+
+## จุดเริ่มต้นเมื่อรับงานใหม่
+
+1. อ่าน `todo.md` และเอกสารที่เกี่ยวข้องใน `docs/`
+2. ตรวจ `git status`, branch และ remote
+3. ตรวจ runtime จริงแยกจาก source code
+4. ทำ backup หากเกี่ยวข้องกับ MCSV/database/config live
+5. แก้เฉพาะขอบเขตที่ได้รับอนุมัติ
+6. รัน validation และบันทึกหลักฐาน
+7. ใช้ branch/PR เมื่อแก้ repository ที่ผู้ใช้งานจริง
+
+## คำสั่ง validation
+
+```bash
+pnpm check
+pnpm test
+pnpm build
+git diff --check
+```
+
+Live Discord tests อาจต้อง network และ secret จริง ให้ระบุแยกจาก unit tests ห้ามสรุปว่า bot ออนไลน์จากผล build เพียงอย่างเดียว
+
+## แหล่งความจริง
+
+- สถานะงาน: `todo.md`
+- สถาปัตยกรรมและสิทธิ์: `docs/ai-access-matrix-th.md`
+- ขั้นตอนปฏิบัติการ: `docs/ai-operations-runbook-th.md`
+- กติกาแก้ไข: `CONTRIBUTING.md`
+- ตัวแปรที่ต้องมี: `env.template`
