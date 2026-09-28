@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#050711"/><stop offset=".45" stop-color="#180d25"/><stop offset="1" stop-color="#5a1d12"/></linearGradient>
+<radialGradient id="sun"><stop stop-color="#fff3b0"/><stop offset=".3" stop-color="#ffb84c"/><stop offset="1" stop-color="#ff6a1a" stop-opacity="0"/></radialGradient>
+<linearGradient id="lava" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ffdd55"/><stop offset=".35" stop-color="#ff7a1b"/><stop offset="1" stop-color="#b21b13"/></linearGradient>
+<linearGradient id="stone"><stop stop-color="#241f2a"/><stop offset="1" stop-color="#0b0b10"/></linearGradient>
+<radialGradient id="portal"><stop stop-color="#e6b8ff"/><stop offset=".35" stop-color="#a52cff"/><stop offset=".7" stop-color="#5b15d8"/><stop offset="1" stop-color="#140a34"/></radialGradient>
+<filter id="glow"><feGaussianBlur stdDeviation="12"/></filter>
+<filter id="soft"><feGaussianBlur stdDeviation="32"/></filter>
+</defs>
+<rect width="1600" height="900" fill="url(#sky)"/>
+<circle cx="1400" cy="220" r="180" fill="url(#sun)"/>
+<circle cx="1400" cy="220" r="48" fill="#fff3bb"/>
+<g opacity=".45" filter="url(#soft)" fill="#db42ff"><ellipse cx="1010" cy="170" rx="360" ry="90"/><ellipse cx="520" cy="170" rx="280" ry="75"/></g>
+
+<!-- distant mountains -->
+<g fill="#100d18"><path d="M0 510 180 330 300 470 470 280 700 510Z"/><path d="M950 500 1170 300 1310 460 1450 320 1600 520V700H950Z"/></g>
+
+<!-- floating islands -->
+<g>
+<path d="M180 250h180l36 26-35 24H178l-32-25z" fill="url(#stone)"/>
+<path d="M1050 260h190l28 28-30 24h-190l-28-24z" fill="url(#stone)"/>
+<path d="M1360 410h140l30 22-26 22h-142l-28-22z" fill="url(#stone)"/>
+<path d="M180 300 240 520h62l64-220z" fill="#15121a"/>
+<path d="M1070 310 1135 520h50l60-210z" fill="#15121a"/>
+<path d="M1380 455 1430 615h38l48-160z" fill="#15121a"/>
+<path d="M215 410v100" stroke="#75d8ff" stroke-opacity=".45" stroke-width="7"/><path d="M1090 405v115" stroke="#75d8ff" stroke-opacity=".35" stroke-width="7"/>
+</g>
+
+<!-- grand castle silhouette -->
+<g fill="url(#stone)" stroke="#2e2835" stroke-width="6">
+<path d="M450 610V420h90V300l65 45v-80h90v80l55-45v120h90v190z"/>
+<path d="M760 610V280h100V120l70 55V70h110v105l68-55v160h105v330z"/>
+<path d="M1090 610V410h90V290l60 45v-90h90v90l62-45v120h80v200z"/>
+</g>
+
+<!-- castle towers -->
+<g fill="#17131e">
+<path d="M485 420V300h55v-65l36 65v120z"/><path d="M650 430V315h55v-80l34 80v115z"/>
+<path d="M785 280V120h55v-85l40 85v160z"/><path d="M965 285V175h58v-75l40 75v110z"/>
+<path d="M1110 420V300h55v-80l35 80v120z"/><path d="M1270 430V310h55v-70l35 70v120z"/>
+</g>
+
+<!-- lava seams -->
+<g fill="url(#lava)" opacity=".95">
+<rect x="565" y="385" width="12" height="180" rx="6"/><rect x="694" y="390" width="9" height="165" rx="4"/>
+<rect x="836" y="245" width="14" height="285" rx="7"/><rect x="965" y="235" width="12" height="300" rx="6"/>
+<rect x="1135" y="390" width="11" height="175" rx="5"/><rect x="1300" y="395" width="10" height="170" rx="5"/>
+</g>
+
+<!-- central gateway -->
+<g>
+<ellipse cx="930" cy="455" rx="82" ry="145" fill="#6d16c6" opacity=".25" filter="url(#glow)"/>
+<path d="M845 590V370q85-90 170 0v220z" fill="url(#portal)" stroke="#7d31df" stroke-width="10"/>
+<path d="M872 557V400q58-58 116 0v157z" fill="#180629"/>
+<ellipse cx="930" cy="470" rx="38" ry="66" fill="#b53cff" opacity=".8" filter="url(#glow)"/>
+<ellipse cx="930" cy="470" rx="25" ry="45" fill="#cf78ff"/>
+</g>
+
+<!-- stairway -->
+<g fill="url(#lava)" stroke="#a34a16" stroke-width="2">
+<path d="M870 600h120l10 14H860z"/><path d="M860 616h140l12 14H848z"/><path d="M850 634h160l12 14H838z"/><path d="M838 652h184l13 15H825z"/><path d="M824 672h212l15 16H808z"/><path d="M806 693h248l16 17H790z"/>
+</g>
+
+<!-- foreground ledges -->
+<path d="M0 760h500l-80 140H0z" fill="#0b0a0e"/><path d="M1220 700h380v200h-520z" fill="#0b0a0e"/>
+<g fill="#ff7a1c">
+<circle cx="130" cy="700" r="8"/><circle cx="165" cy="720" r="6"/><circle cx="1490" cy="690" r="8"/><circle cx="1450" cy="735" r="6"/>
+</g>
+<!-- embers -->
+<g fill="#ffae3d">
+<circle cx="260" cy="210" r="4"/><circle cx="390" cy="160" r="3"/><circle cx="1250" cy="150" r="4"/><circle cx="1320" cy="330" r="3"/><circle cx="760" cy="200" r="3"/><circle cx="1120" cy="190" r="4"/><circle cx="520" cy="560" r="3"/><circle cx="1180" cy="600" r="4"/>
+</g>
+<!-- dark vignette -->
+<rect width="1600" height="900" fill="none" stroke="#000" stroke-width="180" opacity=".35"/>
+</svg>
