@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { startLogin } from "@/const";
 import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -152,6 +152,16 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [priceFilter, setPriceFilter] = useState<"all" | "budget" | "mid" | "prestige">("all");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [catalogTimedOut, setCatalogTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (!ranksQuery.isLoading) {
+      setCatalogTimedOut(false);
+      return;
+    }
+    const timeoutId = window.setTimeout(() => setCatalogTimedOut(true), 10_000);
+    return () => window.clearTimeout(timeoutId);
+  }, [ranksQuery.isLoading]);
 
   const ranks = ranksQuery.data ?? [];
   const rankNotice = useMemo(() => ranks.some(rank => Number(rank.price) <= 0), [ranks]);
@@ -447,12 +457,13 @@ export default function Home() {
               </div>
             </div>
 
-            {ranksQuery.isLoading ? (
+            {ranksQuery.isLoading && !catalogTimedOut ? (
               <div className="loading"><Loader2 className="animate-spin" size={24} /> กำลังโหลดรายการยศ...</div>
-            ) : ranksQuery.isError ? (
+            ) : ranksQuery.isError || catalogTimedOut ? (
               <div className="empty-box" style={{ borderColor: "rgba(181,77,82,.3)" }}>
                 <AlertCircle size={24} style={{ color: "#ff9a94", marginBottom: 8 }} />
-                <p>ไม่สามารถโหลดรายการยศได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง</p>
+                <p>{catalogTimedOut && !ranksQuery.isError ? "ระบบร้านค้ากำลังเชื่อมต่อ backend ใช้เวลานานกว่าปกติ" : "ไม่สามารถโหลดรายการยศได้ในขณะนี้"}</p>
+                <small className="subtle">กรุณาลองใหม่อีกครั้ง หรือติดต่อทีมงานก่อนชำระเงิน</small>
                 <button className="ghost-btn compact-btn" style={{ marginTop: 12 }} onClick={() => ranksQuery.refetch()}>
                   <RefreshCcw size={14} /> โหลดใหม่
                 </button>

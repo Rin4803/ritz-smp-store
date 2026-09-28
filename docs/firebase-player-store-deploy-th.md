@@ -8,7 +8,7 @@
 
 ## ไฟล์ที่เตรียมไว้
 
-- `.firebaserc` ผูก project ID กับ `ritz-smp`
+- `.firebaserc` ผูก project ID กับ `ritzsmp-web-store`
 - `firebase.json` ตั้ง Hosting, SPA fallback, cache headers และ rewrite `/api/**` ไป Cloud Run
 - `Dockerfile` ใช้ build backend เดิมสำหรับ Cloud Run
 - `railway.json` ยังคงเก็บไว้เป็นแผนสำรองและไม่เกี่ยวกับ Firebase
@@ -26,7 +26,7 @@
 
 ## ขั้นตอน deploy ที่ปลอดภัย
 
-1. Login ด้วย Firebase CLI ในบัญชีเจ้าของ project `ritz-smp`
+1. Login ด้วย Firebase CLI ในบัญชีเจ้าของ project `ritzsmp-web-store`
 2. Build project ด้วย `pnpm build`
 3. Deploy backend container ไป Cloud Run service `ritz-smp-store-api`
 4. ตั้ง Cloud Run environment variables และตรวจ `/healthz`
